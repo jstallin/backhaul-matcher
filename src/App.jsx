@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp, Calendar, Search } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
+import { FleetDashboard } from './components/FleetDashboard';
 
 // Simulated DAT API - In production, this would connect to actual DAT API
 const mockDATLoads = [
@@ -147,6 +148,7 @@ function App() {
   const { user, signOut } = useAuth();
   const [userType, setUserType] = useState('fleet');
   const [activeTab, setActiveTab] = useState('search');
+  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management'
   const [relayMode, setRelayMode] = useState(false);
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
@@ -222,6 +224,9 @@ function App() {
 
   return (
     <AuthWrapper>
+      {currentView === 'fleet-management' ? (
+        <FleetDashboard onBackToSearch={() => setCurrentView('search')} />
+      ) : (
     <div style={styles.container}>
       <div style={styles.backgroundBlobs}>
         <div style={styles.blob1} />
@@ -260,6 +265,22 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => setCurrentView('fleet-management')}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
+                border: 'none',
+                color: '#fff',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '14px',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Manage Fleet
+            </button>
             <button
               onClick={() => setUserType('fleet')}
               style={{
@@ -687,6 +708,7 @@ function App() {
         )}
       </div>
     </div>
+      )}
     </AuthWrapper>
   );
 }
