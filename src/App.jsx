@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp, Calendar, Search } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { FleetDashboard } from './components/FleetDashboard';
+import { db } from './lib/supabase';
 
 // Simulated DAT API - In production, this would connect to actual DAT API
 const mockDATLoads = [
@@ -153,15 +154,69 @@ function App() {
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  const [loadingFleet, setLoadingFleet] = useState(true);
+  const [fleetProfile, setFleetProfile] = useState(null);
 
-  const [fleetProfile] = useState({
-    name: 'Carolina Transport Fleet',
-    fleetHome: { address: 'Davidson, NC', lat: 35.4993, lng: -80.8481 },
-    trailerType: 'Dry Van',
-    trailerLength: 53,
-    weightLimit: 45000,
-    mcNumber: 'MC-123456'
-  });
+  // Load user's fleet data
+  useEffect(() => {
+    loadFleetData();
+  }, [user, currentView]); // Reload when returning from fleet management
+
+  const loadFleetData = async () => {
+    if (!user) return;
+    
+    setLoadingFleet(true);
+    try {
+      const fleets = await db.fleets.getAll(user.id);
+      if (fleets && fleets.length > 0) {
+        const fleet = fleets[0];
+        
+        // Get first active truck or use defaults
+        const trucks = await db.trucks.getByFleet(fleet.id);
+        const firstTruck = trucks && trucks.length > 0 ? trucks[0] : null;
+        
+        setFleetProfile({
+          id: fleet.id,
+          name: fleet.name,
+          fleetHome: { 
+            address: fleet.home_address, 
+            lat: fleet.home_lat || 35.4993, 
+            lng: fleet.home_lng || -80.8481 
+          },
+          trailerType: firstTruck?.trailer_type || 'Dry Van',
+          trailerLength: firstTruck?.trailer_length || 53,
+          weightLimit: firstTruck?.weight_limit || 45000,
+          mcNumber: fleet.mc_number || 'Not Set',
+          trucks: trucks || []
+        });
+      } else {
+        // No fleet created yet, use defaults
+        setFleetProfile({
+          name: 'Demo Fleet (Create Your Fleet Profile)',
+          fleetHome: { address: 'Davidson, NC', lat: 35.4993, lng: -80.8481 },
+          trailerType: 'Dry Van',
+          trailerLength: 53,
+          weightLimit: 45000,
+          mcNumber: 'Not Set',
+          trucks: []
+        });
+      }
+    } catch (err) {
+      console.error('Error loading fleet:', err);
+      // Use defaults on error
+      setFleetProfile({
+        name: 'Demo Fleet',
+        fleetHome: { address: 'Davidson, NC', lat: 35.4993, lng: -80.8481 },
+        trailerType: 'Dry Van',
+        trailerLength: 53,
+        weightLimit: 45000,
+        mcNumber: 'Not Set',
+        trucks: []
+      });
+    } finally {
+      setLoadingFleet(false);
+    }
+  };
 
   const [finalStop] = useState({
     address: '100 Business Park Dr, Hickory, NC',
@@ -170,6 +225,8 @@ function App() {
   });
 
   const handleSearch = () => {
+    if (!fleetProfile) return;
+    
     const results = findBackhaulOpportunities(
       finalStop,
       fleetProfile.fleetHome,
@@ -180,6 +237,26 @@ function App() {
     setOpportunities(results);
     setActiveTab('results');
   };
+
+  // Show loading state while fleet data loads
+  if (loadingFleet) {
+    return (
+      <AuthWrapper>
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
+          color: '#e8eaed',
+          fontSize: '18px',
+          fontWeight: 600
+        }}>
+          Loading your fleet data...
+        </div>
+      </AuthWrapper>
+    );
+  }
 
   const styles = {
     container: {
@@ -359,15 +436,52 @@ function App() {
           <div>
             <h2 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: 800 }}>
               {fleetProfile.name}
+              {!fleetProfile.id && (
+                <span style={{
+                  marginLeft: '12px',
+                  fontSize: '12px',
+                  padding: '4px 12px',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  borderRadius: '6px',
+                  color: '#fbbf24',
+                  fontWeight: 600
+                }}>
+                  DEMO DATA
+                </span>
+              )}
             </h2>
             <p style={{ margin: 0, color: '#8b92a7', fontSize: '15px' }}>
               <MapPin size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
               Fleet Home: {fleetProfile.fleetHome.address}
             </p>
+            {fleetProfile.trucks && fleetProfile.trucks.length > 0 && (
+              <p style={{ margin: '4px 0 0 0', color: '#8b92a7', fontSize: '13px' }}>
+                {fleetProfile.trucks.length} truck{fleetProfile.trucks.length !== 1 ? 's' : ''} in fleet
+              </p>
+            )}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '14px', color: '#8b92a7', marginBottom: '4px' }}>Current Destination</div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: '#00d4ff' }}>{finalStop.address}</div>
+            {!fleetProfile.id && (
+              <button
+                onClick={() => setCurrentView('fleet-management')}
+                style={{
+                  marginTop: '12px',
+                  padding: '8px 16px',
+                  background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Create Fleet Profile →
+              </button>
+            )}
           </div>
         </div>
 
