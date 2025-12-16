@@ -3,6 +3,7 @@ import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp, Calendar, 
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { FleetDashboard } from './components/FleetDashboard';
+import { TruckSelector } from './components/TruckSelector';
 import { db } from './lib/supabase';
 
 // Simulated DAT API - In production, this would connect to actual DAT API
@@ -156,6 +157,8 @@ function App() {
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [loadingFleet, setLoadingFleet] = useState(true);
   const [fleetProfile, setFleetProfile] = useState(null);
+  const [selectedTruckForSearch, setSelectedTruckForSearch] = useState(null);
+  const [finalStop, setFinalStop] = useState(null);
 
   // Load user's fleet data
   useEffect(() => {
@@ -218,11 +221,27 @@ function App() {
     }
   };
 
-  const [finalStop] = useState({
-    address: '100 Business Park Dr, Hickory, NC',
-    lat: 35.7332,
-    lng: -81.3412
-  });
+  const handleTruckSelect = ({ truck, finalStop: destination }) => {
+    setSelectedTruckForSearch(truck);
+    
+    // Set final stop with fallback coordinates
+    setFinalStop({
+      address: destination.address,
+      lat: destination.lat || 35.7332, // Default if not provided
+      lng: destination.lng || -81.3412  // Default if not provided
+    });
+    
+    // Update fleet profile to use this truck's specs
+    setFleetProfile(prev => ({
+      ...prev,
+      trailerType: truck.trailer_type,
+      trailerLength: truck.trailer_length,
+      weightLimit: truck.weight_limit
+    }));
+    
+    // Move to search configuration
+    setActiveTab('search-config');
+  };
 
   const handleSearch = () => {
     if (!fleetProfile) return;
@@ -460,10 +479,36 @@ function App() {
                 {fleetProfile.trucks.length} truck{fleetProfile.trucks.length !== 1 ? 's' : ''} in fleet
               </p>
             )}
+            {selectedTruckForSearch && (
+              <p style={{
+                margin: '8px 0 0 0',
+                padding: '6px 12px',
+                background: 'rgba(0, 212, 255, 0.15)',
+                border: '1px solid rgba(0, 212, 255, 0.3)',
+                borderRadius: '6px',
+                display: 'inline-block',
+                fontSize: '13px',
+                color: '#00d4ff',
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace"
+              }}>
+                Selected: {selectedTruckForSearch.truck_number} ({selectedTruckForSearch.trailer_type}, {selectedTruckForSearch.trailer_length}ft)
+              </p>
+            )}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', color: '#8b92a7', marginBottom: '4px' }}>Current Destination</div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#00d4ff' }}>{finalStop.address}</div>
+            {finalStop ? (
+              <>
+                <div style={{ fontSize: '14px', color: '#8b92a7', marginBottom: '4px' }}>
+                  {selectedTruckForSearch ? `${selectedTruckForSearch.truck_number} Destination` : 'Current Destination'}
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#00d4ff' }}>{finalStop.address}</div>
+              </>
+            ) : (
+              <div style={{ fontSize: '14px', color: '#8b92a7' }}>
+                Select a truck to begin
+              </div>
+            )}
             {!fleetProfile.id && (
               <button
                 onClick={() => setCurrentView('fleet-management')}
@@ -486,7 +531,47 @@ function App() {
         </div>
 
         {/* Search Configuration */}
-        {activeTab === 'search' && (
+        {activeTab === 'search' && fleetProfile && (
+          <TruckSelector
+            fleetId={fleetProfile.id}
+            onSelectTruck={handleTruckSelect}
+          />
+        )}
+
+        {activeTab === 'search' && !fleetProfile?.id && (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            background: 'rgba(26, 31, 58, 0.6)',
+            borderRadius: '16px',
+            border: '1px dashed rgba(255, 255, 255, 0.2)'
+          }}>
+            <Truck size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800, color: '#e8eaed' }}>
+              Create Your Fleet First
+            </h3>
+            <p style={{ margin: '0 0 16px 0', color: '#8b92a7', fontSize: '15px' }}>
+              Set up your fleet profile and add trucks before searching for backhaul opportunities
+            </p>
+            <button
+              onClick={() => setCurrentView('fleet-management')}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              Go to Fleet Management
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'search-config' && selectedTruckForSearch && finalStop && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px', marginBottom: '32px' }}>
             
             {/* Search Parameters */}
@@ -497,10 +582,32 @@ function App() {
               padding: '32px',
               backdropFilter: 'blur(10px)'
             }}>
-              <h3 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Search size={24} color="#ff6b35" />
-                Search Parameters
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Search size={24} color="#ff6b35" />
+                  Search Parameters
+                </h3>
+                <button
+                  onClick={() => {
+                    setActiveTab('search');
+                    setSelectedTruckForSearch(null);
+                    setFinalStop(null);
+                    setOpportunities([]);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '6px',
+                    color: '#8b92a7',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ← Change Truck
+                </button>
+              </div>
               
               <div style={{ marginBottom: '28px' }}>
                 <label style={{ display: 'block', marginBottom: '12px', fontSize: '15px', fontWeight: 600, color: '#b8bcc8' }}>
@@ -595,26 +702,38 @@ function App() {
               backdropFilter: 'blur(10px)'
             }}>
               <h3 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Settings size={24} color="#00d4ff" />
-                Equipment Profile
+                <Truck size={24} color="#00d4ff" />
+                Selected Truck
               </h3>
               
               <div style={{ display: 'grid', gap: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <span style={{ color: '#8b92a7', fontSize: '14px' }}>Truck Number</span>
+                  <span style={{ fontWeight: 700, fontSize: '15px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {selectedTruckForSearch.truck_number}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                   <span style={{ color: '#8b92a7', fontSize: '14px' }}>Trailer Type</span>
-                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{fleetProfile.trailerType}</span>
+                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{selectedTruckForSearch.trailer_type}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                   <span style={{ color: '#8b92a7', fontSize: '14px' }}>Trailer Length</span>
-                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{fleetProfile.trailerLength} ft</span>
+                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{selectedTruckForSearch.trailer_length} ft</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                   <span style={{ color: '#8b92a7', fontSize: '14px' }}>Weight Limit</span>
-                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{fleetProfile.weightLimit.toLocaleString()} lbs</span>
+                  <span style={{ fontWeight: 700, fontSize: '15px' }}>{selectedTruckForSearch.weight_limit.toLocaleString()} lbs</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
-                  <span style={{ color: '#8b92a7', fontSize: '14px' }}>MC Number</span>
-                  <span style={{ fontWeight: 700, fontSize: '15px', fontFamily: "'JetBrains Mono', monospace" }}>{fleetProfile.mcNumber}</span>
+                  <span style={{ color: '#8b92a7', fontSize: '14px' }}>Status</span>
+                  <span style={{ 
+                    fontWeight: 700, 
+                    fontSize: '15px',
+                    color: selectedTruckForSearch.status === 'active' ? '#10b981' : '#8b92a7'
+                  }}>
+                    {selectedTruckForSearch.status}
+                  </span>
                 </div>
               </div>
 

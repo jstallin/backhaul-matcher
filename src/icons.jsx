@@ -113,3 +113,9 @@ export const User = ({ size = 24, color = 'currentColor', style = {} }) => (
     <circle cx="12" cy="7" r="4"></circle>
   </svg>
 );
+
+export const ChevronRight = ({ size = 24, color = 'currentColor', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
