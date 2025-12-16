@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/supabase';
 import { FleetSetup } from './FleetSetup';
 import { TruckManagement } from './TruckManagement';
-import { Truck, Settings as SettingsIcon } from '../icons';
+import { DriverManagement } from './DriverManagement';
+import { Truck, Settings as SettingsIcon, User } from '../icons';
 
 export const FleetDashboard = ({ onBackToSearch }) => {
   const { user } = useAuth();
@@ -142,6 +143,26 @@ export const FleetDashboard = ({ onBackToSearch }) => {
               <Truck size={16} />
               Trucks {fleet && fleet.trucks && `(${fleet.trucks.length})`}
             </button>
+            <button
+              onClick={() => setActiveTab('drivers')}
+              style={{
+                padding: '12px 24px',
+                background: activeTab === 'drivers' ? 'rgba(168, 85, 247, 0.1)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'drivers' ? '2px solid #a855f7' : '2px solid transparent',
+                color: activeTab === 'drivers' ? '#a855f7' : '#8b92a7',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <User size={16} />
+              Drivers
+            </button>
           </div>
         </div>
 
@@ -159,7 +180,10 @@ export const FleetDashboard = ({ onBackToSearch }) => {
           {activeTab === 'trucks' && fleet && (
             <TruckManagement fleetId={fleet.id} />
           )}
-          {activeTab === 'trucks' && !fleet && (
+          {activeTab === 'drivers' && fleet && (
+            <DriverManagement fleetId={fleet.id} />
+          )}
+          {(activeTab === 'trucks' || activeTab === 'drivers') && !fleet && (
             <div style={{
               textAlign: 'center',
               padding: '60px 20px',

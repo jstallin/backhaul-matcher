@@ -1,11 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Login } from './Login';
 import { SignUp } from './SignUp';
+import { DriverDashboard } from './DriverDashboard';
 
 export const AuthWrapper = ({ children }) => {
   const { user, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(true);
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      // Check user role from metadata
+      const role = user.user_metadata?.role || 'fleet_manager';
+      setUserRole(role);
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -32,5 +42,11 @@ export const AuthWrapper = ({ children }) => {
     );
   }
 
+  // Route based on user role
+  if (userRole === 'driver') {
+    return <DriverDashboard />;
+  }
+
+  // Default: fleet_manager or other roles
   return children;
 };
