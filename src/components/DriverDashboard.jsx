@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { Truck, MapPin, DollarSign, TrendingUp, Package } from '../icons';
 
 export const DriverDashboard = () => {
@@ -21,37 +21,66 @@ export const DriverDashboard = () => {
     
     setLoading(true);
     try {
-      // Find driver record by user_id
-      const { data: profile } = await db.userProfiles.get(user.id);
+      // Check user role
+      const role = user.user_metadata?.role || 'fleet_manager';
       
-      if (profile?.role !== 'driver') {
-        // Not a driver
+      if (role !== 'driver') {
         setLoading(false);
         return;
       }
 
-      // For now, we'll need to query drivers table to find this user
-      // In a real implementation, you'd store fleet_id in user_profiles
-      // For demo purposes, we'll show placeholder data
-      
+      // Find driver record by user_id using raw SQL-like query
+      // We need to search drivers table for this user
+      const { data: allDrivers, error: driversError } = await supabase
+        .from('drivers')
+        .select(`
+          *,
+          trucks (
+            id,
+            truck_number,
+            trailer_type,
+            trailer_length,
+            weight_limit,
+            status
+          ),
+          fleets (
+            id,
+            name,
+            home_address
+          )
+        `)
+        .eq('user_id', user.id)
+        .single();
+
+      if (driversError) {
+        console.error('Error loading driver:', driversError);
+        setLoading(false);
+        return;
+      }
+
+      if (!allDrivers) {
+        setLoading(false);
+        return;
+      }
+
+      // Set driver info
       setDriverInfo({
-        name: user.user_metadata?.full_name || user.email,
-        email: user.email
+        name: `${allDrivers.first_name} ${allDrivers.last_name}`,
+        email: allDrivers.email,
+        id: allDrivers.id
       });
 
-      // Mock assigned truck and route for demo
-      setAssignedTruck({
-        truck_number: 'TRUCK-001',
-        trailer_type: 'Dry Van',
-        trailer_length: 53,
-        weight_limit: 45000
-      });
+      // Set assigned truck
+      if (allDrivers.trucks) {
+        setAssignedTruck(allDrivers.trucks);
+      }
 
-      setFleet({
-        name: 'Carolina Transport Fleet',
-        home_address: 'Davidson, NC'
-      });
+      // Set fleet info
+      if (allDrivers.fleets) {
+        setFleet(allDrivers.fleets);
+      }
 
+      // Mock current route for now
       setCurrentRoute({
         origin: 'Charlotte, NC',
         destination: 'Greensboro, NC',
@@ -76,7 +105,7 @@ export const DriverDashboard = () => {
           revenue: 1200,
           miles: 48,
           revenuePerMile: 25.00,
-          selected: true // Fleet manager selected this one
+          selected: true
         }
       ]);
 
