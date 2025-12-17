@@ -4,6 +4,7 @@ import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { FleetDashboard } from './components/FleetDashboard';
 import { TruckSelector } from './components/TruckSelector';
+import { ActiveRoutes } from './components/ActiveRoutes';
 import { db } from './lib/supabase';
 
 // Simulated DAT API - In production, this would connect to actual DAT API
@@ -159,6 +160,7 @@ function App() {
   const [fleetProfile, setFleetProfile] = useState(null);
   const [selectedTruckForSearch, setSelectedTruckForSearch] = useState(null);
   const [finalStop, setFinalStop] = useState(null);
+  const [selectedRoute, setSelectedRoute] = useState(null);
 
   // Load user's fleet data
   useEffect(() => {
@@ -238,6 +240,44 @@ function App() {
       trailerLength: truck.trailer_length,
       weightLimit: truck.weight_limit
     }));
+    
+    // Move to search configuration
+    setActiveTab('search-config');
+  };
+
+  const handleRouteSelectForBackhaul = (route) => {
+    setSelectedRoute(route);
+    
+    // Set final stop to the route's destination
+    setFinalStop({
+      address: route.dest_city,
+      lat: route.dest_lat,
+      lng: route.dest_lng
+    });
+    
+    // Find the truck from fleet that matches this route's equipment type
+    const matchingTruck = fleetProfile?.trucks?.find(t => 
+      (route.equipment_type === 'TV' && t.trailer_type === 'Dry Van') ||
+      (route.equipment_type === 'FT' && t.trailer_type === 'Flatbed')
+    );
+    
+    if (matchingTruck) {
+      setSelectedTruckForSearch(matchingTruck);
+      setFleetProfile(prev => ({
+        ...prev,
+        trailerType: matchingTruck.trailer_type,
+        trailerLength: matchingTruck.trailer_length,
+        weightLimit: matchingTruck.weight_limit
+      }));
+    } else {
+      // Use route equipment type directly
+      setFleetProfile(prev => ({
+        ...prev,
+        trailerType: route.equipment_type === 'TV' ? 'Dry Van' : 'Flatbed',
+        trailerLength: 53,
+        weightLimit: 45000
+      }));
+    }
     
     // Move to search configuration
     setActiveTab('search-config');
@@ -361,6 +401,25 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                setCurrentView('search');
+                setActiveTab('routes');
+              }}
+              style={{
+                padding: '10px 20px',
+                background: activeTab === 'routes' ? 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)' : 'rgba(0, 212, 255, 0.1)',
+                border: activeTab === 'routes' ? 'none' : '1px solid rgba(0, 212, 255, 0.3)',
+                color: '#fff',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '14px',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Active Routes
+            </button>
             <button
               onClick={() => setCurrentView('fleet-management')}
               style={{
@@ -529,6 +588,11 @@ function App() {
             )}
           </div>
         </div>
+
+        {/* Active Routes View */}
+        {activeTab === 'routes' && (
+          <ActiveRoutes onSelectRouteForBackhaul={handleRouteSelectForBackhaul} />
+        )}
 
         {/* Search Configuration */}
         {activeTab === 'search' && fleetProfile && (
