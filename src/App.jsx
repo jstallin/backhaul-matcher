@@ -6,75 +6,7 @@ import { FleetDashboard } from './components/FleetDashboard';
 import { TruckSelector } from './components/TruckSelector';
 import { ActiveRoutes } from './components/ActiveRoutes';
 import { db } from './lib/supabase';
-
-// Simulated DAT API - In production, this would connect to actual DAT API
-const mockDATLoads = [
-  {
-    id: 'DAT001',
-    origin: { address: '1234 Industrial Blvd, Charlotte, NC', lat: 35.2271, lng: -80.8431 },
-    destination: { address: '5678 Commerce St, Greensboro, NC', lat: 36.0726, lng: -79.7920 },
-    equipmentType: 'Dry Van',
-    trailerLength: 53,
-    weight: 42000,
-    rateType: 'per_mile',
-    rate: 2.85,
-    fuelSurcharge: 0.45,
-    pickupDate: '2024-12-16',
-    distance: 92
-  },
-  {
-    id: 'DAT002',
-    origin: { address: '890 Warehouse Way, Winston-Salem, NC', lat: 36.0999, lng: -80.2442 },
-    destination: { address: '321 Distribution Dr, Raleigh, NC', lat: 35.7796, lng: -78.6382 },
-    equipmentType: 'Dry Van',
-    trailerLength: 53,
-    weight: 38000,
-    rateType: 'flat',
-    rate: 450,
-    fuelSurcharge: 75,
-    pickupDate: '2024-12-16',
-    distance: 110
-  },
-  {
-    id: 'DAT003',
-    origin: { address: '456 Logistics Ln, Durham, NC', lat: 35.9940, lng: -78.8986 },
-    destination: { address: '789 Supply Chain Ave, Fayetteville, NC', lat: 35.0527, lng: -78.8784 },
-    equipmentType: 'Dry Van',
-    trailerLength: 53,
-    weight: 45000,
-    rateType: 'per_mile',
-    rate: 2.65,
-    fuelSurcharge: 0.40,
-    pickupDate: '2024-12-17',
-    distance: 65
-  },
-  {
-    id: 'DAT004',
-    origin: { address: '234 Transport Rd, Gastonia, NC', lat: 35.2621, lng: -81.1873 },
-    destination: { address: '567 Freight St, Columbia, SC', lat: 34.0007, lng: -81.0348 },
-    equipmentType: 'Dry Van',
-    trailerLength: 53,
-    weight: 40000,
-    rateType: 'per_mile',
-    rate: 3.10,
-    fuelSurcharge: 0.50,
-    pickupDate: '2024-12-16',
-    distance: 88
-  },
-  {
-    id: 'DAT005',
-    origin: { address: '678 Cargo Ct, Asheville, NC', lat: 35.5951, lng: -82.5515 },
-    destination: { address: '910 Logistics Loop, Charleston, SC', lat: 32.7765, lng: -79.9311 },
-    equipmentType: 'Dry Van',
-    trailerLength: 53,
-    weight: 41000,
-    rateType: 'per_mile',
-    rate: 2.95,
-    fuelSurcharge: 0.42,
-    pickupDate: '2024-12-17',
-    distance: 145
-  }
-];
+import backhaulLoadsData from './data/backhaul_loads_data.json';
 
 // Calculate distance between two points (Haversine formula)
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -88,7 +20,7 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
   return R * c;
 };
 
-// Core matching algorithm
+// Core matching algorithm - uses real backhaul loads data
 const findBackhaulOpportunities = (finalStop, fleetHome, fleetProfile, searchRadius, relayMode) => {
   const opportunities = [];
   
@@ -97,53 +29,96 @@ const findBackhaulOpportunities = (finalStop, fleetHome, fleetProfile, searchRad
     fleetHome.lat, fleetHome.lng
   );
 
-  mockDATLoads.forEach(load => {
-    if (load.equipmentType !== fleetProfile.trailerType) return;
-    if (load.trailerLength > fleetProfile.trailerLength) return;
-    if (load.weight > fleetProfile.weightLimit) return;
+  // Filter and process real backhaul loads
+  const availableLoads = backhaulLoadsData.filter(load => load.status === 'available');
 
+  availableLoads.forEach(load => {
+    // Match equipment type
+    const loadEquipmentType = load.equipment_type;
+    if (loadEquipmentType !== fleetProfile.trailerType) return;
+    
+    // Check trailer length compatibility
+    if (load.trailer_length > fleetProfile.trailerLength) return;
+    
+    // Check weight compatibility
+    if (load.weight_lbs > fleetProfile.weightLimit) return;
+
+    // Calculate distance from final stop to load pickup
     const finalToPickup = calculateDistance(
       finalStop.lat, finalStop.lng,
-      load.origin.lat, load.origin.lng
+      load.pickup_lat, load.pickup_lng
     );
 
+    // Skip if pickup is outside search radius
     if (finalToPickup > searchRadius) return;
 
-    let totalRevenue = 0;
-    if (load.rateType === 'per_mile') {
-      totalRevenue = (load.rate * load.distance) + (load.fuelSurcharge * load.distance);
-    } else if (load.rateType === 'flat') {
-      totalRevenue = load.rate + load.fuelSurcharge;
-    }
+    // Calculate total revenue (already in the load data)
+    const totalRevenue = load.total_revenue;
 
+    // Calculate out-of-route miles
     let oorMiles;
     if (relayMode) {
-      const pickupToHome = calculateDistance(load.origin.lat, load.origin.lng, fleetHome.lat, fleetHome.lng);
-      const homeToDelivery = calculateDistance(fleetHome.lat, fleetHome.lng, load.destination.lat, load.destination.lng);
-      const deliveryToHome = calculateDistance(load.destination.lat, load.destination.lng, fleetHome.lat, fleetHome.lng);
+      // Relay mode: Final → Pickup → Home → Delivery → Home
+      const pickupToHome = calculateDistance(
+        load.pickup_lat, load.pickup_lng, 
+        fleetHome.lat, fleetHome.lng
+      );
+      const homeToDelivery = calculateDistance(
+        fleetHome.lat, fleetHome.lng, 
+        load.delivery_lat, load.delivery_lng
+      );
+      const deliveryToHome = calculateDistance(
+        load.delivery_lat, load.delivery_lng, 
+        fleetHome.lat, fleetHome.lng
+      );
       oorMiles = finalToPickup + pickupToHome + homeToDelivery + deliveryToHome;
     } else {
-      const pickupToDelivery = load.distance;
-      const deliveryToHome = calculateDistance(load.destination.lat, load.destination.lng, fleetHome.lat, fleetHome.lng);
+      // Standard mode: Final → Pickup → Delivery → Home
+      const pickupToDelivery = load.distance_miles;
+      const deliveryToHome = calculateDistance(
+        load.delivery_lat, load.delivery_lng, 
+        fleetHome.lat, fleetHome.lng
+      );
       oorMiles = finalToPickup + pickupToDelivery + deliveryToHome;
     }
 
     const additionalMiles = oorMiles - directReturnMiles;
     const revenuePerMile = totalRevenue / oorMiles;
-    const score = revenuePerMile * totalRevenue;
+    const score = revenuePerMile * totalRevenue; // Optimize for revenue per mile AND total revenue
 
     opportunities.push({
-      ...load,
+      id: load.load_id,
+      origin: {
+        address: load.pickup_city,
+        lat: load.pickup_lat,
+        lng: load.pickup_lng
+      },
+      destination: {
+        address: load.delivery_city,
+        lat: load.delivery_lat,
+        lng: load.delivery_lng
+      },
+      equipmentType: load.equipment_type,
+      trailerLength: load.trailer_length,
+      weight: load.weight_lbs,
+      pickupDate: load.pickup_date,
+      deliveryDate: load.delivery_date,
+      distance: load.distance_miles,
+      broker: load.broker,
+      shipper: load.shipper,
+      receiver: load.receiver,
+      freightType: load.freight_type,
       totalRevenue,
-      oorMiles,
-      directReturnMiles,
-      additionalMiles,
-      revenuePerMile,
+      oorMiles: Math.round(oorMiles),
+      directReturnMiles: Math.round(directReturnMiles),
+      additionalMiles: Math.round(additionalMiles),
+      revenuePerMile: parseFloat(revenuePerMile.toFixed(2)),
       score,
-      finalToPickup
+      finalToPickup: Math.round(finalToPickup)
     });
   });
 
+  // Sort by score (highest first)
   return opportunities.sort((a, b) => b.score - a.score);
 };
 
