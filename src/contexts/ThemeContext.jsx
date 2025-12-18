@@ -49,25 +49,25 @@ export const ThemeProvider = ({ children }) => {
       blue: '#3b82f6'
     }
   } : {
-    // Light mode colors
+    // Light mode colors - IMPROVED CONTRAST
     background: {
       primary: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
-      secondary: 'rgba(255, 255, 255, 0.8)',
-      tertiary: 'rgba(255, 255, 255, 0.6)',
+      secondary: 'rgba(255, 255, 255, 0.9)',
+      tertiary: 'rgba(248, 250, 252, 0.8)',
       card: 'rgba(255, 255, 255, 0.95)',
       hover: 'rgba(241, 245, 249, 0.95)',
       overlay: 'rgba(255, 255, 255, 0.98)'
     },
     text: {
-      primary: '#0f172a',
-      secondary: '#475569',
-      tertiary: '#64748b',
+      primary: '#0f172a',      // Much darker for better contrast
+      secondary: '#334155',     // Darker gray instead of light
+      tertiary: '#475569',      // Medium gray instead of light
       inverse: '#ffffff'
     },
     border: {
-      primary: 'rgba(15, 23, 42, 0.1)',
-      secondary: 'rgba(15, 23, 42, 0.08)',
-      accent: 'rgba(15, 23, 42, 0.15)'
+      primary: 'rgba(15, 23, 42, 0.15)',    // Darker borders
+      secondary: 'rgba(15, 23, 42, 0.1)',
+      accent: 'rgba(15, 23, 42, 0.2)'
     },
     accent: {
       orange: '#ea580c',

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp } from './icons';
+import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp, Search } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -571,7 +571,7 @@ function App() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Search size={24} color="#ff6b35" />
+                  <Search size={24} color={colors.accent.orange} />
                   Search Parameters
                 </h3>
                 <button
