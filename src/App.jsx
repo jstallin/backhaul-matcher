@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp, Search } from './icons';
+import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp, Search, Calendar } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';

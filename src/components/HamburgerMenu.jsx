@@ -56,27 +56,36 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          padding: '10px',
-          background: isOpen ? '${colors.border.primary}' : 'transparent',
-          border: '1px solid ${colors.border.accent}',
+          padding: '10px 16px',
+          background: isOpen 
+            ? `linear-gradient(135deg, ${colors.accent.cyan}20 0%, ${colors.accent.cyan}10 100%)`
+            : colors.background.secondary,
+          border: `2px solid ${isOpen ? colors.accent.cyan : colors.border.accent}`,
           borderRadius: '8px',
-          color: '${colors.text.primary}',
+          color: colors.text.primary,
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
           fontSize: '14px',
-          fontWeight: 600,
-          transition: 'all 0.2s'
+          fontWeight: 700,
+          transition: 'all 0.2s',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}
         onMouseEnter={(e) => {
-          if (!isOpen) e.currentTarget.style.background = '${colors.background.tertiary}';
+          if (!isOpen) {
+            e.currentTarget.style.background = colors.background.hover;
+            e.currentTarget.style.borderColor = colors.accent.cyan;
+          }
         }}
         onMouseLeave={(e) => {
-          if (!isOpen) e.currentTarget.style.background = 'transparent';
+          if (!isOpen) {
+            e.currentTarget.style.background = colors.background.secondary;
+            e.currentTarget.style.borderColor = colors.border.accent;
+          }
         }}
       >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isOpen ? <X size={20} color={colors.accent.cyan} /> : <Menu size={20} />}
         Menu
       </button>
 

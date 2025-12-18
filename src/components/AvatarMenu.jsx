@@ -63,9 +63,9 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           height: '40px',
           borderRadius: '50%',
           background: isOpen 
-            ? 'linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)'
-            : 'linear-gradient(135deg, ${colors.accent.purple} 0%, ${colors.accent.purple} 100%)',
-          border: isOpen ? '2px solid ${colors.accent.cyan}' : '2px solid transparent',
+            ? `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`
+            : `linear-gradient(135deg, ${colors.accent.purple} 0%, ${colors.accent.purple} 100%)`,
+          border: isOpen ? `2px solid ${colors.accent.cyan}` : `2px solid ${colors.border.accent}`,
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',
