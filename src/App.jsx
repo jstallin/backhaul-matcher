@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp } from './icons';
+import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
+import { useTheme } from './contexts/ThemeContext';
 import { FleetDashboard } from './components/FleetDashboard';
 import { TruckSelector } from './components/TruckSelector';
 import { ActiveRoutes } from './components/ActiveRoutes';
 import { HamburgerMenu } from './components/HamburgerMenu';
 import { AvatarMenu } from './components/AvatarMenu';
+import { Settings } from './components/Settings';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -127,9 +129,10 @@ const findBackhaulOpportunities = (finalStop, fleetHome, fleetProfile, searchRad
 
 function App() {
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
   const [userType, setUserType] = useState('fleet');
   const [activeTab, setActiveTab] = useState('routes'); // Default to routes (Active Routes)
-  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management' or 'truck-search'
+  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management' or 'truck-search' or 'settings'
   const [relayMode, setRelayMode] = useState(false);
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
@@ -276,6 +279,15 @@ function App() {
     }
   };
 
+  const handleNavigateToSettings = () => {
+    setCurrentView('settings');
+  };
+
+  const handleBackFromSettings = () => {
+    setCurrentView('search');
+    setActiveTab('routes');
+  };
+
   const handleSearch = () => {
     if (!fleetProfile) return;
     
@@ -353,7 +365,9 @@ function App() {
 
   return (
     <AuthWrapper>
-      {currentView === 'fleet-management' ? (
+      {currentView === 'settings' ? (
+        <Settings onBack={handleBackFromSettings} />
+      ) : currentView === 'fleet-management' ? (
         <FleetDashboard onBackToSearch={() => setCurrentView('search')} />
       ) : (
     <div style={styles.container}>
@@ -398,7 +412,7 @@ function App() {
               currentView={currentView}
               onNavigate={handleMenuNavigation}
             />
-            <AvatarMenu />
+            <AvatarMenu onNavigateToSettings={handleNavigateToSettings} />
           </div>
         </div>
       </header>

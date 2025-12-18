@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { User, Settings, LogOut } from '../icons';
 import { useAuth } from '../contexts/AuthContext';
 
-export const AvatarMenu = () => {
+export const AvatarMenu = ({ onNavigateToSettings }) => {
   const { user, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -31,8 +31,9 @@ export const AvatarMenu = () => {
 
   const handleSettings = () => {
     setIsOpen(false);
-    // TODO: Navigate to settings page when implemented
-    alert('Settings feature coming soon!');
+    if (onNavigateToSettings) {
+      onNavigateToSettings();
+    }
   };
 
   // Get user initials or first letter of email
