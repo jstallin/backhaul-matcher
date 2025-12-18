@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp, Calendar, Search } from './icons';
+import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
 import { FleetDashboard } from './components/FleetDashboard';
 import { TruckSelector } from './components/TruckSelector';
 import { ActiveRoutes } from './components/ActiveRoutes';
+import { HamburgerMenu } from './components/HamburgerMenu';
+import { AvatarMenu } from './components/AvatarMenu';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -126,8 +128,8 @@ const findBackhaulOpportunities = (finalStop, fleetHome, fleetProfile, searchRad
 function App() {
   const { user, signOut } = useAuth();
   const [userType, setUserType] = useState('fleet');
-  const [activeTab, setActiveTab] = useState('search');
-  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management'
+  const [activeTab, setActiveTab] = useState('routes'); // Default to routes (Active Routes)
+  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management' or 'truck-search'
   const [relayMode, setRelayMode] = useState(false);
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
@@ -259,6 +261,21 @@ function App() {
     setActiveTab('search-config');
   };
 
+  const handleMenuNavigation = (view) => {
+    if (view === 'routes') {
+      setCurrentView('search');
+      setActiveTab('routes');
+    } else if (view === 'truck-search') {
+      setCurrentView('search');
+      setActiveTab('search');
+      setSelectedTruckForSearch(null);
+      setFinalStop(null);
+      setOpportunities([]);
+    } else if (view === 'fleet-management') {
+      setCurrentView('fleet-management');
+    }
+  };
+
   const handleSearch = () => {
     if (!fleetProfile) return;
     
@@ -377,95 +394,11 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button
-              onClick={() => {
-                setCurrentView('search');
-                setActiveTab('routes');
-              }}
-              style={{
-                padding: '10px 20px',
-                background: activeTab === 'routes' ? 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)' : 'rgba(0, 212, 255, 0.1)',
-                border: activeTab === 'routes' ? 'none' : '1px solid rgba(0, 212, 255, 0.3)',
-                color: '#fff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '14px',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Active Routes
-            </button>
-            <button
-              onClick={() => setCurrentView('fleet-management')}
-              style={{
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
-                border: 'none',
-                color: '#fff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '14px',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Manage Fleet
-            </button>
-            <button
-              onClick={() => setUserType('fleet')}
-              style={{
-                padding: '10px 20px',
-                background: userType === 'fleet' ? 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)' : 'transparent',
-                border: userType === 'fleet' ? 'none' : '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '14px',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Fleet Manager
-            </button>
-            <button
-              onClick={() => setUserType('driver')}
-              style={{
-                padding: '10px 20px',
-                background: userType === 'driver' ? 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)' : 'transparent',
-                border: userType === 'driver' ? 'none' : '1px solid rgba(255, 255, 255, 0.15)',
-                color: '#fff',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '14px',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              Driver
-            </button>
-            <button
-              onClick={async () => {
-                if (window.confirm('Sign out?')) {
-                  await signOut();
-                }
-              }}
-              title="Sign Out"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                marginLeft: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-            >
-              <Settings size={24} color="#8b92a7" />
-            </button>
+            <HamburgerMenu 
+              currentView={currentView}
+              onNavigate={handleMenuNavigation}
+            />
+            <AvatarMenu />
           </div>
         </div>
       </header>
