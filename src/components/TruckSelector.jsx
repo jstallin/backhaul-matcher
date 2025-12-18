@@ -284,7 +284,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             style={{
               width: '100%',
               padding: '16px',
-              background: 'linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)',
+              background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
               border: 'none',
               borderRadius: '12px',
               color: '#fff',
