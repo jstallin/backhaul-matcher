@@ -325,8 +325,8 @@ function App() {
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
-      color: '#e8eaed',
+      background: colors.background.primary,
+      color: colors.text.primary,
       position: 'relative',
       overflow: 'hidden'
     },
@@ -345,7 +345,7 @@ function App() {
       left: '5%',
       width: '500px',
       height: '500px',
-      background: 'radial-gradient(circle, #ff6b35 0%, transparent 70%)',
+      background: `radial-gradient(circle, ${colors.accent.orange} 0%, transparent 70%)`,
       borderRadius: '50%',
       filter: 'blur(80px)',
       animation: 'float 20s ease-in-out infinite'
@@ -356,7 +356,7 @@ function App() {
       right: '5%',
       width: '600px',
       height: '600px',
-      background: 'radial-gradient(circle, #00d4ff 0%, transparent 70%)',
+      background: `radial-gradient(circle, ${colors.accent.cyan} 0%, transparent 70%)`,
       borderRadius: '50%',
       filter: 'blur(100px)',
       animation: 'float 25s ease-in-out infinite reverse'
@@ -379,8 +379,8 @@ function App() {
       {/* Header */}
       <header style={{
         padding: '24px 32px',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        background: 'rgba(10, 14, 39, 0.8)',
+        borderBottom: `1px solid ${colors.border.secondary}`,
+        background: colors.background.overlay,
         backdropFilter: 'blur(20px)',
         position: 'sticky',
         top: 0,
@@ -388,20 +388,20 @@ function App() {
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Truck size={32} color="#ff6b35" strokeWidth={2.5} />
+            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
             <div>
               <h1 style={{ 
                 margin: 0, 
                 fontSize: '28px', 
                 fontWeight: 900,
                 letterSpacing: '-0.02em',
-                background: 'linear-gradient(135deg, #ff6b35 0%, #00d4ff 100%)',
+                background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
                 BACKHAUL
               </h1>
-              <p style={{ margin: 0, fontSize: '13px', color: '#8b92a7', fontWeight: 500, letterSpacing: '0.05em' }}>
+              <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>
                 SMART RETURN ROUTE OPTIMIZATION
               </p>
             </div>

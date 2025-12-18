@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, Settings, LogOut } from '../icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const AvatarMenu = ({ onNavigateToSettings }) => {
   const { user, signOut } = useAuth();
+  const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -61,9 +63,9 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           height: '40px',
           borderRadius: '50%',
           background: isOpen 
-            ? 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)'
-            : 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
-          border: isOpen ? '2px solid #00d4ff' : '2px solid transparent',
+            ? 'linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)'
+            : 'linear-gradient(135deg, ${colors.accent.purple} 0%, ${colors.accent.purple} 100%)',
+          border: isOpen ? '2px solid ${colors.accent.cyan}' : '2px solid transparent',
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',
@@ -97,8 +99,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           top: 'calc(100% + 8px)',
           right: 0,
           minWidth: '240px',
-          background: 'rgba(26, 31, 58, 0.98)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: '${colors.background.overlay}',
+          border: '1px solid ${colors.border.accent}',
           borderRadius: '12px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           backdropFilter: 'blur(10px)',
@@ -108,12 +110,12 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           {/* User Info Section */}
           <div style={{
             padding: '16px 20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+            borderBottom: '1px solid ${colors.border.secondary}'
           }}>
             <div style={{
               fontSize: '14px',
               fontWeight: 700,
-              color: '#e8eaed',
+              color: '${colors.text.primary}',
               marginBottom: '4px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -123,7 +125,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
             </div>
             <div style={{
               fontSize: '12px',
-              color: '#8b92a7'
+              color: '${colors.text.secondary}'
             }}>
               {userRole}
             </div>
@@ -137,7 +139,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               padding: '14px 20px',
               background: 'transparent',
               border: 'none',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              borderBottom: '1px solid ${colors.border.secondary}',
               textAlign: 'left',
               cursor: 'pointer',
               transition: 'all 0.2s',
@@ -146,17 +148,17 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               gap: '12px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.background = '${colors.background.tertiary}';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <Settings size={18} color="#8b92a7" />
+            <Settings size={18} color="${colors.text.secondary}" />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '${colors.text.primary}'
             }}>
               Settings
             </span>
@@ -183,11 +185,11 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <LogOut size={18} color="#ef4444" />
+            <LogOut size={18} color="${colors.accent.red}" />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '#ef4444'
+              color: '${colors.accent.red}'
             }}>
               Sign Out
             </span>

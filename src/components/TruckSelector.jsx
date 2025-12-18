@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Truck, MapPin, Search, ChevronRight } from '../icons';
+import { useTheme } from '../contexts/ThemeContext';
 import { db } from '../lib/supabase';
 
 export const TruckSelector = ({ fleetId, onSelectTruck }) => {
+  const { colors } = useTheme();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTruck, setSelectedTruck] = useState(null);
@@ -49,7 +51,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', color: '#8b92a7', textAlign: 'center' }}>
+      <div style={{ padding: '20px', color: '${colors.text.secondary}', textAlign: 'center' }}>
         Loading trucks...
       </div>
     );
@@ -60,15 +62,15 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
       <div style={{
         textAlign: 'center',
         padding: '60px 20px',
-        background: 'rgba(26, 31, 58, 0.4)',
+        background: '${colors.background.tertiary}',
         borderRadius: '16px',
         border: '1px dashed rgba(255, 255, 255, 0.2)'
       }}>
-        <Truck size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800, color: '#e8eaed' }}>
+        <Truck size={48} color="${colors.text.tertiary}" style={{ marginBottom: '16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800, color: '${colors.text.primary}' }}>
           No Active Trucks
         </h3>
-        <p style={{ margin: 0, color: '#8b92a7', fontSize: '15px' }}>
+        <p style={{ margin: 0, color: '${colors.text.secondary}', fontSize: '15px' }}>
           Add trucks to your fleet to start searching for backhaul opportunities
         </p>
       </div>
@@ -83,11 +85,11 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
           margin: '0 0 8px 0',
           fontSize: '24px',
           fontWeight: 900,
-          color: '#e8eaed'
+          color: '${colors.text.primary}'
         }}>
           Select Truck for Backhaul Search
         </h3>
-        <p style={{ margin: 0, color: '#8b92a7', fontSize: '15px' }}>
+        <p style={{ margin: 0, color: '${colors.text.secondary}', fontSize: '15px' }}>
           Choose which truck needs a backhaul and enter its final destination
         </p>
       </div>
@@ -105,10 +107,10 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             style={{
               background: selectedTruck?.id === truck.id 
                 ? 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 100%)'
-                : 'rgba(26, 31, 58, 0.6)',
+                : '${colors.background.secondary}',
               border: selectedTruck?.id === truck.id 
-                ? '2px solid #00d4ff' 
-                : '1px solid rgba(255, 255, 255, 0.1)',
+                ? '2px solid ${colors.accent.cyan}' 
+                : '1px solid ${colors.border.primary}',
               borderRadius: '12px',
               padding: '20px',
               cursor: 'pointer',
@@ -119,12 +121,12 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             }}
             onMouseEnter={(e) => {
               if (selectedTruck?.id !== truck.id) {
-                e.currentTarget.style.background = 'rgba(26, 31, 58, 0.8)';
+                e.currentTarget.style.background = '${colors.background.hover}';
               }
             }}
             onMouseLeave={(e) => {
               if (selectedTruck?.id !== truck.id) {
-                e.currentTarget.style.background = 'rgba(26, 31, 58, 0.6)';
+                e.currentTarget.style.background = '${colors.background.secondary}';
               }
             }}
           >
@@ -132,14 +134,14 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
               <div style={{
                 fontSize: '18px',
                 fontWeight: 800,
-                color: selectedTruck?.id === truck.id ? '#00d4ff' : '#e8eaed',
+                color: selectedTruck?.id === truck.id ? '${colors.accent.cyan}' : '${colors.text.primary}',
                 marginBottom: '8px',
                 fontFamily: "'JetBrains Mono', monospace",
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                <Truck size={20} color={selectedTruck?.id === truck.id ? '#00d4ff' : '#8b92a7'} />
+                <Truck size={20} color={selectedTruck?.id === truck.id ? '${colors.accent.cyan}' : '${colors.text.secondary}'} />
                 {truck.truck_number}
               </div>
               <div style={{
@@ -147,7 +149,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 gap: '16px',
                 flexWrap: 'wrap',
                 fontSize: '14px',
-                color: '#8b92a7'
+                color: '${colors.text.secondary}'
               }}>
                 <span><strong>Type:</strong> {truck.trailer_type}</span>
                 <span><strong>Length:</strong> {truck.trailer_length} ft</span>
@@ -159,7 +161,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                background: '#00d4ff',
+                background: '${colors.accent.cyan}',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -187,12 +189,12 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             margin: '0 0 16px 0',
             fontSize: '18px',
             fontWeight: 800,
-            color: '#e8eaed',
+            color: '${colors.text.primary}',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <MapPin size={20} color="#00d4ff" />
+            <MapPin size={20} color="${colors.accent.cyan}" />
             Final Destination for {selectedTruck.truck_number}
           </h4>
 
@@ -214,10 +216,10 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '${colors.background.tertiary}',
+                border: '1px solid ${colors.border.primary}',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '${colors.text.primary}',
                 fontSize: '15px',
                 outline: 'none'
               }}
@@ -225,7 +227,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             <p style={{
               margin: '8px 0 0 0',
               fontSize: '13px',
-              color: '#6b7280'
+              color: '${colors.text.tertiary}'
             }}>
               Where is this truck completing its current delivery?
             </p>
@@ -250,10 +252,10 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '${colors.background.tertiary}',
+                  border: '1px solid ${colors.border.primary}',
                   borderRadius: '8px',
-                  color: '#e8eaed',
+                  color: '${colors.text.primary}',
                   fontSize: '14px',
                   outline: 'none'
                 }}
@@ -266,10 +268,10 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '${colors.background.tertiary}',
+                  border: '1px solid ${colors.border.primary}',
                   borderRadius: '8px',
-                  color: '#e8eaed',
+                  color: '${colors.text.primary}',
                   fontSize: '14px',
                   outline: 'none'
                 }}
@@ -282,7 +284,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             style={{
               width: '100%',
               padding: '16px',
-              background: 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)',
+              background: 'linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)',
               border: 'none',
               borderRadius: '12px',
               color: '#fff',

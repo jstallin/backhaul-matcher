@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Menu, X, Truck, Search, Calendar } from '../icons';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const HamburgerMenu = ({ currentView, onNavigate }) => {
+  const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -55,10 +57,10 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
         onClick={() => setIsOpen(!isOpen)}
         style={{
           padding: '10px',
-          background: isOpen ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: isOpen ? '${colors.border.primary}' : 'transparent',
+          border: '1px solid ${colors.border.accent}',
           borderRadius: '8px',
-          color: '#e8eaed',
+          color: '${colors.text.primary}',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -68,7 +70,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           transition: 'all 0.2s'
         }}
         onMouseEnter={(e) => {
-          if (!isOpen) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+          if (!isOpen) e.currentTarget.style.background = '${colors.background.tertiary}';
         }}
         onMouseLeave={(e) => {
           if (!isOpen) e.currentTarget.style.background = 'transparent';
@@ -85,8 +87,8 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           top: 'calc(100% + 8px)',
           right: 0,
           minWidth: '280px',
-          background: 'rgba(26, 31, 58, 0.98)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: '${colors.background.overlay}',
+          border: '1px solid ${colors.border.accent}',
           borderRadius: '12px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           backdropFilter: 'blur(10px)',
@@ -109,7 +111,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   padding: '16px 20px',
                   background: isActive ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
                   border: 'none',
-                  borderBottom: index < menuItems.length - 1 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  borderBottom: index < menuItems.length - 1 ? '1px solid ${colors.border.secondary}' : 'none',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -118,7 +120,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   gap: '12px'
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  if (!isActive) e.currentTarget.style.background = '${colors.background.tertiary}';
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent';
@@ -126,21 +128,21 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
               >
                 <Icon 
                   size={20} 
-                  color={isActive ? '#00d4ff' : '#8b92a7'} 
+                  color={isActive ? '${colors.accent.cyan}' : '${colors.text.secondary}'} 
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: isActive ? '#00d4ff' : '#e8eaed',
+                    color: isActive ? '${colors.accent.cyan}' : '${colors.text.primary}',
                     marginBottom: '4px'
                   }}>
                     {item.label}
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: '#8b92a7',
+                    color: '${colors.text.secondary}',
                     lineHeight: '1.4'
                   }}>
                     {item.description}
