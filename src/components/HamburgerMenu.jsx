@@ -96,8 +96,8 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           top: 'calc(100% + 8px)',
           right: 0,
           minWidth: '280px',
-          background: '${colors.background.overlay}',
-          border: '1px solid ${colors.border.accent}',
+          background: colors.background.overlay,
+          border: `1px solid ${colors.border.accent}`,
           borderRadius: '12px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           backdropFilter: 'blur(10px)',
@@ -118,9 +118,9 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                 style={{
                   width: '100%',
                   padding: '16px 20px',
-                  background: isActive ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
+                  background: isActive ? `${colors.accent.cyan}20` : 'transparent',
                   border: 'none',
-                  borderBottom: index < menuItems.length - 1 ? '1px solid ${colors.border.secondary}' : 'none',
+                  borderBottom: index < menuItems.length - 1 ? `1px solid ${colors.border.secondary}` : 'none',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -129,7 +129,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   gap: '12px'
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = '${colors.background.tertiary}';
+                  if (!isActive) e.currentTarget.style.background = colors.background.tertiary;
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent';
@@ -137,21 +137,21 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
               >
                 <Icon 
                   size={20} 
-                  color={isActive ? '${colors.accent.cyan}' : '${colors.text.secondary}'} 
+                  color={isActive ? colors.accent.cyan : colors.text.secondary} 
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: isActive ? '${colors.accent.cyan}' : '${colors.text.primary}',
+                    color: isActive ? colors.accent.cyan : colors.text.primary,
                     marginBottom: '4px'
                   }}>
                     {item.label}
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: '${colors.text.secondary}',
+                    color: colors.text.secondary,
                     lineHeight: '1.4'
                   }}>
                     {item.description}

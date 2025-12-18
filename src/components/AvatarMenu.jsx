@@ -99,8 +99,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           top: 'calc(100% + 8px)',
           right: 0,
           minWidth: '240px',
-          background: '${colors.background.overlay}',
-          border: '1px solid ${colors.border.accent}',
+          background: colors.background.overlay,
+          border: `1px solid ${colors.border.accent}`,
           borderRadius: '12px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
           backdropFilter: 'blur(10px)',
@@ -110,12 +110,12 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           {/* User Info Section */}
           <div style={{
             padding: '16px 20px',
-            borderBottom: '1px solid ${colors.border.secondary}'
+            borderBottom: `1px solid ${colors.border.secondary}`
           }}>
             <div style={{
               fontSize: '14px',
               fontWeight: 700,
-              color: '${colors.text.primary}',
+              color: colors.text.primary,
               marginBottom: '4px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -125,7 +125,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
             </div>
             <div style={{
               fontSize: '12px',
-              color: '${colors.text.secondary}'
+              color: colors.text.secondary
             }}>
               {userRole}
             </div>
@@ -139,7 +139,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               padding: '14px 20px',
               background: 'transparent',
               border: 'none',
-              borderBottom: '1px solid ${colors.border.secondary}',
+              borderBottom: `1px solid ${colors.border.secondary}`,
               textAlign: 'left',
               cursor: 'pointer',
               transition: 'all 0.2s',
@@ -148,17 +148,17 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               gap: '12px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '${colors.background.tertiary}';
+              e.currentTarget.style.background = colors.background.tertiary;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <Settings size={18} color="${colors.text.secondary}" />
+            <Settings size={18} color={colors.text.secondary} />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '${colors.text.primary}'
+              color: colors.text.primary
             }}>
               Settings
             </span>
@@ -185,11 +185,11 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <LogOut size={18} color="${colors.accent.red}" />
+            <LogOut size={18} color={colors.accent.red} />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: '${colors.accent.red}'
+              color: colors.accent.red
             }}>
               Sign Out
             </span>

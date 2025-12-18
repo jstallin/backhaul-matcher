@@ -288,7 +288,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                       onClick={() => onSelectRouteForBackhaul && onSelectRouteForBackhaul(route)}
                       style={{
                         padding: '10px 20px',
-                        background: 'linear-gradient(135deg, ${colors.accent.orange} 0%, #ff8c5a 100%)',
+                        background: `linear-gradient(135deg, ${colors.accent.orange} 0%, #ff8c5a 100%)`,
                         border: 'none',
                         borderRadius: '8px',
                         color: '#fff',
@@ -303,7 +303,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                   )}
                   <div style={{
                     fontSize: '11px',
-                    color: '${colors.text.tertiary}',
+                    color: colors.text.tertiary,
                     textAlign: 'center'
                   }}>
                     {route.equipment_type === 'TV' ? 'Dry Van' : 'Flatbed'}
