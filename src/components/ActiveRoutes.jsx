@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, MapPin, DollarSign, Navigation, TrendingUp } from '../icons';
+import { Truck, MapPin, DollarSign, Navigation, TrendingUp, Search } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import tmsRoutesData from '../data/tms_routes_data.json';
 
