@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { MapPin, Truck, DollarSign, Navigation, Settings, TrendingUp, Calendar, Search } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { useAuth } from './contexts/AuthContext';
@@ -981,6 +982,7 @@ function App() {
       </div>
     </div>
       )}
+      <Analytics />
     </AuthWrapper>
   );
 }
