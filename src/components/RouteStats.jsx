@@ -4,12 +4,12 @@ import { useTheme } from '../contexts/ThemeContext';
 export const RouteStats = ({ route, backhaul = null }) => {
   const { colors } = useTheme();
 
-  // Calculate original route stats
-  const originalDistance = route.distance;
-  const originalRevenue = route.revenue;
-  const emptyReturnMiles = route.distance; // Assuming return to origin
+  // Calculate original route stats - defensive parsing
+  const originalDistance = parseFloat(route?.distance) || 0;
+  const originalRevenue = parseFloat(route?.revenue) || 0;
+  const emptyReturnMiles = originalDistance; // Assuming return to origin
   const originalTotalMiles = originalDistance + emptyReturnMiles;
-  const originalAvgRate = originalRevenue / originalTotalMiles;
+  const originalAvgRate = originalTotalMiles > 0 ? originalRevenue / originalTotalMiles : 0;
 
   // Calculate route with backhaul stats
   let newTotalMiles = originalDistance;
@@ -19,11 +19,11 @@ export const RouteStats = ({ route, backhaul = null }) => {
   let newAvgRate = originalAvgRate;
 
   if (backhaul) {
-    outOfRouteMiles = backhaul.outOfRouteMiles || 0;
-    backhaulDistance = backhaul.distance;
+    outOfRouteMiles = parseFloat(backhaul.outOfRouteMiles) || 0;
+    backhaulDistance = parseFloat(backhaul.distance) || 0;
     newTotalMiles = originalDistance + outOfRouteMiles + backhaulDistance;
-    newRevenue = originalRevenue + backhaul.revenue;
-    newAvgRate = newRevenue / newTotalMiles;
+    newRevenue = originalRevenue + (parseFloat(backhaul.revenue) || 0);
+    newAvgRate = newTotalMiles > 0 ? newRevenue / newTotalMiles : 0;
   }
 
   // Calculate improvements

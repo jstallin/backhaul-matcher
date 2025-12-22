@@ -293,29 +293,60 @@ function App() {
   };
 
   const handleViewRoute = (opportunity) => {
-    // Create route object from selected truck/route and opportunity
-    const routeData = selectedRoute || {
-      truck_number: selectedTruckForSearch?.truck_number || 'TRUCK-001',
-      origin_city: finalStop?.address || 'Origin',
-      origin_lat: finalStop?.lat || 35.7332,
-      origin_lng: finalStop?.lng || -80.8412,
-      dest_city: finalStop?.address || 'Destination',
-      dest_lat: finalStop?.lat || 35.7332,
-      dest_lng: finalStop?.lng || -80.8412,
-      distance: opportunity.finalToPickup + opportunity.distance,
-      revenue: 0 // Original route revenue would come from TMS
-    };
+    // Create route object - handle both TMS routes (from Active Routes) and manual search
+    let routeData;
+    
+    if (selectedRoute) {
+      // Coming from Active Routes - use TMS route data
+      routeData = {
+        truck_number: selectedRoute.truck_number || 'TRUCK-001',
+        origin_city: selectedRoute.origin_city || 'Origin',
+        origin_lat: selectedRoute.origin_lat || 35.7332,
+        origin_lng: selectedRoute.origin_lng || -80.8412,
+        dest_city: selectedRoute.dest_city || 'Destination',
+        dest_lat: selectedRoute.dest_lat || 35.7332,
+        dest_lng: selectedRoute.dest_lng || -80.8412,
+        distance: parseFloat(selectedRoute.distance) || 0,
+        revenue: parseFloat(selectedRoute.revenue) || 0
+      };
+    } else if (finalStop) {
+      // Coming from manual truck search - use finalStop data
+      routeData = {
+        truck_number: selectedTruckForSearch?.truck_number || 'TRUCK-001',
+        origin_city: fleetProfile?.fleetHome?.address || 'Fleet Home',
+        origin_lat: fleetProfile?.fleetHome?.lat || 35.7332,
+        origin_lng: fleetProfile?.fleetHome?.lng || -80.8412,
+        dest_city: finalStop.address || 'Destination',
+        dest_lat: finalStop.lat || 35.7332,
+        dest_lng: finalStop.lng || -80.8412,
+        distance: 0, // Would need to calculate
+        revenue: 0
+      };
+    } else {
+      // Fallback defaults
+      routeData = {
+        truck_number: 'TRUCK-001',
+        origin_city: 'Origin',
+        origin_lat: 35.7332,
+        origin_lng: -80.8412,
+        dest_city: 'Destination',
+        dest_lat: 35.7332,
+        dest_lng: -80.8412,
+        distance: 0,
+        revenue: 0
+      };
+    }
 
     const backhaulData = {
-      pickup_city: opportunity.origin.address,
-      pickup_lat: opportunity.origin.lat,
-      pickup_lng: opportunity.origin.lng,
-      delivery_city: opportunity.destination.address,
-      delivery_lat: opportunity.destination.lat,
-      delivery_lng: opportunity.destination.lng,
-      distance: opportunity.distance,
-      revenue: opportunity.totalRevenue,
-      outOfRouteMiles: opportunity.additionalMiles
+      pickup_city: opportunity.origin?.address || opportunity.origin || 'Pickup',
+      pickup_lat: opportunity.origin?.lat || 35.7332,
+      pickup_lng: opportunity.origin?.lng || -80.8412,
+      delivery_city: opportunity.destination?.address || opportunity.destination || 'Delivery',
+      delivery_lat: opportunity.destination?.lat || 35.7332,
+      delivery_lng: opportunity.destination?.lng || -80.8412,
+      distance: parseFloat(opportunity.distance) || 0,
+      revenue: parseFloat(opportunity.totalRevenue) || 0,
+      outOfRouteMiles: parseFloat(opportunity.additionalMiles) || 0
     };
 
     setSelectedRouteForModal(routeData);
