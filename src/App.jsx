@@ -10,6 +10,7 @@ import { ActiveRoutes } from './components/ActiveRoutes';
 import { HamburgerMenu } from './components/HamburgerMenu';
 import { AvatarMenu } from './components/AvatarMenu';
 import { Settings } from './components/Settings';
+import { RouteComparisonModal } from './components/RouteComparisonModal';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -142,6 +143,9 @@ function App() {
   const [selectedTruckForSearch, setSelectedTruckForSearch] = useState(null);
   const [finalStop, setFinalStop] = useState(null);
   const [selectedRoute, setSelectedRoute] = useState(null);
+  const [showRouteModal, setShowRouteModal] = useState(false);
+  const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
+  const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
 
   // Load user's fleet data
   useEffect(() => {
@@ -286,6 +290,43 @@ function App() {
   const handleBackFromSettings = () => {
     setCurrentView('search');
     setActiveTab('routes');
+  };
+
+  const handleViewRoute = (opportunity) => {
+    // Create route object from selected truck/route and opportunity
+    const routeData = selectedRoute || {
+      truck_number: selectedTruckForSearch?.truck_number || 'TRUCK-001',
+      origin_city: finalStop?.address || 'Origin',
+      origin_lat: finalStop?.lat || 35.7332,
+      origin_lng: finalStop?.lng || -80.8412,
+      dest_city: finalStop?.address || 'Destination',
+      dest_lat: finalStop?.lat || 35.7332,
+      dest_lng: finalStop?.lng || -80.8412,
+      distance: opportunity.finalToPickup + opportunity.distance,
+      revenue: 0 // Original route revenue would come from TMS
+    };
+
+    const backhaulData = {
+      pickup_city: opportunity.origin.address,
+      pickup_lat: opportunity.origin.lat,
+      pickup_lng: opportunity.origin.lng,
+      delivery_city: opportunity.destination.address,
+      delivery_lat: opportunity.destination.lat,
+      delivery_lng: opportunity.destination.lng,
+      distance: opportunity.distance,
+      revenue: opportunity.totalRevenue,
+      outOfRouteMiles: opportunity.additionalMiles
+    };
+
+    setSelectedRouteForModal(routeData);
+    setSelectedBackhaulForModal(backhaulData);
+    setShowRouteModal(true);
+  };
+
+  const handleAssignRoute = (backhaul) => {
+    // TODO: Implement route assignment to driver
+    alert(`Route assigned! This will integrate with driver dashboard in the future.`);
+    setShowRouteModal(false);
   };
 
   const handleSearch = () => {
@@ -879,11 +920,32 @@ function App() {
                     </div>
 
                     {/* Action */}
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <button
                         style={{
                           padding: '12px 24px',
-                          background: 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)',
+                          background: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`,
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '14px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          letterSpacing: '0.03em',
+                          width: '100%'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewRoute(opp);
+                        }}
+                      >
+                        🗺️ VIEW ROUTE
+                      </button>
+                      <button
+                        style={{
+                          padding: '12px 24px',
+                          background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
                           border: 'none',
                           borderRadius: '8px',
                           color: '#fff',
@@ -929,6 +991,17 @@ function App() {
       </div>
     </div>
       )}
+      
+      {/* Route Comparison Modal */}
+      {showRouteModal && (
+        <RouteComparisonModal
+          route={selectedRouteForModal}
+          backhaul={selectedBackhaulForModal}
+          onClose={() => setShowRouteModal(false)}
+          onAssign={handleAssignRoute}
+        />
+      )}
+      
       <Analytics />
     </AuthWrapper>
   );

@@ -1,0 +1,310 @@
+import { Truck, Navigation, DollarSign, TrendingUp, MapPin } from '../icons';
+import { useTheme } from '../contexts/ThemeContext';
+
+export const RouteStats = ({ route, backhaul = null }) => {
+  const { colors } = useTheme();
+
+  // Calculate original route stats
+  const originalDistance = route.distance;
+  const originalRevenue = route.revenue;
+  const emptyReturnMiles = route.distance; // Assuming return to origin
+  const originalTotalMiles = originalDistance + emptyReturnMiles;
+  const originalAvgRate = originalRevenue / originalTotalMiles;
+
+  // Calculate route with backhaul stats
+  let newTotalMiles = originalDistance;
+  let newRevenue = originalRevenue;
+  let backhaulDistance = 0;
+  let outOfRouteMiles = 0;
+  let newAvgRate = originalAvgRate;
+
+  if (backhaul) {
+    outOfRouteMiles = backhaul.outOfRouteMiles || 0;
+    backhaulDistance = backhaul.distance;
+    newTotalMiles = originalDistance + outOfRouteMiles + backhaulDistance;
+    newRevenue = originalRevenue + backhaul.revenue;
+    newAvgRate = newRevenue / newTotalMiles;
+  }
+
+  // Calculate improvements
+  const milesSaved = originalTotalMiles - newTotalMiles;
+  const revenueGain = newRevenue - originalRevenue;
+  const rateImprovement = newAvgRate - originalAvgRate;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Original Route */}
+      <div style={{
+        background: colors.background.card,
+        border: `1px solid ${colors.border.primary}`,
+        borderRadius: '12px',
+        padding: '20px'
+      }}>
+        <h3 style={{
+          margin: '0 0 16px 0',
+          fontSize: '16px',
+          fontWeight: 800,
+          color: colors.text.primary,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <Truck size={20} color={colors.accent.orange} />
+          ORIGINAL ROUTE
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px',
+            background: colors.background.secondary,
+            borderRadius: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Navigation size={16} color={colors.text.secondary} />
+              <span style={{ fontSize: '14px', color: colors.text.secondary }}>Primary Haul</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                {originalDistance} mi
+              </div>
+              <div style={{ fontSize: '12px', color: colors.accent.green }}>
+                ${originalRevenue.toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px',
+            background: colors.background.secondary,
+            borderRadius: '8px',
+            border: `2px dashed ${colors.accent.red}40`
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={16} color={colors.accent.red} />
+              <span style={{ fontSize: '14px', color: colors.text.secondary }}>Empty Return</span>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.red }}>
+                {emptyReturnMiles} mi
+              </div>
+              <div style={{ fontSize: '12px', color: colors.accent.red }}>
+                $0
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            borderTop: `2px solid ${colors.border.primary}`,
+            paddingTop: '12px',
+            marginTop: '4px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Total Miles:</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                {originalTotalMiles.toLocaleString()} mi
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Total Revenue:</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                ${originalRevenue.toLocaleString()}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Avg Rate:</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.secondary }}>
+                ${originalAvgRate.toFixed(2)}/mi
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Route with Backhaul */}
+      {backhaul && (
+        <>
+          <div style={{
+            background: colors.background.card,
+            border: `2px solid ${colors.accent.green}`,
+            borderRadius: '12px',
+            padding: '20px'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: 800,
+              color: colors.text.primary,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <TrendingUp size={20} color={colors.accent.green} />
+              WITH BACKHAUL
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px',
+                background: colors.background.secondary,
+                borderRadius: '8px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Navigation size={16} color={colors.text.secondary} />
+                  <span style={{ fontSize: '14px', color: colors.text.secondary }}>Primary Haul</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                    {originalDistance} mi
+                  </div>
+                  <div style={{ fontSize: '12px', color: colors.accent.green }}>
+                    ${originalRevenue.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px',
+                background: colors.background.secondary,
+                borderRadius: '8px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={16} color={colors.accent.yellow} />
+                  <span style={{ fontSize: '14px', color: colors.text.secondary }}>Out-of-Route</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                    {outOfRouteMiles} mi
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px',
+                background: `${colors.accent.green}20`,
+                borderRadius: '8px',
+                border: `2px solid ${colors.accent.green}`
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <DollarSign size={16} color={colors.accent.green} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>Backhaul</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                    {backhaulDistance} mi
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.green }}>
+                    +${backhaul.revenue.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                borderTop: `2px solid ${colors.border.primary}`,
+                paddingTop: '12px',
+                marginTop: '4px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Total Miles:</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                    {newTotalMiles.toLocaleString()} mi
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Total Revenue:</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                    ${newRevenue.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Avg Rate:</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                    ${newAvgRate.toFixed(2)}/mi
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Net Improvement */}
+          <div style={{
+            background: `linear-gradient(135deg, ${colors.accent.green}20 0%, ${colors.accent.green}10 100%)`,
+            border: `2px solid ${colors.accent.green}`,
+            borderRadius: '12px',
+            padding: '20px'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: 800,
+              color: colors.accent.green,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              💰 NET IMPROVEMENT
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div style={{
+                textAlign: 'center',
+                padding: '16px',
+                background: colors.background.card,
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                  +${revenueGain.toLocaleString()}
+                </div>
+                <div style={{ fontSize: '12px', color: colors.text.secondary }}>
+                  Extra Revenue
+                </div>
+              </div>
+
+              <div style={{
+                textAlign: 'center',
+                padding: '16px',
+                background: colors.background.card,
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                  {milesSaved > 0 ? '-' : ''}{Math.abs(milesSaved)} mi
+                </div>
+                <div style={{ fontSize: '12px', color: colors.text.secondary }}>
+                  {milesSaved > 0 ? 'Miles Saved' : 'Extra Miles'}
+                </div>
+              </div>
+
+              <div style={{
+                textAlign: 'center',
+                padding: '16px',
+                background: colors.background.card,
+                borderRadius: '8px'
+              }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                  +${rateImprovement.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '12px', color: colors.text.secondary }}>
+                  Per Mile
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
