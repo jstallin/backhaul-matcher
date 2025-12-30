@@ -11,6 +11,10 @@ import { HamburgerMenu } from './components/HamburgerMenu';
 import { AvatarMenu } from './components/AvatarMenu';
 import { Settings } from './components/Settings';
 import { RouteComparisonModal } from './components/RouteComparisonModal';
+import { Fleets } from './components/Fleets';
+import { StartRequest } from './components/StartRequest';
+import { OpenRequests } from './components/OpenRequests';
+import { FleetReports } from './components/FleetReports';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -132,8 +136,8 @@ function App() {
   const { user, signOut } = useAuth();
   const { colors } = useTheme();
   const [userType, setUserType] = useState('fleet');
-  const [activeTab, setActiveTab] = useState('routes'); // Default to routes (Active Routes)
-  const [currentView, setCurrentView] = useState('search'); // 'search' or 'fleet-management' or 'truck-search' or 'settings'
+  const [activeTab, setActiveTab] = useState('fleets'); // Default to fleets
+  const [currentView, setCurrentView] = useState('fleets'); // 'fleets', 'start-request', 'open-requests', 'fleet-reports', 'fleet-management', 'settings'
   const [relayMode, setRelayMode] = useState(false);
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
@@ -269,17 +273,10 @@ function App() {
   };
 
   const handleMenuNavigation = (view) => {
-    if (view === 'routes') {
-      setCurrentView('search');
-      setActiveTab('routes');
-    } else if (view === 'truck-search') {
-      setCurrentView('search');
-      setActiveTab('search');
-      setSelectedTruckForSearch(null);
-      setFinalStop(null);
-      setOpportunities([]);
-    } else if (view === 'fleet-management') {
-      setCurrentView('fleet-management');
+    setCurrentView(view);
+    // Reset other state when navigating
+    if (view !== 'fleet-management') {
+      setActiveTab('fleets');
     }
   };
 
@@ -288,8 +285,8 @@ function App() {
   };
 
   const handleBackFromSettings = () => {
-    setCurrentView('search');
-    setActiveTab('routes');
+    setCurrentView('fleets');
+    setActiveTab('fleets');
   };
 
   const handleViewRoute = (opportunity) => {
@@ -439,8 +436,25 @@ function App() {
     <AuthWrapper>
       {currentView === 'settings' ? (
         <Settings onBack={handleBackFromSettings} />
+      ) : currentView === 'fleets' ? (
+        <Fleets 
+          onSelectFleet={(fleet) => {
+            // TODO: Navigate to fleet detail view
+            setCurrentView('fleet-management');
+          }}
+          onCreateFleet={() => {
+            // TODO: Navigate to create fleet view
+            setCurrentView('fleet-management');
+          }}
+        />
+      ) : currentView === 'start-request' ? (
+        <StartRequest />
+      ) : currentView === 'open-requests' ? (
+        <OpenRequests />
+      ) : currentView === 'fleet-reports' ? (
+        <FleetReports />
       ) : currentView === 'fleet-management' ? (
-        <FleetDashboard onBackToSearch={() => setCurrentView('search')} />
+        <FleetDashboard onBackToSearch={() => setCurrentView('fleets')} />
       ) : (
     <div style={styles.container}>
       <div style={styles.backgroundBlobs}>

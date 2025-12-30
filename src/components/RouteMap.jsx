@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Mapbox access token - you'll need to replace this with your own
-const MAPBOX_TOKEN = 'pk.eyJ1IjoianN0YWxsaW5ncyIsImEiOiJjbWpobW5uMHoxMmFvM2Zwd3U2NjNnd2NmIn0.1NqksRspovws_BZmPhQWfQ';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiYmFja2hhdWwiLCJhIjoiY2x6ZGV4eXl6MDAwZzJpcXVrbzFseWttcyJ9.example';
 
 export const RouteMap = ({ route, backhaul = null, showComparison = false }) => {
   const { colors, theme } = useTheme();

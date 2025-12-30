@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Truck, Search, Calendar } from '../icons';
+import { Menu, X, Truck, Plus, FileText, TrendingUp } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 
 export const HamburgerMenu = ({ currentView, onNavigate }) => {
@@ -31,22 +31,28 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
 
   const menuItems = [
     { 
-      id: 'routes', 
-      label: 'Active Route Planning', 
-      icon: Calendar,
-      description: 'View and plan backhauls for active routes'
-    },
-    { 
-      id: 'truck-search', 
-      label: 'Truck Search', 
-      icon: Search,
-      description: 'Search backhaul for specific truck'
-    },
-    { 
-      id: 'fleet-management', 
-      label: 'Manage Fleet', 
+      id: 'fleets', 
+      label: 'Fleets', 
       icon: Truck,
-      description: 'Manage trucks, drivers, and fleet profile'
+      description: 'View and manage all fleets'
+    },
+    { 
+      id: 'start-request', 
+      label: 'Start Request', 
+      icon: Plus,
+      description: 'Create new backhaul request'
+    },
+    { 
+      id: 'open-requests', 
+      label: 'Open Requests', 
+      icon: FileText,
+      description: 'View active backhaul requests'
+    },
+    { 
+      id: 'fleet-reports', 
+      label: 'Fleet Reports', 
+      icon: TrendingUp,
+      description: 'Analytics and performance reports'
     }
   ];
 
