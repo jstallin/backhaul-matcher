@@ -97,7 +97,7 @@ export const FleetDashboard = ({ onBackToSearch }) => {
                 cursor: 'pointer'
               }}
             >
-              ← Back to Search
+              ← Back
             </button>
           </div>
 
