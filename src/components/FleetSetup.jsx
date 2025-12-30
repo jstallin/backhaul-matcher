@@ -106,7 +106,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
             color: '#e8eaed'
           }}>
             <Truck size={32} color="#ff6b35" />
-            {existingFleet ? 'Edit Fleet Profile' : 'Create Fleet Profile'}
+            {fleet ? 'Edit Fleet Profile' : 'Create Fleet Profile'}
           </h2>
           <p style={{ margin: 0, color: '#8b92a7', fontSize: '15px' }}>
             Set up your fleet information and home base location
@@ -362,7 +362,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
             }}
           >
             <Save size={20} />
-            {saving ? 'Saving...' : existingFleet ? 'Update Fleet Profile' : 'Create Fleet Profile'}
+            {saving ? 'Saving...' : fleet ? 'Update Fleet Profile' : 'Create Fleet Profile'}
           </button>
         </form>
       </div>
