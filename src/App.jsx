@@ -438,6 +438,7 @@ function App() {
         <Settings onBack={handleBackFromSettings} />
       ) : currentView === 'fleets' ? (
         <Fleets 
+          user={user}
           onSelectFleet={(fleet) => {
             // TODO: Navigate to fleet detail view
             setCurrentView('fleet-management');

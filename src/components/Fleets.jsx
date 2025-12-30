@@ -5,21 +5,22 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { db } from '../lib/supabase';
 
-export const Fleets = ({ onSelectFleet, onCreateFleet, onNavigateToSettings, onMenuNavigate }) => {
+export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSettings, onMenuNavigate }) => {
   const { colors } = useTheme();
   const [fleets, setFleets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFleets();
-  }, []);
+    if (user) {
+      loadFleets();
+    }
+  }, [user]);
 
   const loadFleets = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual user ID from auth
-      const userId = 'demo-user-id';
-      const fleetsData = await db.fleets.getAll(userId);
+      const fleetsData = await db.fleets.getAll(user.id);
+      console.log('Loaded fleets:', fleetsData); // Debug log
       setFleets(fleetsData || []);
     } catch (error) {
       console.error('Error loading fleets:', error);
