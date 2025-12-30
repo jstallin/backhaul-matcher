@@ -6,7 +6,7 @@ import { TruckManagement } from './TruckManagement';
 import { DriverManagement } from './DriverManagement';
 import { Truck, Settings as SettingsIcon, User } from '../icons';
 
-export const FleetDashboard = ({ onBackToSearch }) => {
+export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
   const { user } = useAuth();
   const [fleet, setFleet] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,17 +14,22 @@ export const FleetDashboard = ({ onBackToSearch }) => {
 
   useEffect(() => {
     loadFleet();
-  }, []);
+  }, [fleetId]); // Reload when fleetId changes
 
   const loadFleet = async () => {
     setLoading(true);
     try {
-      const fleets = await db.fleets.getAll(user.id);
-      if (fleets && fleets.length > 0) {
-        setFleet(fleets[0]);
+      if (fleetId) {
+        // Load specific fleet
+        const fleetData = await db.fleets.getById(fleetId);
+        setFleet(fleetData);
+      } else {
+        // Creating new fleet - start blank
+        setFleet(null);
       }
     } catch (err) {
       console.error('Error loading fleet:', err);
+      setFleet(null);
     } finally {
       setLoading(false);
     }

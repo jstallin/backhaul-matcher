@@ -147,6 +147,7 @@ function App() {
   const [selectedTruckForSearch, setSelectedTruckForSearch] = useState(null);
   const [finalStop, setFinalStop] = useState(null);
   const [selectedRoute, setSelectedRoute] = useState(null);
+  const [selectedFleetId, setSelectedFleetId] = useState(null); // Track which fleet to edit
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
@@ -440,11 +441,13 @@ function App() {
         <Fleets 
           user={user}
           onSelectFleet={(fleet) => {
-            // TODO: Navigate to fleet detail view
+            // Edit existing fleet
+            setSelectedFleetId(fleet.id);
             setCurrentView('fleet-management');
           }}
           onCreateFleet={() => {
-            // TODO: Navigate to create fleet view
+            // Create new fleet
+            setSelectedFleetId(null);
             setCurrentView('fleet-management');
           }}
           onMenuNavigate={handleMenuNavigation}
@@ -466,7 +469,10 @@ function App() {
           onNavigateToSettings={handleNavigateToSettings}
         />
       ) : currentView === 'fleet-management' ? (
-        <FleetDashboard onBackToSearch={() => setCurrentView('fleets')} />
+        <FleetDashboard 
+          fleetId={selectedFleetId}
+          onBackToSearch={() => setCurrentView('fleets')} 
+        />
       ) : (
     <div style={styles.container}>
       <div style={styles.backgroundBlobs}>
