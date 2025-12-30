@@ -446,13 +446,24 @@ function App() {
             // TODO: Navigate to create fleet view
             setCurrentView('fleet-management');
           }}
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
         />
       ) : currentView === 'start-request' ? (
-        <StartRequest />
+        <StartRequest 
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
       ) : currentView === 'open-requests' ? (
-        <OpenRequests />
+        <OpenRequests 
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
       ) : currentView === 'fleet-reports' ? (
-        <FleetReports />
+        <FleetReports 
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
       ) : currentView === 'fleet-management' ? (
         <FleetDashboard onBackToSearch={() => setCurrentView('fleets')} />
       ) : (

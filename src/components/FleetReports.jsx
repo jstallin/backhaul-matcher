@@ -1,7 +1,9 @@
-import { TrendingUp } from '../icons';
+import { TrendingUp, Truck } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { HamburgerMenu } from './HamburgerMenu';
+import { AvatarMenu } from './AvatarMenu';
 
-export const FleetReports = () => {
+export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
 
   return (
@@ -10,24 +12,62 @@ export const FleetReports = () => {
       background: colors.background.primary,
       color: colors.text.primary
     }}>
-      {/* Header */}
+      {/* Main Header with Navigation */}
       <header style={{
         padding: '24px 32px',
         borderBottom: `1px solid ${colors.border.secondary}`,
         background: colors.background.overlay,
-        backdropFilter: 'blur(10px)'
+        backdropFilter: 'blur(20px)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
+            <div>
+              <h1 style={{ 
+                margin: 0, 
+                fontSize: '28px', 
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>
+                BACKHAUL
+              </h1>
+              <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>
+                SMART RETURN ROUTE OPTIMIZATION
+              </p>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <HamburgerMenu 
+              currentView="fleet-reports"
+              onNavigate={onMenuNavigate}
+            />
+            <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
+          </div>
+        </div>
+      </header>
+
+      {/* Page Header */}
+      <div style={{
+        padding: '24px 32px',
+        background: colors.background.secondary,
+        borderBottom: `1px solid ${colors.border.secondary}`
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <h1 style={{
+          <h2 style={{
             margin: '0 0 8px 0',
             fontSize: '32px',
             fontWeight: 900,
-            background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+            color: colors.text.primary
           }}>
             Fleet Reports
-          </h1>
+          </h2>
           <p style={{
             margin: 0,
             color: colors.text.secondary,
@@ -36,7 +76,7 @@ export const FleetReports = () => {
             Analytics and performance metrics
           </p>
         </div>
-      </header>
+      </div>
 
       {/* Content */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px' }}>
