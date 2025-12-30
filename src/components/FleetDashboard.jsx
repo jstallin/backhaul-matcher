@@ -180,7 +180,7 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
           backdropFilter: 'blur(10px)'
         }}>
           {activeTab === 'profile' && (
-            <FleetSetup onComplete={handleFleetComplete} />
+            <FleetSetup fleet={fleet} onComplete={handleFleetComplete} />
           )}
           {activeTab === 'trucks' && fleet && (
             <TruckManagement fleetId={fleet.id} />

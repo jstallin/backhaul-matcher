@@ -3,13 +3,11 @@ import { MapPin, Truck, Save, AlertCircle } from '../icons';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-export const FleetSetup = ({ onComplete }) => {
+export const FleetSetup = ({ fleet, onComplete }) => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [existingFleet, setExistingFleet] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -21,31 +19,28 @@ export const FleetSetup = ({ onComplete }) => {
   });
 
   useEffect(() => {
-    loadExistingFleet();
-  }, []);
-
-  const loadExistingFleet = async () => {
-    setLoading(true);
-    try {
-      const fleets = await db.fleets.getAll(user.id);
-      if (fleets && fleets.length > 0) {
-        const fleet = fleets[0]; // Use first fleet for now
-        setExistingFleet(fleet);
-        setFormData({
-          name: fleet.name || '',
-          mcNumber: fleet.mc_number || '',
-          dotNumber: fleet.dot_number || '',
-          homeAddress: fleet.home_address || '',
-          homeLat: fleet.home_lat || '',
-          homeLng: fleet.home_lng || ''
-        });
-      }
-    } catch (err) {
-      console.error('Error loading fleet:', err);
-    } finally {
-      setLoading(false);
+    // Populate form if editing existing fleet
+    if (fleet) {
+      setFormData({
+        name: fleet.name || '',
+        mcNumber: fleet.mc_number || '',
+        dotNumber: fleet.dot_number || '',
+        homeAddress: fleet.home_address || '',
+        homeLat: fleet.home_lat || '',
+        homeLng: fleet.home_lng || ''
+      });
+    } else {
+      // Reset form for new fleet
+      setFormData({
+        name: '',
+        mcNumber: '',
+        dotNumber: '',
+        homeAddress: '',
+        homeLat: '',
+        homeLng: ''
+      });
     }
-  };
+  }, [fleet]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,14 +57,13 @@ export const FleetSetup = ({ onComplete }) => {
         home_lng: formData.homeLng ? parseFloat(formData.homeLng) : null
       };
 
-      if (existingFleet) {
+      if (fleet) {
         // Update existing fleet
-        await db.fleets.update(existingFleet.id, fleetData);
+        await db.fleets.update(fleet.id, fleetData);
       } else {
         // Create new fleet
         fleetData.user_id = user.id;
-        const newFleet = await db.fleets.create(fleetData);
-        setExistingFleet(newFleet);
+        await db.fleets.create(fleetData);
       }
 
       setSuccess(true);
@@ -86,18 +80,6 @@ export const FleetSetup = ({ onComplete }) => {
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-
-  if (loading) {
-    return (
-      <div style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        color: '#8b92a7'
-      }}>
-        Loading fleet data...
-      </div>
-    );
-  }
 
   return (
     <div style={{
