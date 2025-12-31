@@ -7,6 +7,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findBackhaulOpportunities } from '../utils/backhaulMatching';
+import { parseDatumPoint } from '../utils/geocoding';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -51,9 +52,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         weightLimit: 45000
       };
 
-      // Use fleet home as both final stop and home for now
-      // In production, datum_point would be geocoded
-      const finalStop = {
+      // Try to geocode the datum point, fall back to fleet home if we can't
+      const geocoded = parseDatumPoint(request.datum_point);
+      
+      const finalStop = geocoded ? {
+        address: geocoded.city,
+        lat: geocoded.lat,
+        lng: geocoded.lng
+      } : {
         address: request.datum_point,
         lat: fleet.home_lat,
         lng: fleet.home_lng
@@ -64,6 +70,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         lng: fleet.home_lng
       };
 
+      console.log('Matching with:', {
+        datumPoint: request.datum_point,
+        geocoded: geocoded || 'Using fleet home',
+        finalStop,
+        fleetHome,
+        fleetProfile,
+        searchRadius: 200,
+        isRelay: request.is_relay
+      });
+
       // Find matches with 200 mile search radius
       const matches = findBackhaulOpportunities(
         finalStop,
@@ -72,6 +88,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         200, // search radius
         request.is_relay
       );
+
+      console.log('Found matches:', matches.length);
 
       setBackhaulMatches(matches);
     } catch (error) {
