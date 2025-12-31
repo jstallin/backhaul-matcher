@@ -13,6 +13,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     name: '',
     mcNumber: '',
     dotNumber: '',
+    phoneNumber: '',
+    email: '',
     homeAddress: '',
     homeLat: '',
     homeLng: ''
@@ -25,6 +27,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         name: fleet.name || '',
         mcNumber: fleet.mc_number || '',
         dotNumber: fleet.dot_number || '',
+        phoneNumber: fleet.phone_number || '',
+        email: fleet.email || '',
         homeAddress: fleet.home_address || '',
         homeLat: fleet.home_lat || '',
         homeLng: fleet.home_lng || ''
@@ -35,6 +39,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         name: '',
         mcNumber: '',
         dotNumber: '',
+        phoneNumber: '',
+        email: '',
         homeAddress: '',
         homeLat: '',
         homeLng: ''
@@ -52,6 +58,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         name: formData.name,
         mc_number: formData.mcNumber,
         dot_number: formData.dotNumber,
+        phone_number: formData.phoneNumber,
+        email: formData.email,
         home_address: formData.homeAddress,
         home_lat: formData.homeLat ? parseFloat(formData.homeLat) : null,
         home_lng: formData.homeLng ? parseFloat(formData.homeLng) : null
@@ -246,7 +254,88 @@ export const FleetSetup = ({ fleet, onComplete }) => {
             </div>
           </div>
 
-          {/* Home Address */}
+          {/* Phone and Email */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '16px',
+            marginBottom: '24px'
+          }}>
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#e8eaed'
+              }}>
+                Fleet Manager Phone *
+              </label>
+              <input
+                type="tel"
+                value={formData.phoneNumber}
+                onChange={(e) => handleChange('phoneNumber', e.target.value)}
+                required
+                disabled={saving}
+                placeholder="(555) 123-4567"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#e8eaed',
+                  fontSize: '15px',
+                  outline: 'none'
+                }}
+              />
+              <div style={{
+                fontSize: '12px',
+                color: '#6b7280',
+                marginTop: '4px'
+              }}>
+                For text notifications
+              </div>
+            </div>
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#e8eaed'
+              }}>
+                Fleet Manager Email *
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                required
+                disabled={saving}
+                placeholder="manager@fleet.com"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: '#e8eaed',
+                  fontSize: '15px',
+                  outline: 'none'
+                }}
+              />
+              <div style={{
+                fontSize: '12px',
+                color: '#6b7280',
+                marginTop: '4px'
+              }}>
+                For email notifications
+              </div>
+            </div>
+          </div>
+
+          {/* Home */}
           <div style={{ marginBottom: '24px' }}>
             <label style={{
               display: 'block',
@@ -255,7 +344,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               fontWeight: 600,
               color: '#e8eaed'
             }}>
-              Home Base Address *
+              Home (Fleet Base Location) *
             </label>
             <input
               type="text"
