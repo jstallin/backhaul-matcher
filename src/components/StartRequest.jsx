@@ -89,9 +89,36 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     
     setSaving(true);
     try {
-      console.log('Submitting request:', formData);
-      alert('Request created successfully!\\n\\nNote: Full database integration coming next. This will save to the backhaul_requests table.');
+      // Prepare request data for database
+      const requestData = {
+        user_id: user.id,
+        fleet_id: formData.selectedFleetId,
+        request_name: formData.requestName,
+        datum_point: formData.datumPoint,
+        equipment_available_date: formData.equipmentAvailableDate,
+        equipment_needed_date: formData.equipmentNeededDate,
+        is_relay: formData.isRelay,
+        auto_refresh: formData.autoRefresh,
+        auto_refresh_interval: formData.autoRefresh ? parseInt(formData.autoRefreshInterval) : null,
+        notification_enabled: formData.notificationEnabled,
+        notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
+        status: 'active'
+      };
+
+      // Calculate next refresh time if auto-refresh is enabled
+      if (formData.autoRefresh) {
+        const now = new Date();
+        const intervalHours = parseInt(formData.autoRefreshInterval);
+        const nextRefresh = new Date(now.getTime() + intervalHours * 60 * 60 * 1000);
+        requestData.next_refresh_at = nextRefresh.toISOString();
+      }
+
+      // Save to database
+      await db.requests.create(requestData);
       
+      alert('Request created successfully!\\n\\nYou can view and manage it in the Open Requests page.');
+      
+      // Reset form
       setFormData({
         requestName: generateRequestName(),
         datumPoint: '',

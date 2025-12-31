@@ -264,5 +264,72 @@ export const db = {
       if (error) throw error;
       return data;
     }
+  },
+
+  // Request operations
+  requests: {
+    async getAll(userId) {
+      const { data, error } = await supabase
+        .from('backhaul_requests')
+        .select('*, fleets(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+
+    async getById(requestId) {
+      const { data, error } = await supabase
+        .from('backhaul_requests')
+        .select('*, fleets(*)')
+        .eq('id', requestId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async create(requestData) {
+      const { data, error } = await supabase
+        .from('backhaul_requests')
+        .insert([requestData])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async update(requestId, updates) {
+      const { data, error } = await supabase
+        .from('backhaul_requests')
+        .update(updates)
+        .eq('id', requestId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async delete(requestId) {
+      const { error } = await supabase
+        .from('backhaul_requests')
+        .delete()
+        .eq('id', requestId);
+      if (error) throw error;
+      return { success: true };
+    },
+
+    // Get active requests with auto-refresh enabled
+    async getActiveAutoRefresh() {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('backhaul_requests')
+        .select('*, fleets(*)')
+        .eq('status', 'active')
+        .eq('auto_refresh', true)
+        .lte('next_refresh_at', now)
+        .order('next_refresh_at', { ascending: true });
+      if (error) throw error;
+      return data;
+    }
   }
 };
