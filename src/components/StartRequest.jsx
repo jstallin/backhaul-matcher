@@ -145,7 +145,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     return (
       <div style={{ minHeight: '100vh', background: colors.background.primary, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: `4px solid \${colors.accent.cyan}40`, borderTop: `4px solid \${colors.accent.cyan}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.cyan}40`, borderTop: `4px solid ${colors.accent.cyan}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: colors.text.secondary }}>Loading...</p>
         </div>
       </div>
@@ -154,12 +154,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
-      <header style={{ padding: '24px 32px', borderBottom: `1px solid \${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
             <div>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', background: `linear-gradient(135deg, \${colors.accent.orange} 0%, \${colors.accent.cyan} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BACKHAUL</h1>
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BACKHAUL</h1>
               <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>SMART RETURN ROUTE OPTIMIZATION</p>
             </div>
           </div>
@@ -170,7 +170,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
       </header>
 
-      <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid \${colors.border.secondary}` }}>
+      <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Start Request</h2>
           <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>Create a new backhaul request for your fleet</p>
@@ -179,19 +179,19 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px' }}>
         {fleets.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid \${colors.border.primary}` }}>
+          <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
             <Truck size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
             <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: colors.text.primary }}>No Fleets Available</h3>
             <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               You need to create a fleet before you can start a backhaul request.
             </p>
-            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: `linear-gradient(135deg, \${colors.accent.cyan} 0%, #00a8cc 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
               Go to Fleets
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div style={{ background: colors.background.card, border: `1px solid \${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
+            <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
               
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Request Name *</label>
@@ -256,7 +256,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 {formData.notificationEnabled && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
               </div>
 
-              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: `linear-gradient(135deg, \${colors.accent.green} 0%, #059669 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}><Plus size={20} />{saving ? 'Creating Request...' : 'Create Request'}</button>
+              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}><Plus size={20} />{saving ? 'Creating Request...' : 'Create Request'}</button>
             </div>
           </form>
         )}
