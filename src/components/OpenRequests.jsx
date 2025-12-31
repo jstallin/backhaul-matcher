@@ -7,7 +7,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findBackhaulOpportunities } from '../utils/backhaulMatching';
-import { parseDatumPoint } from '../utils/geocoding';
+import { parseDatumPoint } from '../utils/mapboxGeocoding';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -52,8 +52,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         weightLimit: 45000
       };
 
-      // Try to geocode the datum point, fall back to fleet home if we can't
-      const geocoded = parseDatumPoint(request.datum_point);
+      // Geocode the datum point using Mapbox API (with fallback to local lookup)
+      const geocoded = await parseDatumPoint(request.datum_point);
       
       const finalStop = geocoded ? {
         address: geocoded.city,
@@ -72,7 +72,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       console.log('Matching with:', {
         datumPoint: request.datum_point,
-        geocoded: geocoded || 'Using fleet home',
+        geocoded: geocoded || 'Using fleet home (geocoding failed)',
         finalStop,
         fleetHome,
         fleetProfile,
