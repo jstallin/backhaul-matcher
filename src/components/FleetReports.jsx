@@ -239,12 +239,12 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <td style={{ padding: '12px', color: request.status === 'cancelled' ? colors.text.primary : colors.text.tertiary }}>
                         {request.status === 'cancelled' && request.cancellation_reason ? (
                           <span>
-                            {request.cancellation_reason === 'no_capacity' && 'No Capacity Available'}
-                            {request.cancellation_reason === 'better_rate' && 'Found Better Rate'}
-                            {request.cancellation_reason === 'changed_plans' && 'Plans Changed'}
-                            {request.cancellation_reason === 'equipment_issue' && 'Equipment Issue'}
-                            {request.cancellation_reason === 'customer_cancelled' && 'Customer Cancelled'}
-                            {request.cancellation_reason === 'other' && 'Other'}
+                            {request.cancellation_reason === 'accident' && 'ACCIDENT'}
+                            {request.cancellation_reason === 'weather' && 'WEATHER'}
+                            {request.cancellation_reason === 'illness' && 'ILLNESS'}
+                            {request.cancellation_reason === 'returns' && 'RETURNS'}
+                            {request.cancellation_reason === 'hours_of_service' && 'HOURS OF SERVICE'}
+                            {request.cancellation_reason === 'no_load_avail' && 'NO LOAD AVAIL'}
                           </span>
                         ) : (
                           '—'

@@ -294,12 +294,12 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: cancelling ? 'not-allowed' : 'pointer' }}
                 >
                   <option value="">-- Select a reason --</option>
-                  <option value="no_capacity">No Capacity Available</option>
-                  <option value="better_rate">Found Better Rate</option>
-                  <option value="changed_plans">Plans Changed</option>
-                  <option value="equipment_issue">Equipment Issue</option>
-                  <option value="customer_cancelled">Customer Cancelled</option>
-                  <option value="other">Other</option>
+                  <option value="accident">ACCIDENT</option>
+                  <option value="weather">WEATHER</option>
+                  <option value="illness">ILLNESS</option>
+                  <option value="returns">RETURNS</option>
+                  <option value="hours_of_service">HOURS OF SERVICE</option>
+                  <option value="no_load_avail">NO LOAD AVAIL</option>
                 </select>
               </div>
 
