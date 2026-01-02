@@ -44,9 +44,10 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   }, []);
 
   const loadEditingRequest = () => {
-    // Prevent double loading in React StrictMode
-    if (hasLoadedEditingRequest.current) {
-      console.log('⏭️ Skipping duplicate loadEditingRequest call (StrictMode)');
+    // Check if we've already processed this editing request
+    const editingRequestProcessed = localStorage.getItem('editingRequestProcessed');
+    if (editingRequestProcessed) {
+      console.log('⏭️ Already processed this editing request, skipping');
       return;
     }
     
@@ -81,11 +82,10 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         setFormData(updatedFormData);
         console.log('✨ Form data set with editingId:', request.id);
         
-        // Mark as loaded to prevent double execution
+        // Mark as processed so subsequent mounts don't reload
+        localStorage.setItem('editingRequestProcessed', 'true');
         hasLoadedEditingRequest.current = true;
-        
-        // Remove from localStorage after successful load
-        localStorage.removeItem('editingRequest');
+        console.log('✅ Marked editing request as processed');
       } catch (error) {
         console.error('❌ Error loading editing request:', error);
       }
@@ -187,6 +187,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         // Update existing request
         console.log('Updating request:', formData.editingId);
         await db.requests.update(formData.editingId, requestData);
+        
+        // Clear both editing request keys from localStorage
+        localStorage.removeItem('editingRequest');
+        localStorage.removeItem('editingRequestProcessed');
+        console.log('🗑️ Cleared editing request from localStorage after update');
+        
         alert('Request updated successfully!\\n\\nYou can view it in the Open Requests page.');
       } else {
         // Create new request
