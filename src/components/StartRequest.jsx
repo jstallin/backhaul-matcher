@@ -22,7 +22,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const [formData, setFormData] = useState({
-    requestName: generateRequestName(),
+    requestName: '',
     datumPoint: '',
     selectedFleetId: '',
     equipmentAvailableDate: '',
@@ -120,7 +120,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       
       // Reset form
       setFormData({
-        requestName: generateRequestName(),
+        requestName: '',
         datumPoint: '',
         selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
         equipmentAvailableDate: '',
@@ -204,7 +204,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
                 <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.datumPoint}</div>}
-                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return to</div>
+                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return from</div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
