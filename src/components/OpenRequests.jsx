@@ -45,6 +45,10 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       const fleet = await db.fleets.getById(request.fleet_id);
       setSelectedFleet(fleet);
 
+      console.log('🚛 Fleet loaded:', fleet.name);
+      console.log('📦 Fleet profiles:', fleet.fleet_profiles);
+      console.log('🚚 Fleet trucks:', fleet.trucks);
+
       // Get fleet profile for equipment specs
       const fleetProfile = fleet.fleet_profiles?.[0] || {
         trailerType: 'Dry Van',
@@ -52,9 +56,13 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         weightLimit: 45000
       };
 
+      console.log('⚙️ Fleet profile used for matching:', fleetProfile);
+
       // Geocode the datum point using Mapbox API (with fallback to local lookup)
       const geocoded = await parseDatumPoint(request.datum_point);
       
+      console.log('📍 Geocoding result:', geocoded);
+
       const finalStop = geocoded ? {
         address: geocoded.city,
         lat: geocoded.lat,
@@ -65,10 +73,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         lng: fleet.home_lng
       };
 
+      console.log('🎯 Final stop coordinates:', finalStop);
+
       const fleetHome = {
         lat: fleet.home_lat,
         lng: fleet.home_lng
       };
+
+      console.log('🏠 Fleet home coordinates:', fleetHome);
 
       console.log('Matching with:', {
         datumPoint: request.datum_point,
