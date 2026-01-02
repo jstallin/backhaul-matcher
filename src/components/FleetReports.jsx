@@ -221,6 +221,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Datum Point</th>
                     <th style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: colors.text.secondary }}>Status</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Cancellation Reason</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Created</th>
                   </tr>
                 </thead>
@@ -234,6 +235,20 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                         <span style={{ padding: '4px 12px', background: request.status === 'completed' ? `${colors.accent.success}20` : request.status === 'cancelled' ? `${colors.accent.danger}20` : `${colors.accent.primary}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
                           {request.status}
                         </span>
+                      </td>
+                      <td style={{ padding: '12px', color: request.status === 'cancelled' ? colors.text.primary : colors.text.tertiary }}>
+                        {request.status === 'cancelled' && request.cancellation_reason ? (
+                          <span>
+                            {request.cancellation_reason === 'no_capacity' && 'No Capacity Available'}
+                            {request.cancellation_reason === 'better_rate' && 'Found Better Rate'}
+                            {request.cancellation_reason === 'changed_plans' && 'Plans Changed'}
+                            {request.cancellation_reason === 'equipment_issue' && 'Equipment Issue'}
+                            {request.cancellation_reason === 'customer_cancelled' && 'Customer Cancelled'}
+                            {request.cancellation_reason === 'other' && 'Other'}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>{new Date(request.created_at).toLocaleDateString()}</td>
                     </tr>
