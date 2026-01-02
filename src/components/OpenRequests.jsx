@@ -121,7 +121,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         cancellation_reason: cancelReason
       });
       
-      alert('Request cancelled successfully');
+      alert('Request cancelled successfully!');
       setSelectedRequest(null);
       loadRequests();
     } catch (error) {

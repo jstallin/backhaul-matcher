@@ -203,12 +203,22 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         localStorage.removeItem('editingRequestProcessed');
         console.log('🗑️ Cleared editing request from localStorage after update');
         
-        alert('Request updated successfully!\n\nYou can view it in the Open Requests page.');
+        alert('Request updated successfully!\n\nRedirecting to Open Requests...');
+        
+        // Navigate to Open Requests page
+        setTimeout(() => {
+          onMenuNavigate('open-requests');
+        }, 100);
       } else {
         // Create new request
         console.log('Creating new request');
         await db.requests.create(requestData);
-        alert('Request created successfully!\n\nYou can view and manage it in the Open Requests page.');
+        alert('Request created successfully!\n\nRedirecting to Open Requests...');
+        
+        // Navigate to Open Requests page
+        setTimeout(() => {
+          onMenuNavigate('open-requests');
+        }, 100);
       }
       
       // Reset form
