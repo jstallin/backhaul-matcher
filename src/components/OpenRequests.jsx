@@ -106,6 +106,30 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const handleEditRequest = () => {
+    // Navigate to edit mode - pass request to StartRequest component
+    // For now, we'll store in localStorage and navigate
+    localStorage.setItem('editingRequest', JSON.stringify(selectedRequest));
+    onMenuNavigate('start-request');
+  };
+
+  const handleCancelRequest = async (cancelReason) => {
+    try {
+      await db.requests.update(selectedRequest.id, {
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: cancelReason
+      });
+      
+      alert('Request cancelled successfully');
+      setSelectedRequest(null);
+      loadRequests();
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: colors.background.primary, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -157,6 +181,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               fleet={selectedFleet}
               matches={backhaulMatches}
               onBack={() => setSelectedRequest(null)}
+              onEdit={handleEditRequest}
+              onCancel={handleCancelRequest}
             />
           )
         ) : requests.length === 0 ? (

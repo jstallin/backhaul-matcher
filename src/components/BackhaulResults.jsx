@@ -1,13 +1,34 @@
 import { useState } from 'react';
-import { MapPin, DollarSign, Navigation, TrendingUp, Truck, Calendar, Package } from '../icons';
+import { MapPin, DollarSign, Navigation, TrendingUp, Truck, Calendar, Package, Edit, X } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { RouteStats } from './RouteStats';
 
-export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
+export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCancel }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [showMap, setShowMap] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelRequest = async () => {
+    if (!cancelReason.trim()) {
+      alert('Please select a cancellation reason');
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      await onCancel(cancelReason);
+      setShowCancelDialog(false);
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      alert('Failed to cancel request');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -40,19 +61,29 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <button onClick={onBack} style={{ marginBottom: '12px', padding: '8px 16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <button onClick={onBack} style={{ padding: '8px 16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
             ← Back to Requests
           </button>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
-            {request.request_name}
-          </h3>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: colors.text.secondary }}>
-            <div><strong>Fleet:</strong> {fleet.name}</div>
-            <div><strong>Datum Point:</strong> {request.datum_point}</div>
-            <div><strong>Matches Found:</strong> {matches.length}</div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={onEdit} style={{ padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Edit size={16} />
+              Edit Request
+            </button>
+            <button onClick={() => setShowCancelDialog(true)} style={{ padding: '10px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <X size={16} />
+              Cancel Request
+            </button>
           </div>
+        </div>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
+          {request.request_name}
+        </h3>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: colors.text.secondary }}>
+          <div><strong>Fleet:</strong> {fleet.name}</div>
+          <div><strong>Datum Point:</strong> {request.datum_point}</div>
+          <div><strong>Matches Found:</strong> {matches.length}</div>
         </div>
       </div>
 
@@ -213,6 +244,55 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
                 destination={{ ...selectedMatch.destination, lat: selectedMatch.destination.lat, lng: selectedMatch.destination.lng }}
                 distance={selectedMatch.distance}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Request Dialog */}
+      {showCancelDialog && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => !cancelling && setShowCancelDialog(false)}>
+          <div style={{ background: colors.background.overlay, borderRadius: '16px', maxWidth: '500px', width: '100%', border: `1px solid ${colors.border.accent}`, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: colors.accent.danger }}>Cancel Request?</h3>
+                <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ background: 'none', border: 'none', cursor: cancelling ? 'not-allowed' : 'pointer', padding: '4px', color: colors.text.secondary, opacity: cancelling ? 0.5 : 1 }}>
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ padding: '24px' }}>
+              <p style={{ margin: '0 0 20px 0', fontSize: '15px', color: colors.text.primary, lineHeight: '1.6' }}>
+                This will cancel <strong>{request.request_name}</strong>. Please select a reason:
+              </p>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Cancellation Reason *</label>
+                <select 
+                  value={cancelReason} 
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  disabled={cancelling}
+                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: cancelling ? 'not-allowed' : 'pointer' }}
+                >
+                  <option value="">-- Select a reason --</option>
+                  <option value="no_capacity">No Capacity Available</option>
+                  <option value="better_rate">Found Better Rate</option>
+                  <option value="changed_plans">Plans Changed</option>
+                  <option value="equipment_issue">Equipment Issue</option>
+                  <option value="customer_cancelled">Customer Cancelled</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.5 : 1 }}>
+                  Keep Request
+                </button>
+                <button onClick={handleCancelRequest} disabled={cancelling || !cancelReason} style={{ padding: '12px 24px', background: colors.accent.danger, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: (cancelling || !cancelReason) ? 'not-allowed' : 'pointer', opacity: (cancelling || !cancelReason) ? 0.5 : 1 }}>
+                  {cancelling ? 'Cancelling...' : 'Yes, Cancel Request'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

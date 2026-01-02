@@ -23,14 +23,42 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     autoRefresh: false,
     autoRefreshInterval: '4',
     notificationEnabled: false,
-    notificationMethod: 'both'
+    notificationMethod: 'both',
+    editingId: null
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     loadFleets();
+    loadEditingRequest();
   }, []);
+
+  const loadEditingRequest = () => {
+    const editingRequest = localStorage.getItem('editingRequest');
+    if (editingRequest) {
+      try {
+        const request = JSON.parse(editingRequest);
+        setFormData({
+          requestName: request.request_name,
+          datumPoint: request.datum_point,
+          selectedFleetId: request.fleet_id,
+          equipmentAvailableDate: request.equipment_available_date,
+          equipmentNeededDate: request.equipment_needed_date,
+          isRelay: request.is_relay,
+          autoRefresh: request.auto_refresh,
+          autoRefreshInterval: String(request.auto_refresh_interval || '4'),
+          notificationEnabled: request.notification_enabled,
+          notificationMethod: request.notification_method || 'both'
+        });
+        // Store the request ID for updating
+        setFormData(prev => ({ ...prev, editingId: request.id }));
+      } catch (error) {
+        console.error('Error loading editing request:', error);
+      }
+      localStorage.removeItem('editingRequest');
+    }
+  };
 
   const loadFleets = async () => {
     setLoading(true);
@@ -105,10 +133,16 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         requestData.next_refresh_at = nextRefresh.toISOString();
       }
 
-      // Save to database
-      await db.requests.create(requestData);
-      
-      alert('Request created successfully!\\n\\nYou can view and manage it in the Open Requests page.');
+      // Save to database - create or update
+      if (formData.editingId) {
+        // Update existing request
+        await db.requests.update(formData.editingId, requestData);
+        alert('Request updated successfully!\\n\\nYou can view it in the Open Requests page.');
+      } else {
+        // Create new request
+        await db.requests.create(requestData);
+        alert('Request created successfully!\\n\\nYou can view and manage it in the Open Requests page.');
+      }
       
       // Reset form
       setFormData({
@@ -121,11 +155,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         autoRefresh: false,
         autoRefreshInterval: '4',
         notificationEnabled: false,
-        notificationMethod: 'both'
+        notificationMethod: 'both',
+        editingId: null
       });
     } catch (error) {
-      console.error('Error creating request:', error);
-      alert('Failed to create request: ' + error.message);
+      console.error('Error saving request:', error);
+      alert('Failed to save request: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -247,7 +282,10 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 {formData.notificationEnabled && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
               </div>
 
-              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: `colors.accent.success`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}><Plus size={20} />{saving ? 'Creating Request...' : 'Create Request'}</button>
+              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                <Plus size={20} />
+                {saving ? (formData.editingId ? 'Updating Request...' : 'Creating Request...') : (formData.editingId ? 'Update Request' : 'Create Request')}
+              </button>
             </div>
           </form>
         )}
