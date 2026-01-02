@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Truck, MapPin, Calendar, RefreshCw, Bell, Mail, Phone } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -12,6 +12,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fleets, setFleets] = useState([]);
+  const hasLoadedEditingRequest = useRef(false);
 
   const [formData, setFormData] = useState({
     requestName: '',
@@ -29,39 +30,67 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   const [errors, setErrors] = useState({});
 
+  // Debug: Track all formData changes
   useEffect(() => {
-    loadFleets();
+    console.log('📝 FormData changed:', formData);
+  }, [formData]);
+
+  useEffect(() => {
+    console.log('🚀 Component mounted, loading data...');
+    // Load editing request first (synchronous)
     loadEditingRequest();
+    // Then load fleets (async)
+    loadFleets();
   }, []);
 
   const loadEditingRequest = () => {
+    // Prevent double loading in React StrictMode
+    if (hasLoadedEditingRequest.current) {
+      console.log('⏭️ Skipping duplicate loadEditingRequest call (StrictMode)');
+      return;
+    }
+    
     const editingRequest = localStorage.getItem('editingRequest');
-    console.log('Checking for editingRequest in localStorage:', editingRequest);
+    console.log('🔍 Checking for editingRequest in localStorage:', editingRequest ? 'Found' : 'Not found');
+    
     if (editingRequest) {
       try {
         const request = JSON.parse(editingRequest);
-        console.log('Parsed editing request:', request);
-        setFormData({
-          requestName: request.request_name,
-          datumPoint: request.datum_point,
-          selectedFleetId: request.fleet_id,
-          equipmentAvailableDate: request.equipment_available_date,
-          equipmentNeededDate: request.equipment_needed_date,
-          isRelay: request.is_relay,
-          autoRefresh: request.auto_refresh,
-          autoRefreshInterval: String(request.auto_refresh_interval || '4'),
-          notificationEnabled: request.notification_enabled,
-          notificationMethod: request.notification_method || 'both',
-          editingId: request.id  // Include editingId in the initial setFormData
+        console.log('✅ Parsed editing request:', {
+          id: request.id,
+          name: request.request_name,
+          fleetId: request.fleet_id
         });
-        console.log('Form data set with editingId:', request.id);
+        
+        // Build the form data object
+        const updatedFormData = {
+          requestName: request.request_name || '',
+          datumPoint: request.datum_point || '',
+          selectedFleetId: request.fleet_id || '',
+          equipmentAvailableDate: request.equipment_available_date || '',
+          equipmentNeededDate: request.equipment_needed_date || '',
+          isRelay: request.is_relay || false,
+          autoRefresh: request.auto_refresh || false,
+          autoRefreshInterval: String(request.auto_refresh_interval || '4'),
+          notificationEnabled: request.notification_enabled || false,
+          notificationMethod: request.notification_method || 'both',
+          editingId: request.id
+        };
+        
+        console.log('📋 Setting form data:', updatedFormData);
+        setFormData(updatedFormData);
+        console.log('✨ Form data set with editingId:', request.id);
+        
+        // Mark as loaded to prevent double execution
+        hasLoadedEditingRequest.current = true;
+        
         // Remove from localStorage after successful load
         localStorage.removeItem('editingRequest');
       } catch (error) {
-        console.error('Error loading editing request:', error);
+        console.error('❌ Error loading editing request:', error);
       }
     } else {
-      console.log('No editingRequest found in localStorage');
+      console.log('ℹ️ No editingRequest found in localStorage - creating new request');
     }
   };
 
@@ -70,18 +99,25 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     try {
       const fleetsData = await db.fleets.getAll(user.id);
       setFleets(fleetsData || []);
+      console.log('🏢 Loaded fleets:', fleetsData?.length);
+      
       // Only auto-select fleet if there's exactly one AND we're not editing
       if (fleetsData && fleetsData.length === 1) {
         setFormData(prev => {
+          console.log('🔍 Auto-select check - editingId:', prev.editingId, 'selectedFleetId:', prev.selectedFleetId);
+          
           // If we're editing and already have a fleet selected, don't override
           if (prev.editingId && prev.selectedFleetId) {
+            console.log('✋ Skipping auto-select because we\'re editing');
             return prev;
           }
+          
+          console.log('✅ Auto-selecting single fleet:', fleetsData[0].id);
           return { ...prev, selectedFleetId: fleetsData[0].id };
         });
       }
     } catch (error) {
-      console.error('Error loading fleets:', error);
+      console.error('❌ Error loading fleets:', error);
       setFleets([]);
     } finally {
       setLoading(false);
@@ -214,9 +250,16 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
-            {formData.editingId ? 'Edit Request' : 'Start Request'}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
+              {formData.editingId ? 'Edit Request' : 'Start Request'}
+            </h2>
+            {formData.editingId && (
+              <div style={{ padding: '6px 16px', background: `${colors.accent.primary}20`, border: `2px solid ${colors.accent.primary}`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: colors.accent.primary }}>
+                EDITING MODE
+              </div>
+            )}
+          </div>
           <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
             {formData.editingId ? 'Update your existing backhaul request' : 'Create a new backhaul request for your fleet'}
           </p>
