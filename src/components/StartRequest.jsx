@@ -33,6 +33,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   // Debug: Track all formData changes
   useEffect(() => {
     console.log('📝 FormData changed:', formData);
+    console.trace('📍 Stack trace for formData change:');
   }, [formData]);
 
   useEffect(() => {
@@ -104,7 +105,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Only auto-select fleet if there's exactly one AND we're not editing
       if (fleetsData && fleetsData.length === 1) {
         setFormData(prev => {
-          console.log('🔍 Auto-select check - editingId:', prev.editingId, 'selectedFleetId:', prev.selectedFleetId);
+          console.log('🔍 Auto-select check in prev:', {
+            editingId: prev.editingId,
+            selectedFleetId: prev.selectedFleetId,
+            requestName: prev.requestName,
+            fullPrev: prev
+          });
           
           // If we're editing and already have a fleet selected, don't override
           if (prev.editingId && prev.selectedFleetId) {
@@ -115,6 +121,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           console.log('✅ Auto-selecting single fleet:', fleetsData[0].id);
           return { ...prev, selectedFleetId: fleetsData[0].id };
         });
+      } else {
+        console.log(`ℹ️ Not auto-selecting (${fleetsData?.length} fleets)`);
       }
     } catch (error) {
       console.error('❌ Error loading fleets:', error);
