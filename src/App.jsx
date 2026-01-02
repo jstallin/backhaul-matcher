@@ -381,12 +381,23 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
-          color: '#e8eaed',
+          background: colors.background.primary,
+          color: colors.text.primary,
           fontSize: '18px',
           fontWeight: 600
         }}>
-          Loading your fleet data...
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              border: `4px solid ${colors.accent.primary}40`, 
+              borderTop: `4px solid ${colors.accent.primary}`, 
+              borderRadius: '50%', 
+              animation: 'spin 1s linear infinite', 
+              margin: '0 auto 16px' 
+            }} />
+            <div>Loading your fleet data...</div>
+          </div>
         </div>
       </AuthWrapper>
     );
@@ -1064,6 +1075,12 @@ function App() {
           onAssign={handleAssignRoute}
         />
       )}
+      
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       
       <Analytics />
     </AuthWrapper>
