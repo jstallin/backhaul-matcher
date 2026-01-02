@@ -197,7 +197,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Request Name *</label>
                 <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.requestName}</div>}
-                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Auto-generated with date to avoid duplicates</div>
+                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}></div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
