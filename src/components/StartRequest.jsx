@@ -12,14 +12,6 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fleets, setFleets] = useState([]);
-  
-  const generateRequestName = () => {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const year = now.getFullYear();
-    return `Backhaul Request ${month}/${day}/${year}`;
-  };
 
   const [formData, setFormData] = useState({
     requestName: '',
@@ -195,14 +187,13 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
               
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Request Name *</label>
-                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.requestName}</div>}
-                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}></div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
-                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.datumPoint}</div>}
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return from</div>
               </div>

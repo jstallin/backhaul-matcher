@@ -63,10 +63,10 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           height: '40px',
           borderRadius: '50%',
           background: isOpen 
-            ? `colors.accent.primary`
-            : `linear-gradient(135deg, ${colors.accent.purple} 0%, ${colors.accent.purple} 100%)`,
-          border: isOpen ? `2px solid ${colors.accent.primary}` : `2px solid ${colors.border.accent}`,
-          color: '#fff',
+            ? colors.accent.secondary
+            : colors.accent.primary,
+          border: `2px solid ${isOpen ? colors.accent.tertiary : colors.accent.primary}`,
+          color: '#ffffff',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
@@ -74,18 +74,20 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           fontSize: '14px',
           fontWeight: 700,
           transition: 'all 0.2s',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+          boxShadow: isOpen ? '0 6px 16px rgba(94, 160, 219, 0.3)' : '0 2px 8px rgba(94, 160, 219, 0.2)'
         }}
         onMouseEnter={(e) => {
           if (!isOpen) {
             e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
+            e.currentTarget.style.background = colors.accent.secondary;
+            e.currentTarget.style.boxShadow = '0 6px 16px rgba(94, 160, 219, 0.4)';
           }
         }}
         onMouseLeave={(e) => {
           if (!isOpen) {
             e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.background = colors.accent.primary;
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(94, 160, 219, 0.2)';
           }
         }}
       >
