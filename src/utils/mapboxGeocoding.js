@@ -4,7 +4,7 @@
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const GEOCODING_API = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 
-// Fallback local geocoding for common NC locations (used if Mapbox token not configured)
+// Fallback local geocoding for common NC and FL locations (used if Mapbox token not configured)
 const NC_CITIES = {
   'davidson': { lat: 35.4993, lng: -80.8487, city: 'Davidson, NC' },
   'charlotte': { lat: 35.2271, lng: -80.8431, city: 'Charlotte, NC' },
@@ -24,14 +24,29 @@ const NC_CITIES = {
   'kannapolis': { lat: 35.4873, lng: -80.6217, city: 'Kannapolis, NC' },
   'cornelius': { lat: 35.4862, lng: -80.8590, city: 'Cornelius, NC' },
   'matthews': { lat: 35.1168, lng: -80.7237, city: 'Matthews, NC' },
-  'burlington': { lat: 36.0957, lng: -79.4378, city: 'Burlington, NC' }
+  'burlington': { lat: 36.0957, lng: -79.4378, city: 'Burlington, NC' },
+  // Florida cities
+  'alachua': { lat: 29.7377, lng: -82.4248, city: 'Alachua, FL' },
+  'gainesville': { lat: 29.6516, lng: -82.3248, city: 'Gainesville, FL' },
+  'jacksonville': { lat: 30.3322, lng: -81.6557, city: 'Jacksonville, FL' },
+  'tampa': { lat: 27.9506, lng: -82.4572, city: 'Tampa, FL' },
+  'orlando': { lat: 28.5383, lng: -81.3792, city: 'Orlando, FL' },
+  'lakeland': { lat: 28.0395, lng: -81.9498, city: 'Lakeland, FL' },
+  'ocala': { lat: 29.1872, lng: -82.1401, city: 'Ocala, FL' },
+  'palatka': { lat: 29.6486, lng: -81.6373, city: 'Palatka, FL' },
+  'lake city': { lat: 30.1896, lng: -82.6393, city: 'Lake City, FL' },
+  'st. augustine': { lat: 29.9012, lng: -81.3124, city: 'St. Augustine, FL' }
 };
 
 const ZIP_TO_COORDS = {
   '28036': { lat: 35.4993, lng: -80.8487, city: 'Davidson, NC' },
   '28216': { lat: 35.2271, lng: -80.8431, city: 'Charlotte, NC' },
   '27601': { lat: 35.7796, lng: -78.6382, city: 'Raleigh, NC' },
-  '27401': { lat: 36.0726, lng: -79.7920, city: 'Greensboro, NC' }
+  '27401': { lat: 36.0726, lng: -79.7920, city: 'Greensboro, NC' },
+  // Florida zip codes
+  '32615': { lat: 29.7377, lng: -82.4248, city: 'Alachua, FL' },
+  '32601': { lat: 29.6516, lng: -82.3248, city: 'Gainesville, FL' },
+  '32099': { lat: 30.3322, lng: -81.6557, city: 'Jacksonville, FL' }
 };
 
 /**
