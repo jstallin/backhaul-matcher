@@ -36,9 +36,11 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   const loadEditingRequest = () => {
     const editingRequest = localStorage.getItem('editingRequest');
+    console.log('Checking for editingRequest in localStorage:', editingRequest);
     if (editingRequest) {
       try {
         const request = JSON.parse(editingRequest);
+        console.log('Parsed editing request:', request);
         setFormData({
           requestName: request.request_name,
           datumPoint: request.datum_point,
@@ -49,14 +51,17 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           autoRefresh: request.auto_refresh,
           autoRefreshInterval: String(request.auto_refresh_interval || '4'),
           notificationEnabled: request.notification_enabled,
-          notificationMethod: request.notification_method || 'both'
+          notificationMethod: request.notification_method || 'both',
+          editingId: request.id  // Include editingId in the initial setFormData
         });
-        // Store the request ID for updating
-        setFormData(prev => ({ ...prev, editingId: request.id }));
+        console.log('Form data set with editingId:', request.id);
+        // Remove from localStorage after successful load
+        localStorage.removeItem('editingRequest');
       } catch (error) {
         console.error('Error loading editing request:', error);
       }
-      localStorage.removeItem('editingRequest');
+    } else {
+      console.log('No editingRequest found in localStorage');
     }
   };
 
@@ -65,8 +70,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     try {
       const fleetsData = await db.fleets.getAll(user.id);
       setFleets(fleetsData || []);
+      // Only auto-select fleet if there's exactly one AND we're not editing
       if (fleetsData && fleetsData.length === 1) {
-        setFormData(prev => ({ ...prev, selectedFleetId: fleetsData[0].id }));
+        setFormData(prev => {
+          // If we're editing and already have a fleet selected, don't override
+          if (prev.editingId && prev.selectedFleetId) {
+            return prev;
+          }
+          return { ...prev, selectedFleetId: fleetsData[0].id };
+        });
       }
     } catch (error) {
       console.error('Error loading fleets:', error);
@@ -134,12 +146,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       }
 
       // Save to database - create or update
+      console.log('Submitting with editingId:', formData.editingId);
       if (formData.editingId) {
         // Update existing request
+        console.log('Updating request:', formData.editingId);
         await db.requests.update(formData.editingId, requestData);
         alert('Request updated successfully!\\n\\nYou can view it in the Open Requests page.');
       } else {
         // Create new request
+        console.log('Creating new request');
         await db.requests.create(requestData);
         alert('Request created successfully!\\n\\nYou can view and manage it in the Open Requests page.');
       }
@@ -199,8 +214,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Start Request</h2>
-          <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>Create a new backhaul request for your fleet</p>
+          <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
+            {formData.editingId ? 'Edit Request' : 'Start Request'}
+          </h2>
+          <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
+            {formData.editingId ? 'Update your existing backhaul request' : 'Create a new backhaul request for your fleet'}
+          </p>
         </div>
       </div>
 
