@@ -153,7 +153,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
               id="route"
               type="line"
               paint={{
-                'line-color': colors.accent.orange,
+                'line-color': colors.accent.primary,
                 'line-width': 4,
                 'line-opacity': 0.8
               }}
@@ -168,7 +168,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
               id="backhaul-route"
               type="line"
               paint={{
-                'line-color': colors.accent.green,
+                'line-color': colors.accent.success,
                 'line-width': 4,
                 'line-opacity': 0.8,
                 'line-dasharray': [2, 2]
@@ -193,7 +193,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
             }}
           >
             <div style={{
-              background: colors.accent.orange,
+              background: colors.accent.primary,
               borderRadius: '50%',
               width: '32px',
               height: '32px',
@@ -256,7 +256,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
             }}
           >
             <div style={{
-              background: backhaul ? colors.accent.cyan : colors.accent.blue,
+              background: backhaul ? colors.accent.primary : colors.accent.info,
               borderRadius: '50%',
               width: '32px',
               height: '32px',
@@ -323,7 +323,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
               }}
             >
               <div style={{
-                background: colors.accent.green,
+                background: colors.accent.success,
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
@@ -388,7 +388,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
               }}
             >
               <div style={{
-                background: colors.accent.green,
+                background: colors.accent.success,
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',

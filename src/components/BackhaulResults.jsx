@@ -24,9 +24,9 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
   };
 
   const getRankColor = (index) => {
-    if (index === 0) return colors.accent.green;
-    if (index === 1) return colors.accent.cyan;
-    if (index === 2) return colors.accent.orange;
+    if (index === 0) return colors.accent.success;
+    if (index === 1) return colors.accent.primary;
+    if (index === 2) return colors.accent.primary;
     return colors.text.tertiary;
   };
 
@@ -79,7 +79,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
                   {getRankLabel(index)}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green }}>
+                  <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success }}>
                     {formatCurrency(match.totalRevenue)}
                   </div>
                   <div style={{ fontSize: '13px', color: colors.text.secondary }}>
@@ -92,7 +92,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <MapPin size={16} color={colors.accent.cyan} />
+                    <MapPin size={16} color={colors.accent.primary} />
                     <span style={{ fontSize: '12px', color: colors.text.tertiary, textTransform: 'uppercase', fontWeight: 600 }}>Pickup</span>
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>
@@ -104,7 +104,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <Navigation size={24} color={colors.accent.orange} />
+                  <Navigation size={24} color={colors.accent.primary} />
                   <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                     {match.distance} mi
                   </div>
@@ -112,7 +112,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
 
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <MapPin size={16} color={colors.accent.green} />
+                    <MapPin size={16} color={colors.accent.success} />
                     <span style={{ fontSize: '12px', color: colors.text.tertiary, textTransform: 'uppercase', fontWeight: 600 }}>Delivery</span>
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>
@@ -140,7 +140,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack }) => {
                 </div>
                 <div>
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Out of Route</div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.accent.orange }}>{match.oorMiles} mi</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.accent.primary }}>{match.oorMiles} mi</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Additional Miles</div>

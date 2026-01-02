@@ -63,9 +63,9 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           height: '40px',
           borderRadius: '50%',
           background: isOpen 
-            ? `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`
+            ? `colors.accent.primary`
             : `linear-gradient(135deg, ${colors.accent.purple} 0%, ${colors.accent.purple} 100%)`,
-          border: isOpen ? `2px solid ${colors.accent.cyan}` : `2px solid ${colors.border.accent}`,
+          border: isOpen ? `2px solid ${colors.accent.primary}` : `2px solid ${colors.border.accent}`,
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',
@@ -185,11 +185,11 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <LogOut size={18} color={colors.accent.red} />
+            <LogOut size={18} color={colors.accent.danger} />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: colors.accent.red
+              color: colors.accent.danger
             }}>
               Sign Out
             </span>

@@ -4,9 +4,9 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // Check localStorage for saved preference
+    // Default to light theme now
     const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'dark';
+    return savedTheme || 'light';
   });
 
   useEffect(() => {
@@ -19,64 +19,64 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const colors = theme === 'dark' ? {
-    // Dark mode colors (current)
+    // Dark mode colors (rarely used)
     background: {
-      primary: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
-      secondary: 'rgba(26, 31, 58, 0.6)',
-      tertiary: 'rgba(26, 31, 58, 0.4)',
-      card: 'rgba(26, 31, 58, 0.8)',
-      hover: 'rgba(26, 31, 58, 0.8)',
-      overlay: 'rgba(26, 31, 58, 0.98)'
+      primary: '#0f1419',
+      secondary: '#1a1f2e',
+      tertiary: '#232936',
+      card: '#1a1f2e',
+      hover: '#232936',
+      overlay: '#1a1f2e'
     },
     text: {
       primary: '#e8eaed',
       secondary: '#8b92a7',
       tertiary: '#6b7280',
-      inverse: '#0a0e27'
+      inverse: '#0f1419'
     },
     border: {
-      primary: 'rgba(255, 255, 255, 0.1)',
-      secondary: 'rgba(255, 255, 255, 0.08)',
-      accent: 'rgba(255, 255, 255, 0.15)'
+      primary: 'rgba(94, 160, 219, 0.2)',
+      secondary: 'rgba(94, 160, 219, 0.1)',
+      accent: 'rgba(94, 160, 219, 0.3)'
     },
     accent: {
-      orange: '#ff6b35',
-      cyan: '#00d4ff',
-      purple: '#a855f7',
-      green: '#10b981',
-      red: '#ef4444',
-      yellow: '#f59e0b',
-      blue: '#3b82f6'
+      primary: '#5EA0DB',      // Your primary blue
+      secondary: '#7BB5E3',    // Lighter blue
+      tertiary: '#3D7DB0',     // Darker blue
+      success: '#10b981',
+      warning: '#f59e0b',
+      danger: '#ef4444',
+      info: '#5EA0DB'
     }
   } : {
-    // Light mode colors - IMPROVED CONTRAST
+    // Light mode colors - CLEAN & FRESH
     background: {
-      primary: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)',
-      secondary: 'rgba(255, 255, 255, 0.9)',
-      tertiary: 'rgba(248, 250, 252, 0.8)',
-      card: 'rgba(255, 255, 255, 0.95)',
-      hover: 'rgba(241, 245, 249, 0.95)',
-      overlay: 'rgba(255, 255, 255, 0.98)'
+      primary: '#FAFBFC',           // Off-white, very light
+      secondary: '#FFFFFF',         // Pure white
+      tertiary: '#F5F7FA',          // Slight gray tint
+      card: '#FFFFFF',              // Pure white cards
+      hover: '#F5F7FA',             // Subtle hover
+      overlay: '#FFFFFF'            // White overlay
     },
     text: {
-      primary: '#0f172a',      // Much darker for better contrast
-      secondary: '#334155',     // Darker gray instead of light
-      tertiary: '#475569',      // Medium gray instead of light
-      inverse: '#ffffff'
+      primary: '#1a202c',           // Dark gray, almost black
+      secondary: '#4a5568',         // Medium gray
+      tertiary: '#718096',          // Light gray
+      inverse: '#ffffff'            // White text on blue
     },
     border: {
-      primary: 'rgba(15, 23, 42, 0.15)',    // Darker borders
-      secondary: 'rgba(15, 23, 42, 0.1)',
-      accent: 'rgba(15, 23, 42, 0.2)'
+      primary: '#E2E8F0',           // Light gray border
+      secondary: '#EDF2F7',         // Very light border
+      accent: '#CBD5E0'             // Medium border
     },
     accent: {
-      orange: '#ea580c',
-      cyan: '#0891b2',
-      purple: '#9333ea',
-      green: '#059669',
-      red: '#dc2626',
-      yellow: '#d97706',
-      blue: '#2563eb'
+      primary: '#5EA0DB',           // Your primary blue
+      secondary: '#7BB5E3',         // Lighter blue (hover states)
+      tertiary: '#3D7DB0',          // Darker blue (active states)
+      success: '#48BB78',           // Green
+      warning: '#ED8936',           // Orange
+      danger: '#F56565',            // Red
+      info: '#4299E1'               // Info blue
     }
   };
 

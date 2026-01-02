@@ -37,9 +37,9 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled': return '${colors.accent.yellow}';
-      case 'in_transit': return '${colors.accent.blue}';
-      case 'completed': return '${colors.accent.green}';
+      case 'scheduled': return '${colors.accent.warning}';
+      case 'in_transit': return '${colors.accent.info}';
+      case 'completed': return '${colors.accent.success}';
       default: return '${colors.text.tertiary}';
     }
   };
@@ -76,7 +76,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
           padding: '20px'
         }}>
           <div style={{ fontSize: '14px', color: '${colors.text.secondary}', marginBottom: '8px' }}>Total Routes</div>
-          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.blue}' }}>{totalRoutes}</div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.info}' }}>{totalRoutes}</div>
         </div>
 
         <div style={{
@@ -86,7 +86,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
           padding: '20px'
         }}>
           <div style={{ fontSize: '14px', color: '${colors.text.secondary}', marginBottom: '8px' }}>In Transit</div>
-          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.yellow}' }}>{inTransit}</div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.warning}' }}>{inTransit}</div>
         </div>
 
         <div style={{
@@ -96,7 +96,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
           padding: '20px'
         }}>
           <div style={{ fontSize: '14px', color: '${colors.text.secondary}', marginBottom: '8px' }}>Completed</div>
-          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.green}' }}>{completed}</div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.success}' }}>{completed}</div>
         </div>
 
         <div style={{
@@ -106,7 +106,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
           padding: '20px'
         }}>
           <div style={{ fontSize: '14px', color: '${colors.text.secondary}', marginBottom: '8px' }}>Total Revenue</div>
-          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.cyan}' }}>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: '${colors.accent.primary}' }}>
             ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </div>
         </div>
@@ -149,7 +149,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                 background: filterStatus === status ? 'rgba(0, 212, 255, 0.2)' : '${colors.background.tertiary}',
                 border: filterStatus === status ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid ${colors.border.primary}',
                 borderRadius: '8px',
-                color: filterStatus === status ? '${colors.accent.cyan}' : '${colors.text.secondary}',
+                color: filterStatus === status ? '${colors.accent.primary}' : '${colors.text.secondary}',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -253,25 +253,25 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                     color: '${colors.text.secondary}'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <MapPin size={16} color="${colors.accent.green}" />
+                      <MapPin size={16} color="${colors.accent.success}" />
                       <strong>Origin:</strong>
                     </div>
                     <div>{route.origin_city}</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Navigation size={16} color="${colors.accent.yellow}" />
+                      <Navigation size={16} color="${colors.accent.warning}" />
                       <strong>Destination:</strong>
                     </div>
                     <div>{route.dest_city} ({route.dest_customer})</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <TrendingUp size={16} color="${colors.accent.blue}" />
+                      <TrendingUp size={16} color="${colors.accent.info}" />
                       <strong>Distance:</strong>
                     </div>
                     <div>{route.distance_miles} miles</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <DollarSign size={16} color="${colors.accent.cyan}" />
+                      <DollarSign size={16} color="${colors.accent.primary}" />
                       <strong>Revenue:</strong>
                     </div>
                     <div>
@@ -288,7 +288,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                       onClick={() => onSelectRouteForBackhaul && onSelectRouteForBackhaul(route)}
                       style={{
                         padding: '10px 20px',
-                        background: `linear-gradient(135deg, ${colors.accent.orange} 0%, #ff8c5a 100%)`,
+                        background: `linear-gradient(135deg, ${colors.accent.primary} 0%, #ff8c5a 100%)`,
                         border: 'none',
                         borderRadius: '8px',
                         color: '#fff',

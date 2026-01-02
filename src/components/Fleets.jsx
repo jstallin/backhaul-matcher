@@ -82,8 +82,8 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
           <div style={{
             width: '48px',
             height: '48px',
-            border: `4px solid ${colors.accent.cyan}40`,
-            borderTop: `4px solid ${colors.accent.cyan}`,
+            border: `4px solid ${colors.accent.primary}40`,
+            borderTop: `4px solid ${colors.accent.primary}`,
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px'
@@ -112,14 +112,14 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
+            <Truck size={32} color={colors.accent.primary} strokeWidth={2.5} />
             <div>
               <h1 style={{ 
                 margin: 0, 
                 fontSize: '28px', 
                 fontWeight: 900,
                 letterSpacing: '-0.02em',
-                background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
+                background: `linear-gradient(135deg, ${colors.accent.primary} 0%, ${colors.accent.primary} 100%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
@@ -201,7 +201,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
               onClick={onCreateFleet}
               style={{
                 padding: '14px 28px',
-                background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
+                background: `colors.accent.primary`,
                 border: 'none',
                 borderRadius: '8px',
                 color: '#fff',
@@ -266,7 +266,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = colors.background.hover;
-                  e.currentTarget.style.borderColor = colors.accent.cyan;
+                  e.currentTarget.style.borderColor = colors.accent.primary;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = colors.background.secondary;
@@ -292,7 +292,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                     onClick={() => handleToggleExpand(fleet.id)}
                     style={{
                       background: colors.background.card,
-                      border: `2px solid ${isExpanded ? colors.accent.cyan : colors.border.primary}`,
+                      border: `2px solid ${isExpanded ? colors.accent.primary : colors.border.primary}`,
                       borderRadius: '16px',
                       padding: '24px',
                       cursor: 'pointer',
@@ -301,7 +301,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                     }}
                     onMouseEnter={(e) => {
                       if (!isExpanded) {
-                        e.currentTarget.style.borderColor = colors.accent.cyan;
+                        e.currentTarget.style.borderColor = colors.accent.primary;
                         e.currentTarget.style.transform = 'translateY(-4px)';
                         e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 212, 255, 0.15)';
                       }
@@ -326,7 +326,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                           <div style={{
                             width: '48px',
                             height: '48px',
-                            background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
+                            background: `linear-gradient(135deg, ${colors.accent.primary} 0%, ${colors.accent.primary} 100%)`,
                             borderRadius: '12px',
                             display: 'flex',
                             alignItems: 'center',
@@ -368,7 +368,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                       <div style={{
                         transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                         transition: 'transform 0.3s',
-                        color: colors.accent.cyan
+                        color: colors.accent.primary
                       }}>
                         <ChevronRight size={24} />
                       </div>
@@ -448,7 +448,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                             style={{
                               flex: 1,
                               padding: '12px',
-                              background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
+                              background: `colors.accent.primary`,
                               border: 'none',
                               borderRadius: '8px',
                               color: '#fff',
@@ -480,9 +480,9 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                               flex: 1,
                               padding: '12px',
                               background: colors.background.secondary,
-                              border: `1px solid ${colors.accent.red}40`,
+                              border: `1px solid ${colors.accent.danger}40`,
                               borderRadius: '8px',
-                              color: colors.accent.red,
+                              color: colors.accent.danger,
                               fontSize: '14px',
                               fontWeight: 700,
                               cursor: 'pointer',
@@ -493,12 +493,12 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                               transition: 'all 0.2s'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = `${colors.accent.red}20`;
-                              e.currentTarget.style.borderColor = colors.accent.red;
+                              e.currentTarget.style.background = `${colors.accent.danger}20`;
+                              e.currentTarget.style.borderColor = colors.accent.danger;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.background = colors.background.secondary;
-                              e.currentTarget.style.borderColor = `${colors.accent.red}40`;
+                              e.currentTarget.style.borderColor = `${colors.accent.danger}40`;
                             }}
                           >
                             <Trash2 size={18} />
@@ -555,7 +555,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                   margin: 0,
                   fontSize: '20px',
                   fontWeight: 800,
-                  color: colors.accent.red
+                  color: colors.accent.danger
                 }}>
                   Delete Fleet?
                 </h3>
@@ -609,7 +609,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                   disabled={deleting}
                   style={{
                     padding: '12px 24px',
-                    background: `linear-gradient(135deg, ${colors.accent.red} 0%, #dc2626 100%)`,
+                    background: `colors.accent.danger`,
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',
@@ -667,7 +667,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                   margin: 0,
                   fontSize: '20px',
                   fontWeight: 800,
-                  color: colors.accent.cyan
+                  color: colors.accent.primary
                 }}>
                   Edit Fleet?
                 </h3>
@@ -716,7 +716,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                   onClick={handleEditConfirm}
                   style={{
                     padding: '12px 24px',
-                    background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
+                    background: `colors.accent.primary`,
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',

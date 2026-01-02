@@ -30,7 +30,7 @@ export const Settings = ({ onBack }) => {
               margin: '0 0 4px 0',
               fontSize: '28px',
               fontWeight: 900,
-              background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
+              background: `linear-gradient(135deg, ${colors.accent.primary} 0%, ${colors.accent.primary} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent'
             }}>
@@ -99,7 +99,7 @@ export const Settings = ({ onBack }) => {
                   style={{
                     width: '100%',
                     padding: '12px',
-                    background: isActive ? `${colors.accent.cyan}20` : 'transparent',
+                    background: isActive ? `${colors.accent.primary}20` : 'transparent',
                     border: 'none',
                     borderRadius: '8px',
                     textAlign: 'left',
@@ -119,20 +119,20 @@ export const Settings = ({ onBack }) => {
                 >
                   <Icon 
                     size={18} 
-                    color={isActive ? colors.accent.cyan : colors.text.secondary}
+                    color={isActive ? colors.accent.primary : colors.text.secondary}
                   />
                   <span style={{
                     flex: 1,
                     fontSize: '14px',
                     fontWeight: isActive ? 700 : 600,
-                    color: isActive ? colors.accent.cyan : colors.text.primary
+                    color: isActive ? colors.accent.primary : colors.text.primary
                   }}>
                     {section.label}
                   </span>
                   {section.badge && (
                     <span style={{
                       padding: '2px 8px',
-                      background: colors.accent.orange,
+                      background: colors.accent.primary,
                       borderRadius: '12px',
                       fontSize: '11px',
                       fontWeight: 700,
@@ -142,7 +142,7 @@ export const Settings = ({ onBack }) => {
                     </span>
                   )}
                   {isActive && (
-                    <ChevronRight size={16} color={colors.accent.cyan} />
+                    <ChevronRight size={16} color={colors.accent.primary} />
                   )}
                 </button>
               );
@@ -244,10 +244,10 @@ export const Settings = ({ onBack }) => {
                       style={{
                         padding: '16px',
                         background: theme === 'light' 
-                          ? `linear-gradient(135deg, ${colors.accent.cyan}20 0%, ${colors.accent.cyan}10 100%)`
+                          ? `linear-gradient(135deg, ${colors.accent.primary}20 0%, ${colors.accent.primary}10 100%)`
                           : colors.background.tertiary,
                         border: theme === 'light'
-                          ? `2px solid ${colors.accent.cyan}`
+                          ? `2px solid ${colors.accent.primary}`
                           : `1px solid ${colors.border.primary}`,
                         borderRadius: '12px',
                         cursor: 'pointer',
@@ -267,13 +267,13 @@ export const Settings = ({ onBack }) => {
                     >
                       <Sun 
                         size={32} 
-                        color={theme === 'light' ? colors.accent.cyan : colors.text.secondary}
+                        color={theme === 'light' ? colors.accent.primary : colors.text.secondary}
                         style={{ marginBottom: '8px' }}
                       />
                       <div style={{
                         fontSize: '14px',
                         fontWeight: 700,
-                        color: theme === 'light' ? colors.accent.cyan : colors.text.primary,
+                        color: theme === 'light' ? colors.accent.primary : colors.text.primary,
                         marginBottom: '4px'
                       }}>
                         Light Mode
@@ -288,7 +288,7 @@ export const Settings = ({ onBack }) => {
                         <div style={{
                           marginTop: '8px',
                           padding: '4px 12px',
-                          background: colors.accent.cyan,
+                          background: colors.accent.primary,
                           borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 700,
@@ -367,8 +367,8 @@ export const Settings = ({ onBack }) => {
                 {/* Info Box */}
                 <div style={{
                   padding: '16px',
-                  background: `${colors.accent.blue}15`,
-                  border: `1px solid ${colors.accent.blue}40`,
+                  background: `${colors.accent.info}15`,
+                  border: `1px solid ${colors.accent.info}40`,
                   borderRadius: '8px',
                   fontSize: '13px',
                   color: colors.text.secondary

@@ -49,7 +49,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
           alignItems: 'center',
           gap: '8px'
         }}>
-          <Truck size={20} color={colors.accent.orange} />
+          <Truck size={20} color={colors.accent.primary} />
           ORIGINAL ROUTE
         </h3>
 
@@ -70,7 +70,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
               <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
                 {originalDistance} mi
               </div>
-              <div style={{ fontSize: '12px', color: colors.accent.green }}>
+              <div style={{ fontSize: '12px', color: colors.accent.success }}>
                 ${originalRevenue.toLocaleString()}
               </div>
             </div>
@@ -83,17 +83,17 @@ export const RouteStats = ({ route, backhaul = null }) => {
             padding: '12px',
             background: colors.background.secondary,
             borderRadius: '8px',
-            border: `2px dashed ${colors.accent.red}40`
+            border: `2px dashed ${colors.accent.danger}40`
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={16} color={colors.accent.red} />
+              <MapPin size={16} color={colors.accent.danger} />
               <span style={{ fontSize: '14px', color: colors.text.secondary }}>Empty Return</span>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.red }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>
                 {emptyReturnMiles} mi
               </div>
-              <div style={{ fontSize: '12px', color: colors.accent.red }}>
+              <div style={{ fontSize: '12px', color: colors.accent.danger }}>
                 $0
               </div>
             </div>
@@ -131,7 +131,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
         <>
           <div style={{
             background: colors.background.card,
-            border: `2px solid ${colors.accent.green}`,
+            border: `2px solid ${colors.accent.success}`,
             borderRadius: '12px',
             padding: '20px'
           }}>
@@ -144,7 +144,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <TrendingUp size={20} color={colors.accent.green} />
+              <TrendingUp size={20} color={colors.accent.success} />
               WITH BACKHAUL
             </h3>
 
@@ -165,7 +165,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
                   <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
                     {originalDistance} mi
                   </div>
-                  <div style={{ fontSize: '12px', color: colors.accent.green }}>
+                  <div style={{ fontSize: '12px', color: colors.accent.success }}>
                     ${originalRevenue.toLocaleString()}
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 borderRadius: '8px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <MapPin size={16} color={colors.accent.yellow} />
+                  <MapPin size={16} color={colors.accent.warning} />
                   <span style={{ fontSize: '14px', color: colors.text.secondary }}>Out-of-Route</span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -195,19 +195,19 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px',
-                background: `${colors.accent.green}20`,
+                background: `${colors.accent.success}20`,
                 borderRadius: '8px',
-                border: `2px solid ${colors.accent.green}`
+                border: `2px solid ${colors.accent.success}`
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <DollarSign size={16} color={colors.accent.green} />
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>Backhaul</span>
+                  <DollarSign size={16} color={colors.accent.success} />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.success }}>Backhaul</span>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.success }}>
                     {backhaulDistance} mi
                   </div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.green }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.success }}>
                     +${backhaul.revenue.toLocaleString()}
                   </div>
                 </div>
@@ -226,13 +226,13 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Total Revenue:</span>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.success }}>
                     ${newRevenue.toLocaleString()}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>Avg Rate:</span>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.green }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.success }}>
                     ${newAvgRate.toFixed(2)}/mi
                   </span>
                 </div>
@@ -242,8 +242,8 @@ export const RouteStats = ({ route, backhaul = null }) => {
 
           {/* Net Improvement */}
           <div style={{
-            background: `linear-gradient(135deg, ${colors.accent.green}20 0%, ${colors.accent.green}10 100%)`,
-            border: `2px solid ${colors.accent.green}`,
+            background: `linear-gradient(135deg, ${colors.accent.success}20 0%, ${colors.accent.success}10 100%)`,
+            border: `2px solid ${colors.accent.success}`,
             borderRadius: '12px',
             padding: '20px'
           }}>
@@ -251,7 +251,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
               margin: '0 0 16px 0',
               fontSize: '16px',
               fontWeight: 800,
-              color: colors.accent.green,
+              color: colors.accent.success,
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
@@ -266,7 +266,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 background: colors.background.card,
                 borderRadius: '8px'
               }}>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success, marginBottom: '4px' }}>
                   +${revenueGain.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '12px', color: colors.text.secondary }}>
@@ -280,7 +280,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 background: colors.background.card,
                 borderRadius: '8px'
               }}>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success, marginBottom: '4px' }}>
                   {milesSaved > 0 ? '-' : ''}{Math.abs(milesSaved)} mi
                 </div>
                 <div style={{ fontSize: '12px', color: colors.text.secondary }}>
@@ -294,7 +294,7 @@ export const RouteStats = ({ route, backhaul = null }) => {
                 background: colors.background.card,
                 borderRadius: '8px'
               }}>
-                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.green, marginBottom: '4px' }}>
+                <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success, marginBottom: '4px' }}>
                   +${rateImprovement.toFixed(2)}
                 </div>
                 <div style={{ fontSize: '12px', color: colors.text.secondary }}>

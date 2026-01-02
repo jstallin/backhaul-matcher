@@ -103,32 +103,32 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       title: 'Total Fleets',
       value: totalFleets,
       icon: Truck,
-      color: colors.accent.cyan,
-      gradient: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`
+      color: colors.accent.primary,
+      gradient: `colors.accent.primary`
     },
     {
       id: 'total-requests',
       title: 'Total Requests',
       value: totalRequests,
       icon: FileText,
-      color: colors.accent.orange,
-      gradient: `linear-gradient(135deg, ${colors.accent.orange} 0%, #ff8c42 100%)`
+      color: colors.accent.primary,
+      gradient: `linear-gradient(135deg, ${colors.accent.primary} 0%, #ff8c42 100%)`
     },
     {
       id: 'requests-by-fleet',
       title: 'Requests by Fleet',
       value: `${requestsByFleet.length} fleets`,
       icon: TrendingUp,
-      color: colors.accent.green,
-      gradient: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`
+      color: colors.accent.success,
+      gradient: `colors.accent.success`
     },
     {
       id: 'completed-requests',
       title: 'Completed Requests',
       value: completedRequests.length,
       icon: CheckCircle,
-      color: colors.accent.green,
-      gradient: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`
+      color: colors.accent.success,
+      gradient: `colors.accent.success`
     },
     {
       id: 'revenue-metrics',
@@ -136,8 +136,8 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       value: formatCurrency(totalRevenue),
       subtitle: `Avg: ${formatCurrency(avgRevenue)}`,
       icon: DollarSign,
-      color: colors.accent.green,
-      gradient: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`
+      color: colors.accent.success,
+      gradient: `colors.accent.success`
     },
     {
       id: 'out-of-route',
@@ -145,24 +145,24 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       value: formatNumber(totalOutOfRoute),
       subtitle: `Avg: ${formatNumber(avgOutOfRoute)} mi`,
       icon: Navigation,
-      color: colors.accent.orange,
-      gradient: `linear-gradient(135deg, ${colors.accent.orange} 0%, #ff8c42 100%)`
+      color: colors.accent.primary,
+      gradient: `linear-gradient(135deg, ${colors.accent.primary} 0%, #ff8c42 100%)`
     },
     {
       id: 'cancelled-requests',
       title: 'Cancelled Requests',
       value: cancelledRequests.length,
       icon: X,
-      color: colors.accent.red,
-      gradient: `linear-gradient(135deg, ${colors.accent.red} 0%, #dc2626 100%)`
+      color: colors.accent.danger,
+      gradient: `colors.accent.danger`
     },
     {
       id: 'cancellation-reasons',
       title: 'Cancellation Reasons',
       value: `${Object.keys(cancellationReasons).length} types`,
       icon: FileText,
-      color: colors.accent.red,
-      gradient: `linear-gradient(135deg, ${colors.accent.red} 0%, #dc2626 100%)`
+      color: colors.accent.danger,
+      gradient: `colors.accent.danger`
     },
     {
       id: 'expired-requests',
@@ -231,7 +231,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <td style={{ padding: '12px' }}>{request.fleets?.name || 'Unknown'}</td>
                       <td style={{ padding: '12px' }}>{request.datum_point}</td>
                       <td style={{ padding: '12px', textAlign: 'center' }}>
-                        <span style={{ padding: '4px 12px', background: request.status === 'completed' ? `${colors.accent.green}20` : request.status === 'cancelled' ? `${colors.accent.red}20` : `${colors.accent.cyan}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
+                        <span style={{ padding: '4px 12px', background: request.status === 'completed' ? `${colors.accent.success}20` : request.status === 'cancelled' ? `${colors.accent.danger}20` : `${colors.accent.primary}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
                           {request.status}
                         </span>
                       </td>
@@ -264,8 +264,8 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <tr key={fleet.id} style={{ borderBottom: `1px solid ${colors.border.primary}` }}>
                       <td style={{ padding: '12px', fontWeight: 600 }}>{fleet.name}</td>
                       <td style={{ padding: '12px', textAlign: 'right', fontWeight: 700 }}>{total}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', color: colors.accent.green }}>{completed}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', color: colors.accent.red }}>{cancelled}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', color: colors.accent.success }}>{completed}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', color: colors.accent.danger }}>{cancelled}</td>
                       <td style={{ padding: '12px', textAlign: 'right', color: colors.text.tertiary }}>{expired}</td>
                     </tr>
                   ))}
@@ -295,7 +295,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <tr key={request.id} style={{ borderBottom: `1px solid ${colors.border.primary}` }}>
                       <td style={{ padding: '12px', fontWeight: 600 }}>{request.request_name}</td>
                       <td style={{ padding: '12px' }}>{request.fleets?.name || 'Unknown'}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.green }}>{formatCurrency(parseFloat(request.revenue_amount) || 0)}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.success }}>{formatCurrency(parseFloat(request.revenue_amount) || 0)}</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>{formatNumber(parseFloat(request.out_of_route_miles) || 0)} mi</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>{request.completed_at ? new Date(request.completed_at).toLocaleDateString() : 'N/A'}</td>
                     </tr>
@@ -313,11 +313,11 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
             <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
                 <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Total Revenue</div>
-                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.green }}>{formatCurrency(totalRevenue)}</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.success }}>{formatCurrency(totalRevenue)}</div>
               </div>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
                 <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Average Revenue</div>
-                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.green }}>{formatCurrency(avgRevenue)}</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.success }}>{formatCurrency(avgRevenue)}</div>
               </div>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
                 <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Completed Requests</div>
@@ -338,7 +338,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <tr key={request.id} style={{ borderBottom: `1px solid ${colors.border.primary}` }}>
                       <td style={{ padding: '12px', fontWeight: 600 }}>{request.request_name}</td>
                       <td style={{ padding: '12px' }}>{request.fleets?.name}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.green }}>{formatCurrency(parseFloat(request.revenue_amount) || 0)}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.success }}>{formatCurrency(parseFloat(request.revenue_amount) || 0)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -354,11 +354,11 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
             <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
                 <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Total Miles</div>
-                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.orange }}>{formatNumber(totalOutOfRoute)}</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.primary }}>{formatNumber(totalOutOfRoute)}</div>
               </div>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
                 <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Average Miles</div>
-                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.orange }}>{formatNumber(avgOutOfRoute)}</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.primary }}>{formatNumber(avgOutOfRoute)}</div>
               </div>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -542,7 +542,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
     return (
       <div style={{ minHeight: '100vh', background: colors.background.primary, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.cyan}40`, borderTop: `4px solid ${colors.accent.cyan}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.primary}40`, borderTop: `4px solid ${colors.accent.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: colors.text.secondary }}>Loading reports...</p>
         </div>
       </div>
@@ -555,9 +555,9 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
+            <Truck size={32} color={colors.accent.primary} strokeWidth={2.5} />
             <div>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BACKHAUL</h1>
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', color: colors.accent.primary }}>BACKHAUL</h1>
               <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>SMART RETURN ROUTE OPTIMIZATION</p>
             </div>
           </div>

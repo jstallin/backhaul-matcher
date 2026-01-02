@@ -145,7 +145,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     return (
       <div style={{ minHeight: '100vh', background: colors.background.primary, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.cyan}40`, borderTop: `4px solid ${colors.accent.cyan}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.primary}40`, borderTop: `4px solid ${colors.accent.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
           <p style={{ color: colors.text.secondary }}>Loading...</p>
         </div>
       </div>
@@ -157,9 +157,9 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
+            <Truck size={32} color={colors.accent.primary} strokeWidth={2.5} />
             <div>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>BACKHAUL</h1>
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', color: colors.accent.primary }}>BACKHAUL</h1>
               <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>SMART RETURN ROUTE OPTIMIZATION</p>
             </div>
           </div>
@@ -185,7 +185,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
             <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               You need to create a fleet before you can start a backhaul request.
             </p>
-            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: `colors.accent.primary`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
               Go to Fleets
             </button>
           </div>
@@ -195,38 +195,38 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
               
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Request Name *</label>
-                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.requestName ? colors.accent.red : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
-                {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.red }}>{errors.requestName}</div>}
+                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.requestName}</div>}
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Auto-generated with date to avoid duplicates</div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
-                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.datumPoint ? colors.accent.red : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
-                {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.red }}>{errors.datumPoint}</div>}
+                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.datumPoint}</div>}
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return to</div>
               </div>
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Truck size={16} style={{ display: 'inline', marginRight: '6px' }} />Select Fleet *</label>
-                <select value={formData.selectedFleetId} onChange={(e) => handleChange('selectedFleetId', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.selectedFleetId ? colors.accent.red : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', cursor: 'pointer' }}>
+                <select value={formData.selectedFleetId} onChange={(e) => handleChange('selectedFleetId', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.selectedFleetId ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', cursor: 'pointer' }}>
                   <option value="">-- Select a fleet --</option>
                   {fleets.map(fleet => <option key={fleet.id} value={fleet.id}>{fleet.name} (MC: {fleet.mc_number || 'N/A'})</option>)}
                 </select>
-                {errors.selectedFleetId && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.red }}>{errors.selectedFleetId}</div>}
+                {errors.selectedFleetId && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.selectedFleetId}</div>}
                 {selectedFleet && <div style={{ marginTop: '12px', padding: '12px', background: colors.background.tertiary, borderRadius: '8px', fontSize: '13px', color: colors.text.secondary }}><div><strong>Home:</strong> {selectedFleet.home_address}</div>{selectedFleet.mc_number && <div><strong>MC:</strong> {selectedFleet.mc_number}</div>}{selectedFleet.dot_number && <div><strong>DOT:</strong> {selectedFleet.dot_number}</div>}</div>}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Equipment Available *</label>
-                  <input type="date" value={formData.equipmentAvailableDate} onChange={(e) => handleChange('equipmentAvailableDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentAvailableDate ? colors.accent.red : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
-                  {errors.equipmentAvailableDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.red }}>{errors.equipmentAvailableDate}</div>}
+                  <input type="date" value={formData.equipmentAvailableDate} onChange={(e) => handleChange('equipmentAvailableDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentAvailableDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                  {errors.equipmentAvailableDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentAvailableDate}</div>}
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Equipment Needed Back *</label>
-                  <input type="date" value={formData.equipmentNeededDate} onChange={(e) => handleChange('equipmentNeededDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentNeededDate ? colors.accent.red : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
-                  {errors.equipmentNeededDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.red }}>{errors.equipmentNeededDate}</div>}
+                  <input type="date" value={formData.equipmentNeededDate} onChange={(e) => handleChange('equipmentNeededDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentNeededDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                  {errors.equipmentNeededDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentNeededDate}</div>}
                 </div>
               </div>
 
@@ -237,8 +237,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 </label>
               </div>
 
-              <div style={{ padding: '20px', background: `\${colors.accent.cyan}10`, border: `1px solid \${colors.accent.cyan}30`, borderRadius: '12px', marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><RefreshCw size={20} color={colors.accent.cyan} />Refresh Options</h3>
+              <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><RefreshCw size={20} color={colors.accent.primary} />Refresh Options</h3>
                 <div style={{ padding: '12px', background: colors.background.card, borderRadius: '8px', marginBottom: '16px', fontSize: '13px', color: colors.text.secondary }}>You can manually refresh this request anytime from the Open Requests page</div>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
                   <input type="checkbox" checked={formData.autoRefresh} onChange={(e) => handleChange('autoRefresh', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
@@ -247,8 +247,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 {formData.autoRefresh && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Refresh Interval</label><select value={formData.autoRefreshInterval} onChange={(e) => handleChange('autoRefreshInterval', e.target.value)} disabled={saving} style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}><option value="1">Every 1 Hour</option><option value="4">Every 4 Hours</option></select></div>}
               </div>
 
-              <div style={{ padding: '20px', background: `\${colors.accent.orange}10`, border: `1px solid \${colors.accent.orange}30`, borderRadius: '12px', marginBottom: '32px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={20} color={colors.accent.orange} />Notifications</h3>
+              <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '32px' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={20} color={colors.accent.primary} />Notifications</h3>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
                   <input type="checkbox" checked={formData.notificationEnabled} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Get notified when auto-refresh finds changes in top result</div></div>
@@ -256,7 +256,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 {formData.notificationEnabled && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
               </div>
 
-              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}><Plus size={20} />{saving ? 'Creating Request...' : 'Create Request'}</button>
+              <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: `colors.accent.success`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}><Plus size={20} />{saving ? 'Creating Request...' : 'Create Request'}</button>
             </div>
           </form>
         )}

@@ -80,7 +80,7 @@ export const RouteComparisonModal = ({ route, backhaul, onClose, onAssign }) => 
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = colors.background.hover;
-              e.currentTarget.style.borderColor = colors.accent.red;
+              e.currentTarget.style.borderColor = colors.accent.danger;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = colors.background.tertiary;
@@ -117,7 +117,7 @@ export const RouteComparisonModal = ({ route, backhaul, onClose, onAssign }) => 
                   <div style={{
                     width: '24px',
                     height: '3px',
-                    background: colors.accent.orange,
+                    background: colors.accent.primary,
                     borderRadius: '2px'
                   }} />
                   <span style={{ fontSize: '12px', color: colors.text.secondary }}>
@@ -129,7 +129,7 @@ export const RouteComparisonModal = ({ route, backhaul, onClose, onAssign }) => 
                     <div style={{
                       width: '24px',
                       height: '3px',
-                      background: colors.accent.green,
+                      background: colors.accent.success,
                       borderRadius: '2px',
                       backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 4px, ' + colors.background.secondary + ' 4px, ' + colors.background.secondary + ' 8px)'
                     }} />
@@ -182,7 +182,7 @@ export const RouteComparisonModal = ({ route, backhaul, onClose, onAssign }) => 
                 onClick={() => onAssign(backhaul)}
                 style={{
                   padding: '12px 24px',
-                  background: `linear-gradient(135deg, ${colors.accent.green} 0%, #059669 100%)`,
+                  background: `colors.accent.success`,
                   border: 'none',
                   borderRadius: '8px',
                   color: '#fff',

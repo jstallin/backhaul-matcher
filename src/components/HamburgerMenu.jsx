@@ -64,9 +64,9 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
         style={{
           padding: '10px 16px',
           background: isOpen 
-            ? `linear-gradient(135deg, ${colors.accent.cyan}20 0%, ${colors.accent.cyan}10 100%)`
+            ? `linear-gradient(135deg, ${colors.accent.primary}20 0%, ${colors.accent.primary}10 100%)`
             : colors.background.secondary,
-          border: `2px solid ${isOpen ? colors.accent.cyan : colors.border.accent}`,
+          border: `2px solid ${isOpen ? colors.accent.primary : colors.border.accent}`,
           borderRadius: '8px',
           color: colors.text.primary,
           cursor: 'pointer',
@@ -81,7 +81,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
         onMouseEnter={(e) => {
           if (!isOpen) {
             e.currentTarget.style.background = colors.background.hover;
-            e.currentTarget.style.borderColor = colors.accent.cyan;
+            e.currentTarget.style.borderColor = colors.accent.primary;
           }
         }}
         onMouseLeave={(e) => {
@@ -91,7 +91,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           }
         }}
       >
-        {isOpen ? <X size={20} color={colors.accent.cyan} /> : <Menu size={20} />}
+        {isOpen ? <X size={20} color={colors.accent.primary} /> : <Menu size={20} />}
         Menu
       </button>
 
@@ -124,7 +124,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                 style={{
                   width: '100%',
                   padding: '16px 20px',
-                  background: isActive ? `${colors.accent.cyan}20` : 'transparent',
+                  background: isActive ? `${colors.accent.primary}20` : 'transparent',
                   border: 'none',
                   borderBottom: index < menuItems.length - 1 ? `1px solid ${colors.border.secondary}` : 'none',
                   textAlign: 'left',
@@ -143,14 +143,14 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
               >
                 <Icon 
                   size={20} 
-                  color={isActive ? colors.accent.cyan : colors.text.secondary} 
+                  color={isActive ? colors.accent.primary : colors.text.secondary} 
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: isActive ? colors.accent.cyan : colors.text.primary,
+                    color: isActive ? colors.accent.primary : colors.text.primary,
                     marginBottom: '4px'
                   }}>
                     {item.label}

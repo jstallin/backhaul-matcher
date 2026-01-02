@@ -109,7 +109,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 ? 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 100%)'
                 : '${colors.background.secondary}',
               border: selectedTruck?.id === truck.id 
-                ? '2px solid ${colors.accent.cyan}' 
+                ? '2px solid ${colors.accent.primary}' 
                 : '1px solid ${colors.border.primary}',
               borderRadius: '12px',
               padding: '20px',
@@ -134,14 +134,14 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
               <div style={{
                 fontSize: '18px',
                 fontWeight: 800,
-                color: selectedTruck?.id === truck.id ? '${colors.accent.cyan}' : '${colors.text.primary}',
+                color: selectedTruck?.id === truck.id ? '${colors.accent.primary}' : '${colors.text.primary}',
                 marginBottom: '8px',
                 fontFamily: "'JetBrains Mono', monospace",
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                <Truck size={20} color={selectedTruck?.id === truck.id ? '${colors.accent.cyan}' : '${colors.text.secondary}'} />
+                <Truck size={20} color={selectedTruck?.id === truck.id ? '${colors.accent.primary}' : '${colors.text.secondary}'} />
                 {truck.truck_number}
               </div>
               <div style={{
@@ -161,7 +161,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                background: '${colors.accent.cyan}',
+                background: '${colors.accent.primary}',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -194,7 +194,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <MapPin size={20} color="${colors.accent.cyan}" />
+            <MapPin size={20} color="${colors.accent.primary}" />
             Final Destination for {selectedTruck.truck_number}
           </h4>
 
@@ -284,7 +284,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             style={{
               width: '100%',
               padding: '16px',
-              background: `linear-gradient(135deg, ${colors.accent.cyan} 0%, #00a8cc 100%)`,
+              background: `colors.accent.primary`,
               border: 'none',
               borderRadius: '12px',
               color: '#fff',
