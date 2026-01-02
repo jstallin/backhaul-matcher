@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, DollarSign, Navigation, TrendingUp, Truck, Calendar, Package, Edit, X } from '../icons';
+import { MapPin, DollarSign, Navigation, TrendingUp, Truck, Calendar, Package, Edit, X, Map } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { RouteStats } from './RouteStats';
@@ -102,7 +102,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
         /* Matches List */
         <div>
           {matches.map((match, index) => (
-            <div key={match.id} style={{ marginBottom: '16px', background: colors.background.card, border: `2px solid ${index < 3 ? getRankColor(index) + '40' : colors.border.primary}`, borderRadius: '16px', padding: '24px', transition: 'all 0.2s', cursor: 'pointer' }} onClick={() => setSelectedMatch(match)} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${getRankColor(index)}30`; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+            <div key={match.id} style={{ marginBottom: '16px', background: colors.background.card, border: `2px solid ${index < 3 ? getRankColor(index) + '40' : colors.border.primary}`, borderRadius: '16px', padding: '24px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${getRankColor(index)}30`; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
               
               {/* Rank Badge */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -191,6 +191,18 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   <div><strong>Freight:</strong> {match.freightType}</div>
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                <button onClick={() => setSelectedMatch(match)} style={{ flex: 1, padding: '12px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent.secondary; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent.primary; }}>
+                  <Package size={16} />
+                  View Details
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); setSelectedMatch(match); setShowMap(true); }} style={{ flex: 1, padding: '12px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}10`; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; }}>
+                  <Map size={16} />
+                  View on Map
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -240,9 +252,15 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
             </div>
             <div style={{ height: 'calc(100% - 60px)' }}>
               <RouteMap
-                origin={{ ...selectedMatch.origin, lat: selectedMatch.origin.lat, lng: selectedMatch.origin.lng }}
-                destination={{ ...selectedMatch.destination, lat: selectedMatch.destination.lat, lng: selectedMatch.destination.lng }}
-                distance={selectedMatch.distance}
+                route={{
+                  origin_lat: selectedMatch.origin.lat,
+                  origin_lng: selectedMatch.origin.lng,
+                  dest_lat: selectedMatch.destination.lat,
+                  dest_lng: selectedMatch.destination.lng,
+                  origin_city: selectedMatch.origin.address,
+                  dest_city: selectedMatch.destination.address,
+                  distance_miles: selectedMatch.distance
+                }}
               />
             </div>
           </div>
