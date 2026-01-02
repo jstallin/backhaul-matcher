@@ -45,23 +45,20 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   }, []);
 
   const loadEditingRequest = () => {
-    // Check if we've already processed this editing request
-    const editingRequestProcessed = localStorage.getItem('editingRequestProcessed');
-    if (editingRequestProcessed) {
-      console.log('⏭️ Already processed this editing request, skipping');
-      return;
-    }
-    
     const editingRequest = localStorage.getItem('editingRequest');
     console.log('🔍 Checking for editingRequest in localStorage:', editingRequest ? 'Found' : 'Not found');
     
     if (editingRequest) {
+      // Check if we've already processed to avoid double-removing
+      const alreadyProcessed = localStorage.getItem('editingRequestProcessed');
+      
       try {
         const request = JSON.parse(editingRequest);
         console.log('✅ Parsed editing request:', {
           id: request.id,
           name: request.request_name,
-          fleetId: request.fleet_id
+          fleetId: request.fleet_id,
+          alreadyProcessed: !!alreadyProcessed
         });
         
         // Build the form data object
@@ -83,10 +80,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         setFormData(updatedFormData);
         console.log('✨ Form data set with editingId:', request.id);
         
-        // Mark as processed so subsequent mounts don't reload
-        localStorage.setItem('editingRequestProcessed', 'true');
+        // Mark as processed so we know not to re-load from server
+        if (!alreadyProcessed) {
+          localStorage.setItem('editingRequestProcessed', 'true');
+          console.log('✅ Marked editing request as processed');
+        } else {
+          console.log('♻️ Reloading editing request from localStorage (remount)');
+        }
+        
         hasLoadedEditingRequest.current = true;
-        console.log('✅ Marked editing request as processed');
       } catch (error) {
         console.error('❌ Error loading editing request:', error);
       }
