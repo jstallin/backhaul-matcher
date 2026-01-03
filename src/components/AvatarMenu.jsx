@@ -98,22 +98,25 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
       {isOpen && (
         <>
           <style>{`
+            .avatar-menu-dropdown {
+              position: absolute;
+              top: calc(100% + 8px);
+              right: 0;
+              min-width: 220px;
+              max-width: 280px;
+            }
             @media (max-width: 640px) {
               .avatar-menu-dropdown {
-                right: auto !important;
-                left: auto !important;
-                transform: translateX(calc(-100% + 48px)) !important;
+                right: auto;
+                left: 50%;
+                transform: translateX(-50%);
+                max-width: calc(100vw - 32px);
               }
             }
           `}</style>
           <div 
             className="avatar-menu-dropdown"
             style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              minWidth: '220px',
-              maxWidth: '280px',
               background: colors.background.overlay,
               border: `1px solid ${colors.border.accent}`,
               borderRadius: '12px',
