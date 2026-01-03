@@ -100,8 +100,10 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 8px)',
-          right: 0,
+          left: '0',
+          right: '0',
           minWidth: '280px',
+          maxWidth: '320px',
           background: colors.background.overlay,
           border: `1px solid ${colors.border.accent}`,
           borderRadius: '12px',
@@ -132,7 +134,8 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: '12px'
+                  gap: '12px',
+                  minHeight: '56px'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) e.currentTarget.style.background = colors.background.tertiary;
@@ -146,19 +149,23 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   color={isActive ? colors.accent.primary : colors.text.secondary} 
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
                     color: isActive ? colors.accent.primary : colors.text.primary,
-                    marginBottom: '4px'
+                    marginBottom: '4px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                   }}>
                     {item.label}
                   </div>
                   <div style={{
                     fontSize: '12px',
                     color: colors.text.secondary,
-                    lineHeight: '1.4'
+                    lineHeight: '1.4',
+                    whiteSpace: 'normal'
                   }}>
                     {item.description}
                   </div>

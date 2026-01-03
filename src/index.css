@@ -4,11 +4,44 @@
   box-sizing: border-box;
 }
 
+/* Mobile-friendly touch targets and viewport */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: 'Darker Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: contain;
+  /* Better touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure buttons are touch-friendly (minimum 44x44px) */
+button {
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Better focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #5EA0DB;
+  outline-offset: 2px;
+}
+
+/* Remove default button styling on mobile */
+button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 @keyframes float {

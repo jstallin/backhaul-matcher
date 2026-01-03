@@ -100,7 +100,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
           position: 'absolute',
           top: 'calc(100% + 8px)',
           right: 0,
-          minWidth: '240px',
+          minWidth: '220px',
+          maxWidth: '280px',
           background: colors.background.overlay,
           border: `1px solid ${colors.border.accent}`,
           borderRadius: '12px',
@@ -121,7 +122,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               marginBottom: '4px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              maxWidth: '240px'
             }}>
               {userName}
             </div>
@@ -147,7 +149,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px'
+              gap: '12px',
+              minHeight: '48px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = colors.background.tertiary;
@@ -156,7 +159,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <Settings size={18} color={colors.text.secondary} />
+            <Settings size={18} color={colors.text.secondary} style={{ flexShrink: 0 }} />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
@@ -178,7 +181,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px'
+              gap: '12px',
+              minHeight: '48px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
@@ -187,7 +191,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               e.currentTarget.style.background = 'transparent';
             }}
           >
-            <LogOut size={18} color={colors.accent.danger} />
+            <LogOut size={18} color={colors.accent.danger} style={{ flexShrink: 0 }} />
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
