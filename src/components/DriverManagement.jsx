@@ -1,8 +1,10 @@
+import { useTheme } from '../contexts/ThemeContext';
 import { useState, useEffect } from 'react';
 import { User, Plus, Edit, Trash2, Save, X, Truck as TruckIcon, Mail } from '../icons';
 import { db, supabase } from '../lib/supabase';
 
 export const DriverManagement = ({ fleetId }) => {
+  const { colors } = useTheme();
   const [drivers, setDrivers] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +135,7 @@ export const DriverManagement = ({ fleetId }) => {
   };
 
   if (loading) {
-    return <div style={{ padding: '20px', color: '#8b92a7' }}>Loading drivers...</div>;
+    return <div style={{ padding: '20px', color: colors.text.secondary }}>Loading drivers...</div>;
   }
 
   return (
@@ -149,7 +151,7 @@ export const DriverManagement = ({ fleetId }) => {
           margin: 0,
           fontSize: '24px',
           fontWeight: 900,
-          color: '#e8eaed',
+          color: colors.text.primary,
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
@@ -193,7 +195,7 @@ export const DriverManagement = ({ fleetId }) => {
             margin: '0 0 20px 0',
             fontSize: '18px',
             fontWeight: 800,
-            color: '#e8eaed'
+            color: colors.text.primary
           }}>
             {editing ? 'Edit Driver' : 'Add New Driver'}
           </h4>
@@ -202,7 +204,7 @@ export const DriverManagement = ({ fleetId }) => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
               {/* First Name */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   First Name *
                 </label>
                 <input
@@ -214,10 +216,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -226,7 +228,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* Last Name */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Last Name *
                 </label>
                 <input
@@ -238,10 +240,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -250,7 +252,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* Email */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Email {!editing && '*'}
                 </label>
                 <input
@@ -264,7 +266,7 @@ export const DriverManagement = ({ fleetId }) => {
                     width: '100%',
                     padding: '10px 12px',
                     background: editing ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
                     color: editing ? '#6b7280' : '#e8eaed',
                     fontSize: '14px',
@@ -272,7 +274,7 @@ export const DriverManagement = ({ fleetId }) => {
                   }}
                 />
                 {!editing && (
-                  <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: '#6b7280' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: colors.text.tertiary }}>
                     Creates driver login & sends confirmation email
                   </p>
                 )}
@@ -280,7 +282,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* Phone */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Phone
                 </label>
                 <input
@@ -292,10 +294,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -304,7 +306,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* CDL Number */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   CDL Number
                 </label>
                 <input
@@ -316,10 +318,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -328,7 +330,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* CDL State */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   CDL State
                 </label>
                 <input
@@ -341,10 +343,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -353,7 +355,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* Assigned Truck */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Assigned Truck
                 </label>
                 <select
@@ -363,10 +365,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: 'pointer'
@@ -383,7 +385,7 @@ export const DriverManagement = ({ fleetId }) => {
 
               {/* Status */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Status
                 </label>
                 <select
@@ -393,10 +395,10 @@ export const DriverManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: 'pointer'
@@ -444,10 +446,10 @@ export const DriverManagement = ({ fleetId }) => {
                 disabled={creating}
                 style={{
                   padding: '10px 20px',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: colors.background.secondary,
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '8px',
-                  color: '#e8eaed',
+                  color: colors.text.primary,
                   fontSize: '14px',
                   fontWeight: 700,
                   cursor: creating ? 'not-allowed' : 'pointer',
@@ -474,10 +476,10 @@ export const DriverManagement = ({ fleetId }) => {
           border: '1px dashed rgba(255, 255, 255, 0.2)'
         }}>
           <User size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#e8eaed' }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
             No Drivers Yet
           </h4>
-          <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: colors.text.secondary, fontSize: '14px' }}>
             Add your first driver to start assigning trucks and routes
           </p>
         </div>
@@ -489,8 +491,8 @@ export const DriverManagement = ({ fleetId }) => {
               <div
                 key={driver.id}
                 style={{
-                  background: 'rgba(26, 31, 58, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: colors.background.card,
+                  border: `1px solid ${colors.border.primary}`,
                   borderRadius: '12px',
                   padding: '20px',
                   display: 'flex',
@@ -502,7 +504,7 @@ export const DriverManagement = ({ fleetId }) => {
                   <div style={{
                     fontSize: '18px',
                     fontWeight: 800,
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     marginBottom: '8px'
                   }}>
                     {driver.first_name} {driver.last_name}
@@ -522,12 +524,12 @@ export const DriverManagement = ({ fleetId }) => {
                       </span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#8b92a7' }}>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: colors.text.secondary }}>
                     {driver.email && <span><strong>Email:</strong> {driver.email}</span>}
                     {driver.phone && <span><strong>Phone:</strong> {driver.phone}</span>}
                     {driver.cdl_number && <span><strong>CDL:</strong> {driver.cdl_number} ({driver.cdl_state})</span>}
                     {assignedTruck && (
-                      <span style={{ color: '#00d4ff' }}>
+                      <span style={{ color: colors.accent.primary }}>
                         <TruckIcon size={14} style={{ display: 'inline', marginRight: '4px' }} />
                         <strong>{assignedTruck.truck_number}</strong> ({assignedTruck.trailer_type})
                       </span>
@@ -550,7 +552,7 @@ export const DriverManagement = ({ fleetId }) => {
                       background: 'rgba(168, 85, 247, 0.1)',
                       border: '1px solid rgba(168, 85, 247, 0.3)',
                       borderRadius: '6px',
-                      color: '#a855f7',
+                      color: colors.accent.primary,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',

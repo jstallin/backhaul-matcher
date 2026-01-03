@@ -1,8 +1,10 @@
+import { useTheme } from '../contexts/ThemeContext';
 import { useState, useEffect } from 'react';
 import { Truck, Plus, Edit, Trash2, Save, X } from '../icons';
 import { db } from '../lib/supabase';
 
 export const TruckManagement = ({ fleetId }) => {
+  const { colors } = useTheme();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -98,7 +100,7 @@ export const TruckManagement = ({ fleetId }) => {
   };
 
   if (loading) {
-    return <div style={{ padding: '20px', color: '#8b92a7' }}>Loading trucks...</div>;
+    return <div style={{ padding: '20px', color: colors.text.secondary }}>Loading trucks...</div>;
   }
 
   return (
@@ -114,7 +116,7 @@ export const TruckManagement = ({ fleetId }) => {
           margin: 0,
           fontSize: '24px',
           fontWeight: 900,
-          color: '#e8eaed',
+          color: colors.text.primary,
           display: 'flex',
           alignItems: 'center',
           gap: '12px'
@@ -158,7 +160,7 @@ export const TruckManagement = ({ fleetId }) => {
             margin: '0 0 20px 0',
             fontSize: '18px',
             fontWeight: 800,
-            color: '#e8eaed'
+            color: colors.text.primary
           }}>
             {editing ? 'Edit Truck' : 'Add New Truck'}
           </h4>
@@ -167,7 +169,7 @@ export const TruckManagement = ({ fleetId }) => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
               {/* Truck Number */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Truck Number *
                 </label>
                 <input
@@ -179,10 +181,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -191,7 +193,7 @@ export const TruckManagement = ({ fleetId }) => {
 
               {/* Trailer Type */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Trailer Type *
                 </label>
                 <select
@@ -201,10 +203,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: 'pointer'
@@ -221,7 +223,7 @@ export const TruckManagement = ({ fleetId }) => {
 
               {/* Trailer Length */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Length (ft) *
                 </label>
                 <input
@@ -234,10 +236,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -246,7 +248,7 @@ export const TruckManagement = ({ fleetId }) => {
 
               {/* Weight Limit */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Weight Limit (lbs) *
                 </label>
                 <input
@@ -260,10 +262,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -272,7 +274,7 @@ export const TruckManagement = ({ fleetId }) => {
 
               {/* Door Type */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Door Type
                 </label>
                 <select
@@ -281,10 +283,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: 'pointer'
@@ -297,7 +299,7 @@ export const TruckManagement = ({ fleetId }) => {
 
               {/* Status */}
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#b8bcc8' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>
                   Status
                 </label>
                 <select
@@ -306,10 +308,10 @@ export const TruckManagement = ({ fleetId }) => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.primary}`,
                     borderRadius: '6px',
-                    color: '#e8eaed',
+                    color: colors.text.primary,
                     fontSize: '14px',
                     outline: 'none',
                     cursor: 'pointer'
@@ -348,10 +350,10 @@ export const TruckManagement = ({ fleetId }) => {
                 onClick={resetForm}
                 style={{
                   padding: '10px 20px',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: colors.background.secondary,
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '8px',
-                  color: '#e8eaed',
+                  color: colors.text.primary,
                   fontSize: '14px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -373,15 +375,15 @@ export const TruckManagement = ({ fleetId }) => {
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'rgba(26, 31, 58, 0.4)',
+          background: colors.background.secondary,
           borderRadius: '12px',
-          border: '1px dashed rgba(255, 255, 255, 0.2)'
+          border: `1px dashed ${colors.border.accent}`
         }}>
-          <Truck size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: '#e8eaed' }}>
+          <Truck size={48} color={colors.text.tertiary} style={{ marginBottom: '16px' }} />
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
             No Trucks Yet
           </h4>
-          <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: colors.text.secondary, fontSize: '14px' }}>
             Add your first truck to start managing your fleet
           </p>
         </div>
@@ -391,8 +393,8 @@ export const TruckManagement = ({ fleetId }) => {
             <div
               key={truck.id}
               style={{
-                background: 'rgba(26, 31, 58, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
                 borderRadius: '12px',
                 padding: '20px',
                 display: 'flex',
@@ -404,13 +406,13 @@ export const TruckManagement = ({ fleetId }) => {
                 <div style={{
                   fontSize: '18px',
                   fontWeight: 800,
-                  color: '#e8eaed',
+                  color: colors.text.primary,
                   marginBottom: '8px',
                   fontFamily: "'JetBrains Mono', monospace"
                 }}>
                   {truck.truck_number}
                 </div>
-                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: '#8b92a7' }}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: colors.text.secondary }}>
                   <span><strong>Type:</strong> {truck.trailer_type}</span>
                   <span><strong>Length:</strong> {truck.trailer_length} ft</span>
                   <span><strong>Weight:</strong> {truck.weight_limit.toLocaleString()} lbs</span>
@@ -433,7 +435,7 @@ export const TruckManagement = ({ fleetId }) => {
                     background: 'rgba(0, 212, 255, 0.1)',
                     border: '1px solid rgba(0, 212, 255, 0.3)',
                     borderRadius: '6px',
-                    color: '#00d4ff',
+                    color: colors.accent.primary,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
