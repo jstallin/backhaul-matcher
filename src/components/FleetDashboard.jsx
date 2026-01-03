@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { db } from '../lib/supabase';
 import { FleetSetup } from './FleetSetup';
 import { TruckManagement } from './TruckManagement';
 import { DriverManagement } from './DriverManagement';
-import { Truck, Settings as SettingsIcon, User } from '../icons';
+import { Truck, Settings as SettingsIcon, User, ArrowLeft } from '../icons';
 
 export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [fleet, setFleet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
@@ -47,10 +49,26 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
-        color: '#e8eaed'
+        background: colors.background.primary,
+        color: colors.text.primary
       }}>
-        Loading...
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ 
+            width: '48px', 
+            height: '48px', 
+            border: `4px solid ${colors.accent.primary}40`, 
+            borderTop: `4px solid ${colors.accent.primary}`, 
+            borderRadius: '50%', 
+            animation: 'spin 1s linear infinite', 
+            margin: '0 auto 16px' 
+          }} />
+          <div>Loading...</div>
+        </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -58,33 +76,30 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
-      padding: '20px'
+      background: colors.background.primary,
+      padding: '32px'
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{
-          background: 'rgba(26, 31, 58, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          padding: '24px',
-          marginBottom: '24px',
-          backdropFilter: 'blur(10px)'
+          marginBottom: '32px',
+          borderBottom: `1px solid ${colors.border.secondary}`,
+          paddingBottom: '24px'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h1 style={{
-                margin: '0 0 8px 0',
-                fontSize: '32px',
+                margin: '0 0 4px 0',
+                fontSize: '28px',
                 fontWeight: 900,
-                background: 'linear-gradient(135deg, #ff6b35 0%, #00d4ff 100%)',
+                background: `linear-gradient(135deg, ${colors.accent.primary} 0%, ${colors.accent.primary} 100%)`,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}>
-                Fleet Management
+                BACKHAUL
               </h1>
               {fleet && (
-                <p style={{ margin: 0, fontSize: '16px', color: '#8b92a7' }}>
+                <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
                   {fleet.name}
                 </p>
               )}
@@ -92,30 +107,43 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
             <button
               onClick={onBackToSearch}
               style={{
-                padding: '12px 24px',
-                background: 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)',
-                border: 'none',
+                padding: '10px 20px',
+                background: colors.background.secondary,
+                border: `1px solid ${colors.border.accent}`,
                 borderRadius: '8px',
-                color: '#fff',
+                color: colors.text.primary,
                 fontSize: '14px',
-                fontWeight: 700,
-                cursor: 'pointer'
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = colors.accent.primary;
+                e.currentTarget.style.color = colors.accent.primary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border.accent;
+                e.currentTarget.style.color = colors.text.primary;
               }}
             >
-              ← Back
+              <ArrowLeft size={16} />
+              Back
             </button>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
             <button
               onClick={() => setActiveTab('profile')}
               style={{
                 padding: '12px 24px',
-                background: activeTab === 'profile' ? 'rgba(255, 107, 53, 0.1)' : 'transparent',
+                background: activeTab === 'profile' ? `${colors.accent.primary}20` : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'profile' ? '2px solid #ff6b35' : '2px solid transparent',
-                color: activeTab === 'profile' ? '#ff6b35' : '#8b92a7',
+                borderBottom: activeTab === 'profile' ? `2px solid ${colors.accent.primary}` : '2px solid transparent',
+                color: activeTab === 'profile' ? colors.accent.primary : colors.text.secondary,
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -132,10 +160,10 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
               onClick={() => setActiveTab('trucks')}
               style={{
                 padding: '12px 24px',
-                background: activeTab === 'trucks' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
+                background: activeTab === 'trucks' ? `${colors.accent.primary}20` : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'trucks' ? '2px solid #00d4ff' : '2px solid transparent',
-                color: activeTab === 'trucks' ? '#00d4ff' : '#8b92a7',
+                borderBottom: activeTab === 'trucks' ? `2px solid ${colors.accent.primary}` : '2px solid transparent',
+                color: activeTab === 'trucks' ? colors.accent.primary : colors.text.secondary,
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -152,10 +180,10 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
               onClick={() => setActiveTab('drivers')}
               style={{
                 padding: '12px 24px',
-                background: activeTab === 'drivers' ? 'rgba(168, 85, 247, 0.1)' : 'transparent',
+                background: activeTab === 'drivers' ? `${colors.accent.primary}20` : 'transparent',
                 border: 'none',
-                borderBottom: activeTab === 'drivers' ? '2px solid #a855f7' : '2px solid transparent',
-                color: activeTab === 'drivers' ? '#a855f7' : '#8b92a7',
+                borderBottom: activeTab === 'drivers' ? `2px solid ${colors.accent.primary}` : '2px solid transparent',
+                color: activeTab === 'drivers' ? colors.accent.primary : colors.text.secondary,
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -173,11 +201,10 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
 
         {/* Content */}
         <div style={{
-          background: 'rgba(26, 31, 58, 0.6)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: colors.background.card,
+          border: `1px solid ${colors.border.primary}`,
           borderRadius: '16px',
-          padding: '32px',
-          backdropFilter: 'blur(10px)'
+          padding: '32px'
         }}>
           {activeTab === 'profile' && (
             <FleetSetup fleet={fleet} onComplete={handleFleetComplete} />
