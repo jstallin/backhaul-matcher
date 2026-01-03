@@ -99,9 +99,9 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
         <div style={{
           position: 'absolute',
           top: 'calc(100% + 8px)',
-          right: 0,
+          right: '-8px',
           minWidth: '220px',
-          maxWidth: '280px',
+          maxWidth: 'calc(100vw - 32px)',
           background: colors.background.overlay,
           border: `1px solid ${colors.border.accent}`,
           borderRadius: '12px',
@@ -122,8 +122,7 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
               marginBottom: '4px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '240px'
+              whiteSpace: 'nowrap'
             }}>
               {userName}
             </div>
@@ -163,7 +162,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: colors.text.primary
+              color: colors.text.primary,
+              whiteSpace: 'nowrap'
             }}>
               Settings
             </span>
@@ -195,7 +195,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
             <span style={{
               fontSize: '14px',
               fontWeight: 600,
-              color: colors.accent.danger
+              color: colors.accent.danger,
+              whiteSpace: 'nowrap'
             }}>
               Sign Out
             </span>
