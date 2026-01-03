@@ -420,7 +420,7 @@ export const TruckManagement = ({ fleetId }) => {
                   <span>
                     <strong>Status:</strong>{' '}
                     <span style={{
-                      color: truck.status === 'active' ? '#10b981' : truck.status === 'maintenance' ? '#f59e0b' : '#6b7280'
+                      color: truck.status === 'active' ? colors.accent.success : truck.status === 'maintenance' ? colors.accent.warning : colors.text.tertiary
                     }}>
                       {truck.status}
                     </span>
@@ -432,8 +432,8 @@ export const TruckManagement = ({ fleetId }) => {
                   onClick={() => handleEdit(truck)}
                   style={{
                     padding: '8px 16px',
-                    background: 'rgba(0, 212, 255, 0.1)',
-                    border: '1px solid rgba(0, 212, 255, 0.3)',
+                    background: 'transparent',
+                    border: `1px solid ${colors.accent.primary}`,
                     borderRadius: '6px',
                     color: colors.accent.primary,
                     cursor: 'pointer',
@@ -441,7 +441,14 @@ export const TruckManagement = ({ fleetId }) => {
                     alignItems: 'center',
                     gap: '6px',
                     fontSize: '13px',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `${colors.accent.primary}15`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
                   }}
                 >
                   <Edit size={14} />
@@ -451,16 +458,23 @@ export const TruckManagement = ({ fleetId }) => {
                   onClick={() => handleDelete(truck.id)}
                   style={{
                     padding: '8px 16px',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    background: 'transparent',
+                    border: `1px solid ${colors.accent.danger}`,
                     borderRadius: '6px',
-                    color: '#f87171',
+                    color: colors.accent.danger,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
                     fontSize: '13px',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `${colors.accent.danger}15`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
                   }}
                 >
                   <Trash2 size={14} />

@@ -471,11 +471,11 @@ export const DriverManagement = ({ fleetId }) => {
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
-          background: 'rgba(26, 31, 58, 0.4)',
+          background: colors.background.secondary,
           borderRadius: '12px',
-          border: '1px dashed rgba(255, 255, 255, 0.2)'
+          border: `1px dashed ${colors.border.accent}`
         }}>
-          <User size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
+          <User size={48} color={colors.text.tertiary} style={{ marginBottom: '16px' }} />
           <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
             No Drivers Yet
           </h4>
@@ -512,11 +512,11 @@ export const DriverManagement = ({ fleetId }) => {
                       <span style={{
                         marginLeft: '8px',
                         padding: '2px 8px',
-                        background: 'rgba(16, 185, 129, 0.2)',
-                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        background: `${colors.accent.success}20`,
+                        border: `1px solid ${colors.accent.success}`,
                         borderRadius: '4px',
                         fontSize: '11px',
-                        color: '#6ee7b7',
+                        color: colors.accent.success,
                         fontWeight: 600
                       }}>
                         <Mail size={10} style={{ display: 'inline', marginRight: '4px' }} />
@@ -537,7 +537,7 @@ export const DriverManagement = ({ fleetId }) => {
                     <span>
                       <strong>Status:</strong>{' '}
                       <span style={{
-                        color: driver.status === 'active' ? '#10b981' : driver.status === 'on_leave' ? '#f59e0b' : '#6b7280'
+                        color: driver.status === 'active' ? colors.accent.success : driver.status === 'on_leave' ? colors.accent.warning : colors.text.tertiary
                       }}>
                         {driver.status}
                       </span>
@@ -549,8 +549,8 @@ export const DriverManagement = ({ fleetId }) => {
                     onClick={() => handleEdit(driver)}
                     style={{
                       padding: '8px 16px',
-                      background: 'rgba(168, 85, 247, 0.1)',
-                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      background: 'transparent',
+                      border: `1px solid ${colors.accent.primary}`,
                       borderRadius: '6px',
                       color: colors.accent.primary,
                       cursor: 'pointer',
@@ -558,7 +558,14 @@ export const DriverManagement = ({ fleetId }) => {
                       alignItems: 'center',
                       gap: '6px',
                       fontSize: '13px',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = `${colors.accent.primary}15`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
                     }}
                   >
                     <Edit size={14} />
@@ -568,16 +575,23 @@ export const DriverManagement = ({ fleetId }) => {
                     onClick={() => handleDelete(driver.id)}
                     style={{
                       padding: '8px 16px',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      background: 'transparent',
+                      border: `1px solid ${colors.accent.danger}`,
                       borderRadius: '6px',
-                      color: '#f87171',
+                      color: colors.accent.danger,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
                       fontSize: '13px',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = `${colors.accent.danger}15`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
                     }}
                   >
                     <Trash2 size={14} />
