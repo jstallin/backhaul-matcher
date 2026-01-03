@@ -448,7 +448,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                             style={{
                               flex: 1,
                               padding: '12px',
-                              background: `colors.accent.primary`,
+                              background: colors.accent.primary,
                               border: 'none',
                               borderRadius: '8px',
                               color: '#fff',
@@ -463,7 +463,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'translateY(-2px)';
-                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 212, 255, 0.3)';
+                              e.currentTarget.style.boxShadow = `0 4px 12px ${colors.accent.primary}60`;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.transform = 'translateY(0)';
