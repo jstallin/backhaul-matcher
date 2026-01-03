@@ -96,112 +96,125 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: '-8px',
-          minWidth: '220px',
-          maxWidth: 'calc(100vw - 32px)',
-          background: colors.background.overlay,
-          border: `1px solid ${colors.border.accent}`,
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 1000,
-          overflow: 'hidden'
-        }}>
-          {/* User Info Section */}
-          <div style={{
-            padding: '16px 20px',
-            borderBottom: `1px solid ${colors.border.secondary}`
-          }}>
-            <div style={{
-              fontSize: '14px',
-              fontWeight: 700,
-              color: colors.text.primary,
-              marginBottom: '4px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+        <>
+          <style>{`
+            @media (max-width: 640px) {
+              .avatar-menu-dropdown {
+                right: auto !important;
+                left: auto !important;
+                transform: translateX(calc(-100% + 48px)) !important;
+              }
+            }
+          `}</style>
+          <div 
+            className="avatar-menu-dropdown"
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              minWidth: '220px',
+              maxWidth: '280px',
+              background: colors.background.overlay,
+              border: `1px solid ${colors.border.accent}`,
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 1000,
+              overflow: 'hidden'
             }}>
-              {userName}
-            </div>
+            {/* User Info Section */}
             <div style={{
-              fontSize: '12px',
-              color: colors.text.secondary
+              padding: '16px 20px',
+              borderBottom: `1px solid ${colors.border.secondary}`
             }}>
-              {userRole}
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                color: colors.text.primary,
+                marginBottom: '4px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {userName}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: colors.text.secondary
+              }}>
+                {userRole}
+              </div>
             </div>
+
+            {/* Menu Items */}
+            <button
+              onClick={handleSettings}
+              style={{
+                width: '100%',
+                padding: '14px 20px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: `1px solid ${colors.border.secondary}`,
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                minHeight: '48px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = colors.background.tertiary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <Settings size={18} color={colors.text.secondary} style={{ flexShrink: 0 }} />
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: colors.text.primary,
+                whiteSpace: 'nowrap'
+              }}>
+                Settings
+              </span>
+            </button>
+
+            <button
+              onClick={handleSignOut}
+              style={{
+                width: '100%',
+                padding: '14px 20px',
+                background: 'transparent',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                minHeight: '48px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <LogOut size={18} color={colors.accent.danger} style={{ flexShrink: 0 }} />
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: colors.accent.danger,
+                whiteSpace: 'nowrap'
+              }}>
+                Sign Out
+              </span>
+            </button>
           </div>
-
-          {/* Menu Items */}
-          <button
-            onClick={handleSettings}
-            style={{
-              width: '100%',
-              padding: '14px 20px',
-              background: 'transparent',
-              border: 'none',
-              borderBottom: `1px solid ${colors.border.secondary}`,
-              textAlign: 'left',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              minHeight: '48px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = colors.background.tertiary;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            <Settings size={18} color={colors.text.secondary} style={{ flexShrink: 0 }} />
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.text.primary,
-              whiteSpace: 'nowrap'
-            }}>
-              Settings
-            </span>
-          </button>
-
-          <button
-            onClick={handleSignOut}
-            style={{
-              width: '100%',
-              padding: '14px 20px',
-              background: 'transparent',
-              border: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              minHeight: '48px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            <LogOut size={18} color={colors.accent.danger} style={{ flexShrink: 0 }} />
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: colors.accent.danger,
-              whiteSpace: 'nowrap'
-            }}>
-              Sign Out
-            </span>
-          </button>
-        </div>
+        </>
       )}
     </div>
   );
