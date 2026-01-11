@@ -81,7 +81,7 @@ export const Login = ({ onToggleMode }) => {
           marginBottom: '32px',
           gap: '16px'
         }}>
-          <HaulMonitorLogo size="large" textColor="#fff" />
+          <HaulMonitorLogo size="large" variant="full" showText={false} />
           <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
             {showForgotPassword ? 'Reset your password' : 'Sign in to your account'}
           </p>

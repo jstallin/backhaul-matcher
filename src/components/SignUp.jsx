@@ -127,7 +127,7 @@ export const SignUp = ({ onToggleMode }) => {
           marginBottom: '32px',
           gap: '16px'
         }}>
-          <HaulMonitorLogo size="large" textColor="#fff" />
+          <HaulMonitorLogo size="large" variant="full" showText={false} />
           <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
             Create your account
           </p>

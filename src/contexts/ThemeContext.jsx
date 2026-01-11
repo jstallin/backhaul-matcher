@@ -40,9 +40,11 @@ export const ThemeProvider = ({ children }) => {
       accent: 'rgba(94, 160, 219, 0.3)'
     },
     accent: {
-      primary: '#5EA0DB',      // Your primary blue
-      secondary: '#7BB5E3',    // Lighter blue
-      tertiary: '#3D7DB0',     // Darker blue
+      primary: '#D89F38',      // Haul Monitor golden amber
+      secondary: '#E8B55E',    // Lighter amber
+      tertiary: '#C08920',     // Darker amber
+      blue: '#5EA0DB',         // Keep blue for certain UI elements
+      charcoal: '#2C3744',     // Haul Monitor charcoal
       success: '#10b981',
       warning: '#f59e0b',
       danger: '#ef4444',
@@ -70,9 +72,11 @@ export const ThemeProvider = ({ children }) => {
       accent: '#CBD5E0'             // Medium border
     },
     accent: {
-      primary: '#5EA0DB',           // Your primary blue
-      secondary: '#7BB5E3',         // Lighter blue (hover states)
-      tertiary: '#3D7DB0',          // Darker blue (active states)
+      primary: '#D89F38',           // Haul Monitor golden amber (primary brand)
+      secondary: '#E8B55E',         // Lighter amber (hover states)
+      tertiary: '#C08920',          // Darker amber (active states)
+      blue: '#5EA0DB',              // Keep blue for certain UI elements
+      charcoal: '#2C3744',          // Haul Monitor charcoal
       success: '#48BB78',           // Green
       warning: '#ED8936',           // Orange
       danger: '#F56565',            // Red

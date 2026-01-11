@@ -1,4 +1,4 @@
-export const HaulMonitorLogo = ({ size = 'medium', showText = true, textColor = 'auto' }) => {
+export const HaulMonitorLogo = ({ size = 'medium', showText = true, variant = 'horizontal' }) => {
   const sizes = {
     small: { img: 40, haul: 20, monitor: 20 },
     medium: { img: 60, haul: 32, monitor: 32 },
@@ -8,11 +8,26 @@ export const HaulMonitorLogo = ({ size = 'medium', showText = true, textColor = 
 
   const currentSize = sizes[size] || sizes.medium;
 
-  // Color scheme
+  // Brand colors matching the logo
   const colors = {
-    haul: '#F0A030',      // Golden/amber from the logo
-    monitor: '#2C3E50'    // Dark charcoal from the logo
+    haul: '#D89F38',      // Golden amber from monitor scales
+    monitor: '#2C3744'    // Charcoal from lizard body
   };
+
+  // If variant is 'full', use the full logo PNG with text
+  if (variant === 'full') {
+    return (
+      <img 
+        src="/haul-monitor-full.png" 
+        alt="Haul Monitor"
+        style={{
+          height: `${currentSize.img * 1.2}px`,
+          width: 'auto',
+          objectFit: 'contain'
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{
@@ -20,9 +35,9 @@ export const HaulMonitorLogo = ({ size = 'medium', showText = true, textColor = 
       alignItems: 'center',
       gap: size === 'small' ? '8px' : '12px'
     }}>
-      {/* Monitor Lizard Logo */}
+      {/* Monitor Lizard Icon Only */}
       <img 
-        src="/haul-monitor-logo.png" 
+        src="/haul-monitor-icon.png" 
         alt="Haul Monitor"
         style={{
           height: `${currentSize.img}px`,
@@ -35,38 +50,34 @@ export const HaulMonitorLogo = ({ size = 'medium', showText = true, textColor = 
       {showText && (
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          lineHeight: 1
+          alignItems: 'baseline',
+          gap: '4px'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '4px'
+          <span style={{
+            fontSize: `${currentSize.haul}px`,
+            fontWeight: 900,
+            color: colors.haul,
+            letterSpacing: '-0.5px',
+            fontFamily: 'Arial, sans-serif'
           }}>
-            <span style={{
-              fontSize: `${currentSize.haul}px`,
-              fontWeight: 900,
-              color: textColor === 'auto' ? colors.haul : textColor,
-              letterSpacing: '-0.5px'
-            }}>
-              HAUL
-            </span>
-            <span style={{
-              fontSize: `${currentSize.monitor}px`,
-              fontWeight: 900,
-              color: textColor === 'auto' ? colors.monitor : textColor,
-              letterSpacing: '-0.5px'
-            }}>
-              MONITOR
-            </span>
-          </div>
+            HAUL
+          </span>
+          <span style={{
+            fontSize: `${currentSize.monitor}px`,
+            fontWeight: 900,
+            color: colors.monitor,
+            letterSpacing: '-0.5px',
+            fontFamily: 'Arial, sans-serif'
+          }}>
+            MONITOR
+          </span>
         </div>
       )}
     </div>
   );
 };
 
-export const HaulMonitorBrand = ({ tagline = true, size = 'medium' }) => {
+export const HaulMonitorBrand = ({ tagline = true, size = 'medium', variant = 'horizontal' }) => {
   const sizes = {
     small: { tagline: 10 },
     medium: { tagline: 13 },
@@ -82,7 +93,7 @@ export const HaulMonitorBrand = ({ tagline = true, size = 'medium' }) => {
       alignItems: 'center',
       gap: '8px'
     }}>
-      <HaulMonitorLogo size={size} />
+      <HaulMonitorLogo size={size} variant={variant} />
       {tagline && (
         <div style={{
           fontSize: `${currentSize.tagline}px`,
