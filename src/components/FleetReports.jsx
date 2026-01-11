@@ -1,3 +1,4 @@
+import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { useState, useEffect } from 'react';
 import { TrendingUp, Truck, FileText, CheckCircle, X, DollarSign, MapPin, Navigation } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';

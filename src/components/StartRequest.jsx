@@ -1,3 +1,4 @@
+import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Truck, MapPin, Calendar, RefreshCw, Bell, Mail, Phone } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';

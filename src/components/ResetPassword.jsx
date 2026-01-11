@@ -1,3 +1,4 @@
+import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { useState, useEffect } from 'react';
 import { Truck, Lock } from '../icons';
 
@@ -68,19 +69,15 @@ export const ResetPassword = () => {
         backdropFilter: 'blur(20px)'
       }}>
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <Truck size={48} color="#ff6b35" strokeWidth={2.5} style={{ margin: '0 auto 16px' }} />
-          <h1 style={{
-            margin: 0,
-            fontSize: '32px',
-            fontWeight: 900,
-            background: 'linear-gradient(135deg, #ff6b35 0%, #00d4ff 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            BACKHAUL
-          </h1>
-          <p style={{ margin: '8px 0 0 0', color: '#8b92a7', fontSize: '14px' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center',
+          marginBottom: '32px',
+          gap: '16px'
+        }}>
+          <HaulMonitorLogo size="large" variant="full" showText={false} />
+          <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
             Set your new password
           </p>
         </div>
