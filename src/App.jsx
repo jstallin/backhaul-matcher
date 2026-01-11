@@ -16,6 +16,7 @@ import { Fleets } from './components/Fleets';
 import { StartRequest } from './components/StartRequest';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
+import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -508,25 +509,7 @@ function App() {
         zIndex: 100
       }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Truck size={32} color={colors.accent.orange} strokeWidth={2.5} />
-            <div>
-              <h1 style={{ 
-                margin: 0, 
-                fontSize: '28px', 
-                fontWeight: 900,
-                letterSpacing: '-0.02em',
-                background: `linear-gradient(135deg, ${colors.accent.orange} 0%, ${colors.accent.cyan} 100%)`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                BACKHAUL
-              </h1>
-              <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary, fontWeight: 500, letterSpacing: '0.05em' }}>
-                SMART RETURN ROUTE OPTIMIZATION
-              </p>
-            </div>
-          </div>
+          <HaulMonitorLogo size="medium" />
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <HamburgerMenu 
