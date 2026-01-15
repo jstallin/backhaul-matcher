@@ -142,6 +142,8 @@ export const findRouteHomeBackhauls = (
       weight: load.weight_lbs,
       trailerLength: load.trailer_length,
       equipmentType: load.equipment_type,
+      totalRevenue: totalRevenue,
+      revenuePerMile: revenuePerMile,
       
       // Value metrics
       revenue_per_mile: revenuePerMile,
@@ -154,16 +156,16 @@ export const findRouteHomeBackhauls = (
       
       // For BackhaulResults component compatibility
       origin: {
-        address: `${load.pickup_city}, NC`,
+        address: `${load.pickup_city}, ${load.pickup_state}`,
         city: load.pickup_city,
-        state: 'NC',
+        state: load.pickup_state,
         lat: load.pickup_lat,
         lng: load.pickup_lng
       },
       destination: {
-        address: `${load.delivery_city}, NC`,
+        address: `${load.delivery_city}, ${load.delivery_state}`,
         city: load.delivery_city,
-        state: 'NC',
+        state: load.delivery_state,
         lat: load.delivery_lat,
         lng: load.delivery_lng
       },
