@@ -38,6 +38,11 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId 
       map.current.removeSource('direct-route');
     }
     
+    if (map.current.getSource('actual-route')) {
+      map.current.removeLayer('actual-route-line');
+      map.current.removeSource('actual-route');
+    }
+    
     backhauls.slice(0, 10).forEach((_, index) => {
       if (map.current.getSource(`backhaul-route-${index}`)) {
         map.current.removeLayer(`backhaul-route-${index}`);
@@ -46,6 +51,82 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId 
     });
 
     const bounds = new mapboxgl.LngLatBounds();
+
+    // Fetch actual driving route from Mapbox Directions API
+    const fetchActualRoute = async () => {
+      try {
+        const coordinates = `${datumPoint.lng},${datumPoint.lat};${fleetHome.lng},${fleetHome.lat}`;
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.routes && data.routes[0]) {
+          const route = data.routes[0].geometry;
+          
+          // Add the actual route as a solid line
+          map.current.addSource('actual-route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              geometry: route
+            }
+          });
+
+          map.current.addLayer({
+            id: 'actual-route-line',
+            type: 'line',
+            source: 'actual-route',
+            paint: {
+              'line-color': '#9CA3AF',
+              'line-width': 3,
+              'line-opacity': 0.6
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching route:', error);
+        // Fallback to straight line if API fails
+        drawStraightLine();
+      }
+    };
+
+    // Fallback: draw straight dashed line
+    const drawStraightLine = () => {
+      if (!map.current.getSource('direct-route')) {
+        map.current.addSource('direct-route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: [
+                [datumPoint.lng, datumPoint.lat],
+                [fleetHome.lng, fleetHome.lat]
+              ]
+            }
+          }
+        });
+
+        map.current.addLayer({
+          id: 'direct-route-line',
+          type: 'line',
+          source: 'direct-route',
+          paint: {
+            'line-color': '#9CA3AF',
+            'line-width': 2,
+            'line-dasharray': [4, 4]
+          }
+        });
+      }
+    };
+
+    // Wait for map to load before adding route
+    if (map.current.loaded()) {
+      fetchActualRoute();
+    } else {
+      map.current.on('load', fetchActualRoute);
+    }
 
     // Add datum marker (Point A - red)
     const datumEl = document.createElement('div');
@@ -107,36 +188,6 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId 
       .addTo(map.current);
     markers.current.push(homeMarker);
     bounds.extend([fleetHome.lng, fleetHome.lat]);
-
-    // Draw direct route line (dashed gray) from datum to home
-    map.current.on('load', () => {
-      if (!map.current.getSource('direct-route')) {
-        map.current.addSource('direct-route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: [
-                [datumPoint.lng, datumPoint.lat],
-                [fleetHome.lng, fleetHome.lat]
-              ]
-            }
-          }
-        });
-
-        map.current.addLayer({
-          id: 'direct-route-line',
-          type: 'line',
-          source: 'direct-route',
-          paint: {
-            'line-color': '#9CA3AF',
-            'line-width': 2,
-            'line-dasharray': [4, 4]
-          }
-        });
-      }
-    });
 
     // Add top 10 backhaul markers
     const top10 = backhauls.slice(0, 10);
