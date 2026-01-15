@@ -127,13 +127,21 @@ export const findRouteHomeBackhauls = (
     
     opportunities.push({
       ...load,
-      // Route metrics
+      // Route metrics (new names from route-home logic)
       datum_to_pickup_miles: Math.round(datumToPickup),
       pickup_to_delivery_miles: Math.round(pickupToDelivery),
       delivery_to_home_miles: Math.round(deliveryToHome),
       total_miles: Math.round(totalMilesWithBackhaul),
       direct_return_miles: Math.round(directReturnMiles),
       additional_miles: Math.round(additionalMiles),
+      
+      // Legacy property mappings for BackhaulResults component
+      finalToPickup: Math.round(datumToPickup),
+      additionalMiles: Math.round(additionalMiles),
+      oorMiles: Math.round(totalMilesWithBackhaul), // Total miles as "out of route"
+      weight: load.weight_lbs,
+      trailerLength: load.trailer_length,
+      equipmentType: load.equipment_type,
       
       // Value metrics
       revenue_per_mile: revenuePerMile,
@@ -146,16 +154,16 @@ export const findRouteHomeBackhauls = (
       
       // For BackhaulResults component compatibility
       origin: {
-        address: `${load.pickup_city}, ${load.pickup_state}`,
+        address: `${load.pickup_city}, NC`,
         city: load.pickup_city,
-        state: load.pickup_state,
+        state: 'NC',
         lat: load.pickup_lat,
         lng: load.pickup_lng
       },
       destination: {
-        address: `${load.delivery_city}, ${load.delivery_state}`,
+        address: `${load.delivery_city}, NC`,
         city: load.delivery_city,
-        state: load.delivery_state,
+        state: 'NC',
         lat: load.delivery_lat,
         lng: load.delivery_lng
       },
