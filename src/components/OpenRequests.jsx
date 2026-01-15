@@ -20,6 +20,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedFleet, setSelectedFleet] = useState(null);
+  const [datumCoordinates, setDatumCoordinates] = useState(null); // Store geocoded datum coords
   const [backhaulMatches, setBackhaulMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
 
@@ -102,6 +103,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         console.error('❌ GEOCODING FAILED - Using home as datum (this will find 0 matches!)');
         console.error('Try entering datum as: "Alachua, FL" or "Alachua, Florida" or zip "32615"');
       }
+
+      // Store the geocoded datum coordinates for the map
+      setDatumCoordinates({
+        lat: datumPoint.lat,
+        lng: datumPoint.lng
+      });
 
       const fleetHome = {
         lat: fleet.home_lat,
@@ -233,7 +240,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           ) : (
             <>
               {/* Route Home Map */}
-              {selectedRequest && selectedFleet && backhaulMatches.length > 0 && (
+              {selectedRequest && selectedFleet && backhaulMatches.length > 0 && datumCoordinates && (
                 <div style={{ marginBottom: '32px' }}>
                   <div style={{ marginBottom: '16px' }}>
                     <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
@@ -244,10 +251,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     </p>
                   </div>
                   <RouteHomeMap
-                    datumPoint={{
-                      lat: selectedRequest.datum_lat || selectedFleet.home_lat,
-                      lng: selectedRequest.datum_lng || selectedFleet.home_lng
-                    }}
+                    datumPoint={datumCoordinates}
                     fleetHome={{
                       lat: selectedFleet.home_lat,
                       lng: selectedFleet.home_lng,
