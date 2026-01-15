@@ -64,6 +64,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Geocode the datum point using Mapbox API (with fallback to local lookup)
       const geocoded = await parseDatumPoint(request.datum_point);
       
+      console.log('📍 Geocoding input:', request.datum_point);
       console.log('📍 Geocoding result:', geocoded);
 
       const datumPoint = geocoded ? {
@@ -77,6 +78,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       };
 
       console.log('🎯 Datum point coordinates:', datumPoint);
+      console.log('⚠️ WARNING: If datum === home, geocoding failed!');
+      
+      if (datumPoint.lat === fleet.home_lat && datumPoint.lng === fleet.home_lng) {
+        console.error('❌ GEOCODING FAILED - Using home as datum (this will find 0 matches!)');
+        console.error('Try entering datum as: "Alachua, FL" or "Alachua, Florida" or zip "32615"');
+      }
 
       const fleetHome = {
         lat: fleet.home_lat,
@@ -88,13 +95,17 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       console.log('🔍 Route-home matching with:', {
         datumPoint: request.datum_point,
-        geocoded: geocoded || 'Using fleet home (geocoding failed)',
+        geocoded: geocoded || '⚠️ FAILED - using fleet home',
         datumPoint,
         fleetHome,
         fleetProfile,
-        homeRadiusMiles: 50,
-        corridorWidthMiles: 100
+        homeRadiusMiles: datumPoint.lat === fleet.home_lat ? 200 : 50, // Relaxed if geocoding failed
+        corridorWidthMiles: datumPoint.lat === fleet.home_lat ? 300 : 100
       });
+
+      // If geocoding failed (datum === home), use very relaxed criteria to still show some results
+      const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 50;
+      const corridorWidthMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 300 : 100;
 
       // Find matches along route home (50 mile home radius, 100 mile corridor)
       const matches = findRouteHomeBackhauls(
@@ -102,11 +113,26 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         fleetHome,
         fleetProfile,
         backhaulLoadsData,
-        50,   // homeRadiusMiles - delivery must be within 50 miles of home
-        100   // corridorWidthMiles - pickup must be within 100 miles of direct route
+        homeRadiusMiles,
+        corridorWidthMiles
       );
 
       console.log('✅ Found matches along route home:', matches.length);
+      
+      if (matches.length === 0) {
+        console.warn('⚠️ NO MATCHES FOUND. Debugging info:');
+        console.warn('  - Check if datum point geocoded correctly');
+        console.warn('  - Try entering datum as "City, State" format');
+        console.warn('  - Datum coordinates:', datumPoint);
+        console.warn('  - Home coordinates:', fleetHome);
+        console.warn('  - Equipment:', fleetProfile);
+      } else {
+        console.log('🎯 Top 5 matches:');
+        matches.slice(0, 5).forEach((m, i) => {
+          console.log(`  ${i+1}. ${m.pickup_city}, ${m.pickup_state} → ${m.delivery_city}, ${m.delivery_state}`);
+          console.log(`     $${m.total_revenue} | ${m.total_miles}mi total | +${m.additional_miles}mi vs direct`);
+        });
+      }
 
       setBackhaulMatches(matches);
     } catch (error) {
