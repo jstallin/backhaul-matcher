@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+// Mapbox access token - matches the token used in RouteMap
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoianN0YWxsaW5ncyIsImEiOiJjbWpobW5uMHoxMmFvM2Zwd3U2NjNnd2NmIn0.1NqksRspovws_BZmPhQWfQ';
 
 export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId }) => {
   const mapContainer = useRef(null);
@@ -11,11 +12,6 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId 
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
-
-    if (!MAPBOX_TOKEN) {
-      console.error('Mapbox token not configured. Set VITE_MAPBOX_TOKEN in your .env file');
-      return;
-    }
 
     mapboxgl.accessToken = MAPBOX_TOKEN;
     
@@ -262,29 +258,6 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId 
     }
 
   }, [datumPoint, fleetHome, backhauls, selectedLoadId]);
-
-  if (!MAPBOX_TOKEN) {
-    return (
-      <div style={{
-        width: '100%',
-        height: '400px',
-        borderRadius: '12px',
-        border: '1px solid #E5E7EB',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#F9FAFB',
-        color: '#6B7280',
-        textAlign: 'center',
-        padding: '20px'
-      }}>
-        <div>
-          <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>Map not available</p>
-          <p style={{ margin: 0, fontSize: '14px' }}>Mapbox token not configured. Set VITE_MAPBOX_TOKEN in your .env file</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div 
