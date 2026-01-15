@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
+import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import backhaulLoadsData from '../data/backhaul_loads_data.json';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
@@ -45,12 +46,29 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
     try {
       // Load fleet data
-      const fleet = await db.fleets.getById(request.fleet_id);
-      setSelectedFleet(fleet);
-
+      let fleet = await db.fleets.getById(request.fleet_id);
+      
       console.log('🚛 Fleet loaded:', fleet.name);
       console.log('📦 Fleet profiles:', fleet.fleet_profiles);
       console.log('🚚 Fleet trucks:', fleet.trucks);
+      
+      // FIX: If fleet home coordinates are missing, geocode them now
+      if (!fleet.home_lat || !fleet.home_lng) {
+        console.warn('⚠️ Fleet home coordinates missing! Attempting to geocode...');
+        const success = await updateFleetCoordinates(db, fleet.id, fleet.home_address);
+        if (success) {
+          // Reload fleet with updated coordinates
+          fleet = await db.fleets.getById(request.fleet_id);
+          console.log('✅ Fleet coordinates updated:', fleet.home_lat, fleet.home_lng);
+        } else {
+          console.error('❌ Failed to geocode fleet address. Cannot find matches.');
+          setBackhaulMatches([]);
+          setLoadingMatches(false);
+          return;
+        }
+      }
+      
+      setSelectedFleet(fleet);
 
       // Get fleet profile for equipment specs
       const fleetProfile = fleet.fleet_profiles?.[0] || {
