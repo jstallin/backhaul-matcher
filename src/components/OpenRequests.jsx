@@ -4,11 +4,13 @@ import { FileText, Truck, MapPin, Calendar, RefreshCw, Bell, Edit, Trash2, X, Ch
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
+import { RouteHomeMap } from './RouteHomeMap';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
-import { findBackhaulOpportunities } from '../utils/backhaulMatching';
+import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
+import backhaulLoadsData from '../data/backhaul_loads_data.json';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -64,7 +66,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       
       console.log('📍 Geocoding result:', geocoded);
 
-      const finalStop = geocoded ? {
+      const datumPoint = geocoded ? {
         address: geocoded.city,
         lat: geocoded.lat,
         lng: geocoded.lng
@@ -74,35 +76,37 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         lng: fleet.home_lng
       };
 
-      console.log('🎯 Final stop coordinates:', finalStop);
+      console.log('🎯 Datum point coordinates:', datumPoint);
 
       const fleetHome = {
         lat: fleet.home_lat,
-        lng: fleet.home_lng
+        lng: fleet.home_lng,
+        address: fleet.home_address
       };
 
       console.log('🏠 Fleet home coordinates:', fleetHome);
 
-      console.log('Matching with:', {
+      console.log('🔍 Route-home matching with:', {
         datumPoint: request.datum_point,
         geocoded: geocoded || 'Using fleet home (geocoding failed)',
-        finalStop,
+        datumPoint,
         fleetHome,
         fleetProfile,
-        searchRadius: 200,
-        isRelay: request.is_relay
+        homeRadiusMiles: 50,
+        corridorWidthMiles: 100
       });
 
-      // Find matches with 200 mile search radius
-      const matches = findBackhaulOpportunities(
-        finalStop,
+      // Find matches along route home (50 mile home radius, 100 mile corridor)
+      const matches = findRouteHomeBackhauls(
+        datumPoint,
         fleetHome,
         fleetProfile,
-        200, // search radius
-        request.is_relay
+        backhaulLoadsData,
+        50,   // homeRadiusMiles - delivery must be within 50 miles of home
+        100   // corridorWidthMiles - pickup must be within 100 miles of direct route
       );
 
-      console.log('Found matches:', matches.length);
+      console.log('✅ Found matches along route home:', matches.length);
 
       setBackhaulMatches(matches);
     } catch (error) {
@@ -180,17 +184,73 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           loadingMatches ? (
             <div style={{ textAlign: 'center', padding: '80px 20px' }}>
               <div style={{ width: '48px', height: '48px', border: `4px solid ${colors.accent.primary}40`, borderTop: `4px solid ${colors.accent.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-              <p style={{ color: colors.text.secondary }}>Finding backhaul opportunities...</p>
+              <p style={{ color: colors.text.secondary }}>Finding backhaul opportunities along your route home...</p>
             </div>
           ) : (
-            <BackhaulResults 
-              request={selectedRequest}
-              fleet={selectedFleet}
-              matches={backhaulMatches}
-              onBack={() => setSelectedRequest(null)}
-              onEdit={handleEditRequest}
-              onCancel={handleCancelRequest}
-            />
+            <>
+              {/* Route Home Map */}
+              {selectedRequest && selectedFleet && backhaulMatches.length > 0 && (
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
+                      Route Home Map
+                    </h3>
+                    <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
+                      Top 10 backhaul opportunities plotted along your route from <strong>{selectedRequest.datum_point}</strong> to <strong>home</strong>
+                    </p>
+                  </div>
+                  <RouteHomeMap
+                    datumPoint={{
+                      lat: selectedRequest.datum_lat || selectedFleet.home_lat,
+                      lng: selectedRequest.datum_lng || selectedFleet.home_lng
+                    }}
+                    fleetHome={{
+                      lat: selectedFleet.home_lat,
+                      lng: selectedFleet.home_lng,
+                      address: selectedFleet.home_address
+                    }}
+                    backhauls={backhaulMatches}
+                    selectedLoadId={null}
+                  />
+                  <div style={{ 
+                    marginTop: '16px', 
+                    padding: '16px', 
+                    background: colors.background.secondary, 
+                    borderRadius: '8px',
+                    display: 'flex',
+                    gap: '24px',
+                    flexWrap: 'wrap',
+                    fontSize: '13px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#EF4444', border: '2px solid white' }} />
+                      <span><strong>A</strong> = Datum Point (Current Location)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#10B981', border: '2px solid white' }} />
+                      <span><strong>B</strong> = Fleet Home</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#D89F38', border: '2px solid white' }} />
+                      <span><strong>1-10</strong> = Pickup Locations</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#5EA0DB', border: '2px solid white' }} />
+                      <span><strong>1-10</strong> = Delivery Locations</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <BackhaulResults 
+                request={selectedRequest}
+                fleet={selectedFleet}
+                matches={backhaulMatches}
+                onBack={() => setSelectedRequest(null)}
+                onEdit={handleEditRequest}
+                onCancel={handleCancelRequest}
+              />
+            </>
           )
         ) : requests.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
