@@ -144,6 +144,22 @@ export const findRouteHomeBackhauls = (
       formatted_revenue: `$${totalRevenue.toFixed(2)}`,
       formatted_rpm: `$${revenuePerMile.toFixed(2)}`,
       
+      // For BackhaulResults component compatibility
+      origin: {
+        address: `${load.pickup_city}, ${load.pickup_state}`,
+        city: load.pickup_city,
+        state: load.pickup_state,
+        lat: load.pickup_lat,
+        lng: load.pickup_lng
+      },
+      destination: {
+        address: `${load.delivery_city}, ${load.delivery_state}`,
+        city: load.delivery_city,
+        state: load.delivery_state,
+        lat: load.delivery_lat,
+        lng: load.delivery_lng
+      },
+      
       // Ranking category
       is_excellent: efficiencyScore > 50 && additionalMiles < 50,
       is_good: efficiencyScore > 30 && additionalMiles < 100,
