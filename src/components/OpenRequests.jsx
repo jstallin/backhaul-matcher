@@ -11,6 +11,7 @@ import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
+import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import backhaulLoadsData from '../data/backhaul_loads_data.json';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
@@ -22,6 +23,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [selectedFleet, setSelectedFleet] = useState(null);
   const [datumCoordinates, setDatumCoordinates] = useState(null); // Store geocoded datum coords
   const [backhaulMatches, setBackhaulMatches] = useState([]);
+  const [previousMatches, setPreviousMatches] = useState([]); // Track previous matches for change detection
   const [loadingMatches, setLoadingMatches] = useState(false);
   
   // Auto-refresh state - read from request, not local
@@ -224,6 +226,38 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           console.log(`  ${i+1}. ${m.pickup_city}, ${m.pickup_state} → ${m.delivery_city}, ${m.delivery_state}`);
           console.log(`     $${m.total_revenue} | ${m.total_miles}mi total | +${m.additional_miles}mi vs direct`);
         });
+
+        // Detect material changes and send notifications
+        if (request.notification_enabled && previousMatches.length > 0) {
+          const change = detectBackhaulChanges(previousMatches, matches);
+          
+          if (change) {
+            console.log('📬 Material change detected:', change.type);
+            
+            // Send notification
+            sendBackhaulChangeNotification({
+              method: request.notification_method || 'both',
+              email: fleet.email,
+              phone: fleet.phone_number,
+              requestName: request.request_name,
+              fleetName: fleet.name,
+              oldTopMatch: change.oldMatch,
+              newTopMatch: change.newMatch,
+              changeType: change.type
+            }).then(result => {
+              if (result.success) {
+                console.log('✅ Notification sent successfully');
+              } else {
+                console.error('❌ Notification failed:', result.error);
+              }
+            });
+          } else {
+            console.log('ℹ️ No material changes detected - no notification sent');
+          }
+        }
+
+        // Store matches for next comparison
+        setPreviousMatches(matches);
       }
 
       setBackhaulMatches(matches);
