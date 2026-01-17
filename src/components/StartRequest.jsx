@@ -23,7 +23,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     equipmentNeededDate: '',
     isRelay: false,
     autoRefresh: false,
-    autoRefreshInterval: '4',
+    autoRefreshInterval: '0.5',  // 30 minutes default
     notificationEnabled: false,
     notificationMethod: 'both',
     editingId: null
@@ -71,7 +71,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           equipmentNeededDate: request.equipment_needed_date || '',
           isRelay: request.is_relay || false,
           autoRefresh: request.auto_refresh || false,
-          autoRefreshInterval: String(request.auto_refresh_interval || '4'),
+          autoRefreshInterval: String(request.auto_refresh_interval || '0.5'),
           notificationEnabled: request.notification_enabled || false,
           notificationMethod: request.notification_method || 'both',
           editingId: request.id
@@ -231,7 +231,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipmentNeededDate: '',
         isRelay: false,
         autoRefresh: false,
-        autoRefreshInterval: '4',
+        autoRefreshInterval: '0.5',
         notificationEnabled: false,
         notificationMethod: 'both',
         editingId: null
@@ -353,7 +353,23 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <input type="checkbox" checked={formData.autoRefresh} onChange={(e) => handleChange('autoRefresh', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Auto Refresh</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Automatically refresh and search for updated backhaul data</div></div>
                 </label>
-                {formData.autoRefresh && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Refresh Interval</label><select value={formData.autoRefreshInterval} onChange={(e) => handleChange('autoRefreshInterval', e.target.value)} disabled={saving} style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}><option value="1">Every 1 Hour</option><option value="4">Every 4 Hours</option></select></div>}
+                {formData.autoRefresh && (
+                  <div style={{ marginLeft: '32px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                      Refresh Interval
+                    </label>
+                    <select 
+                      value={formData.autoRefreshInterval} 
+                      onChange={(e) => handleChange('autoRefreshInterval', e.target.value)} 
+                      disabled={saving} 
+                      style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="0.5">Every 30 Minutes</option>
+                      <option value="1">Every 1 Hour</option>
+                      <option value="4">Every 4 Hours</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '32px' }}>
