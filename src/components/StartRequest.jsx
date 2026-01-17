@@ -178,7 +178,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
         auto_refresh: formData.autoRefresh,
-        auto_refresh_interval: formData.autoRefresh ? parseInt(formData.autoRefreshInterval) : null,
+        auto_refresh_interval: formData.autoRefresh ? parseFloat(formData.autoRefreshInterval) : null,
         notification_enabled: formData.notificationEnabled,
         notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
         status: 'active'
@@ -187,7 +187,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Calculate next refresh time if auto-refresh is enabled
       if (formData.autoRefresh) {
         const now = new Date();
-        const intervalHours = parseInt(formData.autoRefreshInterval);
+        const intervalHours = parseFloat(formData.autoRefreshInterval);
         const nextRefresh = new Date(now.getTime() + intervalHours * 60 * 60 * 1000);
         requestData.next_refresh_at = nextRefresh.toISOString();
       }
