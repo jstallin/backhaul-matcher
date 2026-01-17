@@ -21344,5 +21344,31 @@
     "posted_date": "2025-12-18 15:00",
     "pickup_state": "FL",
     "delivery_state": "FL"
-  }
+  },
+{
+  "load_id": "LOAD-TEST-001",
+  "broker": "DAT",
+  "shipper": "Express Logistics",
+  "receiver": "Davidson Warehouse",
+  "freight_type": "Electronics",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Jacksonville",
+  "pickup_lat": 30.3322,
+  "pickup_lng": -81.6557,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Charlotte",
+  "delivery_lat": 35.2271,
+  "delivery_lng": -80.8431,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 340,
+  "weight_lbs": 38000,
+  "trailer_length": 53,
+  "revenue_per_mile": 3.50,
+  "total_revenue": 1190.00,
+  "status": "available",
+  "posted_date": "2025-01-17 15:10",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
+}  
 ]
