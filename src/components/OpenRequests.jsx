@@ -39,15 +39,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       return;
     }
 
-    // Convert hours to minutes for the interval (database stores in hours)
-    const refreshIntervalMinutes = (selectedRequest.auto_refresh_interval || 4) * 60;
+    // Convert hours to milliseconds (database stores in hours)
+    const refreshIntervalHours = selectedRequest.auto_refresh_interval || 4;
+    const refreshIntervalMs = refreshIntervalHours * 60 * 60 * 1000;
 
     // Set initial refresh time
     const now = new Date();
-    const nextRefresh = new Date(now.getTime() + refreshIntervalMinutes * 60 * 1000);
+    const nextRefresh = new Date(now.getTime() + refreshIntervalMs);
     setNextRefreshTime(nextRefresh);
 
-    console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalMinutes} minutes (${selectedRequest.auto_refresh_interval} hours)`);
+    console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalHours} hours (${refreshIntervalHours * 60} minutes)`);
 
     // Set up interval to refresh matches
     const refreshTimer = setInterval(() => {
@@ -55,9 +56,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       handleSelectRequest(selectedRequest);
       
       // Update next refresh time
-      const newNextRefresh = new Date(Date.now() + refreshIntervalMinutes * 60 * 1000);
+      const newNextRefresh = new Date(Date.now() + refreshIntervalMs);
       setNextRefreshTime(newNextRefresh);
-    }, refreshIntervalMinutes * 60 * 1000);
+    }, refreshIntervalMs);
 
     return () => clearInterval(refreshTimer);
   }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval]);
@@ -351,7 +352,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                         color: colors.accent.success
                       }}>
                         <CheckCircle size={16} />
-                        Auto-refresh: Every {selectedRequest.auto_refresh_interval}h
+                        Auto-refresh: Every {selectedRequest.auto_refresh_interval >= 1 
+                          ? `${selectedRequest.auto_refresh_interval}h` 
+                          : `${selectedRequest.auto_refresh_interval * 60}min`}
                       </div>
 
                       {/* Countdown display */}
@@ -384,7 +387,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
                   {/* Link to edit settings */}
                   <button
-                    onClick={() => onMenuNavigate('start-request')}
+                    onClick={handleEditRequest}
                     style={{
                       padding: '6px 12px',
                       background: 'transparent',
