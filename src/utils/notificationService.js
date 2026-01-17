@@ -162,16 +162,39 @@ const sendEmail = async ({ to, subject, body, html }) => {
 };
 
 /**
- * Send SMS notification via Twilio
+ * Send SMS notification via Twilio OR Email-to-SMS gateway
  */
 const sendSMS = async ({ to, message }) => {
-  // Twilio integration - requires API keys
   console.log('📱 Sending SMS:', { to, message });
   
   const TWILIO_ACCOUNT_SID = import.meta.env.VITE_TWILIO_ACCOUNT_SID;
   const TWILIO_AUTH_TOKEN = import.meta.env.VITE_TWILIO_AUTH_TOKEN;
   const TWILIO_PHONE_NUMBER = import.meta.env.VITE_TWILIO_PHONE_NUMBER;
+  const USE_EMAIL_TO_SMS = import.meta.env.VITE_USE_EMAIL_TO_SMS === 'true';
 
+  // Option 1: Use Email-to-SMS gateway (easy testing, free)
+  if (USE_EMAIL_TO_SMS || !TWILIO_ACCOUNT_SID) {
+    console.log('📧 Using email-to-SMS gateway instead of Twilio');
+    
+    // Convert phone to email gateway
+    // User can set their carrier gateway in fleet settings
+    // For now, try common gateways or use the stored email
+    const smsEmail = convertPhoneToEmailGateway(to);
+    
+    if (smsEmail) {
+      return sendEmail({
+        to: smsEmail,
+        subject: 'Haul Monitor Alert',
+        text: message,
+        html: `<p>${message}</p>`
+      });
+    } else {
+      console.warn('⚠️ Could not determine SMS gateway for:', to);
+      return { success: false, message: 'SMS gateway not configured' };
+    }
+  }
+
+  // Option 2: Use Twilio (production)
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
     console.warn('⚠️ Twilio credentials not configured. Skipping SMS.');
     return { success: false, message: 'Twilio not configured' };
@@ -195,6 +218,35 @@ const sendSMS = async ({ to, message }) => {
   }
 
   return response.json();
+};
+
+/**
+ * Convert phone number to email-to-SMS gateway
+ * Format: number@carrier-gateway.com
+ */
+const convertPhoneToEmailGateway = (phone) => {
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+  
+  // Try to detect carrier (would need a lookup service for real detection)
+  // For testing, you can hardcode your carrier here:
+  const carrier = import.meta.env.VITE_SMS_CARRIER || 'verizon'; // Set in .env
+  
+  const gateways = {
+    'verizon': 'vtext.com',
+    'att': 'txt.att.net',
+    'tmobile': 'tmomail.net',
+    'sprint': 'messaging.sprintpcs.com',
+    'boost': 'sms.myboostmobile.com',
+    'cricket': 'sms.cricketwireless.net',
+    'uscellular': 'email.uscc.net'
+  };
+  
+  if (gateways[carrier]) {
+    return `${digits}@${gateways[carrier]}`;
+  }
+  
+  return null;
 };
 
 /**
