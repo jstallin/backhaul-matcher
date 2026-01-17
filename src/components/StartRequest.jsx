@@ -71,7 +71,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           equipmentNeededDate: request.equipment_needed_date || '',
           isRelay: request.is_relay || false,
           autoRefresh: request.auto_refresh || false,
-          autoRefreshInterval: String(request.auto_refresh_interval || '0.5'),
+          autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
           notificationEnabled: request.notification_enabled || false,
           notificationMethod: request.notification_method || 'both',
           editingId: request.id
@@ -178,7 +178,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
         auto_refresh: formData.autoRefresh,
-        auto_refresh_interval: formData.autoRefresh ? parseFloat(formData.autoRefreshInterval) : null,
+        auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null, // Store as MINUTES
         notification_enabled: formData.notificationEnabled,
         notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
         status: 'active'

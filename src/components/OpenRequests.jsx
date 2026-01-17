@@ -39,16 +39,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       return;
     }
 
-    // Convert hours to milliseconds (database stores in hours)
-    const refreshIntervalHours = selectedRequest.auto_refresh_interval || 4;
-    const refreshIntervalMs = refreshIntervalHours * 60 * 60 * 1000;
+    // Database stores interval in MINUTES (not hours)
+    const refreshIntervalMinutes = selectedRequest.auto_refresh_interval || 240; // Default 240 min (4 hours)
+    const refreshIntervalMs = refreshIntervalMinutes * 60 * 1000;
 
     // Set initial refresh time
     const now = new Date();
     const nextRefresh = new Date(now.getTime() + refreshIntervalMs);
     setNextRefreshTime(nextRefresh);
 
-    console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalHours} hours (${refreshIntervalHours * 60} minutes)`);
+    console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalMinutes} minutes (${refreshIntervalMinutes / 60} hours)`);
 
     // Set up interval to refresh matches
     const refreshTimer = setInterval(() => {
@@ -352,9 +352,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                         color: colors.accent.success
                       }}>
                         <CheckCircle size={16} />
-                        Auto-refresh: Every {selectedRequest.auto_refresh_interval >= 1 
-                          ? `${selectedRequest.auto_refresh_interval}h` 
-                          : `${selectedRequest.auto_refresh_interval * 60}min`}
+                        Auto-refresh: Every {selectedRequest.auto_refresh_interval >= 60 
+                          ? `${Math.round(selectedRequest.auto_refresh_interval / 60)}h` 
+                          : `${selectedRequest.auto_refresh_interval}min`}
                       </div>
 
                       {/* Countdown display */}
