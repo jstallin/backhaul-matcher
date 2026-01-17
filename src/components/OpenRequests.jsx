@@ -23,10 +23,76 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [datumCoordinates, setDatumCoordinates] = useState(null); // Store geocoded datum coords
   const [backhaulMatches, setBackhaulMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  
+  // Auto-refresh state - read from request, not local
+  const [nextRefreshTime, setNextRefreshTime] = useState(null);
+  const [timeUntilRefresh, setTimeUntilRefresh] = useState('');
 
   useEffect(() => {
     loadRequests();
   }, []);
+
+  // Auto-refresh timer - uses settings from the request itself
+  useEffect(() => {
+    if (!selectedRequest || !selectedRequest.auto_refresh) {
+      setNextRefreshTime(null);
+      return;
+    }
+
+    // Convert hours to minutes for the interval (database stores in hours)
+    const refreshIntervalMinutes = (selectedRequest.auto_refresh_interval || 4) * 60;
+
+    // Set initial refresh time
+    const now = new Date();
+    const nextRefresh = new Date(now.getTime() + refreshIntervalMinutes * 60 * 1000);
+    setNextRefreshTime(nextRefresh);
+
+    console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalMinutes} minutes (${selectedRequest.auto_refresh_interval} hours)`);
+
+    // Set up interval to refresh matches
+    const refreshTimer = setInterval(() => {
+      console.log('🔄 Auto-refreshing backhaul matches...');
+      handleSelectRequest(selectedRequest);
+      
+      // Update next refresh time
+      const newNextRefresh = new Date(Date.now() + refreshIntervalMinutes * 60 * 1000);
+      setNextRefreshTime(newNextRefresh);
+    }, refreshIntervalMinutes * 60 * 1000);
+
+    return () => clearInterval(refreshTimer);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval]);
+
+  // Update countdown display every second
+  useEffect(() => {
+    if (!nextRefreshTime) {
+      setTimeUntilRefresh('');
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = nextRefreshTime - now;
+
+      if (diff <= 0) {
+        setTimeUntilRefresh('Refreshing...');
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      
+      if (minutes > 0) {
+        setTimeUntilRefresh(`${minutes}m ${seconds}s`);
+      } else {
+        setTimeUntilRefresh(`${seconds}s`);
+      }
+    };
+
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [nextRefreshTime]);
 
   const loadRequests = async () => {
     setLoading(true);
@@ -223,10 +289,127 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Open Requests</h2>
-          <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
-            {selectedRequest ? 'Backhaul opportunities for your request' : 'Click a request to view matching backhaul opportunities'}
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Open Requests</h2>
+              <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
+                {selectedRequest ? 'Backhaul opportunities for your request' : 'Click a request to view matching backhaul opportunities'}
+              </p>
+            </div>
+            
+            {/* Auto-refresh controls - only show when request is selected */}
+            {selectedRequest && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '16px',
+                padding: '12px 20px',
+                background: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: '12px'
+              }}>
+                {/* Manual Refresh Button */}
+                <button
+                  onClick={() => handleSelectRequest(selectedRequest)}
+                  disabled={loadingMatches}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    border: `1px solid ${colors.accent.primary}`,
+                    borderRadius: '8px',
+                    color: colors.accent.primary,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: loadingMatches ? 'not-allowed' : 'pointer',
+                    opacity: loadingMatches ? 0.5 : 1,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => !loadingMatches && (e.target.style.background = `${colors.accent.primary}10`)}
+                  onMouseLeave={(e) => (e.target.style.background = 'transparent')}
+                >
+                  <RefreshCw size={16} />
+                  Refresh Now
+                </button>
+
+                {/* Separator */}
+                <div style={{ width: '1px', height: '32px', background: colors.border.secondary }} />
+
+                {/* Auto-refresh status */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {selectedRequest.auto_refresh ? (
+                    <>
+                      {/* Auto-refresh is enabled */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: colors.accent.success
+                      }}>
+                        <CheckCircle size={16} />
+                        Auto-refresh: Every {selectedRequest.auto_refresh_interval}h
+                      </div>
+
+                      {/* Countdown display */}
+                      {timeUntilRefresh && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 12px',
+                          background: `${colors.accent.primary}10`,
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          color: colors.accent.primary,
+                          fontWeight: 600
+                        }}>
+                          <Clock size={14} />
+                          Next: {timeUntilRefresh}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* Auto-refresh is disabled */
+                    <div style={{
+                      fontSize: '14px',
+                      color: colors.text.tertiary
+                    }}>
+                      Auto-refresh: Disabled
+                    </div>
+                  )}
+
+                  {/* Link to edit settings */}
+                  <button
+                    onClick={() => onMenuNavigate('start-request')}
+                    style={{
+                      padding: '6px 12px',
+                      background: 'transparent',
+                      border: `1px solid ${colors.border.primary}`,
+                      borderRadius: '6px',
+                      color: colors.text.secondary,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = colors.background.hover;
+                      e.target.style.color = colors.text.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                      e.target.style.color = colors.text.secondary;
+                    }}
+                  >
+                    Edit Settings
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
