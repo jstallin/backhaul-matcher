@@ -8,8 +8,18 @@
     "api/**/*.js": {
       "memory": 1024,
       "maxDuration": 10
+    },
+    "api/cron/refresh-requests.js": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/refresh-requests",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/reset-password",
