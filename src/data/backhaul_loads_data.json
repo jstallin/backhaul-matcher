@@ -21422,5 +21422,31 @@
   "posted_date": "2025-01-17 15:30",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-004",
+  "broker": "123Loadboard",
+  "shipper": "Medical Supplies Co",
+  "receiver": "Davidson Medical",
+  "freight_type": "Medical Equipment",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Orlando",
+  "pickup_lat": 28.5383,
+  "pickup_lng": -81.3792,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Cornelius",
+  "delivery_lat": 35.4832,
+  "delivery_lng": -80.8590,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 615,
+  "weight_lbs": 35000,
+  "trailer_length": 53,
+  "revenue_per_mile": 3.40,
+  "total_revenue": 2091.00,
+  "status": "available",
+  "posted_date": "2025-01-17 15:40",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
