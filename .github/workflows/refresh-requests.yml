@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Trigger backhaul refresh
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X GET \
+          response=$(curl -s -L -w "\n%{http_code}" -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
             "${{ secrets.APP_URL }}/api/cron/refresh-requests")
