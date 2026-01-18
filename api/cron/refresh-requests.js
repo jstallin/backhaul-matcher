@@ -200,12 +200,23 @@ const buildNotificationMessage = (requestName, _fleetName, changeType, newTopMat
 const sendNotification = async (method, email, phone, subject, text) => {
   const results = { email: null, sms: null };
 
+  // Debug logging
+  console.log('📧 sendNotification called:', {
+    method,
+    email: email || '(not set)',
+    phone: phone || '(not set)',
+    subject,
+    hasResendKey: !!process.env.RESEND_API_KEY,
+    hasTwilioConfig: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER)
+  });
+
   // Send email
   if ((method === 'email' || method === 'both') && email) {
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
       try {
         const resend = new Resend(resendKey);
+        console.log(`📤 Attempting to send email to ${email}...`);
         const result = await resend.emails.send({
           from: 'Haul Monitor <notifications@haulmonitor.com>',
           to: [email],
@@ -213,12 +224,17 @@ const sendNotification = async (method, email, phone, subject, text) => {
           text
         });
         results.email = { success: true, id: result.id };
-        console.log(`✅ Email sent to ${email}`);
+        console.log(`✅ Email sent to ${email}, id: ${result.id}`);
       } catch (error) {
         results.email = { success: false, error: error.message };
         console.error(`❌ Email failed: ${error.message}`);
       }
+    } else {
+      console.log('⚠️ Skipping email - RESEND_API_KEY not configured');
+      results.email = { success: false, error: 'RESEND_API_KEY not configured' };
     }
+  } else {
+    console.log(`⚠️ Skipping email - method=${method}, email=${email || 'not set'}`);
   }
 
   // Send SMS (via Twilio or email-to-SMS gateway)
@@ -229,6 +245,7 @@ const sendNotification = async (method, email, phone, subject, text) => {
 
     if (twilioSid && twilioToken && twilioFrom) {
       try {
+        console.log(`📤 Attempting to send SMS to ${phone}...`);
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
         const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
 
@@ -251,14 +268,21 @@ const sendNotification = async (method, email, phone, subject, text) => {
         } else {
           const error = await response.text();
           results.sms = { success: false, error };
+          console.error(`❌ SMS failed: ${error}`);
         }
       } catch (error) {
         results.sms = { success: false, error: error.message };
         console.error(`❌ SMS failed: ${error.message}`);
       }
+    } else {
+      console.log('⚠️ Skipping SMS - Twilio not configured');
+      results.sms = { success: false, error: 'Twilio not configured' };
     }
+  } else {
+    console.log(`⚠️ Skipping SMS - method=${method}, phone=${phone || 'not set'}`);
   }
 
+  console.log('📧 sendNotification results:', results);
   return results;
 };
 
