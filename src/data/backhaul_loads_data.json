@@ -21500,5 +21500,31 @@
   "posted_date": "2025-01-17 16:00",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-007",
+  "broker": "DAT",
+  "shipper": "Consumer Goods Co",
+  "receiver": "Charlotte Retail Hub",
+  "freight_type": "Retail Products",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Daytona Beach",
+  "pickup_lat": 29.2108,
+  "pickup_lng": -81.0228,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Huntersville",
+  "delivery_lat": 35.4107,
+  "delivery_lng": -80.8423,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 565,
+  "weight_lbs": 39000,
+  "trailer_length": 53,
+  "revenue_per_mile": 3.30,
+  "total_revenue": 1864.50,
+  "status": "available",
+  "posted_date": "2025-01-17 16:10",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
