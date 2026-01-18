@@ -1,5 +1,5 @@
 import { HaulMonitorLogo } from './HaulMonitorLogo';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileText, Truck, MapPin, Calendar, RefreshCw, Bell, Edit, Trash2, X, CheckCircle, Clock, ChevronRight } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -24,6 +24,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [datumCoordinates, setDatumCoordinates] = useState(null); // Store geocoded datum coords
   const [backhaulMatches, setBackhaulMatches] = useState([]);
   const [previousMatches, setPreviousMatches] = useState([]); // Track previous matches for change detection
+  const previousMatchesRef = useRef([]); // Ref to avoid stale closure in auto-refresh interval
   const [loadingMatches, setLoadingMatches] = useState(false);
   
   // Auto-refresh state - read from request, not local
@@ -228,8 +229,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         });
 
         // Detect material changes and send notifications
-        if (request.notification_enabled && previousMatches.length > 0) {
-          const change = detectBackhaulChanges(previousMatches, matches);
+        // Use ref to avoid stale closure issue with auto-refresh interval
+        if (request.notification_enabled && previousMatchesRef.current.length > 0) {
+          const change = detectBackhaulChanges(previousMatchesRef.current, matches);
           
           if (change) {
             console.log('📬 Material change detected:', change.type);
@@ -256,7 +258,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           }
         }
 
-        // Store matches for next comparison
+        // Store matches for next comparison (update both ref and state)
+        previousMatchesRef.current = matches;
         setPreviousMatches(matches);
       }
 
