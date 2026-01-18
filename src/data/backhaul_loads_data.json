@@ -21396,5 +21396,31 @@
   "posted_date": "2025-01-17 15:20",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-003",
+  "broker": "DAT",
+  "shipper": "Fresh Foods Inc",
+  "receiver": "Charlotte Distribution",
+  "freight_type": "Packaged Foods",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Ocala",
+  "pickup_lat": 29.1872,
+  "pickup_lng": -82.1401,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Mooresville",
+  "delivery_lat": 35.5849,
+  "delivery_lng": -80.8101,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 580,
+  "weight_lbs": 40000,
+  "trailer_length": 53,
+  "revenue_per_mile": 3.10,
+  "total_revenue": 1798.00,
+  "status": "available",
+  "posted_date": "2025-01-17 15:30",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
