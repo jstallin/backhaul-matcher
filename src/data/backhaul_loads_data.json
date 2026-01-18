@@ -21370,5 +21370,31 @@
   "posted_date": "2025-01-17 15:10",
   "pickup_state": "FL",
   "delivery_state": "NC"
-}  
+},
+{
+  "load_id": "LOAD-TEST-002",
+  "broker": "Truckstop",
+  "shipper": "Auto Parts Distribution",
+  "receiver": "Concord Motors",
+  "freight_type": "Auto Parts",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Tampa",
+  "pickup_lat": 27.9506,
+  "pickup_lng": -82.4572,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Huntersville",
+  "delivery_lat": 35.4107,
+  "delivery_lng": -80.8423,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 535,
+  "weight_lbs": 42000,
+  "trailer_length": 53,
+  "revenue_per_mile": 2.95,
+  "total_revenue": 1578.25,
+  "status": "available",
+  "posted_date": "2025-01-17 15:20",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
+} 
 ]
