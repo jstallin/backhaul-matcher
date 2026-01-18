@@ -267,28 +267,12 @@ const sendNotification = async (method, email, phone, subject, text) => {
 // ============================================
 
 export default async function handler(req, res) {
-  // Verify cron secret (Vercel sends this header for cron jobs)
+  // Verify cron secret
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
 
-  // Debug logging
-  console.log('🔐 Auth check:', {
-    hasAuthHeader: !!authHeader,
-    hasCronSecret: !!cronSecret,
-    authHeaderPrefix: authHeader?.substring(0, 15),
-    cronSecretLength: cronSecret?.length
-  });
-
-  // Allow requests from Vercel cron (with secret) or manual testing
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    console.log('⚠️ Unauthorized cron request - header mismatch');
-    return res.status(401).json({
-      error: 'Unauthorized',
-      debug: {
-        hasAuthHeader: !!authHeader,
-        hasCronSecret: !!cronSecret
-      }
-    });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   console.log('🔄 Server-side backhaul refresh starting...');
