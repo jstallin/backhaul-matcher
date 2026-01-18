@@ -1,0 +1,35 @@
+name: Refresh Backhaul Requests
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger backhaul refresh
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.APP_URL }}/api/cron/refresh-requests")
+
+          # Extract HTTP status code (last line)
+          http_code=$(echo "$response" | tail -n1)
+          # Extract body (all but last line)
+          body=$(echo "$response" | sed '$d')
+
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+
+          # Fail if not 2xx status
+          if [[ ! "$http_code" =~ ^2 ]]; then
+            echo "Error: Request failed with status $http_code"
+            exit 1
+          fi
+
+          echo "✅ Refresh completed successfully"
