@@ -21448,5 +21448,31 @@
   "posted_date": "2025-01-17 15:40",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-005",
+  "broker": "DAT",
+  "shipper": "Tech Hardware Ltd",
+  "receiver": "Charlotte Tech Hub",
+  "freight_type": "Computer Equipment",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Lakeland",
+  "pickup_lat": 28.0395,
+  "pickup_lng": -81.9498,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Davidson",
+  "delivery_lat": 35.4993,
+  "delivery_lng": -80.8481,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 595,
+  "weight_lbs": 37000,
+  "trailer_length": 53,
+  "revenue_per_mile": 3.20,
+  "total_revenue": 1904.00,
+  "status": "available",
+  "posted_date": "2025-01-17 15:50",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
