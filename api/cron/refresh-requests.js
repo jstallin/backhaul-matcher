@@ -1,10 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
-import { createRequire } from 'module';
 
-// Import backhaul loads data using createRequire for Node.js compatibility
-const require = createRequire(import.meta.url);
-const backhaulLoadsData = require('./backhaul_loads_data.json');
+// Backhaul data will be fetched at runtime
+let backhaulLoadsData = null;
+
+const loadBackhaulData = async () => {
+  if (backhaulLoadsData) return backhaulLoadsData;
+
+  try {
+    // Fetch from the deployed app's public data
+    const response = await fetch('https://backhaul-matcher.vercel.app/backhaul_loads_data.json');
+    if (response.ok) {
+      backhaulLoadsData = await response.json();
+      return backhaulLoadsData;
+    }
+  } catch (e) {
+    console.error('Failed to fetch backhaul data:', e.message);
+  }
+
+  return [];
+};
 
 // Initialize Supabase client for server-side
 const supabase = createClient(
@@ -269,6 +284,10 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
+    // Load backhaul data at runtime
+    const loadsData = await loadBackhaulData();
+    console.log(`📦 Loaded ${loadsData.length} backhaul loads`);
+
     // 1. Get all active requests that are due for refresh
     const now = new Date().toISOString();
     const { data: requests, error: fetchError } = await supabase
@@ -330,7 +349,7 @@ export default async function handler(req, res) {
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,
-          backhaulLoadsData,
+          loadsData,
           50,  // homeRadiusMiles
           100  // corridorWidthMiles
         );
