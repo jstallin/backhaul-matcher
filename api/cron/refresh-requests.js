@@ -271,13 +271,24 @@ export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
 
+  // Debug logging
+  console.log('🔐 Auth check:', {
+    hasAuthHeader: !!authHeader,
+    hasCronSecret: !!cronSecret,
+    authHeaderPrefix: authHeader?.substring(0, 15),
+    cronSecretLength: cronSecret?.length
+  });
+
   // Allow requests from Vercel cron (with secret) or manual testing
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // Also allow if it's a GET request for manual testing in dev
-    if (req.method !== 'GET' || process.env.NODE_ENV === 'production') {
-      console.log('⚠️ Unauthorized cron request');
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    console.log('⚠️ Unauthorized cron request - header mismatch');
+    return res.status(401).json({
+      error: 'Unauthorized',
+      debug: {
+        hasAuthHeader: !!authHeader,
+        hasCronSecret: !!cronSecret
+      }
+    });
   }
 
   console.log('🔄 Server-side backhaul refresh starting...');
