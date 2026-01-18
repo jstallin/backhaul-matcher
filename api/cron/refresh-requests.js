@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { createRequire } from 'module';
 
-// Import backhaul loads data (file is in same directory for Vercel bundling)
-import backhaulLoadsData from './backhaul_loads_data.json' with { type: 'json' };
+// Import backhaul loads data using createRequire for Node.js compatibility
+const require = createRequire(import.meta.url);
+const backhaulLoadsData = require('./backhaul_loads_data.json');
 
 // Initialize Supabase client for server-side
 const supabase = createClient(
