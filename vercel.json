@@ -7,10 +7,6 @@
   "functions": {
     "api/**/*.js": {
       "memory": 1024,
-      "maxDuration": 10
-    },
-    "api/cron/refresh-requests.js": {
-      "memory": 1024,
       "maxDuration": 60
     }
   },
