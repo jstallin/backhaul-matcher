@@ -21474,5 +21474,31 @@
   "posted_date": "2025-01-17 15:50",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-006",
+  "broker": "Truckstop",
+  "shipper": "Industrial Supply",
+  "receiver": "Concord Industrial",
+  "freight_type": "Machinery Parts",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Gainesville",
+  "pickup_lat": 29.6516,
+  "pickup_lng": -82.3248,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Kannapolis",
+  "delivery_lat": 35.4873,
+  "delivery_lng": -80.6217,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 620,
+  "weight_lbs": 44000,
+  "trailer_length": 53,
+  "revenue_per_mile": 2.85,
+  "total_revenue": 1767.00,
+  "status": "available",
+  "posted_date": "2025-01-17 16:00",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
