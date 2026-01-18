@@ -170,6 +170,30 @@ const detectMaterialChange = (lastMatchId, lastMatchRevenue, newTopMatch) => {
   return null;
 };
 
+// Convert phone number to email-to-SMS gateway address
+const convertPhoneToEmailGateway = (phone, carrier = 'verizon') => {
+  if (!phone) return null;
+
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+
+  const gateways = {
+    'verizon': 'vtext.com',
+    'att': 'txt.att.net',
+    'tmobile': 'tmomail.net',
+    'sprint': 'messaging.sprintpcs.com',
+    'boost': 'sms.myboostmobile.com',
+    'cricket': 'sms.cricketwireless.net',
+    'uscellular': 'email.uscc.net'
+  };
+
+  if (gateways[carrier]) {
+    return `${digits}@${gateways[carrier]}`;
+  }
+
+  return null;
+};
+
 const buildNotificationMessage = (requestName, _fleetName, changeType, newTopMatch, priceDiff) => {
   const route = `${newTopMatch.origin.city}, ${newTopMatch.origin.state} → ${newTopMatch.destination.city}, ${newTopMatch.destination.state}`;
   const revenue = newTopMatch.totalRevenue;
@@ -237,46 +261,36 @@ const sendNotification = async (method, email, phone, subject, text) => {
     console.log(`⚠️ Skipping email - method=${method}, email=${email || 'not set'}`);
   }
 
-  // Send SMS (via Twilio or email-to-SMS gateway)
+  // Send SMS via email-to-SMS gateway
   if ((method === 'text' || method === 'both') && phone) {
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+    const resendKey = process.env.RESEND_API_KEY;
+    const carrier = process.env.SMS_CARRIER || 'verizon';
 
-    if (twilioSid && twilioToken && twilioFrom) {
+    // Convert phone to email gateway address
+    const smsEmail = convertPhoneToEmailGateway(phone, carrier);
+
+    if (smsEmail && resendKey) {
       try {
-        console.log(`📤 Attempting to send SMS to ${phone}...`);
-        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-        const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
-
-        const response = await fetch(twilioUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: new URLSearchParams({
-            To: phone,
-            From: twilioFrom,
-            Body: text.substring(0, 160) // SMS character limit
-          })
+        console.log(`📤 Attempting to send SMS via email gateway to ${smsEmail}...`);
+        const resend = new Resend(resendKey);
+        const result = await resend.emails.send({
+          from: 'Haul Monitor <notifications@haulmonitor.com>',
+          to: [smsEmail],
+          subject: 'Haul Monitor Alert',
+          text: text.substring(0, 160) // SMS-friendly length
         });
-
-        if (response.ok) {
-          results.sms = { success: true };
-          console.log(`✅ SMS sent to ${phone}`);
-        } else {
-          const error = await response.text();
-          results.sms = { success: false, error };
-          console.error(`❌ SMS failed: ${error}`);
-        }
+        results.sms = { success: true, id: result.id, gateway: smsEmail };
+        console.log(`✅ SMS sent via email gateway to ${smsEmail}, id: ${result.id}`);
       } catch (error) {
         results.sms = { success: false, error: error.message };
-        console.error(`❌ SMS failed: ${error.message}`);
+        console.error(`❌ SMS via email gateway failed: ${error.message}`);
       }
+    } else if (!smsEmail) {
+      console.log(`⚠️ Skipping SMS - could not determine gateway for carrier: ${carrier}`);
+      results.sms = { success: false, error: `Unknown carrier: ${carrier}` };
     } else {
-      console.log('⚠️ Skipping SMS - Twilio not configured');
-      results.sms = { success: false, error: 'Twilio not configured' };
+      console.log('⚠️ Skipping SMS - RESEND_API_KEY not configured');
+      results.sms = { success: false, error: 'RESEND_API_KEY not configured' };
     }
   } else {
     console.log(`⚠️ Skipping SMS - method=${method}, phone=${phone || 'not set'}`);
