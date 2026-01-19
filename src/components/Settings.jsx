@@ -19,7 +19,7 @@ export const Settings = ({ onBack }) => {
 
   // DAT Integration state
   const [showDatModal, setShowDatModal] = useState(false);
-  const [datCredentials, setDatCredentials] = useState({ username: '', password: '' });
+  const [datEmail, setDatEmail] = useState('');
   const [datConnecting, setDatConnecting] = useState(false);
   const [datError, setDatError] = useState('');
   const [datConnection, setDatConnection] = useState(null); // { connected, account_email, connected_at }
@@ -58,8 +58,15 @@ export const Settings = ({ onBack }) => {
     e.preventDefault();
     setDatError('');
 
-    if (!datCredentials.username || !datCredentials.password) {
-      setDatError('Please enter your DAT username and password');
+    if (!datEmail.trim()) {
+      setDatError('Please enter your DAT email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(datEmail.trim())) {
+      setDatError('Please enter a valid email address');
       return;
     }
 
@@ -79,15 +86,14 @@ export const Settings = ({ onBack }) => {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          username: datCredentials.username,
-          password: datCredentials.password
+          email: datEmail.trim()
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setDatError(data.error || 'Failed to connect to DAT');
+        setDatError(data.error || 'Failed to link DAT account');
         return;
       }
 
@@ -98,7 +104,7 @@ export const Settings = ({ onBack }) => {
         connected_at: data.connected_at
       });
       setShowDatModal(false);
-      setDatCredentials({ username: '', password: '' });
+      setDatEmail('');
     } catch (error) {
       console.error('DAT connect error:', error);
       setDatError('An unexpected error occurred. Please try again.');
@@ -1012,44 +1018,13 @@ export const Settings = ({ onBack }) => {
                   fontSize: '14px',
                   color: colors.text.secondary
                 }}>
-                  Enter your DAT One credentials
+                  Link your DAT One account
                 </p>
               </div>
             </div>
 
-            {/* Login Form */}
+            {/* Link Form */}
             <form onSubmit={handleDatConnect}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  marginBottom: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: colors.text.primary
-                }}>
-                  DAT Username / Email
-                </label>
-                <input
-                  type="text"
-                  value={datCredentials.username}
-                  onChange={(e) => setDatCredentials(prev => ({ ...prev, username: e.target.value }))}
-                  placeholder="Enter your DAT username or email"
-                  disabled={datConnecting}
-                  autoComplete="username"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: colors.background.primary,
-                    border: `1px solid ${colors.border.accent}`,
-                    borderRadius: '8px',
-                    color: colors.text.primary,
-                    fontSize: '14px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
               <div style={{ marginBottom: '20px' }}>
                 <label style={{
                   display: 'block',
@@ -1058,15 +1033,15 @@ export const Settings = ({ onBack }) => {
                   fontWeight: 600,
                   color: colors.text.primary
                 }}>
-                  Password
+                  DAT Account Email
                 </label>
                 <input
-                  type="password"
-                  value={datCredentials.password}
-                  onChange={(e) => setDatCredentials(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Enter your DAT password"
+                  type="email"
+                  value={datEmail}
+                  onChange={(e) => setDatEmail(e.target.value)}
+                  placeholder="Enter your DAT account email"
                   disabled={datConnecting}
-                  autoComplete="current-password"
+                  autoComplete="email"
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -1079,6 +1054,13 @@ export const Settings = ({ onBack }) => {
                     boxSizing: 'border-box'
                   }}
                 />
+                <p style={{
+                  margin: '8px 0 0 0',
+                  fontSize: '12px',
+                  color: colors.text.tertiary
+                }}>
+                  Use the email associated with your DAT One subscription
+                </p>
               </div>
 
               {/* Error Message */}
@@ -1106,7 +1088,7 @@ export const Settings = ({ onBack }) => {
                 color: colors.text.secondary,
                 marginBottom: '24px'
               }}>
-                Your credentials are securely transmitted and used only to access your DAT account. We never store your password.
+                Linking your DAT email enables Haul Monitor to retrieve loads on your behalf. Make sure this email has an active DAT One subscription with the required seats (Connexion, Load Board).
               </div>
 
               {/* Buttons */}
@@ -1115,7 +1097,7 @@ export const Settings = ({ onBack }) => {
                   type="button"
                   onClick={() => {
                     setShowDatModal(false);
-                    setDatCredentials({ username: '', password: '' });
+                    setDatEmail('');
                     setDatError('');
                   }}
                   disabled={datConnecting}
@@ -1150,7 +1132,7 @@ export const Settings = ({ onBack }) => {
                     opacity: datConnecting ? 0.7 : 1
                   }}
                 >
-                  {datConnecting ? 'Connecting...' : 'Connect'}
+                  {datConnecting ? 'Linking...' : 'Link Account'}
                 </button>
               </div>
             </form>

@@ -42,97 +42,34 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid authentication token' });
   }
 
-  const { username, password } = req.body;
+  const { email } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
+  if (!email) {
+    return res.status(400).json({ error: 'DAT email address is required' });
   }
 
-  console.log(`🔗 DAT Connect: Attempting authentication for user ${user.id} with DAT account ${username}`);
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Please enter a valid email address' });
+  }
+
+  console.log(`🔗 DAT Connect: Linking DAT account ${email} for user ${user.id}`);
 
   try {
-    // DAT API Authentication
-    // DAT uses a two-level auth system:
-    // 1. Service account authentication (app-level)
-    // 2. User-level authentication
-
-    const datApiUrl = process.env.DAT_API_URL || 'https://freight.api.dat.com';
-    const datClientId = process.env.DAT_CLIENT_ID;
-    const datClientSecret = process.env.DAT_CLIENT_SECRET;
-
-    if (!datClientId || !datClientSecret) {
-      console.error('DAT API credentials not configured');
-      return res.status(500).json({
-        error: 'DAT integration not configured. Please contact support.',
-        code: 'DAT_NOT_CONFIGURED'
-      });
-    }
-
-    // Step 1: Authenticate with DAT API
-    // Using OAuth2 password grant flow
-    const authResponse = await fetch(`${datApiUrl}/oauth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${datClientId}:${datClientSecret}`).toString('base64')}`
-      },
-      body: new URLSearchParams({
-        grant_type: 'password',
-        username: username,
-        password: password,
-        scope: 'openid profile' // Adjust based on DAT's actual scopes
-      }).toString()
-    });
-
-    const authData = await authResponse.json();
-
-    if (!authResponse.ok) {
-      console.error('DAT authentication failed:', authData);
-
-      // Handle specific error cases
-      if (authResponse.status === 401 || authData.error === 'invalid_grant') {
-        return res.status(401).json({
-          error: 'Invalid DAT credentials. Please check your username and password.',
-          code: 'INVALID_CREDENTIALS'
-        });
-      }
-
-      return res.status(400).json({
-        error: authData.error_description || 'Failed to authenticate with DAT',
-        code: 'AUTH_FAILED'
-      });
-    }
-
-    const { access_token, refresh_token, expires_in, token_type } = authData;
-
-    if (!access_token) {
-      console.error('No access token in DAT response');
-      return res.status(500).json({
-        error: 'Authentication succeeded but no access token received',
-        code: 'NO_TOKEN'
-      });
-    }
-
-    // Calculate token expiration
-    const expiresAt = expires_in
-      ? new Date(Date.now() + (expires_in * 1000)).toISOString()
-      : null;
-
-    console.log(`✅ DAT authentication successful for ${username}`);
-
-    // Step 2: Store the integration in our database
+    // Store the DAT email link in our database
+    // When the service account is configured, API calls will use:
+    // - Service account credentials (from env vars) for organization auth
+    // - This email for user-level identification
     const integrationData = {
       user_id: user.id,
       provider: 'dat',
-      account_email: username,
-      access_token: access_token,
-      refresh_token: refresh_token || null,
-      token_expires_at: expiresAt,
+      account_email: email.toLowerCase().trim(),
       is_connected: true,
       connected_at: new Date().toISOString(),
       metadata: {
-        token_type: token_type || 'Bearer',
-        last_verified_at: new Date().toISOString()
+        auth_type: 'service_account', // Using service account model
+        linked_at: new Date().toISOString()
       }
     };
 
@@ -148,36 +85,25 @@ export default async function handler(req, res) {
 
     if (dbError) {
       console.error('Failed to save integration:', dbError);
-      // Still return success since auth worked, just warn about storage
-      return res.status(200).json({
-        success: true,
-        message: 'Connected to DAT successfully',
-        warning: 'Connection saved with issues - may need to reconnect later',
-        account_email: username
+      return res.status(500).json({
+        error: 'Failed to link DAT account. Please try again.',
+        code: 'DB_ERROR'
       });
     }
 
+    console.log(`✅ DAT account linked successfully: ${email}`);
+
     return res.status(200).json({
       success: true,
-      message: 'Successfully connected to DAT',
-      account_email: username,
-      connected_at: integration.connected_at,
-      expires_at: expiresAt
+      message: 'DAT account linked successfully',
+      account_email: integration.account_email,
+      connected_at: integration.connected_at
     });
 
   } catch (error) {
     console.error('DAT connection error:', error);
-
-    // Check if it's a network error
-    if (error.cause?.code === 'ECONNREFUSED' || error.cause?.code === 'ENOTFOUND') {
-      return res.status(503).json({
-        error: 'Unable to reach DAT servers. Please try again later.',
-        code: 'DAT_UNAVAILABLE'
-      });
-    }
-
     return res.status(500).json({
-      error: 'An unexpected error occurred while connecting to DAT',
+      error: 'An unexpected error occurred',
       code: 'INTERNAL_ERROR'
     });
   }
