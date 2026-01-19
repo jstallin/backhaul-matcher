@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, Sun, Moon, ChevronRight, User, Lock } from '../icons';
+import { Settings as SettingsIcon, Sun, Moon, ChevronRight, User, Lock, Link2 } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,6 +19,7 @@ export const Settings = ({ onBack }) => {
   const sections = [
     { id: 'general', label: 'General', icon: SettingsIcon, badge: null },
     { id: 'account', label: 'Account & Access', icon: User, badge: null },
+    { id: 'integrations', label: 'Integrations', icon: Link2, badge: null },
     { id: 'accessibility', label: 'Accessibility', icon: Sun, badge: null }
   ];
 
@@ -447,6 +448,141 @@ export const Settings = ({ onBack }) => {
                       {changingPassword ? 'Changing Password...' : 'Change Password'}
                     </button>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'integrations' && (
+              <div style={{
+                background: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: '16px',
+                padding: '32px'
+              }}>
+                <h2 style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '24px',
+                  fontWeight: 900,
+                  color: colors.text.primary
+                }}>
+                  Integrations
+                </h2>
+                <p style={{
+                  margin: '0 0 32px 0',
+                  color: colors.text.secondary,
+                  fontSize: '14px'
+                }}>
+                  Connect your load board accounts to access real-time freight data
+                </p>
+
+                {/* DAT Integration */}
+                <div style={{
+                  border: `1px solid ${colors.border.primary}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: '#0066CC',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontWeight: 900,
+                        fontSize: '14px'
+                      }}>
+                        DAT
+                      </div>
+                      <div>
+                        <h3 style={{
+                          margin: '0 0 4px 0',
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          color: colors.text.primary
+                        }}>
+                          DAT Freight & Analytics
+                        </h3>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          color: colors.text.secondary
+                        }}>
+                          Access loads from DAT One, the largest load board network
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{
+                      padding: '6px 12px',
+                      background: colors.background.secondary,
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colors.text.tertiary
+                    }}>
+                      Not Connected
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                    <button
+                      style={{
+                        padding: '12px 24px',
+                        background: colors.accent.primary,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Connect DAT Account
+                    </button>
+                  </div>
+                </div>
+
+                {/* Coming Soon Integrations */}
+                <div style={{
+                  border: `1px dashed ${colors.border.primary}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  opacity: 0.6
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: colors.background.secondary,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Link2 size={24} color={colors.text.tertiary} />
+                    </div>
+                    <div>
+                      <h3 style={{
+                        margin: '0 0 4px 0',
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        color: colors.text.primary
+                      }}>
+                        More Integrations Coming Soon
+                      </h3>
+                      <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: colors.text.secondary
+                      }}>
+                        Truckstop, 123Loadboard, and more will be available soon
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
