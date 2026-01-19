@@ -331,5 +331,56 @@ export const db = {
       if (error) throw error;
       return data;
     }
+  },
+
+  // User integrations operations
+  integrations: {
+    async getByUser(userId) {
+      const { data, error } = await supabase
+        .from('user_integrations')
+        .select('*')
+        .eq('user_id', userId);
+      if (error) throw error;
+      return data;
+    },
+
+    async getByProvider(userId, provider) {
+      const { data, error } = await supabase
+        .from('user_integrations')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('provider', provider)
+        .single();
+      // Don't throw on no rows found
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+
+    async isConnected(userId, provider) {
+      const integration = await this.getByProvider(userId, provider);
+      if (!integration) return false;
+
+      // Check if token is expired
+      if (integration.token_expires_at) {
+        const isExpired = new Date(integration.token_expires_at) < new Date();
+        return integration.is_connected && !isExpired;
+      }
+
+      return integration.is_connected;
+    },
+
+    async disconnect(userId, provider) {
+      const { error } = await supabase
+        .from('user_integrations')
+        .update({
+          is_connected: false,
+          access_token: null,
+          refresh_token: null,
+          token_expires_at: null
+        })
+        .eq('user_id', userId)
+        .eq('provider', provider);
+      if (error) throw error;
+    }
   }
 };

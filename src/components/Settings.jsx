@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Sun, Moon, ChevronRight, User, Lock, Link2 } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 export const Settings = ({ onBack }) => {
   const [activeSection, setActiveSection] = useState('accessibility');
@@ -15,6 +16,120 @@ export const Settings = ({ onBack }) => {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // DAT Integration state
+  const [showDatModal, setShowDatModal] = useState(false);
+  const [datCredentials, setDatCredentials] = useState({ username: '', password: '' });
+  const [datConnecting, setDatConnecting] = useState(false);
+  const [datError, setDatError] = useState('');
+  const [datConnection, setDatConnection] = useState(null); // { connected, account_email, connected_at }
+  const [loadingDatStatus, setLoadingDatStatus] = useState(true);
+
+  // Check DAT connection status on mount
+  useEffect(() => {
+    checkDatStatus();
+  }, []);
+
+  const checkDatStatus = async () => {
+    try {
+      setLoadingDatStatus(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/dat/status', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDatConnection(data);
+      }
+    } catch (error) {
+      console.error('Error checking DAT status:', error);
+    } finally {
+      setLoadingDatStatus(false);
+    }
+  };
+
+  const handleDatConnect = async (e) => {
+    e.preventDefault();
+    setDatError('');
+
+    if (!datCredentials.username || !datCredentials.password) {
+      setDatError('Please enter your DAT username and password');
+      return;
+    }
+
+    setDatConnecting(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setDatError('Please log in to connect your DAT account');
+        return;
+      }
+
+      const response = await fetch('/api/integrations/dat/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          username: datCredentials.username,
+          password: datCredentials.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDatError(data.error || 'Failed to connect to DAT');
+        return;
+      }
+
+      // Success - update connection state and close modal
+      setDatConnection({
+        connected: true,
+        account_email: data.account_email,
+        connected_at: data.connected_at
+      });
+      setShowDatModal(false);
+      setDatCredentials({ username: '', password: '' });
+    } catch (error) {
+      console.error('DAT connect error:', error);
+      setDatError('An unexpected error occurred. Please try again.');
+    } finally {
+      setDatConnecting(false);
+    }
+  };
+
+  const handleDatDisconnect = async () => {
+    if (!confirm('Are you sure you want to disconnect your DAT account?')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/dat/status', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        setDatConnection({ connected: false });
+      }
+    } catch (error) {
+      console.error('Error disconnecting DAT:', error);
+    }
+  };
 
   const sections = [
     { id: 'general', label: 'General', icon: SettingsIcon, badge: null },
@@ -477,10 +592,11 @@ export const Settings = ({ onBack }) => {
 
                 {/* DAT Integration */}
                 <div style={{
-                  border: `1px solid ${colors.border.primary}`,
+                  border: `1px solid ${datConnection?.connected ? colors.accent.success : colors.border.primary}`,
                   borderRadius: '12px',
                   padding: '24px',
-                  marginBottom: '16px'
+                  marginBottom: '16px',
+                  background: datConnection?.connected ? `${colors.accent.success}08` : 'transparent'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -514,35 +630,89 @@ export const Settings = ({ onBack }) => {
                         }}>
                           Access loads from DAT One, the largest load board network
                         </p>
+                        {datConnection?.connected && datConnection.account_email && (
+                          <p style={{
+                            margin: '4px 0 0 0',
+                            fontSize: '13px',
+                            color: colors.text.tertiary
+                          }}>
+                            Connected as: {datConnection.account_email}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div style={{
-                      padding: '6px 12px',
-                      background: colors.background.secondary,
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: colors.text.tertiary
-                    }}>
-                      Not Connected
-                    </div>
+                    {loadingDatStatus ? (
+                      <div style={{
+                        padding: '6px 12px',
+                        background: colors.background.secondary,
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.text.tertiary
+                      }}>
+                        Checking...
+                      </div>
+                    ) : datConnection?.connected ? (
+                      <div style={{
+                        padding: '6px 12px',
+                        background: `${colors.accent.success}20`,
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.accent.success
+                      }}>
+                        Connected
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: '6px 12px',
+                        background: colors.background.secondary,
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: colors.text.tertiary
+                      }}>
+                        Not Connected
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
-                    <button
-                      style={{
-                        padding: '12px 24px',
-                        background: colors.accent.primary,
-                        border: 'none',
-                        borderRadius: '8px',
-                        color: '#fff',
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Connect DAT Account
-                    </button>
+                    {datConnection?.connected ? (
+                      <button
+                        onClick={handleDatDisconnect}
+                        style={{
+                          padding: '12px 24px',
+                          background: 'transparent',
+                          border: `1px solid ${colors.accent.danger}`,
+                          borderRadius: '8px',
+                          color: colors.accent.danger,
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Disconnect DAT Account
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowDatModal(true)}
+                        disabled={loadingDatStatus}
+                        style={{
+                          padding: '12px 24px',
+                          background: colors.accent.primary,
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          cursor: loadingDatStatus ? 'not-allowed' : 'pointer',
+                          opacity: loadingDatStatus ? 0.5 : 1
+                        }}
+                      >
+                        Connect DAT Account
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -780,13 +950,213 @@ export const Settings = ({ onBack }) => {
                   fontSize: '13px',
                   color: colors.text.secondary
                 }}>
-                  💡 Your theme preference is saved automatically and will persist across sessions.
+                  Your theme preference is saved automatically and will persist across sessions.
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* DAT Connection Modal */}
+      {showDatModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: colors.background.card,
+            borderRadius: '16px',
+            padding: '32px',
+            width: '100%',
+            maxWidth: '440px',
+            border: `1px solid ${colors.border.primary}`,
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: '#0066CC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontWeight: 900,
+                fontSize: '14px'
+              }}>
+                DAT
+              </div>
+              <div>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: colors.text.primary
+                }}>
+                  Connect to DAT
+                </h3>
+                <p style={{
+                  margin: '4px 0 0 0',
+                  fontSize: '14px',
+                  color: colors.text.secondary
+                }}>
+                  Enter your DAT One credentials
+                </p>
+              </div>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleDatConnect}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: colors.text.primary
+                }}>
+                  DAT Username / Email
+                </label>
+                <input
+                  type="text"
+                  value={datCredentials.username}
+                  onChange={(e) => setDatCredentials(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Enter your DAT username or email"
+                  disabled={datConnecting}
+                  autoComplete="username"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: colors.background.primary,
+                    border: `1px solid ${colors.border.accent}`,
+                    borderRadius: '8px',
+                    color: colors.text.primary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: colors.text.primary
+                }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={datCredentials.password}
+                  onChange={(e) => setDatCredentials(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="Enter your DAT password"
+                  disabled={datConnecting}
+                  autoComplete="current-password"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: colors.background.primary,
+                    border: `1px solid ${colors.border.accent}`,
+                    borderRadius: '8px',
+                    color: colors.text.primary,
+                    fontSize: '14px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Error Message */}
+              {datError && (
+                <div style={{
+                  padding: '12px',
+                  background: `${colors.accent.danger}20`,
+                  border: `1px solid ${colors.accent.danger}`,
+                  borderRadius: '8px',
+                  color: colors.accent.danger,
+                  fontSize: '14px',
+                  marginBottom: '16px'
+                }}>
+                  {datError}
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div style={{
+                padding: '12px',
+                background: `${colors.accent.info}15`,
+                border: `1px solid ${colors.accent.info}40`,
+                borderRadius: '8px',
+                fontSize: '13px',
+                color: colors.text.secondary,
+                marginBottom: '24px'
+              }}>
+                Your credentials are securely transmitted and used only to access your DAT account. We never store your password.
+              </div>
+
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDatModal(false);
+                    setDatCredentials({ username: '', password: '' });
+                    setDatError('');
+                  }}
+                  disabled={datConnecting}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: 'transparent',
+                    border: `1px solid ${colors.border.accent}`,
+                    borderRadius: '8px',
+                    color: colors.text.primary,
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: datConnecting ? 'not-allowed' : 'pointer',
+                    opacity: datConnecting ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={datConnecting}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: '#0066CC',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    cursor: datConnecting ? 'not-allowed' : 'pointer',
+                    opacity: datConnecting ? 0.7 : 1
+                  }}
+                >
+                  {datConnecting ? 'Connecting...' : 'Connect'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
