@@ -241,17 +241,22 @@ const sendNotification = async (method, email, phone, subject, text) => {
       try {
         const resend = new Resend(resendKey);
         console.log(`📤 Attempting to send email to ${email}...`);
-        const result = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: 'Haul Monitor <notifications@haulmonitor.com>',
           to: [email],
           subject,
           text
         });
-        results.email = { success: true, id: result.id };
-        console.log(`✅ Email sent to ${email}, id: ${result.id}`);
+        if (error) {
+          results.email = { success: false, error: error.message };
+          console.error(`❌ Email failed:`, error);
+        } else {
+          results.email = { success: true, id: data?.id };
+          console.log(`✅ Email sent to ${email}, id: ${data?.id}`);
+        }
       } catch (error) {
         results.email = { success: false, error: error.message };
-        console.error(`❌ Email failed: ${error.message}`);
+        console.error(`❌ Email exception: ${error.message}`);
       }
     } else {
       console.log('⚠️ Skipping email - RESEND_API_KEY not configured');
@@ -273,17 +278,22 @@ const sendNotification = async (method, email, phone, subject, text) => {
       try {
         console.log(`📤 Attempting to send SMS via email gateway to ${smsEmail}...`);
         const resend = new Resend(resendKey);
-        const result = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: 'Haul Monitor <notifications@haulmonitor.com>',
           to: [smsEmail],
           subject: 'Haul Monitor Alert',
           text: text.substring(0, 160) // SMS-friendly length
         });
-        results.sms = { success: true, id: result.id, gateway: smsEmail };
-        console.log(`✅ SMS sent via email gateway to ${smsEmail}, id: ${result.id}`);
+        if (error) {
+          results.sms = { success: false, error: error.message, gateway: smsEmail };
+          console.error(`❌ SMS via email gateway failed:`, error);
+        } else {
+          results.sms = { success: true, id: data?.id, gateway: smsEmail };
+          console.log(`✅ SMS sent via email gateway to ${smsEmail}, id: ${data?.id}`);
+        }
       } catch (error) {
-        results.sms = { success: false, error: error.message };
-        console.error(`❌ SMS via email gateway failed: ${error.message}`);
+        results.sms = { success: false, error: error.message, gateway: smsEmail };
+        console.error(`❌ SMS via email gateway exception: ${error.message}`);
       }
     } else if (!smsEmail) {
       console.log(`⚠️ Skipping SMS - could not determine gateway for carrier: ${carrier}`);
