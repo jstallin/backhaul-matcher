@@ -279,7 +279,7 @@ const sendNotification = async (method, email, phone, subject, text) => {
         console.log(`📤 Attempting to send SMS via email gateway to ${smsEmail}...`);
         const resend = new Resend(resendKey);
         const { data, error } = await resend.emails.send({
-          from: 'Haul Monitor <notifications@haulmonitor.com>',
+          from: 'Haul Monitor <notifications@haulmonitor.cloud>',
           to: [smsEmail],
           subject: 'Haul Monitor Alert',
           text: text.substring(0, 160) // SMS-friendly length
