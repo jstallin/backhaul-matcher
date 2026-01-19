@@ -242,7 +242,7 @@ const sendNotification = async (method, email, phone, subject, text) => {
         const resend = new Resend(resendKey);
         console.log(`📤 Attempting to send email to ${email}...`);
         const { data, error } = await resend.emails.send({
-          from: 'Haul Monitor <notifications@haulmonitor.com>',
+          from: 'Haul Monitor <notifications@haulmonitor.cloud>',
           to: [email],
           subject,
           text

@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     const resend = new Resend(apiKey);
     
     const data = await resend.emails.send({
-      from: 'Haul Monitor <notifications@haulmonitor.com>', // Change to your verified domain
+      from: 'Haul Monitor <notifications@haulmonitor.cloud>', // Change to your verified domain
       to: [to],
       subject: subject,
       text: text || '',
