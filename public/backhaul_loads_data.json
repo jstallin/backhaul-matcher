@@ -21474,5 +21474,31 @@
   "posted_date": "2025-01-17 15:50",
   "pickup_state": "FL",
   "delivery_state": "NC"
+},
+{
+  "load_id": "LOAD-TEST-008",
+  "broker": "123Loadboard",
+  "shipper": "Furniture Distributors",
+  "receiver": "Davidson Furniture",
+  "freight_type": "Home Furnishings",
+  "equipment_type": "Dry Van",
+  "equipment_code": "V",
+  "pickup_city": "Port St Lucie",
+  "pickup_lat": 27.2730,
+  "pickup_lng": -80.3582,
+  "pickup_date": "2025-01-18",
+  "delivery_city": "Mooresville",
+  "delivery_lat": 35.5849,
+  "delivery_lng": -80.8101,
+  "delivery_date": "2025-01-19",
+  "distance_miles": 680,
+  "weight_lbs": 41000,
+  "trailer_length": 53,
+  "revenue_per_mile": 5.75,
+  "total_revenue": 6870.00,
+  "status": "available",
+  "posted_date": "2025-01-17 16:20",
+  "pickup_state": "FL",
+  "delivery_state": "NC"
 } 
 ]
