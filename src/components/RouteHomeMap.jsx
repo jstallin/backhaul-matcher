@@ -10,6 +10,8 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
   const map = useRef(null);
   const markers = useRef([]);
   const mapLoaded = useRef(false);
+  const initialFitDone = useRef(false);
+  const lastRouteKey = useRef(null);
 
   // Initialize map once
   useEffect(() => {
@@ -51,6 +53,13 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
     if (!map.current) return;
 
     const updateMap = () => {
+      // Check if route changed (different datum/home) - reset fit flag if so
+      const routeKey = `${datumPoint.lat},${datumPoint.lng}->${fleetHome.lat},${fleetHome.lng}`;
+      if (lastRouteKey.current !== routeKey) {
+        lastRouteKey.current = routeKey;
+        initialFitDone.current = false;
+      }
+
       // Clear existing markers
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
@@ -263,12 +272,13 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
         bounds.extend([load.delivery_lng, load.delivery_lat]);
       });
 
-      // Fit map to show all markers
-      if (!bounds.isEmpty()) {
+      // Fit map to show all markers (only on initial load to preserve user zoom)
+      if (!bounds.isEmpty() && !initialFitDone.current) {
         map.current.fitBounds(bounds, {
           padding: { top: 50, bottom: 50, left: 50, right: 50 },
           maxZoom: 8
         });
+        initialFitDone.current = true;
       }
     };
 
