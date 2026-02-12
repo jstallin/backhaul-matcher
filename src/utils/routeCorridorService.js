@@ -6,6 +6,7 @@
  */
 
 import * as turf from '@turf/turf';
+import usLandPolygon from '../data/us-land-simplified.json';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -64,13 +65,41 @@ export const fetchDrivingRoute = async (origin, destination) => {
 };
 
 /**
+ * Clip a polygon to only show over land (exclude oceans)
+ *
+ * @param {Object} polygon - GeoJSON Polygon geometry
+ * @returns {Object} - Clipped GeoJSON geometry (Polygon or MultiPolygon)
+ */
+const clipToLand = (polygon) => {
+  try {
+    const corridorFeature = turf.polygon(polygon.coordinates);
+    const landFeature = turf.polygon(usLandPolygon.geometry.coordinates);
+
+    const clipped = turf.intersect(turf.featureCollection([corridorFeature, landFeature]));
+
+    if (clipped && clipped.geometry) {
+      console.log('Corridor clipped to land boundaries');
+      return clipped.geometry;
+    }
+
+    // If intersection fails, return original
+    console.warn('Land clipping failed, using original corridor');
+    return polygon;
+  } catch (error) {
+    console.error('Error clipping corridor to land:', error);
+    return polygon;
+  }
+};
+
+/**
  * Create a corridor (buffer) around a route line
  *
  * @param {Object} routeLine - GeoJSON LineString geometry
  * @param {Number} widthMiles - Width of corridor in miles (each side)
+ * @param {Boolean} clipToLandOnly - Whether to clip corridor to land (default true)
  * @returns {Object|null} - GeoJSON Polygon geometry or null on failure
  */
-export const createRouteCorridor = (routeLine, widthMiles) => {
+export const createRouteCorridor = (routeLine, widthMiles, clipToLandOnly = true) => {
   try {
     if (!routeLine || routeLine.type !== 'LineString') {
       console.warn('Invalid route line for corridor creation');
@@ -86,6 +115,12 @@ export const createRouteCorridor = (routeLine, widthMiles) => {
 
     if (corridor && corridor.geometry) {
       console.log(`Corridor created: ${widthMiles}-mile buffer`);
+
+      // Clip to land if requested
+      if (clipToLandOnly) {
+        return clipToLand(corridor.geometry);
+      }
+
       return corridor.geometry;
     }
 
@@ -102,7 +137,7 @@ export const createRouteCorridor = (routeLine, widthMiles) => {
  *
  * @param {Number} lat - Latitude
  * @param {Number} lng - Longitude
- * @param {Object} corridor - GeoJSON Polygon geometry
+ * @param {Object} corridor - GeoJSON Polygon or MultiPolygon geometry
  * @returns {Boolean}
  */
 export const isPointInCorridor = (lat, lng, corridor) => {
@@ -110,7 +145,14 @@ export const isPointInCorridor = (lat, lng, corridor) => {
     if (!corridor) return false;
 
     const point = turf.point([lng, lat]);
-    const corridorFeature = turf.polygon(corridor.coordinates);
+
+    // Handle both Polygon and MultiPolygon geometries
+    let corridorFeature;
+    if (corridor.type === 'MultiPolygon') {
+      corridorFeature = turf.multiPolygon(corridor.coordinates);
+    } else {
+      corridorFeature = turf.polygon(corridor.coordinates);
+    }
 
     return turf.booleanPointInPolygon(point, corridorFeature);
   } catch (error) {
@@ -146,8 +188,8 @@ export const getRouteWithCorridor = async (datumPoint, fleetHome, corridorWidthM
     return null;
   }
 
-  // Create corridor
-  const corridor = createRouteCorridor(route, corridorWidthMiles);
+  // Create corridor (with land clipping enabled)
+  const corridor = createRouteCorridor(route, corridorWidthMiles, true);
 
   if (!corridor) {
     console.warn('Failed to create corridor, returning route only');
