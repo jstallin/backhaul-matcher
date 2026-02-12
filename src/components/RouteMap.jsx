@@ -4,8 +4,8 @@ import { MapPin, Navigation, DollarSign, TrendingUp } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Mapbox access token - you'll need to replace this with your own
-const MAPBOX_TOKEN = 'pk.eyJ1IjoianN0YWxsaW5ncyIsImEiOiJjbWpobW5uMHoxMmFvM2Zwd3U2NjNnd2NmIn0.1NqksRspovws_BZmPhQWfQ';
+// Mapbox access token from environment variable
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export const RouteMap = ({ route, backhaul = null, showComparison = false }) => {
   const { colors, theme } = useTheme();

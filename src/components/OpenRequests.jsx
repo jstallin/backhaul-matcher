@@ -23,6 +23,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [selectedFleet, setSelectedFleet] = useState(null);
   const [datumCoordinates, setDatumCoordinates] = useState(null); // Store geocoded datum coords
   const [backhaulMatches, setBackhaulMatches] = useState([]);
+  const [routeData, setRouteData] = useState(null); // Store route and corridor data for map
   const [previousMatches, setPreviousMatches] = useState([]); // Track previous matches for change detection
   const previousMatchesRef = useRef([]); // Ref to avoid stale closure in auto-refresh interval
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -202,8 +203,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 50;
       const corridorWidthMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 300 : 100;
 
-      // Find matches along route home (50 mile home radius, 100 mile corridor)
-      const matches = findRouteHomeBackhauls(
+      // Find matches along route home (50 mile home radius, 50 mile corridor for geographic filtering)
+      const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,
         fleetProfile,
@@ -212,7 +213,15 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         corridorWidthMiles
       );
 
+      const matches = result.opportunities;
+
+      // Store route data for map visualization
+      setRouteData(result.routeData);
+
       console.log('✅ Found matches along route home:', matches.length);
+      if (result.routeData?.corridor) {
+        console.log('✅ Route corridor created for map visualization');
+      }
       
       if (matches.length === 0) {
         console.warn('⚠️ NO MATCHES FOUND. Debugging info:');
@@ -482,11 +491,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     }}
                     backhauls={backhaulMatches}
                     selectedLoadId={null}
+                    routeData={routeData}
                   />
-                  <div style={{ 
-                    marginTop: '16px', 
-                    padding: '16px', 
-                    background: colors.background.secondary, 
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '16px',
+                    background: colors.background.secondary,
                     borderRadius: '8px',
                     display: 'flex',
                     gap: '24px',
@@ -509,6 +519,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#5EA0DB', border: '2px solid white' }} />
                       <span><strong>1-10</strong> = Delivery Locations</span>
                     </div>
+                    {routeData?.corridor && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '20px', height: '12px', background: 'rgba(216, 159, 56, 0.15)', border: '2px dashed #D89F38', borderRadius: '2px' }} />
+                        <span><strong>Search Corridor</strong> = 50-mile buffer along route</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
