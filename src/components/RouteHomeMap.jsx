@@ -21,10 +21,17 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
       center: [datumPoint.lng, datumPoint.lat],
-      zoom: 6
+      zoom: 6,
+      minZoom: 3,
+      maxZoom: 18,
+      scrollZoom: true,
+      boxZoom: true,
+      dragPan: true,
+      doubleClickZoom: true,
+      touchZoomRotate: true
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
 
     map.current.on('load', () => {
       mapLoaded.current = true;
