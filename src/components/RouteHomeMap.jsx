@@ -72,7 +72,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
     // Add corridor and route from routeData if available
     const addCorridorAndRoute = () => {
       // Add corridor polygon first (so it's behind the route line)
-      if (routeData && routeData.corridor) {
+      if (routeData && routeData.corridor && !map.current.getSource('route-corridor')) {
         map.current.addSource('route-corridor', {
           type: 'geojson',
           data: {
@@ -107,7 +107,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
       }
 
       // Add actual route line if available from routeData
-      if (routeData && routeData.route) {
+      if (routeData && routeData.route && !map.current.getSource('actual-route')) {
         map.current.addSource('actual-route', {
           type: 'geojson',
           data: {
@@ -126,7 +126,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
             'line-opacity': 0.7
           }
         });
-      } else {
+      } else if (!routeData?.route && !map.current.getSource('actual-route')) {
         // Fallback: fetch route if not provided via routeData
         fetchActualRoute();
       }
@@ -135,13 +135,16 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
     // Fallback: Fetch actual driving route from Mapbox Directions API
     const fetchActualRoute = async () => {
       try {
+        // Skip if source already exists
+        if (map.current.getSource('actual-route')) return;
+
         const coordinates = `${datumPoint.lng},${datumPoint.lat};${fleetHome.lng},${fleetHome.lat}`;
         const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
 
         const response = await fetch(url);
         const data = await response.json();
 
-        if (data.routes && data.routes[0]) {
+        if (data.routes && data.routes[0] && !map.current.getSource('actual-route')) {
           const route = data.routes[0].geometry;
 
           // Add the actual route as a solid line
