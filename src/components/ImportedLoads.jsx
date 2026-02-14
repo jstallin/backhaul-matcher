@@ -55,6 +55,15 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
     }
   }, [extensionInstalled]);
 
+  // Parse numeric value from string like "6,000 lbs" or "1,234"
+  const parseNumeric = (value) => {
+    if (typeof value === 'number') return value || null;
+    if (!value) return null;
+    const cleaned = String(value).replace(/[^0-9.]/g, '');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? null : parsed;
+  };
+
   // Sync loads from extension to Supabase
   const syncFromExtension = useCallback(async () => {
     if (!user || pendingLoads.length === 0) return;
@@ -63,28 +72,31 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
     try {
       // Transform extension loads to Supabase format and insert
       for (const load of pendingLoads) {
+        const rate = parseNumeric(load.rate);
+        const distance = parseNumeric(load.trip);
+
         const dbLoad = {
           user_id: user.id,
           external_id: load.id,
           source: load.source || 'dat',
           origin_city: load.originCity,
           origin_state: load.originState,
-          origin_lat: load.originLat,
-          origin_lng: load.originLng,
+          origin_lat: load.originLat ? parseNumeric(load.originLat) : null,
+          origin_lng: load.originLng ? parseNumeric(load.originLng) : null,
           destination_city: load.destCity,
           destination_state: load.destState,
-          destination_lat: load.destLat,
-          destination_lng: load.destLng,
+          destination_lat: load.destLat ? parseNumeric(load.destLat) : null,
+          destination_lng: load.destLng ? parseNumeric(load.destLng) : null,
           pickup_date: load.pickup ? parsePickupDate(load.pickup) : null,
-          distance_miles: load.trip || null,
-          rate: load.rate,
-          rate_per_mile: load.rate && load.trip ? load.rate / load.trip : null,
+          distance_miles: distance ? Math.round(distance) : null,
+          rate: rate,
+          rate_per_mile: rate && distance ? Math.round((rate / distance) * 100) / 100 : null,
           equipment_type: load.truck,
-          weight_lbs: load.weight,
+          weight_lbs: parseNumeric(load.weight) ? Math.round(parseNumeric(load.weight)) : null,
           company_name: load.company,
           contact_phone: load.contact,
-          credit_score: load.cs || null,
-          days_to_pay: load.dtp || null,
+          credit_score: parseNumeric(load.cs) ? Math.round(parseNumeric(load.cs)) : null,
+          days_to_pay: parseNumeric(load.dtp) ? Math.round(parseNumeric(load.dtp)) : null,
           raw_data: load,
           status: 'available'
         };
