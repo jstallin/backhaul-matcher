@@ -45,6 +45,8 @@
     {
       "matches": [
         "https://haulmonitor.cloud/*",
+        "https://www.haulmonitor.cloud/*",
+        "https://*.vercel.app/*",
         "http://localhost:5173/*"
       ],
       "js": ["haul-monitor-bridge.js"],
