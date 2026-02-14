@@ -41,6 +41,14 @@
       "js": ["content.js"],
       "css": ["content-styles.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://backhaul-matcher.vercel.app/*",
+        "http://localhost:5173/*"
+      ],
+      "js": ["haul-monitor-bridge.js"],
+      "run_at": "document_idle"
     }
   ],
   "background": {

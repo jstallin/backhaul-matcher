@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Package, MapPin, Navigation, DollarSign, Truck, Calendar, Trash2, RefreshCw, CheckCircle, X, Phone, Mail, Clock } from '../icons';
+import { useState, useEffect, useCallback } from 'react';
+import { Package, MapPin, Navigation, DollarSign, Truck, Calendar, Trash2, RefreshCw, CheckCircle, X, Phone, Mail, Clock, Download } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/supabase';
@@ -14,6 +14,109 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
   const [filter, setFilter] = useState('available'); // 'all', 'available', 'contacted', 'booked', 'dismissed'
   const [selectedLoad, setSelectedLoad] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [extensionInstalled, setExtensionInstalled] = useState(false);
+  const [pendingLoads, setPendingLoads] = useState([]);
+  const [syncing, setSyncing] = useState(false);
+
+  // Check for extension and listen for messages
+  useEffect(() => {
+    // Check if extension is installed via DOM attribute
+    const hasExtension = document.documentElement.getAttribute('data-haul-monitor-extension') === 'true';
+    setExtensionInstalled(hasExtension);
+
+    // Listen for messages from extension
+    const handleMessage = (event) => {
+      if (event.source !== window) return;
+      const { type, loads: incomingLoads, count } = event.data || {};
+
+      switch (type) {
+        case 'HAUL_MONITOR_EXTENSION_READY':
+          setExtensionInstalled(true);
+          break;
+        case 'HAUL_MONITOR_PENDING_LOADS':
+          console.log('ImportedLoads: Received pending loads from extension:', count);
+          setPendingLoads(incomingLoads || []);
+          break;
+        case 'HAUL_MONITOR_LOADS_RESPONSE':
+          console.log('ImportedLoads: Received loads response from extension');
+          setPendingLoads(incomingLoads || []);
+          break;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Request loads from extension on mount
+  useEffect(() => {
+    if (extensionInstalled) {
+      window.postMessage({ type: 'HAUL_MONITOR_GET_LOADS', requestId: Date.now() }, '*');
+    }
+  }, [extensionInstalled]);
+
+  // Sync loads from extension to Supabase
+  const syncFromExtension = useCallback(async () => {
+    if (!user || pendingLoads.length === 0) return;
+
+    setSyncing(true);
+    try {
+      // Transform extension loads to Supabase format and insert
+      for (const load of pendingLoads) {
+        const dbLoad = {
+          user_id: user.id,
+          external_id: load.id,
+          source: load.source || 'dat',
+          origin_city: load.originCity,
+          origin_state: load.originState,
+          origin_lat: load.originLat,
+          origin_lng: load.originLng,
+          destination_city: load.destCity,
+          destination_state: load.destState,
+          destination_lat: load.destLat,
+          destination_lng: load.destLng,
+          pickup_date: load.pickup ? parsePickupDate(load.pickup) : null,
+          distance_miles: load.trip || null,
+          rate: load.rate,
+          rate_per_mile: load.rate && load.trip ? load.rate / load.trip : null,
+          equipment_type: load.truck,
+          weight_lbs: load.weight,
+          company_name: load.company,
+          contact_phone: load.contact,
+          credit_score: load.cs || null,
+          days_to_pay: load.dtp || null,
+          raw_data: load,
+          status: 'available'
+        };
+
+        await db.importedLoads.create(dbLoad);
+      }
+
+      // Clear loads from extension storage
+      window.postMessage({ type: 'HAUL_MONITOR_CLEAR_LOADS', requestId: Date.now() }, '*');
+      setPendingLoads([]);
+
+      // Refresh the loads list
+      await loadImportedLoads();
+    } catch (error) {
+      console.error('Error syncing loads from extension:', error);
+    } finally {
+      setSyncing(false);
+    }
+  }, [user, pendingLoads]);
+
+  // Parse pickup date string like "Feb 14" to a date
+  const parsePickupDate = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      const currentYear = new Date().getFullYear();
+      const parsed = new Date(`${dateStr} ${currentYear}`);
+      if (isNaN(parsed.getTime())) return null;
+      return parsed.toISOString().split('T')[0];
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -161,6 +264,72 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           <AvatarMenu onNavigate={onMenuNavigate} />
         </div>
       </div>
+
+      {/* Extension Sync Banner */}
+      {pendingLoads.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          background: 'linear-gradient(135deg, rgba(216, 159, 56, 0.15) 0%, rgba(184, 134, 11, 0.15) 100%)',
+          border: `2px solid ${colors.accent.primary}`,
+          borderRadius: '12px',
+          marginBottom: '20px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: colors.accent.primary,
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Download size={20} color="white" />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, color: colors.text.primary }}>
+                {pendingLoads.length} load{pendingLoads.length > 1 ? 's' : ''} ready to import
+              </div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                Imported from DAT via browser extension
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={syncFromExtension}
+            disabled={syncing}
+            style={{
+              padding: '12px 24px',
+              background: colors.accent.primary,
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '14px',
+              cursor: syncing ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              opacity: syncing ? 0.7 : 1
+            }}
+          >
+            {syncing ? (
+              <>
+                <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <CheckCircle size={16} />
+                Sync to Haul Monitor
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div style={{

@@ -13,40 +13,48 @@ const CONFIG = {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Haul Monitor Background: Received message', message);
 
-  if (message.action === 'loadImported') {
-    handleLoadImported(message.load);
-    sendResponse({ success: true });
+  switch (message.action) {
+    case 'loadImported':
+      handleLoadImported(message.load);
+      sendResponse({ success: true });
+      break;
+
+    case 'loadsImported':
+      handleLoadsImported(message.loads, message.count);
+      sendResponse({ success: true });
+      break;
+
+    case 'getImportedLoads':
+      chrome.storage.local.get(['importedLoads'], (result) => {
+        sendResponse({ loads: result.importedLoads || [] });
+      });
+      return true; // Keep channel open for async response
+
+    case 'clearImportedLoads':
+      chrome.storage.local.set({ importedLoads: [] }, () => {
+        updateBadge();
+        sendResponse({ success: true });
+      });
+      return true;
+
+    case 'exportToHaulMonitor':
+      // Simply open the Haul Monitor app - user can view their loads there
+      chrome.tabs.create({ url: CONFIG.haulMonitorUrl });
+      sendResponse({ success: true });
+      break;
+
+    default:
+      sendResponse({ error: 'Unknown action' });
   }
 
-  if (message.action === 'loadsImported') {
-    handleLoadsImported(message.loads, message.count);
-    sendResponse({ success: true });
-  }
-
-  if (message.action === 'getImportedLoads') {
-    getImportedLoads().then(loads => sendResponse({ loads }));
-    return true; // Keep channel open for async response
-  }
-
-  if (message.action === 'clearImportedLoads') {
-    clearImportedLoads().then(() => sendResponse({ success: true }));
-    return true;
-  }
-
-  if (message.action === 'exportToHaulMonitor') {
-    exportToHaulMonitor().then(result => sendResponse(result));
-    return true;
-  }
+  return false; // No async response needed for sync handlers
 });
 
 // Handle single load import
 function handleLoadImported(load) {
   console.log('Haul Monitor: Load imported', load);
-
-  // Update badge
   updateBadge();
 
-  // Show notification
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'icons/icon128.png',
@@ -59,11 +67,8 @@ function handleLoadImported(load) {
 // Handle multiple loads import
 function handleLoadsImported(loads, count) {
   console.log('Haul Monitor: Loads imported', count);
-
-  // Update badge
   updateBadge();
 
-  // Show notification
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'icons/icon128.png',
@@ -74,51 +79,17 @@ function handleLoadsImported(loads, count) {
 }
 
 // Update extension badge with count
-async function updateBadge() {
-  const { importedLoads = [] } = await chrome.storage.local.get(['importedLoads']);
-  const count = importedLoads.length;
+function updateBadge() {
+  chrome.storage.local.get(['importedLoads'], (result) => {
+    const count = (result.importedLoads || []).length;
 
-  if (count > 0) {
-    chrome.action.setBadgeText({ text: count.toString() });
-    chrome.action.setBadgeBackgroundColor({ color: '#D89F38' });
-  } else {
-    chrome.action.setBadgeText({ text: '' });
-  }
-}
-
-// Get all imported loads
-async function getImportedLoads() {
-  const { importedLoads = [] } = await chrome.storage.local.get(['importedLoads']);
-  return importedLoads;
-}
-
-// Clear all imported loads
-async function clearImportedLoads() {
-  await chrome.storage.local.set({ importedLoads: [] });
-  updateBadge();
-}
-
-// Export loads to Haul Monitor app
-async function exportToHaulMonitor() {
-  try {
-    const loads = await getImportedLoads();
-
-    if (loads.length === 0) {
-      return { success: false, error: 'No loads to export' };
+    if (count > 0) {
+      chrome.action.setBadgeText({ text: count.toString() });
+      chrome.action.setBadgeBackgroundColor({ color: '#D89F38' });
+    } else {
+      chrome.action.setBadgeText({ text: '' });
     }
-
-    // Open Haul Monitor with loads data
-    // The app will read from a special URL parameter or localStorage
-    const loadsJson = encodeURIComponent(JSON.stringify(loads));
-    const url = `${CONFIG.haulMonitorUrl}/import?loads=${loadsJson}`;
-
-    chrome.tabs.create({ url });
-
-    return { success: true, count: loads.length };
-  } catch (error) {
-    console.error('Haul Monitor: Export error', error);
-    return { success: false, error: error.message };
-  }
+  });
 }
 
 // Initialize badge on startup
@@ -128,10 +99,6 @@ updateBadge();
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     console.log('Haul Monitor: Extension installed');
-
-    // Open welcome page or instructions
-    chrome.tabs.create({
-      url: 'welcome.html'
-    });
+    chrome.tabs.create({ url: 'welcome.html' });
   }
 });
