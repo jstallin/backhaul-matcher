@@ -44,7 +44,7 @@
     },
     {
       "matches": [
-        "https://backhaul-matcher.vercel.app/*",
+        "https://haulmonitor.cloud/*",
         "http://localhost:5173/*"
       ],
       "js": ["haul-monitor-bridge.js"],

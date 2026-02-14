@@ -9,7 +9,7 @@ const loadBackhaulData = async () => {
 
   try {
     // Fetch from the deployed app's public data
-    const response = await fetch('https://backhaul-matcher.vercel.app/backhaul_loads_data.json');
+    const response = await fetch('https://haulmonitor.cloud/backhaul_loads_data.json');
     if (response.ok) {
       backhaulLoadsData = await response.json();
       return backhaulLoadsData;

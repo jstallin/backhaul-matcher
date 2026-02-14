@@ -298,7 +298,7 @@ const buildEmailHtml = (title, fields) => {
                   </table>
                   
                   <div style="margin-top: 32px; text-align: center;">
-                    <a href="https://backhaul-matcher.vercel.app" style="display: inline-block; padding: 14px 32px; background-color: #D89F38; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                    <a href="https://haulmonitor.cloud" style="display: inline-block; padding: 14px 32px; background-color: #D89F38; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
                       View in Haul Monitor
                     </a>
                   </div>

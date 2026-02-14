@@ -10,7 +10,7 @@
 
   // Configuration
   const CONFIG = {
-    haulMonitorUrl: 'https://backhaul-matcher.vercel.app', // Production URL
+    haulMonitorUrl: 'https://haulmonitor.cloud', // Production URL
     localUrl: 'http://localhost:5173', // Dev URL
     checkInterval: 2000, // Check for new loads every 2 seconds
     buttonClass: 'haul-monitor-btn',

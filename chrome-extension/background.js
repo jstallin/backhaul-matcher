@@ -5,7 +5,7 @@
 
 // Configuration
 const CONFIG = {
-  haulMonitorUrl: 'https://backhaul-matcher.vercel.app',
+  haulMonitorUrl: 'https://haulmonitor.cloud',
   localUrl: 'http://localhost:5173'
 };
 
