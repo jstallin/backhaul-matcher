@@ -81,13 +81,16 @@
   setTimeout(() => {
     chrome.storage.local.get(['importedLoads'], (result) => {
       const loads = result.importedLoads || [];
+      console.log('Haul Monitor Bridge: Checking storage, found', loads.length, 'loads');
       if (loads.length > 0) {
-        console.log('Haul Monitor Bridge: Found', loads.length, 'pending loads');
+        console.log('Haul Monitor Bridge: Sending pending loads to page');
         window.postMessage({
           type: 'HAUL_MONITOR_PENDING_LOADS',
           count: loads.length,
           loads: loads
         }, '*');
+      } else {
+        console.log('Haul Monitor Bridge: No pending loads in storage');
       }
     });
   }, 1000);

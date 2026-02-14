@@ -22,6 +22,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
   useEffect(() => {
     // Check if extension is installed via DOM attribute
     const hasExtension = document.documentElement.getAttribute('data-haul-monitor-extension') === 'true';
+    console.log('ImportedLoads: Extension detected via attribute:', hasExtension);
     setExtensionInstalled(hasExtension);
 
     // Listen for messages from extension
@@ -29,8 +30,13 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
       if (event.source !== window) return;
       const { type, loads: incomingLoads, count } = event.data || {};
 
+      if (type && type.startsWith('HAUL_MONITOR')) {
+        console.log('ImportedLoads: Received message:', type, { count, loadsLength: incomingLoads?.length });
+      }
+
       switch (type) {
         case 'HAUL_MONITOR_EXTENSION_READY':
+          console.log('ImportedLoads: Extension ready signal received');
           setExtensionInstalled(true);
           break;
         case 'HAUL_MONITOR_PENDING_LOADS':
@@ -38,7 +44,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           setPendingLoads(incomingLoads || []);
           break;
         case 'HAUL_MONITOR_LOADS_RESPONSE':
-          console.log('ImportedLoads: Received loads response from extension');
+          console.log('ImportedLoads: Received loads response from extension:', incomingLoads?.length);
           setPendingLoads(incomingLoads || []);
           break;
       }
