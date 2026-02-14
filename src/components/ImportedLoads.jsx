@@ -55,6 +55,12 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
     }
   }, [extensionInstalled]);
 
+  // Clear pending loads from extension storage
+  const clearPendingLoads = useCallback(() => {
+    window.postMessage({ type: 'HAUL_MONITOR_CLEAR_LOADS', requestId: Date.now() }, '*');
+    setPendingLoads([]);
+  }, []);
+
   // Parse numeric value from string like "6,000 lbs" or "1,234"
   const parseNumeric = (value) => {
     if (typeof value === 'number') return value || null;
@@ -119,7 +125,16 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           status: 'available'
         };
 
-        await db.importedLoads.create(dbLoad);
+        try {
+          await db.importedLoads.create(dbLoad);
+        } catch (err) {
+          // Skip duplicates (409/23505 error)
+          if (err.code === '23505') {
+            console.log('Skipping duplicate load:', load.id);
+          } else {
+            throw err;
+          }
+        }
       }
 
       // Clear loads from extension storage
@@ -328,36 +343,54 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
               </div>
             </div>
           </div>
-          <button
-            onClick={syncFromExtension}
-            disabled={syncing}
-            style={{
-              padding: '12px 24px',
-              background: colors.accent.primary,
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: syncing ? 'wait' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              opacity: syncing ? 0.7 : 1
-            }}
-          >
-            {syncing ? (
-              <>
-                <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                Syncing...
-              </>
-            ) : (
-              <>
-                <CheckCircle size={16} />
-                Sync to Haul Monitor
-              </>
-            )}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={clearPendingLoads}
+              disabled={syncing}
+              style={{
+                padding: '12px 16px',
+                background: 'transparent',
+                color: colors.text.secondary,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              Clear
+            </button>
+            <button
+              onClick={syncFromExtension}
+              disabled={syncing}
+              style={{
+                padding: '12px 24px',
+                background: colors.accent.primary,
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: syncing ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                opacity: syncing ? 0.7 : 1
+              }}
+            >
+              {syncing ? (
+                <>
+                  <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={16} />
+                  Sync to Haul Monitor
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
