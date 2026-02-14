@@ -722,6 +722,104 @@ export const Settings = ({ onBack }) => {
                   </div>
                 </div>
 
+                {/* Chrome Extension */}
+                <div style={{
+                  border: `1px solid ${colors.accent.primary}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  marginBottom: '16px',
+                  background: `${colors.accent.primary}08`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: `linear-gradient(135deg, ${colors.accent.primary} 0%, #B8860B 100%)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff'
+                      }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="1" y="3" width="15" height="13" rx="2"/>
+                          <circle cx="5.5" cy="18.5" r="2.5"/>
+                          <circle cx="13.5" cy="18.5" r="2.5"/>
+                          <path d="M16 8h4l3 5v4h-3"/>
+                          <circle cx="20" cy="18.5" r="2.5"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 style={{
+                          margin: '0 0 4px 0',
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          color: colors.text.primary
+                        }}>
+                          Chrome Extension
+                        </h3>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '14px',
+                          color: colors.text.secondary
+                        }}>
+                          Import loads directly from DAT and other load boards
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{
+                      padding: '6px 12px',
+                      background: `${colors.accent.primary}20`,
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colors.accent.primary
+                    }}>
+                      Available
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>
+                        Installation Instructions:
+                      </h4>
+                      <ol style={{ margin: 0, paddingLeft: '20px', color: colors.text.secondary, fontSize: '14px', lineHeight: '1.8' }}>
+                        <li>Download and unzip the extension file</li>
+                        <li>Go to <code style={{ background: colors.background.secondary, padding: '2px 6px', borderRadius: '4px' }}>chrome://extensions</code> in Chrome</li>
+                        <li>Enable <strong>Developer mode</strong> (toggle in top right)</li>
+                        <li>Click <strong>Load unpacked</strong> and select the unzipped folder</li>
+                      </ol>
+                    </div>
+                    <a
+                      href="/haul-monitor-extension.zip"
+                      download="haul-monitor-extension.zip"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 24px',
+                        background: colors.accent.primary,
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: '#fff',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      Download Extension
+                    </a>
+                  </div>
+                </div>
+
                 {/* Coming Soon Integrations */}
                 <div style={{
                   border: `1px dashed ${colors.border.primary}`,
