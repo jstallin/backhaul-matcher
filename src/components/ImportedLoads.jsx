@@ -64,6 +64,16 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
     return isNaN(parsed) ? null : parsed;
   };
 
+  // Parse city/state from combined string like "Atlanta, GA"
+  const parseCityState = (combined) => {
+    if (!combined) return { city: null, state: null };
+    const parts = combined.split(',').map(s => s.trim());
+    return {
+      city: parts[0] || null,
+      state: parts[1] || null
+    };
+  };
+
   // Sync loads from extension to Supabase
   const syncFromExtension = useCallback(async () => {
     if (!user || pendingLoads.length === 0) return;
@@ -75,16 +85,24 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
         const rate = parseNumeric(load.rate);
         const distance = parseNumeric(load.trip);
 
+        // Handle both separate city/state fields and combined "City, ST" strings
+        const origin = load.originCity
+          ? { city: load.originCity, state: load.originState }
+          : parseCityState(load.origin);
+        const dest = load.destCity
+          ? { city: load.destCity, state: load.destState }
+          : parseCityState(load.destination);
+
         const dbLoad = {
           user_id: user.id,
           external_id: load.id,
           source: load.source || 'dat',
-          origin_city: load.originCity,
-          origin_state: load.originState,
+          origin_city: origin.city || 'Unknown',
+          origin_state: origin.state,
           origin_lat: load.originLat ? parseNumeric(load.originLat) : null,
           origin_lng: load.originLng ? parseNumeric(load.originLng) : null,
-          destination_city: load.destCity,
-          destination_state: load.destState,
+          destination_city: dest.city || 'Unknown',
+          destination_state: dest.state,
           destination_lat: load.destLat ? parseNumeric(load.destLat) : null,
           destination_lng: load.destLng ? parseNumeric(load.destLng) : null,
           pickup_date: load.pickup ? parsePickupDate(load.pickup) : null,
@@ -94,7 +112,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           equipment_type: load.truck,
           weight_lbs: parseNumeric(load.weight) ? Math.round(parseNumeric(load.weight)) : null,
           company_name: load.company,
-          contact_phone: load.contact,
+          contact_phone: load.contact || load.phone,
           credit_score: parseNumeric(load.cs) ? Math.round(parseNumeric(load.cs)) : null,
           days_to_pay: parseNumeric(load.dtp) ? Math.round(parseNumeric(load.dtp)) : null,
           raw_data: load,
