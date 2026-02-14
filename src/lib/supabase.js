@@ -382,5 +382,136 @@ export const db = {
         .eq('provider', provider);
       if (error) throw error;
     }
+  },
+
+  // Imported loads operations (from Chrome extension)
+  importedLoads: {
+    async getAll(userId, options = {}) {
+      let query = supabase
+        .from('imported_loads')
+        .select('*')
+        .eq('user_id', userId)
+        .order('imported_at', { ascending: false });
+
+      if (options.status) {
+        query = query.eq('status', options.status);
+      }
+      if (options.source) {
+        query = query.eq('source', options.source);
+      }
+      if (options.fleetId) {
+        query = query.eq('fleet_id', options.fleetId);
+      }
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+
+    async getAvailable(userId, fleetId = null) {
+      let query = supabase
+        .from('imported_loads')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'available')
+        .order('imported_at', { ascending: false });
+
+      if (fleetId) {
+        query = query.eq('fleet_id', fleetId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+
+    async getById(loadId) {
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .select('*')
+        .eq('id', loadId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async create(loadData) {
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .insert([loadData])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async createBatch(loadsArray) {
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .insert(loadsArray)
+        .select();
+      if (error) throw error;
+      return data;
+    },
+
+    async update(loadId, updates) {
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .update(updates)
+        .eq('id', loadId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateStatus(loadId, status, notes = null) {
+      const updates = { status };
+      if (notes) updates.notes = notes;
+
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .update(updates)
+        .eq('id', loadId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async delete(loadId) {
+      const { error } = await supabase
+        .from('imported_loads')
+        .delete()
+        .eq('id', loadId);
+      if (error) throw error;
+    },
+
+    async deleteByStatus(userId, status) {
+      const { error } = await supabase
+        .from('imported_loads')
+        .delete()
+        .eq('user_id', userId)
+        .eq('status', status);
+      if (error) throw error;
+    },
+
+    async checkDuplicate(userId, externalId, source) {
+      if (!externalId) return null;
+
+      const { data, error } = await supabase
+        .from('imported_loads')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('external_id', externalId)
+        .eq('source', source)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
   }
 };

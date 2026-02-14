@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D89F38"/>
+      <stop offset="100%" style="stop-color:#B8860B"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="128" height="128" rx="24" fill="url(#bg)"/>
+  <!-- Truck icon -->
+  <g transform="translate(24, 32)" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Truck body -->
+    <rect x="2" y="8" width="48" height="40" rx="4"/>
+    <!-- Cab -->
+    <path d="M50 24h16l12 16v16h-12"/>
+    <!-- Wheels -->
+    <circle cx="18" cy="56" r="8" fill="white"/>
+    <circle cx="42" cy="56" r="8" fill="white"/>
+    <circle cx="66" cy="56" r="8" fill="white"/>
+  </g>
+</svg>

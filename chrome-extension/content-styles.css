@@ -1,0 +1,218 @@
+/**
+ * Haul Monitor - Content Script Styles
+ * Styles for UI elements injected into load board pages
+ */
+
+/* Send to Haul Monitor button (inline in rows) */
+.haul-monitor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #D89F38 0%, #B8860B 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.haul-monitor-btn:hover {
+  background: linear-gradient(135deg, #E5AC45 0%, #C49515 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.haul-monitor-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.haul-monitor-btn.loading {
+  background: #9CA3AF;
+  cursor: wait;
+}
+
+.haul-monitor-btn.loading .spinner {
+  animation: spin 1s linear infinite;
+}
+
+.haul-monitor-btn.success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.haul-monitor-btn.error {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Selected row styling */
+.haul-monitor-selected {
+  background: rgba(216, 159, 56, 0.1) !important;
+}
+
+.haul-monitor-selected td {
+  background: rgba(216, 159, 56, 0.1) !important;
+}
+
+/* Floating Action Button */
+.haul-monitor-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.haul-monitor-fab-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.haul-monitor-fab-logo {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #D89F38 0%, #B8860B 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.haul-monitor-fab-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.haul-monitor-fab-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1F2937;
+}
+
+.haul-monitor-fab-status {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.haul-monitor-selected-count {
+  font-weight: 700;
+  color: #D89F38;
+}
+
+.haul-monitor-fab-send {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #D89F38 0%, #B8860B 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.haul-monitor-fab-send:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E5AC45 0%, #C49515 100%);
+  transform: translateY(-1px);
+}
+
+.haul-monitor-fab-send:disabled {
+  background: #D1D5DB;
+  cursor: not-allowed;
+}
+
+/* Toast Notification */
+.haul-monitor-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  max-width: 400px;
+}
+
+.haul-monitor-toast.show {
+  transform: translateX(0);
+}
+
+.haul-monitor-toast-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.haul-monitor-toast-success .haul-monitor-toast-icon {
+  color: #10B981;
+}
+
+.haul-monitor-toast-error .haul-monitor-toast-icon {
+  color: #EF4444;
+}
+
+.haul-monitor-toast-info .haul-monitor-toast-icon {
+  color: #3B82F6;
+}
+
+.haul-monitor-toast-message {
+  font-size: 14px;
+  color: #1F2937;
+  line-height: 1.4;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .haul-monitor-fab-content,
+  .haul-monitor-toast {
+    background: #1F2937;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .haul-monitor-fab-title,
+  .haul-monitor-toast-message {
+    color: #F9FAFB;
+  }
+
+  .haul-monitor-fab-status {
+    color: #9CA3AF;
+  }
+}

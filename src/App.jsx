@@ -16,6 +16,7 @@ import { Fleets } from './components/Fleets';
 import { StartRequest } from './components/StartRequest';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
+import { ImportedLoads } from './components/ImportedLoads';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
@@ -482,9 +483,13 @@ function App() {
           onNavigateToSettings={handleNavigateToSettings}
         />
       ) : currentView === 'fleet-reports' ? (
-        <FleetReports 
+        <FleetReports
           onMenuNavigate={handleMenuNavigation}
           onNavigateToSettings={handleNavigateToSettings}
+        />
+      ) : currentView === 'imported-loads' ? (
+        <ImportedLoads
+          onMenuNavigate={handleMenuNavigation}
         />
       ) : currentView === 'fleet-management' ? (
         <FleetDashboard 

@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Haul Monitor - Load Board Connector",
+  "version": "1.0.0",
+  "description": "Import loads from DAT and other load boards into Haul Monitor for backhaul matching",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://power.dat.com/*",
+    "https://one.dat.com/*",
+    "https://www.dat.com/*",
+    "http://localhost:*/*",
+    "file:///*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://power.dat.com/*",
+        "https://one.dat.com/*",
+        "https://www.dat.com/*",
+        "http://localhost:*/*",
+        "file:///*"
+      ],
+      "js": ["content.js"],
+      "css": ["content-styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
