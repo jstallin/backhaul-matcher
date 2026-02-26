@@ -1,344 +1,254 @@
-import { useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { getRouteGeometry } from '../utils/pcMilerClient';
 
-// Mapbox access token from environment variable
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+// Create a colored circle icon for markers
+const createCircleIcon = (color, label, size = 36) => L.divIcon({
+  className: '',
+  html: `<div style="
+    background: ${color};
+    color: white;
+    width: ${size}px;
+    height: ${size}px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: ${Math.round(size * 0.45)}px;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    cursor: pointer;
+  ">${label}</div>`,
+  iconSize: [size, size],
+  iconAnchor: [size / 2, size / 2],
+  popupAnchor: [0, -size / 2]
+});
+
+// Component to fit map bounds
+const FitBounds = ({ bounds, initialFitDone }) => {
+  const map = useMap();
+  const fitted = useRef(false);
+
+  useEffect(() => {
+    if (bounds && bounds.length > 0 && !fitted.current) {
+      const leafletBounds = L.latLngBounds(bounds.map(([lat, lng]) => [lat, lng]));
+      if (leafletBounds.isValid()) {
+        map.fitBounds(leafletBounds, { padding: [50, 50], maxZoom: 8 });
+        fitted.current = true;
+      }
+    }
+  }, [bounds, map]);
+
+  // Reset fit flag when route changes
+  useEffect(() => {
+    if (initialFitDone === false) {
+      fitted.current = false;
+    }
+  }, [initialFitDone]);
+
+  return null;
+};
+
+// Component to fetch fallback route if not provided
+const FallbackRoute = ({ datumPoint, fleetHome, routeData, onRouteLoaded }) => {
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    if (routeData?.route || loaded.current) return;
+    loaded.current = true;
+
+    const fetchRoute = async () => {
+      const geometry = await getRouteGeometry([datumPoint, fleetHome]);
+      if (geometry) {
+        onRouteLoaded(geometry);
+      }
+    };
+    fetchRoute();
+  }, [datumPoint, fleetHome, routeData]);
+
+  return null;
+};
 
 export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId, routeData }) => {
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const markers = useRef([]);
-  const mapLoaded = useRef(false);
-  const initialFitDone = useRef(false);
-  const lastRouteKey = useRef(null);
+  const fallbackRouteRef = useRef(null);
 
-  // Initialize map once
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [datumPoint.lng, datumPoint.lat],
-      zoom: 6,
-      minZoom: 3,
-      maxZoom: 18,
-      scrollZoom: true,
-      boxZoom: true,
-      dragPan: true,
-      doubleClickZoom: true,
-      touchZoomRotate: true
+  // Collect all bounds points
+  const boundsPoints = useMemo(() => {
+    const points = [];
+    if (datumPoint) points.push([datumPoint.lat, datumPoint.lng]);
+    if (fleetHome) points.push([fleetHome.lat, fleetHome.lng]);
+    const top10 = (backhauls || []).slice(0, 10);
+    top10.forEach(load => {
+      if (load.pickup_lat && load.pickup_lng) points.push([load.pickup_lat, load.pickup_lng]);
+      if (load.delivery_lat && load.delivery_lng) points.push([load.delivery_lat, load.delivery_lng]);
     });
+    return points;
+  }, [datumPoint, fleetHome, backhauls]);
 
-    map.current.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+  // Corridor GeoJSON style
+  const corridorStyle = {
+    fillColor: '#D89F38',
+    fillOpacity: 0.15,
+    color: '#D89F38',
+    weight: 2,
+    opacity: 0.5,
+    dashArray: '8 8'
+  };
 
-    map.current.on('load', () => {
-      mapLoaded.current = true;
-    });
+  // Route line GeoJSON style
+  const routeStyle = {
+    color: '#6B7280',
+    weight: 3,
+    opacity: 0.7
+  };
 
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-        mapLoaded.current = false;
-      }
-    };
-  }, []);
+  const top10 = (backhauls || []).slice(0, 10);
 
-  // Update map data when props change
-  useEffect(() => {
-    if (!map.current) return;
+  // Route key for detecting changes
+  const routeKey = datumPoint && fleetHome
+    ? `${datumPoint.lat},${datumPoint.lng}->${fleetHome.lat},${fleetHome.lng}`
+    : '';
 
-    const updateMap = () => {
-      // Check if route changed (different datum/home) - reset fit flag if so
-      const routeKey = `${datumPoint.lat},${datumPoint.lng}->${fleetHome.lat},${fleetHome.lng}`;
-      if (lastRouteKey.current !== routeKey) {
-        lastRouteKey.current = routeKey;
-        initialFitDone.current = false;
-      }
+  // Prepare GeoJSON features
+  const corridorFeature = routeData?.corridor ? {
+    type: 'Feature',
+    geometry: routeData.corridor
+  } : null;
 
-      // Clear existing markers
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
+  const routeFeature = routeData?.route ? {
+    type: 'Feature',
+    geometry: routeData.route
+  } : (fallbackRouteRef.current ? {
+    type: 'Feature',
+    geometry: fallbackRouteRef.current
+  } : null);
 
-      const bounds = new mapboxgl.LngLatBounds();
-
-      // Update or add corridor
-      if (routeData && routeData.corridor) {
-        const corridorData = {
-          type: 'Feature',
-          geometry: routeData.corridor
-        };
-
-        if (map.current.getSource('route-corridor')) {
-          map.current.getSource('route-corridor').setData(corridorData);
-        } else {
-          map.current.addSource('route-corridor', {
-            type: 'geojson',
-            data: corridorData
-          });
-
-          map.current.addLayer({
-            id: 'route-corridor-fill',
-            type: 'fill',
-            source: 'route-corridor',
-            paint: {
-              'fill-color': '#D89F38',
-              'fill-opacity': 0.15
-            }
-          });
-
-          map.current.addLayer({
-            id: 'route-corridor-outline',
-            type: 'line',
-            source: 'route-corridor',
-            paint: {
-              'line-color': '#D89F38',
-              'line-width': 2,
-              'line-opacity': 0.5,
-              'line-dasharray': [4, 4]
-            }
-          });
-        }
-      }
-
-      // Update or add route line
-      if (routeData && routeData.route) {
-        const routeLineData = {
-          type: 'Feature',
-          geometry: routeData.route
-        };
-
-        if (map.current.getSource('actual-route')) {
-          map.current.getSource('actual-route').setData(routeLineData);
-        } else {
-          map.current.addSource('actual-route', {
-            type: 'geojson',
-            data: routeLineData
-          });
-
-          map.current.addLayer({
-            id: 'actual-route-line',
-            type: 'line',
-            source: 'actual-route',
-            paint: {
-              'line-color': '#6B7280',
-              'line-width': 3,
-              'line-opacity': 0.7
-            }
-          });
-        }
-      } else if (!map.current.getSource('actual-route')) {
-        // Fallback: fetch route if not provided
-        fetchActualRoute();
-      }
-
-      // Add datum marker (Point A - red)
-      const datumEl = document.createElement('div');
-      datumEl.innerHTML = `
-        <div style="
-          background: #EF4444;
-          color: white;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 900;
-          font-size: 18px;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        ">A</div>
-      `;
-      const datumMarker = new mapboxgl.Marker({ element: datumEl })
-        .setLngLat([datumPoint.lng, datumPoint.lat])
-        .setPopup(new mapboxgl.Popup().setHTML(`
-          <div style="padding: 8px;">
-            <strong>Datum Point</strong><br/>
-            Current Location
-          </div>
-        `))
-        .addTo(map.current);
-      markers.current.push(datumMarker);
-      bounds.extend([datumPoint.lng, datumPoint.lat]);
-
-      // Add fleet home marker (Point B - green)
-      const homeEl = document.createElement('div');
-      homeEl.innerHTML = `
-        <div style="
-          background: #10B981;
-          color: white;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 900;
-          font-size: 18px;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        ">B</div>
-      `;
-      const homeMarker = new mapboxgl.Marker({ element: homeEl })
-        .setLngLat([fleetHome.lng, fleetHome.lat])
-        .setPopup(new mapboxgl.Popup().setHTML(`
-          <div style="padding: 8px;">
-            <strong>Fleet Home</strong><br/>
-            ${fleetHome.address || 'Base Location'}
-          </div>
-        `))
-        .addTo(map.current);
-      markers.current.push(homeMarker);
-      bounds.extend([fleetHome.lng, fleetHome.lat]);
-
-      // Add top 10 backhaul markers
-      const top10 = backhauls.slice(0, 10);
-      top10.forEach((load, index) => {
-        const loadNum = index + 1;
-        const isSelected = load.load_id === selectedLoadId;
-
-        // Pickup marker (golden amber)
-        const pickupEl = document.createElement('div');
-        pickupEl.innerHTML = `
-          <div style="
-            background: ${isSelected ? '#F59E0B' : '#D89F38'};
-            color: white;
-            width: ${isSelected ? '32px' : '28px'};
-            height: ${isSelected ? '32px' : '28px'};
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: ${isSelected ? '14px' : '12px'};
-            border: ${isSelected ? '3px' : '2px'} solid white;
-            box-shadow: 0 2px ${isSelected ? '8' : '4'}px rgba(0,0,0,0.3);
-            cursor: pointer;
-          ">${loadNum}</div>
-        `;
-        const pickupMarker = new mapboxgl.Marker({ element: pickupEl })
-          .setLngLat([load.pickup_lng, load.pickup_lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`
-            <div style="padding: 8px;">
-              <strong>#${loadNum} Pickup</strong><br/>
-              ${load.pickup_city}, ${load.pickup_state}<br/>
-              <span style="font-size: 11px; color: #666;">
-                ${load.datum_to_pickup_miles} mi from datum
-              </span>
-            </div>
-          `))
-          .addTo(map.current);
-        markers.current.push(pickupMarker);
-        bounds.extend([load.pickup_lng, load.pickup_lat]);
-
-        // Delivery marker (blue)
-        const deliveryEl = document.createElement('div');
-        deliveryEl.innerHTML = `
-          <div style="
-            background: ${isSelected ? '#3B82F6' : '#5EA0DB'};
-            color: white;
-            width: ${isSelected ? '28px' : '24px'};
-            height: ${isSelected ? '28px' : '24px'};
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: ${isSelected ? '12px' : '11px'};
-            border: 2px solid white;
-            box-shadow: 0 2px ${isSelected ? '6' : '4'}px rgba(0,0,0,0.3);
-            cursor: pointer;
-          ">${loadNum}</div>
-        `;
-        const deliveryMarker = new mapboxgl.Marker({ element: deliveryEl })
-          .setLngLat([load.delivery_lng, load.delivery_lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`
-            <div style="padding: 8px;">
-              <strong>#${loadNum} Delivery</strong><br/>
-              ${load.delivery_city}, ${load.delivery_state}<br/>
-              <span style="font-size: 11px; color: #666;">
-                ${load.delivery_to_home_miles} mi to home<br/>
-                ${load.formatted_revenue} • ${load.formatted_rpm}/mi
-              </span>
-            </div>
-          `))
-          .addTo(map.current);
-        markers.current.push(deliveryMarker);
-        bounds.extend([load.delivery_lng, load.delivery_lat]);
-      });
-
-      // Fit map to show all markers (only on initial load to preserve user zoom)
-      if (!bounds.isEmpty() && !initialFitDone.current) {
-        map.current.fitBounds(bounds, {
-          padding: { top: 50, bottom: 50, left: 50, right: 50 },
-          maxZoom: 8
-        });
-        initialFitDone.current = true;
-      }
-    };
-
-    // Fallback: Fetch actual driving route from Mapbox Directions API
-    const fetchActualRoute = async () => {
-      try {
-        if (map.current.getSource('actual-route')) return;
-
-        const coordinates = `${datumPoint.lng},${datumPoint.lat};${fleetHome.lng},${fleetHome.lat}`;
-        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinates}?geometries=geojson&access_token=${MAPBOX_TOKEN}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.routes && data.routes[0] && !map.current.getSource('actual-route')) {
-          const route = data.routes[0].geometry;
-
-          map.current.addSource('actual-route', {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              geometry: route
-            }
-          });
-
-          map.current.addLayer({
-            id: 'actual-route-line',
-            type: 'line',
-            source: 'actual-route',
-            paint: {
-              'line-color': '#9CA3AF',
-              'line-width': 3,
-              'line-opacity': 0.6
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching route:', error);
-      }
-    };
-
-    // Wait for map to load before updating
-    if (map.current.loaded()) {
-      updateMap();
-    } else {
-      map.current.on('load', updateMap);
-    }
-
-  }, [datumPoint, fleetHome, backhauls, selectedLoadId, routeData]);
+  if (!datumPoint) return null;
 
   return (
-    <div
-      ref={mapContainer}
-      style={{
-        width: '100%',
-        height: '400px',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid #E5E7EB'
-      }}
-    />
+    <div style={{
+      width: '100%',
+      height: '400px',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      border: '1px solid #E5E7EB'
+    }}>
+      <MapContainer
+        center={[datumPoint.lat, datumPoint.lng]}
+        zoom={6}
+        minZoom={3}
+        maxZoom={18}
+        scrollWheelZoom={true}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <TileLayer
+          url="/api/pcmiler/tile?x={x}&y={y}&z={z}&style=Modern"
+          attribution="&copy; Trimble Maps"
+        />
+
+        <FitBounds bounds={boundsPoints} initialFitDone={null} />
+
+        <FallbackRoute
+          datumPoint={datumPoint}
+          fleetHome={fleetHome}
+          routeData={routeData}
+          onRouteLoaded={(geom) => { fallbackRouteRef.current = geom; }}
+        />
+
+        {/* Corridor polygon */}
+        {corridorFeature && (
+          <GeoJSON key={`corridor-${routeKey}`} data={corridorFeature} style={corridorStyle} />
+        )}
+
+        {/* Route line */}
+        {routeFeature && (
+          <GeoJSON key={`route-${routeKey}`} data={routeFeature} style={routeStyle} />
+        )}
+
+        {/* Datum marker (Point A - red) */}
+        <Marker
+          position={[datumPoint.lat, datumPoint.lng]}
+          icon={createCircleIcon('#EF4444', 'A', 36)}
+        >
+          <Popup>
+            <div style={{ padding: '4px' }}>
+              <strong>Datum Point</strong><br/>
+              Current Location
+            </div>
+          </Popup>
+        </Marker>
+
+        {/* Fleet home marker (Point B - green) */}
+        {fleetHome && (
+          <Marker
+            position={[fleetHome.lat, fleetHome.lng]}
+            icon={createCircleIcon('#10B981', 'B', 36)}
+          >
+            <Popup>
+              <div style={{ padding: '4px' }}>
+                <strong>Fleet Home</strong><br/>
+                {fleetHome.address || 'Base Location'}
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Top 10 backhaul markers */}
+        {top10.map((load, index) => {
+          const loadNum = index + 1;
+          const isSelected = load.load_id === selectedLoadId;
+          const pickupSize = isSelected ? 32 : 28;
+          const deliverySize = isSelected ? 28 : 24;
+
+          return (
+            <span key={`backhaul-${load.load_id}`}>
+              {/* Pickup marker (golden amber) */}
+              <Marker
+                position={[load.pickup_lat, load.pickup_lng]}
+                icon={createCircleIcon(
+                  isSelected ? '#F59E0B' : '#D89F38',
+                  String(loadNum),
+                  pickupSize
+                )}
+              >
+                <Popup>
+                  <div style={{ padding: '4px' }}>
+                    <strong>#{loadNum} Pickup</strong><br/>
+                    {load.pickup_city}, {load.pickup_state}<br/>
+                    <span style={{ fontSize: '11px', color: '#666' }}>
+                      {load.datum_to_pickup_miles} mi from datum
+                    </span>
+                  </div>
+                </Popup>
+              </Marker>
+
+              {/* Delivery marker (blue) */}
+              <Marker
+                position={[load.delivery_lat, load.delivery_lng]}
+                icon={createCircleIcon(
+                  isSelected ? '#3B82F6' : '#5EA0DB',
+                  String(loadNum),
+                  deliverySize
+                )}
+              >
+                <Popup>
+                  <div style={{ padding: '4px' }}>
+                    <strong>#{loadNum} Delivery</strong><br/>
+                    {load.delivery_city}, {load.delivery_state}<br/>
+                    <span style={{ fontSize: '11px', color: '#666' }}>
+                      {load.delivery_to_home_miles} mi to home<br/>
+                      {load.formatted_revenue} &middot; {load.formatted_rpm}/mi
+                    </span>
+                  </div>
+                </Popup>
+              </Marker>
+            </span>
+          );
+        })}
+      </MapContainer>
+    </div>
   );
 };

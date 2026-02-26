@@ -51,15 +51,48 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
   return deviation <= corridorWidthMiles;
 };
 
-const findRouteHomeBackhauls = (datumPoint, fleetHome, fleetProfile, backhaulLoads, homeRadiusMiles = 50, corridorWidthMiles = 100) => {
-  const opportunities = [];
-  const directReturnMiles = calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
-  const availableLoads = backhaulLoads.filter(load => load.status === 'available');
+/**
+ * Get driving distance from PC Miler (server-side, direct API call)
+ */
+const getPCMilerDistance = async (origin, destination) => {
+  const token = process.env.PCMILER_API_KEY;
+  if (!token) return null;
 
-  availableLoads.forEach(load => {
-    if (load.equipment_type !== fleetProfile.trailerType) return;
-    if (load.trailer_length > fleetProfile.trailerLength) return;
-    if (load.weight_lbs > fleetProfile.weightLimit) return;
+  const stops = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
+  const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports?stops=${encodeURIComponent(stops)}&reports=Mileage&authToken=${token}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && Array.isArray(data) && data[0]?.ReportLines) {
+      const lines = data[0].ReportLines;
+      return lines[lines.length - 1]?.TMiles ?? null;
+    }
+    return null;
+  } catch (e) {
+    console.error('PC Miler error:', e.message);
+    return null;
+  }
+};
+
+const findRouteHomeBackhauls = async (datumPoint, fleetHome, fleetProfile, backhaulLoads, homeRadiusMiles = 50, corridorWidthMiles = 100) => {
+  // Get direct return distance from PC Miler (or Haversine fallback)
+  const pcMilerDirect = await getPCMilerDistance(datumPoint, fleetHome);
+  const directReturnMiles = pcMilerDirect ?? calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
+  console.log(`  Direct return: ${directReturnMiles} miles (${pcMilerDirect ? 'PC Miler' : 'Haversine'})`);
+
+  // Fast Haversine pre-filter
+  const availableLoads = backhaulLoads.filter(load => load.status === 'available');
+  const candidates = [];
+
+  for (const load of availableLoads) {
+    if (load.equipment_type !== fleetProfile.trailerType) continue;
+    if (load.trailer_length > fleetProfile.trailerLength) continue;
+    if (load.weight_lbs > fleetProfile.weightLimit) continue;
+
+    const haversineDeliveryToHome = calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
+    if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
 
     const isPickupAlongRoute = isAlongRoute(
       load.pickup_lat, load.pickup_lng,
@@ -67,13 +100,40 @@ const findRouteHomeBackhauls = (datumPoint, fleetHome, fleetProfile, backhaulLoa
       fleetHome.lat, fleetHome.lng,
       corridorWidthMiles
     );
-    if (!isPickupAlongRoute) return;
+    if (!isPickupAlongRoute) continue;
 
-    const deliveryToHome = calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-    if (deliveryToHome > homeRadiusMiles) return;
+    candidates.push(load);
+  }
 
-    const datumToPickup = calculateDistance(datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng);
-    const pickupToDelivery = load.distance_miles;
+  // Cap candidates and get PC Miler distances
+  const maxCandidates = 30;
+  const toProcess = candidates.length > maxCandidates
+    ? candidates.sort((a, b) => {
+        const aDist = calculateDistance(a.delivery_lat, a.delivery_lng, fleetHome.lat, fleetHome.lng);
+        const bDist = calculateDistance(b.delivery_lat, b.delivery_lng, fleetHome.lat, fleetHome.lng);
+        return aDist - bDist;
+      }).slice(0, maxCandidates)
+    : candidates;
+
+  const opportunities = [];
+  const distanceResults = await Promise.all(
+    toProcess.map(async (load) => {
+      const [dtp, ptd, dth] = await Promise.all([
+        getPCMilerDistance(datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }),
+        getPCMilerDistance({ lat: load.pickup_lat, lng: load.pickup_lng }, { lat: load.delivery_lat, lng: load.delivery_lng }),
+        getPCMilerDistance({ lat: load.delivery_lat, lng: load.delivery_lng }, fleetHome)
+      ]);
+      return { load, dtp, ptd, dth };
+    })
+  );
+
+  for (const { load, dtp, ptd, dth } of distanceResults) {
+    const datumToPickup = dtp ?? calculateDistance(datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng);
+    const pickupToDelivery = ptd ?? load.distance_miles;
+    const deliveryToHome = dth ?? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
+
+    if (deliveryToHome > homeRadiusMiles) continue;
+
     const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
     const totalRevenue = load.total_revenue;
     const revenuePerMile = totalRevenue / totalMilesWithBackhaul;
@@ -87,7 +147,7 @@ const findRouteHomeBackhauls = (datumPoint, fleetHome, fleetProfile, backhaulLoa
       origin: { city: load.pickup_city, state: load.pickup_state },
       destination: { city: load.delivery_city, state: load.delivery_state }
     });
-  });
+  }
 
   opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
   return opportunities;
@@ -387,8 +447,8 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Run matching algorithm
-        const matches = findRouteHomeBackhauls(
+        // Run matching algorithm (now async with PC Miler)
+        const matches = await findRouteHomeBackhauls(
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,

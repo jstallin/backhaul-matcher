@@ -4,11 +4,12 @@
  * This algorithm finds backhaul loads that help get you home from a datum point.
  * It looks for loads along the corridor between the datum point and fleet home.
  *
- * Uses Mapbox Directions API + Turf.js for proper geographic corridor filtering,
+ * Uses PC Miler for truck driving distances + Turf.js for geographic corridor filtering,
  * with fallback to Haversine-based filtering when API is unavailable.
  */
 
 import { getRouteWithCorridor, isPointInCorridor } from './routeCorridorService';
+import { getDrivingDistance } from './pcMilerClient';
 
 // Haversine formula to calculate distance between two points
 export const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -128,7 +129,7 @@ export const findRouteHomeBackhauls = async (
   let routeData = null;
   let useCorridor = false;
 
-  // Try to get route corridor from Mapbox
+  // Try to get route corridor from PC Miler
   try {
     console.log('Attempting to fetch route corridor...');
     routeData = await getRouteWithCorridor(datumPoint, fleetHome, corridorWidthMiles);
@@ -144,33 +145,38 @@ export const findRouteHomeBackhauls = async (
     console.warn('Falling back to Haversine algorithm');
   }
 
-  // Calculate direct distance from datum to home (empty miles if no backhaul)
-  const directReturnMiles = calculateDistance(
-    datumPoint.lat, datumPoint.lng,
-    fleetHome.lat, fleetHome.lng
-  );
+  // Use PC Miler driving distance if available, fall back to Haversine
+  const directReturnMiles = routeData?.distanceMiles
+    ?? calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
 
-  // Filter available loads
+  console.log('Direct return miles:', directReturnMiles, routeData?.distanceMiles ? '(PC Miler)' : '(Haversine)');
+
+  // ---- FAST FILTER: equipment + corridor + Haversine pre-check (no API calls) ----
   const availableLoads = backhaulLoads.filter(load => load.status === 'available');
+  const corridorCandidates = [];
 
-  availableLoads.forEach(load => {
-    // 1. Check equipment compatibility
-    if (load.equipment_type !== fleetProfile.trailerType) return;
-    if (load.trailer_length > fleetProfile.trailerLength) return;
-    if (load.weight_lbs > fleetProfile.weightLimit) return;
+  for (const load of availableLoads) {
+    // 1. Equipment compatibility
+    if (load.equipment_type !== fleetProfile.trailerType) continue;
+    if (load.trailer_length > fleetProfile.trailerLength) continue;
+    if (load.weight_lbs > fleetProfile.weightLimit) continue;
 
-    // 2. Check if pickup is along the route home (within corridor)
+    // 2. Quick Haversine pre-filter: delivery must be near home
+    // Use 1.5x homeRadius since driving distance is always longer than Haversine
+    const haversineDeliveryToHome = calculateDistance(
+      load.delivery_lat, load.delivery_lng,
+      fleetHome.lat, fleetHome.lng
+    );
+    if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
+
+    // 3. Corridor check (no API call — Turf.js polygon or Haversine fallback)
     let isPickupAlongRoute;
-
     if (useCorridor) {
-      // Use geographic corridor (Turf.js polygon check)
       isPickupAlongRoute = isPointInCorridor(
-        load.pickup_lat,
-        load.pickup_lng,
+        load.pickup_lat, load.pickup_lng,
         routeData.corridor
       );
     } else {
-      // Fallback to Haversine-based check
       isPickupAlongRoute = isAlongRoute(
         load.pickup_lat, load.pickup_lng,
         datumPoint.lat, datumPoint.lng,
@@ -178,47 +184,85 @@ export const findRouteHomeBackhauls = async (
         corridorWidthMiles
       );
     }
+    if (!isPickupAlongRoute) continue;
 
-    if (!isPickupAlongRoute) return;
+    corridorCandidates.push(load);
+  }
 
-    // 3. Check if delivery is near home (within homeRadiusMiles)
-    const deliveryToHome = calculateDistance(
-      load.delivery_lat, load.delivery_lng,
-      fleetHome.lat, fleetHome.lng
+  console.log(`Corridor filter: ${corridorCandidates.length} candidates from ${availableLoads.length} available loads`);
+
+  // Cap candidates to avoid excessive API calls (pre-sort by Haversine estimate)
+  const maxCandidates = 50;
+  let candidatesToProcess = corridorCandidates;
+  if (corridorCandidates.length > maxCandidates) {
+    corridorCandidates.sort((a, b) => {
+      const aDeliveryDist = calculateDistance(a.delivery_lat, a.delivery_lng, fleetHome.lat, fleetHome.lng);
+      const bDeliveryDist = calculateDistance(b.delivery_lat, b.delivery_lng, fleetHome.lat, fleetHome.lng);
+      return aDeliveryDist - bDeliveryDist;
+    });
+    candidatesToProcess = corridorCandidates.slice(0, maxCandidates);
+    console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
+  }
+
+  // ---- PRECISE DISTANCES: Call PC Miler for each candidate in parallel ----
+  const distancePromises = candidatesToProcess.map(async (load) => {
+    try {
+      const [dtp, ptd, dth] = await Promise.all([
+        getDrivingDistance([datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }]),
+        getDrivingDistance([
+          { lat: load.pickup_lat, lng: load.pickup_lng },
+          { lat: load.delivery_lat, lng: load.delivery_lng }
+        ]),
+        getDrivingDistance([
+          { lat: load.delivery_lat, lng: load.delivery_lng },
+          fleetHome
+        ])
+      ]);
+      return { load, dtp, ptd, dth };
+    } catch (error) {
+      console.warn(`PC Miler distance failed for load ${load.load_id}:`, error.message);
+      return { load, dtp: null, ptd: null, dth: null };
+    }
+  });
+
+  const distanceResults = await Promise.all(distancePromises);
+
+  // ---- SCORE with real driving distances ----
+  for (const { load, dtp, ptd, dth } of distanceResults) {
+    // Fall back to Haversine if PC Miler failed for any leg
+    const datumToPickup = dtp ?? calculateDistance(
+      datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng
+    );
+    const pickupToDelivery = ptd ?? load.distance_miles;
+    const deliveryToHome = dth ?? calculateDistance(
+      load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng
     );
 
-    if (deliveryToHome > homeRadiusMiles) return;
-
-    // 4. Calculate miles
-    const datumToPickup = calculateDistance(
-      datumPoint.lat, datumPoint.lng,
-      load.pickup_lat, load.pickup_lng
-    );
-
-    const pickupToDelivery = load.distance_miles;
+    // Re-check delivery-to-home with real driving distance
+    if (deliveryToHome > homeRadiusMiles) continue;
 
     const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
-
-    // How many extra miles compared to going straight home empty
     const additionalMiles = totalMilesWithBackhaul - directReturnMiles;
 
-    // 5. Calculate value metrics
+    // Calculate value metrics
     const totalRevenue = load.total_revenue;
     const revenuePerMile = totalRevenue / totalMilesWithBackhaul;
     const revenuePerAdditionalMile = additionalMiles > 0 ? totalRevenue / additionalMiles : totalRevenue * 100;
 
-    // 6. Calculate "efficiency score" - rewards high revenue with low deviation from direct route
-    // Higher score is better
+    // Efficiency score - rewards high revenue with low deviation from direct route
     const efficiencyScore = revenuePerMile * (directReturnMiles / totalMilesWithBackhaul) * 100;
 
-    // 7. Calculate net revenue if rate config is available
+    // Calculate net revenue if rate config is available
     const netRevenue = rateConfig
       ? calculateNetRevenue(totalRevenue, additionalMiles, rateConfig)
       : { has_rate_config: false };
 
+    // Track whether we got real driving distances
+    const usedPCMiler = dtp !== null && ptd !== null && dth !== null;
+
     opportunities.push({
       ...load,
-      // Route metrics (new names from route-home logic)
+      // Route metrics
       datum_to_pickup_miles: Math.round(datumToPickup),
       pickup_to_delivery_miles: Math.round(pickupToDelivery),
       delivery_to_home_miles: Math.round(deliveryToHome),
@@ -229,7 +273,7 @@ export const findRouteHomeBackhauls = async (
       // Legacy property mappings for BackhaulResults component
       finalToPickup: Math.round(datumToPickup),
       additionalMiles: Math.round(additionalMiles),
-      oorMiles: Math.round(totalMilesWithBackhaul), // Total miles as "out of route"
+      oorMiles: Math.round(totalMilesWithBackhaul),
       weight: load.weight_lbs,
       trailerLength: load.trailer_length,
       equipmentType: load.equipment_type,
@@ -240,6 +284,9 @@ export const findRouteHomeBackhauls = async (
       revenue_per_mile: revenuePerMile,
       revenue_per_additional_mile: revenuePerAdditionalMile,
       efficiency_score: efficiencyScore,
+
+      // Distance source
+      distance_source: usedPCMiler ? 'pcmiler' : 'haversine',
 
       // Net revenue metrics
       ...netRevenue,
@@ -269,7 +316,7 @@ export const findRouteHomeBackhauls = async (
       is_good: efficiencyScore > 30 && additionalMiles < 100,
       is_acceptable: efficiencyScore > 15
     });
-  });
+  }
 
   // Sort: if rate config available, rank by customer net credit first, then carrier revenue
   // Otherwise fall back to efficiency score
@@ -283,6 +330,7 @@ export const findRouteHomeBackhauls = async (
     opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
   }
 
+  console.log(`Matching complete: ${opportunities.length} opportunities found`);
   return { opportunities, routeData };
 };
 
