@@ -63,18 +63,20 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
  * Carrier Revenue = Gross Revenue × Carrier %
  */
 const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
+  const safeRevenue = Number(totalRevenue) || 0;
+  const safeAdditionalMiles = Number(additionalMiles) || 0;
   const carrierPct = (rateConfig.revenueSplitCarrier || 20) / 100;
   const customerPct = 1 - carrierPct;
-  const mileageRate = rateConfig.mileageRate || 0;
-  const stopRate = rateConfig.stopRate || 0;
+  const mileageRate = Number(rateConfig.mileageRate) || 0;
+  const stopRate = Number(rateConfig.stopRate) || 0;
   const stopCount = 2; // Default: pickup + delivery
-  const fuelPeg = rateConfig.fuelPeg || 0;
-  const fuelMpg = rateConfig.fuelMpg || 6;
-  const doePaddRate = rateConfig.doePaddRate || 0;
+  const fuelPeg = Number(rateConfig.fuelPeg) || 0;
+  const fuelMpg = Number(rateConfig.fuelMpg) || 6;
+  const doePaddRate = Number(rateConfig.doePaddRate) || 0;
 
   // Other charges
-  const otherCharge1 = rateConfig.otherCharge1Amount || 0;
-  const otherCharge2 = rateConfig.otherCharge2Amount || 0;
+  const otherCharge1 = Number(rateConfig.otherCharge1Amount) || 0;
+  const otherCharge2 = Number(rateConfig.otherCharge2Amount) || 0;
   const totalOtherCharges = otherCharge1 + otherCharge2;
 
   // Fuel surcharge per mile
@@ -82,9 +84,9 @@ const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
     ? (doePaddRate - fuelPeg) / fuelMpg
     : 0;
 
-  const customerShare = totalRevenue * customerPct;
-  const carrierRevenue = totalRevenue * carrierPct;
-  const oorMiles = Math.max(0, additionalMiles);
+  const customerShare = safeRevenue * customerPct;
+  const carrierRevenue = safeRevenue * carrierPct;
+  const oorMiles = Math.max(0, safeAdditionalMiles);
   const mileageExpense = oorMiles * mileageRate;
   const stopExpense = stopCount * stopRate;
   const fuelSurcharge = oorMiles * fscPerMile;
@@ -204,28 +206,34 @@ export const findRouteHomeBackhauls = async (
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
   }
 
-  // ---- PRECISE DISTANCES: Call PC Miler for each candidate in parallel ----
-  const distancePromises = candidatesToProcess.map(async (load) => {
-    try {
-      const [dtp, ptd, dth] = await Promise.all([
-        getDrivingDistance([datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }]),
-        getDrivingDistance([
-          { lat: load.pickup_lat, lng: load.pickup_lng },
-          { lat: load.delivery_lat, lng: load.delivery_lng }
-        ]),
-        getDrivingDistance([
-          { lat: load.delivery_lat, lng: load.delivery_lng },
-          fleetHome
-        ])
-      ]);
-      return { load, dtp, ptd, dth };
-    } catch (error) {
-      console.warn(`PC Miler distance failed for load ${load.load_id}:`, error.message);
-      return { load, dtp: null, ptd: null, dth: null };
-    }
-  });
+  // ---- PRECISE DISTANCES: Call PC Miler in batches to avoid rate limiting ----
+  const batchSize = 5; // Process 5 loads at a time (15 API calls per batch)
+  const distanceResults = [];
 
-  const distanceResults = await Promise.all(distancePromises);
+  for (let i = 0; i < candidatesToProcess.length; i += batchSize) {
+    const batch = candidatesToProcess.slice(i, i + batchSize);
+    const batchPromises = batch.map(async (load) => {
+      try {
+        const [dtp, ptd, dth] = await Promise.all([
+          getDrivingDistance([datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }]),
+          getDrivingDistance([
+            { lat: load.pickup_lat, lng: load.pickup_lng },
+            { lat: load.delivery_lat, lng: load.delivery_lng }
+          ]),
+          getDrivingDistance([
+            { lat: load.delivery_lat, lng: load.delivery_lng },
+            fleetHome
+          ])
+        ]);
+        return { load, dtp, ptd, dth };
+      } catch (error) {
+        console.warn(`PC Miler distance failed for load ${load.load_id}:`, error.message);
+        return { load, dtp: null, ptd: null, dth: null };
+      }
+    });
+    const batchResults = await Promise.all(batchPromises);
+    distanceResults.push(...batchResults);
+  }
 
   // ---- SCORE with real driving distances ----
   for (const { load, dtp, ptd, dth } of distanceResults) {
@@ -233,7 +241,9 @@ export const findRouteHomeBackhauls = async (
     const datumToPickup = dtp ?? calculateDistance(
       datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng
     );
-    const pickupToDelivery = ptd ?? load.distance_miles;
+    const pickupToDelivery = ptd ?? (load.distance_miles || calculateDistance(
+      load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng
+    ));
     const deliveryToHome = dth ?? calculateDistance(
       load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng
     );
@@ -241,12 +251,18 @@ export const findRouteHomeBackhauls = async (
     // Re-check delivery-to-home with real driving distance
     if (deliveryToHome > homeRadiusMiles) continue;
 
+    // Guard against NaN — skip load if any distance is not a valid number
+    if (isNaN(datumToPickup) || isNaN(pickupToDelivery) || isNaN(deliveryToHome)) {
+      console.warn(`Skipping load ${load.load_id}: invalid distance (dtp=${datumToPickup}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
+      continue;
+    }
+
     const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
-    const additionalMiles = totalMilesWithBackhaul - directReturnMiles;
+    const additionalMiles = Math.max(0, totalMilesWithBackhaul - directReturnMiles);
 
     // Calculate value metrics
-    const totalRevenue = load.total_revenue;
-    const revenuePerMile = totalRevenue / totalMilesWithBackhaul;
+    const totalRevenue = load.total_revenue || 0;
+    const revenuePerMile = totalMilesWithBackhaul > 0 ? totalRevenue / totalMilesWithBackhaul : 0;
     const revenuePerAdditionalMile = additionalMiles > 0 ? totalRevenue / additionalMiles : totalRevenue * 100;
 
     // Efficiency score - rewards high revenue with low deviation from direct route
