@@ -148,10 +148,13 @@ export const findRouteHomeBackhauls = async (
   }
 
   // Use PC Miler driving distance if available, fall back to Haversine
-  const directReturnMiles = routeData?.distanceMiles
-    ?? calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
+  const pcMilerDirect = routeData?.distanceMiles;
+  const haversineDirect = calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
+  const directReturnMiles = (typeof pcMilerDirect === 'number' && !isNaN(pcMilerDirect) && pcMilerDirect > 0)
+    ? pcMilerDirect
+    : haversineDirect;
 
-  console.log('Direct return miles:', directReturnMiles, routeData?.distanceMiles ? '(PC Miler)' : '(Haversine)');
+  console.log('Direct return miles:', directReturnMiles, pcMilerDirect ? '(PC Miler)' : '(Haversine)');
 
   // ---- FAST FILTER: equipment + corridor + Haversine pre-check (no API calls) ----
   const availableLoads = backhaulLoads.filter(load => load.status === 'available');
