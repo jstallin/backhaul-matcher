@@ -150,9 +150,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       };
 
       // Extract rate configuration for net revenue calculations
-      const rawProfile = fleet.fleet_profiles?.[0];
-      const rateConfig = rawProfile?.revenue_split_carrier ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier,
+      // fleet_profiles comes as array from Supabase join, or could be object
+      const rawProfile = Array.isArray(fleet.fleet_profiles)
+        ? fleet.fleet_profiles[0]
+        : fleet.fleet_profiles;
+
+      console.log('📋 Raw fleet profile data:', JSON.stringify(rawProfile, null, 2));
+
+      const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
+      const rateConfig = hasRateConfig ? {
+        revenueSplitCarrier: rawProfile.revenue_split_carrier || 80,
         mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
         stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
         otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
@@ -163,7 +170,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       } : null;
 
       console.log('⚙️ Fleet profile used for matching:', fleetProfile);
-      console.log('💰 Rate config:', rateConfig || 'Not configured');
+      console.log('💰 Rate config:', rateConfig || 'Not configured — fleet profile has no rate fields');
 
       // Geocode the datum point using Mapbox API (with fallback to local lookup)
       const geocoded = await parseDatumPoint(request.datum_point);
