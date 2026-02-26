@@ -62,7 +62,7 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
  * Carrier Revenue = Gross Revenue × Carrier %
  */
 const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
-  const carrierPct = (rateConfig.revenueSplitCarrier || 80) / 100;
+  const carrierPct = (rateConfig.revenueSplitCarrier || 20) / 100;
   const customerPct = 1 - carrierPct;
   const mileageRate = rateConfig.mileageRate || 0;
   const stopRate = rateConfig.stopRate || 0;

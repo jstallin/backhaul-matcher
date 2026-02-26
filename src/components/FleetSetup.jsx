@@ -33,7 +33,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
   });
 
   const [rateData, setRateData] = useState({
-    revenueSplitCarrier: 80,
+    revenueSplitCarrier: 20,
     mileageRate: '',
     stopRate: '',
     otherCharge1Name: '',
@@ -72,7 +72,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         homeLng: ''
       });
       setRateData({
-        revenueSplitCarrier: 80,
+        revenueSplitCarrier: 20,
         mileageRate: '',
         stopRate: '',
         otherCharge1Name: '',
@@ -93,7 +93,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       const profile = await db.fleetProfiles.get(fleetId);
       if (profile) {
         setRateData({
-          revenueSplitCarrier: profile.revenue_split_carrier ?? 80,
+          revenueSplitCarrier: profile.revenue_split_carrier ?? 20,
           mileageRate: profile.mileage_rate ?? '',
           stopRate: profile.stop_rate ?? '',
           otherCharge1Name: profile.other_charge_1_name ?? '',

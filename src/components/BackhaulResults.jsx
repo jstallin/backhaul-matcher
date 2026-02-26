@@ -186,12 +186,8 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.primary }}>{match.trailerLength} ft</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Out of Route</div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.accent.primary }}>{match.oorMiles} mi</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Additional Miles</div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>{match.additionalMiles} mi</div>
+                  <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>OOR Miles</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.accent.primary }}>{match.additionalMiles} mi</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>To Pickup</div>

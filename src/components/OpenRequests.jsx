@@ -159,7 +159,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
       const rateConfig = hasRateConfig ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier || 80,
+        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
         mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
         stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
         otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,

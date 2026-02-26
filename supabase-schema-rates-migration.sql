@@ -3,8 +3,8 @@
 -- Adds carrier rate structure fields needed for net revenue calculations
 
 -- Revenue split (carrier/customer percentage of gross backhaul revenue)
-ALTER TABLE fleet_profiles ADD COLUMN IF NOT EXISTS revenue_split_carrier INTEGER DEFAULT 80;
-ALTER TABLE fleet_profiles ADD COLUMN IF NOT EXISTS revenue_split_customer INTEGER DEFAULT 20;
+ALTER TABLE fleet_profiles ADD COLUMN IF NOT EXISTS revenue_split_carrier INTEGER DEFAULT 20;
+ALTER TABLE fleet_profiles ADD COLUMN IF NOT EXISTS revenue_split_customer INTEGER DEFAULT 80;
 
 -- Mileage and stop rates (carrier charges to customer)
 ALTER TABLE fleet_profiles ADD COLUMN IF NOT EXISTS mileage_rate DECIMAL(8,2);
