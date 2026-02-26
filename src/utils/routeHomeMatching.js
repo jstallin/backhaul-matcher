@@ -11,8 +11,13 @@
 import { getRouteWithCorridor, isPointInCorridor } from './routeCorridorService';
 import { getDrivingDistance } from './pcMilerClient';
 
-// Haversine formula to calculate distance between two points
-export const calculateDistance = (lat1, lng1, lat2, lng2) => {
+// Road distance correction factor for Haversine estimates.
+// Driving distances are typically 1.2-1.5x straight-line distance.
+// 1.35 is a good approximation for the US Southeast road network.
+const HAVERSINE_ROAD_FACTOR = 1.35;
+
+// Haversine formula to calculate straight-line distance between two points
+const haversineDistance = (lat1, lng1, lat2, lng2) => {
   const R = 3959; // Radius of Earth in miles
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -21,6 +26,11 @@ export const calculateDistance = (lat1, lng1, lat2, lng2) => {
     Math.sin(dLng/2) * Math.sin(dLng/2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
+};
+
+// Estimated driving distance using Haversine with road correction factor
+export const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  return haversineDistance(lat1, lng1, lat2, lng2) * HAVERSINE_ROAD_FACTOR;
 };
 
 // Calculate bearing (direction) between two points
@@ -392,7 +402,7 @@ export const getRouteMapMarkers = (datumPoint, fleetHome, topBackhauls) => {
       label: `${index + 1}P`,
       title: `#${index + 1} Pickup: ${load.pickup_city}, ${load.pickup_state}`,
       loadNumber: index + 1,
-      color: '#D89F38' // Golden amber
+      color: '#008b00' // Golden amber
     });
 
     // Delivery marker

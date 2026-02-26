@@ -90,9 +90,9 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
 
   // Corridor GeoJSON style
   const corridorStyle = {
-    fillColor: '#D89F38',
+    fillColor: '#008b00',
     fillOpacity: 0.15,
-    color: '#D89F38',
+    color: '#008b00',
     weight: 2,
     opacity: 0.5,
     dashArray: '8 8'
@@ -145,8 +145,8 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
         style={{ width: '100%', height: '100%' }}
       >
         <TileLayer
-          url="/api/pcmiler/tile?x={x}&y={y}&z={z}&style=Modern"
-          attribution="&copy; Trimble Maps"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
 
         <FitBounds bounds={boundsPoints} initialFitDone={null} />
@@ -209,7 +209,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
               <Marker
                 position={[load.pickup_lat, load.pickup_lng]}
                 icon={createCircleIcon(
-                  isSelected ? '#F59E0B' : '#D89F38',
+                  isSelected ? '#00a300' : '#008b00',
                   String(loadNum),
                   pickupSize
                 )}

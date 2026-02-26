@@ -255,7 +255,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
   const getStatusBg = (status) => {
     switch (status) {
       case 'available': return 'rgba(16, 185, 129, 0.1)';
-      case 'contacted': return 'rgba(216, 159, 56, 0.1)';
+      case 'contacted': return 'rgba(0, 139, 0, 0.1)';
       case 'booked': return 'rgba(59, 130, 246, 0.1)';
       case 'dismissed': return 'rgba(107, 114, 128, 0.1)';
       default: return colors.background.secondary;
@@ -323,7 +323,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          background: 'linear-gradient(135deg, rgba(216, 159, 56, 0.15) 0%, rgba(184, 134, 11, 0.15) 100%)',
+          background: 'linear-gradient(135deg, rgba(0, 139, 0, 0.15) 0%, rgba(0, 114, 0, 0.15) 100%)',
           border: `2px solid ${colors.accent.primary}`,
           borderRadius: '12px',
           marginBottom: '20px'

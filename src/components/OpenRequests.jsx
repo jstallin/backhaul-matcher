@@ -534,7 +534,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <span><strong>B</strong> = Fleet Home</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#D89F38', border: '2px solid white' }} />
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#008b00', border: '2px solid white' }} />
                       <span><strong>1-10</strong> = Pickup Locations</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -543,7 +543,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     </div>
                     {routeData?.corridor && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '20px', height: '12px', background: 'rgba(216, 159, 56, 0.15)', border: '2px dashed #D89F38', borderRadius: '2px' }} />
+                        <div style={{ width: '20px', height: '12px', background: 'rgba(0, 139, 0, 0.15)', border: '2px dashed #008b00', borderRadius: '2px' }} />
                         <span><strong>Search Corridor</strong> = 50-mile buffer along route</span>
                       </div>
                     )}

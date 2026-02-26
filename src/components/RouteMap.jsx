@@ -156,8 +156,13 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
 
   if (!route) return null;
 
-  // Choose tile style based on theme
-  const tileStyle = theme === 'dark' ? 'Darkness' : 'Modern';
+  // OSM tile URLs — free, no API key needed
+  const tileUrl = theme === 'dark'
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const tileAttribution = theme === 'dark'
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
   const routeLineStyle = {
     color: colors.accent.primary,
@@ -187,8 +192,8 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
         scrollWheelZoom={true}
       >
         <TileLayer
-          url={`/api/pcmiler/tile?x={x}&y={y}&z={z}&style=${tileStyle}`}
-          attribution="&copy; Trimble Maps"
+          url={tileUrl}
+          attribution={tileAttribution}
         />
 
         <FitBounds points={boundsPoints} />

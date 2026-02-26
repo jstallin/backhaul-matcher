@@ -268,7 +268,7 @@ const buildEmailHtml = (title, fields) => {
             <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
               <!-- Header -->
               <tr>
-                <td style="padding: 32px; background: linear-gradient(135deg, #D89F38 0%, #E8B55E 100%); border-radius: 8px 8px 0 0;">
+                <td style="padding: 32px; background: linear-gradient(135deg, #008b00 0%, #00a300 100%); border-radius: 8px 8px 0 0;">
                   <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 900;">
                     🦎 Haul Monitor
                   </h1>
@@ -289,7 +289,7 @@ const buildEmailHtml = (title, fields) => {
                           <strong style="color: #6B7280; font-size: 14px;">${field.label}:</strong>
                         </td>
                         <td style="padding: 12px 0; border-bottom: 1px solid #E5E7EB; text-align: right;">
-                          <span style="color: ${field.highlight ? '#D89F38' : '#2C3744'}; font-size: 16px; font-weight: ${field.highlight ? '700' : '600'};">
+                          <span style="color: ${field.highlight ? '#008b00' : '#2C3744'}; font-size: 16px; font-weight: ${field.highlight ? '700' : '600'};">
                             ${field.value}
                           </span>
                         </td>
@@ -298,7 +298,7 @@ const buildEmailHtml = (title, fields) => {
                   </table>
                   
                   <div style="margin-top: 32px; text-align: center;">
-                    <a href="https://haulmonitor.cloud" style="display: inline-block; padding: 14px 32px; background-color: #D89F38; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                    <a href="https://haulmonitor.cloud" style="display: inline-block; padding: 14px 32px; background-color: #008b00; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
                       View in Haul Monitor
                     </a>
                   </div>

@@ -40,9 +40,9 @@ export const ThemeProvider = ({ children }) => {
       accent: 'rgba(94, 160, 219, 0.3)'
     },
     accent: {
-      primary: '#D89F38',      // Haul Monitor golden amber
-      secondary: '#E8B55E',    // Lighter amber
-      tertiary: '#C08920',     // Darker amber
+      primary: '#008b00',      // Haul Monitor green
+      secondary: '#00a300',    // Lighter green
+      tertiary: '#007200',     // Darker green
       blue: '#5EA0DB',         // Keep blue for certain UI elements
       charcoal: '#2C3744',     // Haul Monitor charcoal
       success: '#10b981',
@@ -72,9 +72,9 @@ export const ThemeProvider = ({ children }) => {
       accent: '#CBD5E0'             // Medium border
     },
     accent: {
-      primary: '#D89F38',           // Haul Monitor golden amber (primary brand)
-      secondary: '#E8B55E',         // Lighter amber (hover states)
-      tertiary: '#C08920',          // Darker amber (active states)
+      primary: '#008b00',           // Haul Monitor green (primary brand)
+      secondary: '#00a300',         // Lighter green (hover states)
+      tertiary: '#007200',          // Darker green (active states)
       blue: '#5EA0DB',              // Keep blue for certain UI elements
       charcoal: '#2C3744',          // Haul Monitor charcoal
       success: '#48BB78',           // Green
