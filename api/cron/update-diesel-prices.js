@@ -100,12 +100,18 @@ async function updateFleetProfiles(prices) {
 
 export default async function handler(req, res) {
   // Verify cron secret to prevent unauthorized access
+  // Accepts: Authorization header, ?secret= query param, or skips if CRON_SECRET not set
   const authHeader = req.headers['authorization'];
+  const querySecret = req.query?.secret;
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    console.warn('Unauthorized cron request attempted');
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (cronSecret) {
+    const headerMatch = authHeader === `Bearer ${cronSecret}`;
+    const queryMatch = querySecret === cronSecret;
+    if (!headerMatch && !queryMatch) {
+      console.warn('Unauthorized cron request attempted');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   const apiKey = process.env.EIA_API_KEY;
