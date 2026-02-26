@@ -15,5 +15,11 @@
       "source": "/reset-password",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/update-diesel-prices",
+      "schedule": "0 14 * * 2"
+    }
   ]
 }
