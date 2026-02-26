@@ -149,7 +149,21 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         weightLimit: 45000
       };
 
+      // Extract rate configuration for net revenue calculations
+      const rawProfile = fleet.fleet_profiles?.[0];
+      const rateConfig = rawProfile?.revenue_split_carrier ? {
+        revenueSplitCarrier: rawProfile.revenue_split_carrier,
+        mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+        stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+        otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+        otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+        fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+        fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+        doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0
+      } : null;
+
       console.log('⚙️ Fleet profile used for matching:', fleetProfile);
+      console.log('💰 Rate config:', rateConfig || 'Not configured');
 
       // Geocode the datum point using Mapbox API (with fallback to local lookup)
       const geocoded = await parseDatumPoint(request.datum_point);
@@ -210,7 +224,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         fleetProfile,
         backhaulLoadsData,
         homeRadiusMiles,
-        corridorWidthMiles
+        corridorWidthMiles,
+        rateConfig
       );
 
       const matches = result.opportunities;

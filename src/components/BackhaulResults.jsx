@@ -110,12 +110,28 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   {getRankLabel(index)}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success }}>
-                    {formatCurrency(match.totalRevenue)}
-                  </div>
-                  <div style={{ fontSize: '13px', color: colors.text.secondary }}>
-                    {formatCurrency(match.revenuePerMile)}/mile
-                  </div>
+                  {match.has_rate_config ? (
+                    <>
+                      <div style={{ fontSize: '24px', fontWeight: 900, color: match.customer_net_credit >= 0 ? colors.accent.success : colors.accent.danger }}>
+                        {formatCurrency(match.customer_net_credit)}
+                      </div>
+                      <div style={{ fontSize: '12px', color: colors.text.tertiary, marginBottom: '2px' }}>
+                        Customer Net Credit
+                      </div>
+                      <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                        Gross: {formatCurrency(match.totalRevenue)} | {formatCurrency(match.revenuePerMile)}/mi
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: '24px', fontWeight: 900, color: colors.accent.success }}>
+                        {formatCurrency(match.totalRevenue)}
+                      </div>
+                      <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                        {formatCurrency(match.revenuePerMile)}/mile
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -182,6 +198,51 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>{match.finalToPickup} mi</div>
                 </div>
               </div>
+
+              {/* Financial Breakdown (when rate config available) */}
+              {match.has_rate_config && (
+                <div style={{ marginTop: '12px', padding: '16px', background: `${colors.background.secondary}`, border: `1px solid ${colors.border.accent}`, borderRadius: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Financial Breakdown
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Customer Share</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>{formatCurrency(match.customer_share)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Mileage Exp</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(match.mileage_expense)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Stop Exp ({match.stop_count})</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(match.stop_expense)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Fuel Surcharge</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(match.fuel_surcharge)}</div>
+                    </div>
+                    {match.other_charges > 0 && (
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Other Charges</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(match.other_charges)}</div>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Carrier Revenue</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.primary }}>{formatCurrency(match.carrier_revenue)}</div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary }}>
+                      FSC: ${match.fsc_per_mile?.toFixed(3)}/mi | OOR: {match.additionalMiles} mi
+                    </div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: match.customer_net_credit >= 0 ? colors.accent.success : colors.accent.danger }}>
+                      Net: {formatCurrency(match.customer_net_credit)}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Additional Info */}
               <div style={{ marginTop: '12px', padding: '12px', background: colors.background.secondary, borderRadius: '8px', fontSize: '12px', color: colors.text.secondary }}>

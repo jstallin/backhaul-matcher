@@ -55,6 +55,55 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
 };
 
 /**
+ * Calculate net revenue fields from rate config
+ * FSC/mile = (DOE PADD Rate - PEG) / MPG
+ * Customer Share = Gross Revenue × Customer %
+ * Customer Net Credit = Customer Share - (OOR Miles × Mileage Rate) - (Stops × Stop Rate) - (OOR Miles × FSC/mile)
+ * Carrier Revenue = Gross Revenue × Carrier %
+ */
+const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
+  const carrierPct = (rateConfig.revenueSplitCarrier || 80) / 100;
+  const customerPct = 1 - carrierPct;
+  const mileageRate = rateConfig.mileageRate || 0;
+  const stopRate = rateConfig.stopRate || 0;
+  const stopCount = 2; // Default: pickup + delivery
+  const fuelPeg = rateConfig.fuelPeg || 0;
+  const fuelMpg = rateConfig.fuelMpg || 6;
+  const doePaddRate = rateConfig.doePaddRate || 0;
+
+  // Other charges
+  const otherCharge1 = rateConfig.otherCharge1Amount || 0;
+  const otherCharge2 = rateConfig.otherCharge2Amount || 0;
+  const totalOtherCharges = otherCharge1 + otherCharge2;
+
+  // Fuel surcharge per mile
+  const fscPerMile = (doePaddRate > 0 && fuelPeg > 0 && fuelMpg > 0)
+    ? (doePaddRate - fuelPeg) / fuelMpg
+    : 0;
+
+  const customerShare = totalRevenue * customerPct;
+  const carrierRevenue = totalRevenue * carrierPct;
+  const oorMiles = Math.max(0, additionalMiles);
+  const mileageExpense = oorMiles * mileageRate;
+  const stopExpense = stopCount * stopRate;
+  const fuelSurcharge = oorMiles * fscPerMile;
+  const customerNetCredit = customerShare - mileageExpense - stopExpense - fuelSurcharge - totalOtherCharges;
+
+  return {
+    fsc_per_mile: fscPerMile,
+    customer_share: customerShare,
+    carrier_revenue: carrierRevenue,
+    mileage_expense: mileageExpense,
+    stop_expense: stopExpense,
+    stop_count: stopCount,
+    fuel_surcharge: fuelSurcharge,
+    other_charges: totalOtherCharges,
+    customer_net_credit: customerNetCredit,
+    has_rate_config: true
+  };
+};
+
+/**
  * Find backhaul opportunities along the route home
  *
  * @param {Object} datumPoint - {lat, lng} - Where the driver currently is (or will be)
@@ -63,6 +112,7 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
  * @param {Array} backhaulLoads - Available backhaul loads from data
  * @param {Number} homeRadiusMiles - How close to home the delivery should be (default 50)
  * @param {Number} corridorWidthMiles - How far off the direct route is acceptable (default 50)
+ * @param {Object} rateConfig - Optional rate configuration from fleet profile
  * @returns {Object} - { opportunities: Array, routeData: { route, corridor } | null }
  */
 export const findRouteHomeBackhauls = async (
@@ -71,7 +121,8 @@ export const findRouteHomeBackhauls = async (
   fleetProfile,
   backhaulLoads,
   homeRadiusMiles = 50,
-  corridorWidthMiles = 50
+  corridorWidthMiles = 50,
+  rateConfig = null
 ) => {
   const opportunities = [];
   let routeData = null;
@@ -160,6 +211,11 @@ export const findRouteHomeBackhauls = async (
     // Higher score is better
     const efficiencyScore = revenuePerMile * (directReturnMiles / totalMilesWithBackhaul) * 100;
 
+    // 7. Calculate net revenue if rate config is available
+    const netRevenue = rateConfig
+      ? calculateNetRevenue(totalRevenue, additionalMiles, rateConfig)
+      : { has_rate_config: false };
+
     opportunities.push({
       ...load,
       // Route metrics (new names from route-home logic)
@@ -184,6 +240,9 @@ export const findRouteHomeBackhauls = async (
       revenue_per_mile: revenuePerMile,
       revenue_per_additional_mile: revenuePerAdditionalMile,
       efficiency_score: efficiencyScore,
+
+      // Net revenue metrics
+      ...netRevenue,
 
       // For display
       formatted_revenue: `$${totalRevenue.toFixed(2)}`,
@@ -212,8 +271,17 @@ export const findRouteHomeBackhauls = async (
     });
   });
 
-  // Sort by efficiency score (best opportunities first)
-  opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
+  // Sort: if rate config available, rank by customer net credit first, then carrier revenue
+  // Otherwise fall back to efficiency score
+  if (rateConfig) {
+    opportunities.sort((a, b) => {
+      const creditDiff = (b.customer_net_credit || 0) - (a.customer_net_credit || 0);
+      if (creditDiff !== 0) return creditDiff;
+      return (b.carrier_revenue || 0) - (a.carrier_revenue || 0);
+    });
+  } else {
+    opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
+  }
 
   return { opportunities, routeData };
 };
