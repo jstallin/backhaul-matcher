@@ -568,7 +568,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
             <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               Create your first backhaul request to start finding opportunities.
             </p>
-            <button onClick={() => onMenuNavigate('start-request')} style={{ padding: '14px 28px', background: `colors.accent.primary`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <button onClick={() => onMenuNavigate('start-request')} style={{ padding: '14px 28px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={20} />
               Start Request
             </button>

@@ -295,7 +295,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
             <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               You need to create a fleet before you can start a backhaul request.
             </p>
-            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: `colors.accent.primary`, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
               Go to Fleets
             </button>
           </div>

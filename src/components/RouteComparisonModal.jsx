@@ -182,7 +182,7 @@ export const RouteComparisonModal = ({ route, backhaul, onClose, onAssign }) => 
                 onClick={() => onAssign(backhaul)}
                 style={{
                   padding: '12px 24px',
-                  background: `colors.accent.success`,
+                  background: colors.accent.success,
                   border: 'none',
                   borderRadius: '8px',
                   color: '#fff',

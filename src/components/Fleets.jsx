@@ -184,7 +184,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
               onClick={onCreateFleet}
               style={{
                 padding: '14px 28px',
-                background: `colors.accent.primary`,
+                background: colors.accent.primary,
                 border: 'none',
                 borderRadius: '8px',
                 color: '#fff',
@@ -592,7 +592,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                   disabled={deleting}
                   style={{
                     padding: '12px 24px',
-                    background: `colors.accent.danger`,
+                    background: colors.accent.danger,
                     border: 'none',
                     borderRadius: '8px',
                     color: '#fff',

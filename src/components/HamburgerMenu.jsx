@@ -54,12 +54,12 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       icon: TrendingUp,
       description: 'Analytics and performance reports'
     },
-    {
-      id: 'imported-loads',
-      label: 'Imported Loads',
-      icon: Package,
-      description: 'Loads from DAT and other load boards'
-    }
+    // {
+    //   id: 'imported-loads',
+    //   label: 'Imported Loads',
+    //   icon: Package,
+    //   description: 'Loads from DAT and other load boards'
+    // }
   ];
 
   return (

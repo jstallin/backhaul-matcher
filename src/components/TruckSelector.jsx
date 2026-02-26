@@ -284,7 +284,7 @@ export const TruckSelector = ({ fleetId, onSelectTruck }) => {
             style={{
               width: '100%',
               padding: '16px',
-              background: `colors.accent.primary`,
+              background: colors.accent.primary,
               border: 'none',
               borderRadius: '12px',
               color: '#fff',
