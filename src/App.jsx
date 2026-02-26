@@ -531,7 +531,7 @@ function App() {
         
         {/* Fleet Info Card */}
         <div style={{
-          background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%)',
+          background: 'linear-gradient(135deg, rgba(0, 139, 0, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
           padding: '24px',
@@ -774,7 +774,7 @@ function App() {
                 style={{
                   width: '100%',
                   padding: '16px',
-                  background: 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)',
+                  background: 'linear-gradient(135deg, #008b00 0%, #00a300 100%)',
                   border: 'none',
                   borderRadius: '12px',
                   color: '#fff',
@@ -836,11 +836,11 @@ function App() {
               <div style={{
                 marginTop: '24px',
                 padding: '16px',
-                background: 'rgba(255, 107, 53, 0.1)',
+                background: 'rgba(0, 139, 0, 0.1)',
                 borderRadius: '12px',
-                border: '1px solid rgba(255, 107, 53, 0.2)'
+                border: '1px solid rgba(0, 139, 0, 0.2)'
               }}>
-                <div style={{ fontSize: '13px', color: '#ff6b35', fontWeight: 700, marginBottom: '4px' }}>
+                <div style={{ fontSize: '13px', color: '#008b00', fontWeight: 700, marginBottom: '4px' }}>
                   ⚡ PRIORITY ACCESS
                 </div>
                 <div style={{ fontSize: '13px', color: '#b8bcc8', lineHeight: '1.5' }}>
@@ -885,7 +885,7 @@ function App() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
                 {[
                   { label: 'Avg Revenue', value: `$${Math.round(opportunities.reduce((sum, o) => sum + o.totalRevenue, 0) / opportunities.length)}`, icon: DollarSign, color: '#00d4ff' },
-                  { label: 'Best Score', value: Math.round(opportunities[0]?.score || 0).toLocaleString(), icon: TrendingUp, color: '#ff6b35' },
+                  { label: 'Best Score', value: Math.round(opportunities[0]?.score || 0).toLocaleString(), icon: TrendingUp, color: '#008b00' },
                   { label: 'Avg OOR Miles', value: Math.round(opportunities.reduce((sum, o) => sum + o.additionalMiles, 0) / opportunities.length), icon: Navigation, color: '#a855f7' },
                   { label: 'Opportunities', value: opportunities.length, icon: Calendar, color: '#10b981' }
                 ].map((stat, idx) => {
@@ -936,7 +936,7 @@ function App() {
                       <div style={{ 
                         display: 'inline-block',
                         padding: '4px 12px',
-                        background: 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)',
+                        background: 'linear-gradient(135deg, #008b00 0%, #00a300 100%)',
                         borderRadius: '6px',
                         fontSize: '12px',
                         fontWeight: 800,
@@ -971,7 +971,7 @@ function App() {
                     {/* OOR Miles */}
                     <div>
                       <div style={{ fontSize: '13px', color: '#8b92a7', marginBottom: '4px' }}>Additional Miles</div>
-                      <div style={{ fontSize: '24px', fontWeight: 900, color: opp.additionalMiles < 50 ? '#10b981' : '#ff6b35' }}>
+                      <div style={{ fontSize: '24px', fontWeight: 900, color: opp.additionalMiles < 50 ? '#10b981' : '#008b00' }}>
                         +{Math.round(opp.additionalMiles)}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
@@ -982,7 +982,7 @@ function App() {
                     {/* Score */}
                     <div>
                       <div style={{ fontSize: '13px', color: '#8b92a7', marginBottom: '4px' }}>Efficiency Score</div>
-                      <div style={{ fontSize: '28px', fontWeight: 900, color: '#ff6b35' }}>
+                      <div style={{ fontSize: '28px', fontWeight: 900, color: '#008b00' }}>
                         {Math.round(opp.score).toLocaleString()}
                       </div>
                     </div>

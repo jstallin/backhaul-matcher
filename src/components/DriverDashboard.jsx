@@ -179,7 +179,7 @@ export const DriverDashboard = () => {
             margin: '0 0 8px 0',
             fontSize: '32px',
             fontWeight: 900,
-            background: 'linear-gradient(135deg, #ff6b35 0%, #00d4ff 100%)',
+            background: 'linear-gradient(135deg, #008b00 0%, #00d4ff 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>
@@ -225,8 +225,8 @@ export const DriverDashboard = () => {
           {/* Current Route */}
           {currentRoute && (
             <div style={{
-              background: 'rgba(255, 107, 53, 0.1)',
-              border: '1px solid rgba(255, 107, 53, 0.3)',
+              background: 'rgba(0, 139, 0, 0.1)',
+              border: '1px solid rgba(0, 139, 0, 0.3)',
               borderRadius: '16px',
               padding: '24px'
             }}>
@@ -234,7 +234,7 @@ export const DriverDashboard = () => {
                 margin: '0 0 16px 0',
                 fontSize: '18px',
                 fontWeight: 800,
-                color: '#ff6b35',
+                color: '#008b00',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'

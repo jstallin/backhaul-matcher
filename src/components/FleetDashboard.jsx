@@ -227,7 +227,7 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
                 style={{
                   marginTop: '16px',
                   padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)',
+                  background: 'linear-gradient(135deg, #008b00 0%, #00a300 100%)',
                   border: 'none',
                   borderRadius: '8px',
                   color: '#fff',

@@ -48,17 +48,17 @@ export const SignUp = ({ onToggleMode }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
+        background: '#ffffff',
         padding: '20px'
       }}>
         <div style={{
           width: '100%',
           maxWidth: '440px',
-          background: 'rgba(26, 31, 58, 0.8)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#f5f5f5',
+          border: '1px solid #e0e0e0',
           borderRadius: '16px',
           padding: '40px',
-          backdropFilter: 'blur(20px)',
+          boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
           textAlign: 'center'
         }}>
           <div style={{
@@ -70,14 +70,15 @@ export const SignUp = ({ onToggleMode }) => {
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 24px',
-            fontSize: '32px'
+            fontSize: '32px',
+            color: '#fff'
           }}>
             ✓
           </div>
-          <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 800, color: '#e8eaed' }}>
+          <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 800, color: '#1a1a1a' }}>
             Check Your Email
           </h2>
-          <p style={{ margin: 0, color: '#8b92a7', fontSize: '15px', lineHeight: '1.6' }}>
+          <p style={{ margin: 0, color: '#666666', fontSize: '15px', lineHeight: '1.6' }}>
             We've sent you a confirmation email. Please check your inbox and click the link to verify your account.
           </p>
           <button
@@ -85,10 +86,10 @@ export const SignUp = ({ onToggleMode }) => {
             style={{
               marginTop: '24px',
               padding: '12px 24px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: '#ffffff',
+              border: '1px solid #d0d0d0',
               borderRadius: '8px',
-              color: '#e8eaed',
+              color: '#666666',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 600
@@ -107,28 +108,28 @@ export const SignUp = ({ onToggleMode }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
+      background: '#ffffff',
       padding: '20px'
     }}>
       <div style={{
         width: '100%',
         maxWidth: '440px',
-        background: 'rgba(26, 31, 58, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#f5f5f5',
+        border: '1px solid #e0e0e0',
         borderRadius: '16px',
         padding: '40px',
-        backdropFilter: 'blur(20px)'
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)'
       }}>
         {/* Logo */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           marginBottom: '32px',
           gap: '16px'
         }}>
           <HaulMonitorLogo size="large" variant="full" showText={false} />
-          <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: '#666666', fontSize: '14px' }}>
             Create your account
           </p>
         </div>
@@ -140,7 +141,7 @@ export const SignUp = ({ onToggleMode }) => {
             background: 'rgba(239, 68, 68, 0.1)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
             borderRadius: '8px',
-            color: '#fca5a5',
+            color: '#dc2626',
             fontSize: '14px',
             marginBottom: '24px'
           }}>
@@ -156,7 +157,7 @@ export const SignUp = ({ onToggleMode }) => {
               marginBottom: '8px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '#1a1a1a'
             }}>
               Full Name
             </label>
@@ -169,13 +170,16 @@ export const SignUp = ({ onToggleMode }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#ffffff',
+                border: '1px solid #d0d0d0',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '#1a1a1a',
                 fontSize: '15px',
-                outline: 'none'
+                outline: 'none',
+                transition: 'all 0.2s'
               }}
+              onFocus={(e) => e.target.style.borderColor = '#008b00'}
+              onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
             />
           </div>
 
@@ -185,7 +189,7 @@ export const SignUp = ({ onToggleMode }) => {
               marginBottom: '8px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '#1a1a1a'
             }}>
               Email
             </label>
@@ -198,13 +202,16 @@ export const SignUp = ({ onToggleMode }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#ffffff',
+                border: '1px solid #d0d0d0',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '#1a1a1a',
                 fontSize: '15px',
-                outline: 'none'
+                outline: 'none',
+                transition: 'all 0.2s'
               }}
+              onFocus={(e) => e.target.style.borderColor = '#008b00'}
+              onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
             />
           </div>
 
@@ -214,7 +221,7 @@ export const SignUp = ({ onToggleMode }) => {
               marginBottom: '8px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '#1a1a1a'
             }}>
               Role
             </label>
@@ -225,13 +232,14 @@ export const SignUp = ({ onToggleMode }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#ffffff',
+                border: '1px solid #d0d0d0',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '#1a1a1a',
                 fontSize: '15px',
                 outline: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.2s'
               }}
             >
               <option value="fleet_manager">Fleet Manager</option>
@@ -246,7 +254,7 @@ export const SignUp = ({ onToggleMode }) => {
               marginBottom: '8px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '#1a1a1a'
             }}>
               Password
             </label>
@@ -259,13 +267,16 @@ export const SignUp = ({ onToggleMode }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#ffffff',
+                border: '1px solid #d0d0d0',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '#1a1a1a',
                 fontSize: '15px',
-                outline: 'none'
+                outline: 'none',
+                transition: 'all 0.2s'
               }}
+              onFocus={(e) => e.target.style.borderColor = '#008b00'}
+              onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
             />
           </div>
 
@@ -275,7 +286,7 @@ export const SignUp = ({ onToggleMode }) => {
               marginBottom: '8px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#e8eaed'
+              color: '#1a1a1a'
             }}>
               Confirm Password
             </label>
@@ -288,13 +299,16 @@ export const SignUp = ({ onToggleMode }) => {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#ffffff',
+                border: '1px solid #d0d0d0',
                 borderRadius: '8px',
-                color: '#e8eaed',
+                color: '#1a1a1a',
                 fontSize: '15px',
-                outline: 'none'
+                outline: 'none',
+                transition: 'all 0.2s'
               }}
+              onFocus={(e) => e.target.style.borderColor = '#008b00'}
+              onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
             />
           </div>
 
@@ -304,7 +318,7 @@ export const SignUp = ({ onToggleMode }) => {
             style={{
               width: '100%',
               padding: '14px',
-              background: loading ? 'rgba(0, 212, 255, 0.5)' : 'linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)',
+              background: loading ? 'rgba(0, 139, 0, 0.5)' : 'linear-gradient(135deg, #008b00 0%, #00a300 100%)',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -321,14 +335,14 @@ export const SignUp = ({ onToggleMode }) => {
 
         {/* Login link */}
         <div style={{ textAlign: 'center', marginTop: '24px' }}>
-          <p style={{ color: '#8b92a7', fontSize: '14px', margin: 0 }}>
+          <p style={{ color: '#666666', fontSize: '14px', margin: 0 }}>
             Already have an account?{' '}
             <button
               onClick={onToggleMode}
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#00d4ff',
+                color: '#008b00',
                 cursor: 'pointer',
                 textDecoration: 'underline',
                 fontSize: '14px',

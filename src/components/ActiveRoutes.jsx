@@ -288,7 +288,7 @@ export const ActiveRoutes = ({ onSelectRouteForBackhaul }) => {
                       onClick={() => onSelectRouteForBackhaul && onSelectRouteForBackhaul(route)}
                       style={{
                         padding: '10px 20px',
-                        background: `linear-gradient(135deg, ${colors.accent.primary} 0%, #ff8c5a 100%)`,
+                        background: `linear-gradient(135deg, ${colors.accent.primary} 0%, #00a300 100%)`,
                         border: 'none',
                         borderRadius: '8px',
                         color: '#fff',

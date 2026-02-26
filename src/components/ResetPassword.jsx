@@ -28,7 +28,7 @@ export const ResetPassword = () => {
 
     try {
       const { supabase } = await import('../lib/supabase');
-      
+
       // Update the password
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
@@ -56,28 +56,28 @@ export const ResetPassword = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #2a1f3a 100%)',
+      background: '#ffffff',
       padding: '20px'
     }}>
       <div style={{
         width: '100%',
         maxWidth: '440px',
-        background: 'rgba(26, 31, 58, 0.8)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#f5f5f5',
+        border: '1px solid #e0e0e0',
         borderRadius: '16px',
         padding: '40px',
-        backdropFilter: 'blur(20px)'
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)'
       }}>
         {/* Logo */}
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           marginBottom: '32px',
           gap: '16px'
         }}>
           <HaulMonitorLogo size="large" variant="full" showText={false} />
-          <p style={{ margin: 0, color: '#8b92a7', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: '#666666', fontSize: '14px' }}>
             Set your new password
           </p>
         </div>
@@ -92,18 +92,18 @@ export const ResetPassword = () => {
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>✓</div>
-            <h3 style={{ 
-              margin: '0 0 8px 0', 
-              fontSize: '20px', 
-              fontWeight: 700, 
-              color: '#86efac' 
+            <h3 style={{
+              margin: '0 0 8px 0',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#16a34a'
             }}>
               Password Reset Successful!
             </h3>
-            <p style={{ 
-              margin: 0, 
-              fontSize: '14px', 
-              color: '#8b92a7' 
+            <p style={{
+              margin: 0,
+              fontSize: '14px',
+              color: '#666666'
             }}>
               Redirecting you to login...
             </p>
@@ -117,7 +117,7 @@ export const ResetPassword = () => {
                 background: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '8px',
-                color: '#fca5a5',
+                color: '#dc2626',
                 fontSize: '14px',
                 marginBottom: '24px'
               }}>
@@ -129,16 +129,15 @@ export const ResetPassword = () => {
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{
-                  display: 'block',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   marginBottom: '8px',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#e8eaed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  color: '#1a1a1a'
                 }}>
-                  <Lock size={16} color="#00d4ff" />
+                  <Lock size={16} color="#008b00" />
                   New Password
                 </label>
                 <input
@@ -151,21 +150,21 @@ export const ResetPassword = () => {
                   style={{
                     width: '100%',
                     padding: '12px 16px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: '#ffffff',
+                    border: '1px solid #d0d0d0',
                     borderRadius: '8px',
-                    color: '#e8eaed',
+                    color: '#1a1a1a',
                     fontSize: '15px',
                     outline: 'none',
                     transition: 'all 0.2s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#00d4ff'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                  onFocus={(e) => e.target.style.borderColor = '#008b00'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
                 />
-                <p style={{ 
-                  margin: '6px 0 0 0', 
-                  fontSize: '12px', 
-                  color: '#8b92a7' 
+                <p style={{
+                  margin: '6px 0 0 0',
+                  fontSize: '12px',
+                  color: '#666666'
                 }}>
                   Must be at least 6 characters
                 </p>
@@ -173,16 +172,15 @@ export const ResetPassword = () => {
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{
-                  display: 'block',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                   marginBottom: '8px',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#e8eaed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  color: '#1a1a1a'
                 }}>
-                  <Lock size={16} color="#00d4ff" />
+                  <Lock size={16} color="#008b00" />
                   Confirm New Password
                 </label>
                 <input
@@ -195,16 +193,16 @@ export const ResetPassword = () => {
                   style={{
                     width: '100%',
                     padding: '12px 16px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: '#ffffff',
+                    border: '1px solid #d0d0d0',
                     borderRadius: '8px',
-                    color: '#e8eaed',
+                    color: '#1a1a1a',
                     fontSize: '15px',
                     outline: 'none',
                     transition: 'all 0.2s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#00d4ff'}
-                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                  onFocus={(e) => e.target.style.borderColor = '#008b00'}
+                  onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
                 />
               </div>
 
@@ -214,7 +212,7 @@ export const ResetPassword = () => {
                 style={{
                   width: '100%',
                   padding: '14px',
-                  background: loading ? 'rgba(255, 107, 53, 0.5)' : 'linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%)',
+                  background: loading ? 'rgba(0, 139, 0, 0.5)' : 'linear-gradient(135deg, #008b00 0%, #00a300 100%)',
                   border: 'none',
                   borderRadius: '8px',
                   color: '#fff',
