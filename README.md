@@ -1,4 +1,4 @@
-# BackHaul - Smart Return Route Optimization
+# Haul Monitor - Smart Return Route Optimization
 
 A logistics platform that solves the backhaul dilemma by matching empty return trips with revenue-generating loads.
 
@@ -73,13 +73,11 @@ Higher scores indicate better opportunities (more revenue per additional mile).
 ## Next Steps for Production
 
 1. **DAT API Integration** - Replace mock data with real DAT API calls
-2. **Authentication** - Add user login and fleet management
-3. **Database** - Store fleet profiles and search history
-4. **Real Routing** - Integrate Google Maps Routes API or PC Miler
-5. **Mobile Apps** - Build native iOS/Android apps
-6. **WebSocket Updates** - Real-time load availability
-7. **Toll Calculations** - Add toll avoidance options
-8. **Multiple Mileage Engines** - Support PC Miler variants
+2. **Real Routing** - Integrate PC Miler
+3. **Mobile Apps** - Build native iOS/Android apps
+4. **WebSocket Updates** - Real-time load availability
+5. **Toll Calculations** - Add toll avoidance options
+6. **Multiple Mileage Engines** - Support PC Miler variants
 
 ## Environment Variables
 
