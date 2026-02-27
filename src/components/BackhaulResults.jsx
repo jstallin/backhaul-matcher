@@ -77,6 +77,9 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
             </button>
           </div>
         </div>
+        <p style={{ margin: 0, fontSize: '12px', color: colors.text.tertiary, fontStyle: 'italic' }}>
+          Estimates Only. Validate with your specific mileage engines.
+        </p>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
           {request.request_name}
         </h3>
