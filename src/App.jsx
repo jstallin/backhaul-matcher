@@ -380,8 +380,9 @@ function App() {
     setActiveTab('results');
   };
 
-  // Show loading state while fleet data loads
-  if (loadingFleet) {
+  // Show loading state only on initial load — subsequent refreshes happen silently in the background
+  // so navigating tabs or token refreshes don't interrupt the user's current view
+  if (loadingFleet && !fleetProfile) {
     return (
       <AuthWrapper>
         <div style={{
