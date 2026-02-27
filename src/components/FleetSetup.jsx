@@ -37,8 +37,10 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     mileageRate: '',
     stopRate: '',
     otherCharge1Name: '',
+    otherCharge1Description: '',
     otherCharge1Amount: '',
     otherCharge2Name: '',
+    otherCharge2Description: '',
     otherCharge2Amount: '',
     fuelPeg: '',
     fuelMpg: '6.0',
@@ -76,8 +78,10 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         mileageRate: '',
         stopRate: '',
         otherCharge1Name: '',
+        otherCharge1Description: '',
         otherCharge1Amount: '',
         otherCharge2Name: '',
+        otherCharge2Description: '',
         otherCharge2Amount: '',
         fuelPeg: '',
         fuelMpg: '6.0',
@@ -97,8 +101,10 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           mileageRate: profile.mileage_rate ?? '',
           stopRate: profile.stop_rate ?? '',
           otherCharge1Name: profile.other_charge_1_name ?? '',
+          otherCharge1Description: profile.other_charge_1_description ?? '',
           otherCharge1Amount: profile.other_charge_1_amount ?? '',
           otherCharge2Name: profile.other_charge_2_name ?? '',
+          otherCharge2Description: profile.other_charge_2_description ?? '',
           otherCharge2Amount: profile.other_charge_2_amount ?? '',
           fuelPeg: profile.fuel_peg ?? '',
           fuelMpg: profile.fuel_mpg ?? '6.0',
@@ -148,8 +154,10 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         mileage_rate: rateData.mileageRate !== '' ? parseFloat(rateData.mileageRate) : null,
         stop_rate: rateData.stopRate !== '' ? parseFloat(rateData.stopRate) : null,
         other_charge_1_name: rateData.otherCharge1Name || null,
+        other_charge_1_description: rateData.otherCharge1Description || null,
         other_charge_1_amount: rateData.otherCharge1Amount !== '' ? parseFloat(rateData.otherCharge1Amount) : null,
         other_charge_2_name: rateData.otherCharge2Name || null,
+        other_charge_2_description: rateData.otherCharge2Description || null,
         other_charge_2_amount: rateData.otherCharge2Amount !== '' ? parseFloat(rateData.otherCharge2Amount) : null,
         fuel_peg: rateData.fuelPeg !== '' ? parseFloat(rateData.fuelPeg) : null,
         fuel_mpg: rateData.fuelMpg !== '' ? parseFloat(rateData.fuelMpg) : 6.0,
@@ -528,7 +536,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               </p>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '2fr 1fr',
+                gridTemplateColumns: '1fr 1fr 1fr',
                 gap: '16px',
                 marginBottom: '12px'
               }}>
@@ -540,6 +548,18 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     onChange={(e) => handleRateChange('otherCharge1Name', e.target.value)}
                     disabled={saving}
                     placeholder="e.g., Detention fee"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Description <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(25 chars)</span></label>
+                  <input
+                    type="text"
+                    maxLength={25}
+                    value={rateData.otherCharge1Description}
+                    onChange={(e) => handleRateChange('otherCharge1Description', e.target.value)}
+                    disabled={saving}
+                    placeholder="e.g., 2+ hr wait time"
                     style={inputStyle}
                   />
                 </div>
@@ -559,7 +579,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               </div>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '2fr 1fr',
+                gridTemplateColumns: '1fr 1fr 1fr',
                 gap: '16px'
               }}>
                 <div>
@@ -570,6 +590,18 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     onChange={(e) => handleRateChange('otherCharge2Name', e.target.value)}
                     disabled={saving}
                     placeholder="e.g., Lumper fee"
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Description <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(25 chars)</span></label>
+                  <input
+                    type="text"
+                    maxLength={25}
+                    value={rateData.otherCharge2Description}
+                    onChange={(e) => handleRateChange('otherCharge2Description', e.target.value)}
+                    disabled={saving}
+                    placeholder="e.g., Unloading assist"
                     style={inputStyle}
                   />
                 </div>
