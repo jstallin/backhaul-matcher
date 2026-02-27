@@ -232,7 +232,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         backhaulLoadsData,
         homeRadiusMiles,
         corridorWidthMiles,
-        rateConfig
+        rateConfig,
+        request.is_relay || false
       );
 
       const matches = result.opportunities;

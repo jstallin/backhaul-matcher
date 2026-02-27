@@ -135,7 +135,8 @@ export const findRouteHomeBackhauls = async (
   backhaulLoads,
   homeRadiusMiles = 50,
   corridorWidthMiles = 50,
-  rateConfig = null
+  rateConfig = null,
+  isRelay = false
 ) => {
   const opportunities = [];
   let routeData = null;
@@ -227,8 +228,11 @@ export const findRouteHomeBackhauls = async (
     const batch = candidatesToProcess.slice(i, i + batchSize);
     const batchPromises = batch.map(async (load) => {
       try {
+        // In relay mode, the relay driver starts from home (not datum),
+        // so measure homeToPickup instead of datumToPickup.
+        const firstLegOrigin = isRelay ? fleetHome : datumPoint;
         const [dtp, ptd, dth] = await Promise.all([
-          getDrivingDistance([datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }]),
+          getDrivingDistance([firstLegOrigin, { lat: load.pickup_lat, lng: load.pickup_lng }]),
           getDrivingDistance([
             { lat: load.pickup_lat, lng: load.pickup_lng },
             { lat: load.delivery_lat, lng: load.delivery_lng }
@@ -250,9 +254,11 @@ export const findRouteHomeBackhauls = async (
 
   // ---- SCORE with real driving distances ----
   for (const { load, dtp, ptd, dth } of distanceResults) {
-    // Fall back to Haversine if PC Miler failed for any leg
-    const datumToPickup = dtp ?? calculateDistance(
-      datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng
+    // Fall back to Haversine if PC Miler failed for any leg.
+    // In relay mode, dtp = homeToPickup; in non-relay, dtp = datumToPickup.
+    const firstLegOrigin = isRelay ? fleetHome : datumPoint;
+    const firstLeg = dtp ?? calculateDistance(
+      firstLegOrigin.lat, firstLegOrigin.lng, load.pickup_lat, load.pickup_lng
     );
     const pickupToDelivery = ptd ?? (load.distance_miles || calculateDistance(
       load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng
@@ -265,17 +271,31 @@ export const findRouteHomeBackhauls = async (
     if (deliveryToHome > homeRadiusMiles) continue;
 
     // Guard against NaN — skip load if any distance is not a valid number
-    if (isNaN(datumToPickup) || isNaN(pickupToDelivery) || isNaN(deliveryToHome)) {
-      console.warn(`Skipping load ${load.load_id}: invalid distance (dtp=${datumToPickup}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
+    if (isNaN(firstLeg) || isNaN(pickupToDelivery) || isNaN(deliveryToHome)) {
+      console.warn(`Skipping load ${load.load_id}: invalid distance (firstLeg=${firstLeg}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
       continue;
     }
 
-    const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
-    const additionalMiles = Math.max(0, totalMilesWithBackhaul - directReturnMiles);
+    // Relay math (per Chip's formula):
+    //   Full relay route = datum→home + home→pickup + pickup→delivery + delivery→home
+    //   Additional miles = home→pickup + pickup→delivery + delivery→home (relay driver's loop)
+    //   Revenue/mile based on relay driver's miles only
+    //
+    // Non-relay math:
+    //   Total = datum→pickup + pickup→delivery + delivery→home
+    //   Additional = total - directReturn
+    const relayOrBackhaulMiles = firstLeg + pickupToDelivery + deliveryToHome;
+    const totalMilesWithBackhaul = isRelay
+      ? directReturnMiles + relayOrBackhaulMiles
+      : relayOrBackhaulMiles;
+    const additionalMiles = isRelay
+      ? relayOrBackhaulMiles  // relay driver starts at home; entire loop is out-of-route
+      : Math.max(0, relayOrBackhaulMiles - directReturnMiles);
 
-    // Calculate value metrics
+    // Calculate value metrics.
+    // Revenue/mile uses the relay driver's miles in relay mode (not the full datum→home leg).
     const totalRevenue = load.total_revenue || 0;
-    const revenuePerMile = totalMilesWithBackhaul > 0 ? totalRevenue / totalMilesWithBackhaul : 0;
+    const revenuePerMile = relayOrBackhaulMiles > 0 ? totalRevenue / relayOrBackhaulMiles : 0;
     const revenuePerAdditionalMile = additionalMiles > 0 ? totalRevenue / additionalMiles : totalRevenue * 100;
 
     // Efficiency score - rewards high revenue with low deviation from direct route
@@ -292,7 +312,7 @@ export const findRouteHomeBackhauls = async (
     opportunities.push({
       ...load,
       // Route metrics
-      datum_to_pickup_miles: Math.round(datumToPickup),
+      datum_to_pickup_miles: Math.round(firstLeg),
       pickup_to_delivery_miles: Math.round(pickupToDelivery),
       delivery_to_home_miles: Math.round(deliveryToHome),
       total_miles: Math.round(totalMilesWithBackhaul),
@@ -300,7 +320,7 @@ export const findRouteHomeBackhauls = async (
       additional_miles: Math.round(additionalMiles),
 
       // Legacy property mappings for BackhaulResults component
-      finalToPickup: Math.round(datumToPickup),
+      finalToPickup: Math.round(firstLeg),
       additionalMiles: Math.round(additionalMiles),
       oorMiles: Math.round(totalMilesWithBackhaul),
       weight: load.weight_lbs,
