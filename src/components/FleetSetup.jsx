@@ -727,9 +727,9 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                   fontSize: '14px',
                   color: colors.text.primary
                 }}>
-                  <strong>Fuel Surcharge:</strong> ${fscPreview}/mile
+                  <strong>FSC Rate:</strong> ${fscPreview}/mi
                   <span style={{ color: colors.text.secondary, marginLeft: '12px' }}>
-                    ({rateData.doePaddRate} - {rateData.fuelPeg}) / {rateData.fuelMpg} = ${fscPreview}
+                    ({rateData.doePaddRate} - {rateData.fuelPeg}) / {rateData.fuelMpg} = ${fscPreview}/mi × OOR Miles
                   </span>
                 </div>
               )}

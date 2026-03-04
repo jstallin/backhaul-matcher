@@ -234,7 +234,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   </div>
                   <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '11px', color: colors.text.tertiary }}>
-                      FSC: ${match.fsc_per_mile?.toFixed(3)}/mi | OOR: {match.additionalMiles} mi
+                      FSC: ({match.fsc_per_mile?.toFixed(3)}/mi × {match.additionalMiles} OOR mi) = {formatCurrency(match.fuel_surcharge)}
                     </div>
                     <div style={{ fontSize: '16px', fontWeight: 900, color: match.customer_net_credit >= 0 ? colors.accent.success : colors.accent.danger }}>
                       Net: {formatCurrency(match.customer_net_credit)}
