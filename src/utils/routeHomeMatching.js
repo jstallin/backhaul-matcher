@@ -301,6 +301,13 @@ export const findRouteHomeBackhauls = async (
       continue;
     }
 
+    // Enforce 5-mile minimum between any two consecutive stops
+    const MIN_LEG_MILES = 5;
+    if (firstLeg < MIN_LEG_MILES || pickupToDelivery < MIN_LEG_MILES || deliveryToHome < MIN_LEG_MILES) {
+      console.warn(`Skipping load ${load.load_id}: leg below 5mi minimum (firstLeg=${firstLeg}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
+      continue;
+    }
+
     // Relay math (per Chip's formula):
     //   Full relay route = datum→home + home→pickup + pickup→delivery + delivery→home
     //   Additional miles = home→pickup + pickup→delivery + delivery→home (relay driver's loop)
