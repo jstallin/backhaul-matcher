@@ -46,7 +46,7 @@ export const getDrivingDistance = async (points) => {
         const lines = reportSet.ReportLines;
         const totalLine = lines[lines.length - 1];
         if (totalLine?.TMiles != null) {
-          return totalLine.TMiles;
+          return Number(totalLine.TMiles);
         }
       }
 
@@ -56,7 +56,7 @@ export const getDrivingDistance = async (points) => {
         if (Array.isArray(lines)) {
           const totalLine = lines[lines.length - 1];
           if (totalLine?.TMiles != null) {
-            return totalLine.TMiles;
+            return Number(totalLine.TMiles);
           }
         }
       }
@@ -64,7 +64,7 @@ export const getDrivingDistance = async (points) => {
 
     // Try flat object format
     if (data && !Array.isArray(data) && data.TMiles != null) {
-      return data.TMiles;
+      return Number(data.TMiles);
     }
 
     console.warn('Could not extract miles from PC Miler response:', JSON.stringify(data).slice(0, 500));
