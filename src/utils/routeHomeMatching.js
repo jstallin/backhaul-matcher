@@ -301,10 +301,11 @@ export const findRouteHomeBackhauls = async (
       continue;
     }
 
-    // Enforce 5-mile minimum between any two consecutive stops
+    // Enforce 5-mile minimum on datum→pickup and pickup→delivery legs.
+    // delivery→home is excluded — being close to home is desirable.
     const MIN_LEG_MILES = 5;
-    if (firstLeg < MIN_LEG_MILES || pickupToDelivery < MIN_LEG_MILES || deliveryToHome < MIN_LEG_MILES) {
-      console.warn(`Skipping load ${load.load_id}: leg below 5mi minimum (firstLeg=${firstLeg}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
+    if (firstLeg < MIN_LEG_MILES || pickupToDelivery < MIN_LEG_MILES) {
+      console.warn(`Skipping load ${load.load_id}: leg below 5mi minimum (firstLeg=${firstLeg}, ptd=${pickupToDelivery})`);
       continue;
     }
 
