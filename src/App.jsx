@@ -15,6 +15,7 @@ import { RouteComparisonModal } from './components/RouteComparisonModal';
 import { Fleets } from './components/Fleets';
 import { StartRequest } from './components/StartRequest';
 import { StartEstimateRequest } from './components/StartEstimateRequest';
+import { OpenEstimateRequests } from './components/OpenEstimateRequests';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
 import { ImportedLoads } from './components/ImportedLoads';
@@ -486,6 +487,11 @@ function App() {
         />
       ) : currentView === 'start-estimate-request' ? (
         <StartEstimateRequest
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
+      ) : currentView === 'open-estimate-requests' ? (
+        <OpenEstimateRequests
           onMenuNavigate={handleMenuNavigation}
           onNavigateToSettings={handleNavigateToSettings}
         />

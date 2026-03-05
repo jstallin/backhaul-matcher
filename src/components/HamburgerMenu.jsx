@@ -55,6 +55,12 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       description: 'Create a new estimate request'
     },
     {
+      id: 'open-estimate-requests',
+      label: 'Open Estimate Requests',
+      icon: FileText,
+      description: 'View active estimate requests'
+    },
+    {
       id: 'fleet-reports',
       label: 'Fleet Reports',
       icon: TrendingUp,
