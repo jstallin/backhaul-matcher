@@ -38,13 +38,13 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
     },
     { 
       id: 'start-request', 
-      label: 'Start Request', 
+      label: 'Start Backhaul Request',
       icon: Plus,
       description: 'Create new backhaul request'
     },
-    { 
-      id: 'open-requests', 
-      label: 'Open Requests', 
+    {
+      id: 'open-requests',
+      label: 'Open Backhaul Requests',
       icon: FileText,
       description: 'View active backhaul requests'
     },

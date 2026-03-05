@@ -273,7 +273,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
             <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
-              {formData.editingId ? 'Edit Request' : 'Start Request'}
+              {formData.editingId ? 'Edit Backhaul Request' : 'Start Backhaul Request'}
             </h2>
             {formData.editingId && (
               <div style={{ padding: '6px 16px', background: `${colors.accent.primary}20`, border: `2px solid ${colors.accent.primary}`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: colors.accent.primary }}>
@@ -304,7 +304,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
             <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
               
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Request Name *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Backhaul Request Name *</label>
                 <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.requestName}</div>}
               </div>
@@ -383,7 +383,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
                 <Plus size={20} />
-                {saving ? (formData.editingId ? 'Updating Request...' : 'Creating Request...') : (formData.editingId ? 'Update Request' : 'Create Request')}
+                {saving ? (formData.editingId ? 'Updating Backhaul Request...' : 'Creating Backhaul Request...') : (formData.editingId ? 'Update Backhaul Request' : 'Create Backhaul Request')}
               </button>
             </div>
           </form>

@@ -64,16 +64,16 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
       <div style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <button onClick={onBack} style={{ padding: '8px 16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
-            ← Back to Requests
+            ← Back to Backhaul Requests
           </button>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button onClick={onEdit} style={{ padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Edit size={16} />
-              Edit Request
+              Edit Backhaul Request
             </button>
             <button onClick={() => setShowCancelDialog(true)} style={{ padding: '10px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <X size={16} />
-              Cancel Request
+              Cancel Backhaul Request
             </button>
           </div>
         </div>
@@ -333,7 +333,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
           <div style={{ background: colors.background.overlay, borderRadius: '16px', maxWidth: '500px', width: '100%', border: `1px solid ${colors.border.accent}`, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: colors.accent.danger }}>Cancel Request?</h3>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: colors.accent.danger }}>Cancel Backhaul Request?</h3>
                 <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ background: 'none', border: 'none', cursor: cancelling ? 'not-allowed' : 'pointer', padding: '4px', color: colors.text.secondary, opacity: cancelling ? 0.5 : 1 }}>
                   <X size={24} />
                 </button>
@@ -365,10 +365,10 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.5 : 1 }}>
-                  Keep Request
+                  Keep Backhaul Request
                 </button>
                 <button onClick={handleCancelRequest} disabled={cancelling || !cancelReason} style={{ padding: '12px 24px', background: colors.accent.danger, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: (cancelling || !cancelReason) ? 'not-allowed' : 'pointer', opacity: (cancelling || !cancelReason) ? 0.5 : 1 }}>
-                  {cancelling ? 'Cancelling...' : 'Yes, Cancel Request'}
+                  {cancelling ? 'Cancelling...' : 'Yes, Cancel Backhaul Request'}
                 </button>
               </div>
             </div>

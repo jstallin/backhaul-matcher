@@ -361,9 +361,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Open Requests</h2>
+              <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>Open Backhaul Requests</h2>
               <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
-                {selectedRequest ? 'Backhaul opportunities for your request' : 'Click a request to view matching backhaul opportunities'}
+                {selectedRequest ? 'Backhaul opportunities for your request' : 'Click a backhaul request to view matching opportunities'}
               </p>
             </div>
             
@@ -565,23 +565,23 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         ) : requests.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
             <FileText size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: colors.text.primary }}>No Requests Yet</h3>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: colors.text.primary }}>No Backhaul Requests Yet</h3>
             <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
               Create your first backhaul request to start finding opportunities.
             </p>
             <button onClick={() => onMenuNavigate('start-request')} style={{ padding: '14px 28px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={20} />
-              Start Request
+              Start Backhaul Request
             </button>
           </div>
         ) : (
           <>
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>
-                Your Requests ({requests.length})
+                Your Backhaul Requests ({requests.length})
               </h3>
               <p style={{ margin: 0, color: colors.text.secondary, fontSize: '14px' }}>
-                Click a request card to view matching backhaul opportunities
+                Click a backhaul request card to view matching opportunities
               </p>
             </div>
 
