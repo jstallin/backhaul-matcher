@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
-import backhaulLoadsData from '../data/backhaul_loads_data.json';
+import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 
 export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -95,11 +95,18 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
       const homeRadiusMiles   = geocodeFailed ? 200 : 50;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
+      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id);
+      if (isLive) {
+        console.log(`Using ${loadsForMatching.length} live imported loads for matching`);
+      } else {
+        console.log('No imported loads found — using demo data');
+      }
+
       const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,
         fleetProfile,
-        backhaulLoadsData,
+        loadsForMatching,
         homeRadiusMiles,
         corridorWidthMiles,
         rateConfig,
