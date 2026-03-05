@@ -1,6 +1,6 @@
 import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { useState, useEffect } from 'react';
-import { Plus, Truck, MapPin, Calendar, RefreshCw, Bell, Mail, Phone, TrendingUp, DollarSign } from '../icons';
+import { Plus, Truck, MapPin, Calendar, TrendingUp, DollarSign } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
@@ -21,10 +21,6 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     equipmentAvailableDate: '',
     equipmentNeededDate: '',
     isRelay: false,
-    autoRefresh: false,
-    autoRefreshInterval: '0.5',
-    notificationEnabled: false,
-    notificationMethod: 'both',
     annualVolume: '',
     minNetCredit: '',
   });
@@ -94,19 +90,10 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
-        auto_refresh: formData.autoRefresh,
-        auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null,
-        notification_enabled: formData.notificationEnabled,
-        notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
         status: 'active',
         annual_volume: formData.annualVolume !== '' ? parseInt(formData.annualVolume) : null,
         min_net_credit: formData.minNetCredit !== '' ? parseFloat(formData.minNetCredit) : null,
       };
-
-      if (formData.autoRefresh) {
-        const intervalHours = parseFloat(formData.autoRefreshInterval);
-        requestData.next_refresh_at = new Date(Date.now() + intervalHours * 60 * 60 * 1000).toISOString();
-      }
 
       await db.estimateRequests.create(requestData);
       alert('Estimate Request created successfully!');
@@ -118,10 +105,6 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
         equipmentAvailableDate: '',
         equipmentNeededDate: '',
         isRelay: false,
-        autoRefresh: false,
-        autoRefreshInterval: '0.5',
-        notificationEnabled: false,
-        notificationMethod: 'both',
         annualVolume: '',
         minNetCredit: '',
       });
@@ -274,55 +257,11 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
               </div>
 
               {/* Relay */}
-              <div style={{ marginBottom: '32px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid ${colors.border.accent}` }}>
+              <div style={{ marginBottom: '24px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid ${colors.border.accent}` }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={formData.isRelay} onChange={(e) => handleChange('isRelay', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Relay Request</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Enable if this is a relay operation</div></div>
                 </label>
-              </div>
-
-              {/* Refresh Options */}
-              <div style={{ padding: '20px', background: `${colors.accent.primary}10`, border: `1px solid ${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '24px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><RefreshCw size={20} color={colors.accent.primary} />Refresh Options</h3>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
-                  <input type="checkbox" checked={formData.autoRefresh} onChange={(e) => handleChange('autoRefresh', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
-                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Auto Refresh</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Automatically refresh and search for updated backhaul data</div></div>
-                </label>
-                {formData.autoRefresh && (
-                  <div style={{ marginLeft: '32px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Refresh Interval</label>
-                    <select value={formData.autoRefreshInterval} onChange={(e) => handleChange('autoRefreshInterval', e.target.value)} disabled={saving} style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}>
-                      <option value="0.5">Every 30 Minutes</option>
-                      <option value="1">Every 1 Hour</option>
-                      <option value="4">Every 4 Hours</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {/* Notifications */}
-              <div style={{ padding: '20px', background: `${colors.accent.primary}10`, border: `1px solid ${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '32px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={20} color={colors.accent.primary} />Notifications</h3>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
-                  <input type="checkbox" checked={formData.notificationEnabled} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
-                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Get notified when auto-refresh finds changes in top result</div></div>
-                </label>
-                {formData.notificationEnabled && (
-                  <div style={{ marginLeft: '32px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label>
-                    </div>
-                    {selectedFleet && (
-                      <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>
-                        {formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}
-                        {formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Submit */}
