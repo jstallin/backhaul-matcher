@@ -15,6 +15,8 @@ const buildCategory = (source, annualVolume) => {
   const otherCharges   = Number(source.other_charges)       || 0;
   const additionalMiles = Number(source.additionalMiles)    || 0;
 
+  const stopCount = Number(source.stop_count) || 2;
+
   return {
     netCredit,
     annualCredit:      netCredit     * annualVolume,
@@ -25,6 +27,8 @@ const buildCategory = (source, annualVolume) => {
     annualOtherCharges: otherCharges * annualVolume,
     carrierTotal:      (carrierSplit + oorMilesCost + oorStopsCost + oorFsc + otherCharges) * annualVolume,
     additionalMiles,
+    annualMiles:       additionalMiles * annualVolume,
+    stopCount,
   };
 };
 
@@ -40,6 +44,7 @@ const computeMetrics = (matches, annualVolume) => {
     fuel_surcharge:      avg(matches, 'fuel_surcharge'),
     other_charges:       avg(matches, 'other_charges'),
     additionalMiles:     avg(matches, 'additionalMiles'),
+    stop_count:          avg(matches, 'stop_count'),
   };
   const avgTop5Source = {
     customer_net_credit: avg(top5, 'customer_net_credit'),
@@ -49,6 +54,7 @@ const computeMetrics = (matches, annualVolume) => {
     fuel_surcharge:      avg(top5, 'fuel_surcharge'),
     other_charges:       avg(top5, 'other_charges'),
     additionalMiles:     avg(top5, 'additionalMiles'),
+    stop_count:          avg(top5, 'stop_count'),
   };
 
   return {
@@ -63,6 +69,9 @@ const computeMetrics = (matches, annualVolume) => {
 
 const fmt$ = (v) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v ?? 0);
+
+const fmtNum = (v, decimals = 0) =>
+  new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(v ?? 0);
 
 const fmtDate = (d) => {
   if (!d) return 'N/A';
@@ -224,6 +233,29 @@ export const EstimateResults = ({ request, fleet, matches, onBack }) => {
                     </tr>
                   )}
 
+                  {/* ── Route Activity ── */}
+                  {subheadRow('Route Activity')}
+                  <tr>
+                    <td style={labelCell}>Carrier Miles (per load)</td>
+                    <td style={cell(false)}>{fmtNum(metrics.highestNet.additionalMiles)} mi</td>
+                    <td style={cell(false)}>{fmtNum(metrics.averageAll.additionalMiles)} mi</td>
+                    <td style={cell(false)}>{fmtNum(metrics.averageTop5.additionalMiles)} mi</td>
+                  </tr>
+                  {annualVolume > 0 && (
+                    <tr>
+                      <td style={labelCell}>Total Annual Mileage Add ({annualVolume} loads)</td>
+                      <td style={cell(false)}>{fmtNum(metrics.highestNet.annualMiles)} mi</td>
+                      <td style={cell(false)}>{fmtNum(metrics.averageAll.annualMiles)} mi</td>
+                      <td style={cell(false)}>{fmtNum(metrics.averageTop5.annualMiles)} mi</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td style={labelCell}>Stops Added (per load)</td>
+                    <td style={cell(false)}>{fmtNum(metrics.highestNet.stopCount)}</td>
+                    <td style={cell(false)}>{fmtNum(metrics.averageAll.stopCount)}</td>
+                    <td style={cell(false)}>{fmtNum(metrics.averageTop5.stopCount)}</td>
+                  </tr>
+
                   {/* ── Carrier Revenue Breakdown ── */}
                   {subheadRow('Carrier Annual Revenue Components')}
                   <tr>
@@ -233,12 +265,7 @@ export const EstimateResults = ({ request, fleet, matches, onBack }) => {
                     <td style={cell(false)}>{fmt$(metrics.averageTop5.annualCarrierSplit)}</td>
                   </tr>
                   <tr>
-                    <td style={labelCell}>
-                      OOR Miles
-                      <span style={{ marginLeft: '6px', fontSize: '11px', color: colors.text.tertiary }}>
-                        ({Math.round(metrics.highestNet.additionalMiles)} / {Math.round(metrics.averageAll.additionalMiles)} / {Math.round(metrics.averageTop5.additionalMiles)} mi avg × rate × vol)
-                      </span>
-                    </td>
+                    <td style={labelCell}>OOR Miles (carrier miles × rate × vol)</td>
                     <td style={cell(false)}>{fmt$(metrics.highestNet.annualOorMiles)}</td>
                     <td style={cell(false)}>{fmt$(metrics.averageAll.annualOorMiles)}</td>
                     <td style={cell(false)}>{fmt$(metrics.averageTop5.annualOorMiles)}</td>
