@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Truck, Plus, FileText, TrendingUp, Package } from '../icons';
+import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 
 export const HamburgerMenu = ({ currentView, onNavigate }) => {
@@ -47,6 +47,12 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       label: 'Open Backhaul Requests',
       icon: FileText,
       description: 'View active backhaul requests'
+    },
+    {
+      id: 'start-estimate-request',
+      label: 'Create Estimate Request',
+      icon: DollarSign,
+      description: 'Create a new estimate request'
     },
     {
       id: 'fleet-reports',

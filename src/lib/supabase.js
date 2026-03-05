@@ -384,6 +384,59 @@ export const db = {
     }
   },
 
+  // Estimate request operations
+  estimateRequests: {
+    async getAll(userId) {
+      const { data, error } = await supabase
+        .from('estimate_requests')
+        .select('*, fleets(*)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+
+    async getById(requestId) {
+      const { data, error } = await supabase
+        .from('estimate_requests')
+        .select('*, fleets(*)')
+        .eq('id', requestId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async create(requestData) {
+      const { data, error } = await supabase
+        .from('estimate_requests')
+        .insert([requestData])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async update(requestId, updates) {
+      const { data, error } = await supabase
+        .from('estimate_requests')
+        .update(updates)
+        .eq('id', requestId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async delete(requestId) {
+      const { error } = await supabase
+        .from('estimate_requests')
+        .delete()
+        .eq('id', requestId);
+      if (error) throw error;
+      return { success: true };
+    }
+  },
+
   // Imported loads operations (from Chrome extension)
   importedLoads: {
     async getAll(userId, options = {}) {
