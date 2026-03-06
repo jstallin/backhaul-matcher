@@ -231,9 +231,8 @@ export const findRouteHomeBackhauls = async (
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
   }
 
-  // ---- PRECISE DISTANCES: Call PC Miler with session caching ----
-  // We fetch 2 legs per load (first leg + delivery→home).
-  // pickup→delivery is skipped — load.distance_miles is already a truck distance.
+  // ---- PRECISE DISTANCES: Call PC*MILER with session caching ----
+  // We fetch all 3 legs per load via PC*MILER for accurate truck distances.
   // Cached results from previous visits to this same request are reused immediately.
   const distCacheKey = getDistanceCacheKey(datumPoint, fleetHome, isRelay);
   const loadDistCache = distanceCache.get(distCacheKey) || new Map();
@@ -243,10 +242,16 @@ export const findRouteHomeBackhauls = async (
 
   console.log(`Distance cache: ${cached.length} hits, ${uncached.length} misses`);
 
-  const cachedResults = cached.map(load => ({ load, ...loadDistCache.get(load.load_id) }));
+  const cachedResults = cached.map(load => {
+    const { dtp, dtm, dth } = loadDistCache.get(load.load_id);
+    return { load, dtp, dtm, dth };
+  });
 
-  // Fetch only the uncached loads, 2 calls each instead of 3
-  const batchSize = 5; // 10 API calls per batch (down from 15)
+  // Fetch all 3 legs per load via PC*MILER:
+  //   dtp: datum (or home in relay) → pickup
+  //   dtm: pickup → delivery  (middle leg — replaces load.distance_miles for accuracy)
+  //   dth: delivery → home
+  const batchSize = 4; // 12 API calls per batch (3 legs × 4 loads)
   const freshResults = [];
   const firstLegOrigin = isRelay ? fleetHome : datumPoint;
 
@@ -254,17 +259,16 @@ export const findRouteHomeBackhauls = async (
     const batch = uncached.slice(i, i + batchSize);
     const batchPromises = batch.map(async (load) => {
       try {
-        // In relay mode the relay driver starts from home; non-relay starts from datum.
-        // pickup→delivery distance comes from load.distance_miles — no API call needed.
-        const [dtp, dth] = await Promise.all([
+        const [dtp, dtm, dth] = await Promise.all([
           getDrivingDistance([firstLegOrigin, { lat: load.pickup_lat, lng: load.pickup_lng }]),
+          getDrivingDistance([{ lat: load.pickup_lat, lng: load.pickup_lng }, { lat: load.delivery_lat, lng: load.delivery_lng }]),
           getDrivingDistance([{ lat: load.delivery_lat, lng: load.delivery_lng }, fleetHome])
         ]);
-        loadDistCache.set(load.load_id, { dtp, dth });
-        return { load, dtp, dth };
+        loadDistCache.set(load.load_id, { dtp, dtm, dth });
+        return { load, dtp, dtm, dth };
       } catch (error) {
         console.warn(`PC Miler distance failed for load ${load.load_id}:`, error.message);
-        return { load, dtp: null, dth: null };
+        return { load, dtp: null, dtm: null, dth: null };
       }
     });
     const batchResults = await Promise.all(batchPromises);
@@ -277,17 +281,18 @@ export const findRouteHomeBackhauls = async (
   const distanceResults = [...cachedResults, ...freshResults];
 
   // ---- SCORE with real driving distances ----
-  for (const { load, dtp, dth } of distanceResults) {
-    // Fall back to Haversine if PC Miler failed for any leg.
+  for (const { load, dtp, dtm, dth } of distanceResults) {
+    // Fall back to Haversine if PC*MILER failed for any leg.
     // In relay mode, dtp = homeToPickup; in non-relay, dtp = datumToPickup.
     const firstLegOrigin = isRelay ? fleetHome : datumPoint;
     const firstLeg = dtp ?? calculateDistance(
       firstLegOrigin.lat, firstLegOrigin.lng, load.pickup_lat, load.pickup_lng
     );
-    // Use the load's known truck distance — no API call needed for this leg
-    const pickupToDelivery = load.distance_miles || calculateDistance(
-      load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng
-    );
+    // Middle leg: prefer PC*MILER result, then load.distance_miles (live DAT data, also PC*MILER),
+    // last resort haversine×1.35.
+    const pickupToDelivery = dtm
+      ?? load.distance_miles
+      ?? calculateDistance(load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng);
     const deliveryToHome = dth ?? calculateDistance(
       load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng
     );
@@ -339,8 +344,8 @@ export const findRouteHomeBackhauls = async (
       ? calculateNetRevenue(totalRevenue, additionalMiles, rateConfig)
       : { has_rate_config: false };
 
-    // Track whether we got real driving distances (pickup→delivery uses load.distance_miles, not PC Miler)
-    const usedPCMiler = dtp !== null && dth !== null;
+    // Track whether all three legs came from PC*MILER
+    const usedPCMiler = dtp !== null && dtm !== null && dth !== null;
 
     opportunities.push({
       ...load,
