@@ -127,6 +127,29 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const handleEditRequest = () => {
+    localStorage.setItem('editingEstimateRequest', JSON.stringify(selectedRequest));
+    onMenuNavigate('start-estimate-request');
+  };
+
+  const handleCancelRequest = async (cancelReason) => {
+    try {
+      await db.estimateRequests.update(selectedRequest.id, {
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: cancelReason,
+      });
+      alert('Estimate request cancelled successfully!');
+      setSelectedRequest(null);
+      setSelectedFleet(null);
+      setMatches([]);
+      loadRequests();
+    } catch (error) {
+      console.error('Error cancelling estimate request:', error);
+      throw error;
+    }
+  };
+
   const formatCurrency = (value) => {
     if (value == null) return '—';
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
@@ -181,6 +204,8 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
               fleet={selectedFleet}
               matches={matches}
               onBack={() => { setSelectedRequest(null); setSelectedFleet(null); setMatches([]); }}
+              onEdit={handleEditRequest}
+              onCancel={handleCancelRequest}
             />
           )
         ) : requests.length === 0 ? (

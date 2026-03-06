@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { ArrowLeft, Download, TrendingUp, DollarSign, Truck, MapPin, Calendar } from '../icons';
+import { ArrowLeft, Download, TrendingUp, DollarSign, Truck, MapPin, Calendar, Edit, X } from '../icons';
 
 // ─── Metric helpers ──────────────────────────────────────────────────────────
 
@@ -80,8 +81,28 @@ const fmtDate = (d) => {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export const EstimateResults = ({ request, fleet, matches, onBack }) => {
+export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCancel }) => {
   const { colors } = useTheme();
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelRequest = async () => {
+    if (!cancelReason.trim()) {
+      alert('Please select a cancellation reason');
+      return;
+    }
+    setCancelling(true);
+    try {
+      await onCancel(cancelReason);
+      setShowCancelDialog(false);
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      alert('Failed to cancel request');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const annualVolume = request.annual_volume || 0;
   const minNetCredit = request.min_net_credit ?? null;
@@ -131,21 +152,84 @@ export const EstimateResults = ({ request, fleet, matches, onBack }) => {
 
   return (
     <div>
-      {/* Back + Print buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }} className="no-print">
+      {/* Back + action buttons */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }} className="no-print">
         <button
           onClick={onBack}
           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'transparent', border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.secondary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
         >
           <ArrowLeft size={16} /> Back to Estimate Requests
         </button>
-        <button
-          onClick={handlePrint}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-        >
-          <Download size={16} /> Print / Save as PDF
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handlePrint}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+          >
+            <Download size={16} /> Print / Save as PDF
+          </button>
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <Edit size={16} /> Edit Estimate Request
+            </button>
+          )}
+          {onCancel && (
+            <button
+              onClick={() => setShowCancelDialog(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <X size={16} /> Cancel Estimate Request
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Cancel Request Dialog */}
+      {showCancelDialog && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => !cancelling && setShowCancelDialog(false)}>
+          <div style={{ background: colors.background.overlay, borderRadius: '16px', maxWidth: '500px', width: '100%', border: `1px solid ${colors.border.accent}`, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: colors.accent.danger }}>Cancel Estimate Request?</h3>
+                <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ background: 'none', border: 'none', cursor: cancelling ? 'not-allowed' : 'pointer', padding: '4px', color: colors.text.secondary, opacity: cancelling ? 0.5 : 1 }}>
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ margin: '0 0 20px 0', color: colors.text.secondary, fontSize: '14px' }}>
+                Are you sure you want to cancel <strong>{request.request_name}</strong>? This will mark the request as cancelled.
+              </p>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Cancellation Reason *</label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  disabled={cancelling}
+                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: cancelling ? 'not-allowed' : 'pointer' }}
+                >
+                  <option value="">-- Select a reason --</option>
+                  <option value="No longer needed">No longer needed</option>
+                  <option value="Found alternative">Found alternative</option>
+                  <option value="Route changed">Route changed</option>
+                  <option value="Equipment unavailable">Equipment unavailable</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowCancelDialog(false)} disabled={cancelling} style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer', opacity: cancelling ? 0.5 : 1 }}>
+                  Keep Estimate Request
+                </button>
+                <button onClick={handleCancelRequest} disabled={cancelling || !cancelReason} style={{ padding: '12px 24px', background: colors.accent.danger, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: (cancelling || !cancelReason) ? 'not-allowed' : 'pointer', opacity: (cancelling || !cancelReason) ? 0.5 : 1 }}>
+                  {cancelling ? 'Cancelling...' : 'Yes, Cancel Estimate Request'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Report ── */}
       <div id="estimate-report" style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', overflow: 'hidden' }}>

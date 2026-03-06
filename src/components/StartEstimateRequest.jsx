@@ -1,5 +1,5 @@
 import { HaulMonitorLogo } from './HaulMonitorLogo';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Truck, MapPin, Calendar, TrendingUp, DollarSign } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -15,6 +15,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
   const [fleets, setFleets] = useState([]);
 
   const [formData, setFormData] = useState({
+    editingId: null,
     requestName: '',
     datumPoint: '',
     selectedFleetId: '',
@@ -26,10 +27,34 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
   });
 
   const [errors, setErrors] = useState({});
+  const hasLoadedEditingRequest = useRef(false);
 
   useEffect(() => {
+    loadEditingRequest();
     loadFleets();
   }, []);
+
+  const loadEditingRequest = () => {
+    const stored = localStorage.getItem('editingEstimateRequest');
+    if (!stored || hasLoadedEditingRequest.current) return;
+    try {
+      const request = JSON.parse(stored);
+      setFormData({
+        editingId: request.id,
+        requestName: request.request_name || '',
+        datumPoint: request.datum_point || '',
+        selectedFleetId: request.fleet_id || '',
+        equipmentAvailableDate: request.equipment_available_date ? request.equipment_available_date.split('T')[0] : '',
+        equipmentNeededDate: request.equipment_needed_date ? request.equipment_needed_date.split('T')[0] : '',
+        isRelay: request.is_relay || false,
+        annualVolume: request.annual_volume != null ? String(request.annual_volume) : '',
+        minNetCredit: request.min_net_credit != null ? String(request.min_net_credit) : '',
+      });
+      hasLoadedEditingRequest.current = true;
+    } catch (error) {
+      console.error('Error loading editing estimate request:', error);
+    }
+  };
 
   const loadFleets = async () => {
     setLoading(true);
@@ -83,31 +108,36 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     setSaving(true);
     try {
       const requestData = {
-        user_id: user.id,
         fleet_id: formData.selectedFleetId,
         request_name: formData.requestName,
         datum_point: formData.datumPoint,
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
-        status: 'active',
         annual_volume: formData.annualVolume !== '' ? parseInt(formData.annualVolume) : null,
         min_net_credit: formData.minNetCredit !== '' ? parseFloat(formData.minNetCredit) : null,
       };
 
-      await db.estimateRequests.create(requestData);
-      alert('Estimate Request created successfully!');
-
-      setFormData({
-        requestName: '',
-        datumPoint: '',
-        selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
-        equipmentAvailableDate: '',
-        equipmentNeededDate: '',
-        isRelay: false,
-        annualVolume: '',
-        minNetCredit: '',
-      });
+      if (formData.editingId) {
+        await db.estimateRequests.update(formData.editingId, requestData);
+        localStorage.removeItem('editingEstimateRequest');
+        alert('Estimate Request updated successfully!');
+        onMenuNavigate('open-estimate-requests');
+      } else {
+        await db.estimateRequests.create({ ...requestData, user_id: user.id, status: 'active' });
+        alert('Estimate Request created successfully!');
+        setFormData({
+          editingId: null,
+          requestName: '',
+          datumPoint: '',
+          selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
+          equipmentAvailableDate: '',
+          equipmentNeededDate: '',
+          isRelay: false,
+          annualVolume: '',
+          minNetCredit: '',
+        });
+      }
     } catch (error) {
       console.error('Error saving estimate request:', error);
       alert('Failed to save estimate request: ' + error.message);
@@ -154,10 +184,10 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
       <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2 style={{ margin: '0 0 8px 0', fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
-            Create Estimate Request
+            {formData.editingId ? 'Edit Estimate Request' : 'Create Estimate Request'}
           </h2>
           <p style={{ margin: 0, color: colors.text.secondary, fontSize: '15px' }}>
-            Create a new estimate request to project revenue and costs for a route
+            {formData.editingId ? 'Update the details for this estimate request' : 'Create a new estimate request to project revenue and costs for a route'}
           </p>
         </div>
       </div>
@@ -267,7 +297,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
               {/* Submit */}
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
                 <Plus size={20} />
-                {saving ? 'Creating Estimate Request...' : 'Create Estimate Request'}
+                {saving ? (formData.editingId ? 'Saving...' : 'Creating Estimate Request...') : (formData.editingId ? 'Save Changes' : 'Create Estimate Request')}
               </button>
             </div>
           </form>
