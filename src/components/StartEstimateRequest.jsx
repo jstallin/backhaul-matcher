@@ -39,6 +39,8 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     if (!stored || hasLoadedEditingRequest.current) return;
     try {
       const request = JSON.parse(stored);
+      // Clear immediately so navigating back to this page later starts a fresh form
+      localStorage.removeItem('editingEstimateRequest');
       setFormData({
         editingId: request.id,
         requestName: request.request_name || '',
@@ -120,7 +122,6 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
 
       if (formData.editingId) {
         await db.estimateRequests.update(formData.editingId, requestData);
-        localStorage.removeItem('editingEstimateRequest');
         alert('Estimate Request updated successfully!');
         onMenuNavigate('open-estimate-requests');
       } else {
