@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HaulMonitor — User Guide</title>
   <style>
-    /* ── Reset & base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -16,7 +15,6 @@
       background: #fff;
     }
 
-    /* ── Layout ── */
     .page {
       max-width: 780px;
       margin: 0 auto;
@@ -35,948 +33,408 @@
       page-break-after: always;
     }
 
-    .cover-logo {
-      height: 60px;
-      margin-bottom: 32px;
-    }
+    .cover-logo { height: 60px; margin-bottom: 32px; }
+    .cover-title { font-size: 36px; font-weight: 900; color: #1a202c; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .cover-subtitle { font-size: 16px; color: #718096; margin-bottom: 48px; }
+    .cover-divider { width: 60px; height: 4px; background: #4a7c3f; border-radius: 2px; margin: 0 auto 48px; }
 
-    .cover-title {
-      font-size: 36px;
-      font-weight: 900;
-      color: #1a202c;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
-    }
-
-    .cover-subtitle {
-      font-size: 16px;
-      color: #718096;
-      margin-bottom: 48px;
-    }
-
-    .cover-divider {
-      width: 60px;
-      height: 4px;
-      background: #3b82f6;
-      border-radius: 2px;
-      margin: 0 auto 48px;
-    }
-
-    .cover-toc {
-      list-style: none;
-      text-align: left;
-      display: inline-block;
-    }
-
-    .cover-toc li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: #2d3748;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
+    .cover-toc { list-style: none; text-align: left; display: inline-block; }
+    .cover-toc li { display: flex; align-items: center; gap: 12px; padding: 10px 0; font-size: 15px; font-weight: 600; color: #2d3748; border-bottom: 1px solid #e2e8f0; }
     .cover-toc li:last-child { border-bottom: none; }
-
-    .toc-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #3b82f6;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 800;
-      flex-shrink: 0;
-    }
+    .toc-num { width: 28px; height: 28px; border-radius: 50%; background: #4a7c3f; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
 
     /* ── Section ── */
-    .section {
-      page-break-before: always;
-      padding: 48px 0 32px;
-    }
-
-    .section:first-of-type {
-      page-break-before: avoid;
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #3b82f6;
-      margin-bottom: 6px;
-    }
-
-    .section-title {
-      font-size: 26px;
-      font-weight: 900;
-      color: #1a202c;
-      margin-bottom: 8px;
-      letter-spacing: -0.3px;
-    }
-
-    .section-intro {
-      font-size: 14px;
-      color: #4a5568;
-      margin-bottom: 32px;
-      padding-bottom: 24px;
-      border-bottom: 2px solid #e2e8f0;
-      line-height: 1.7;
-    }
+    .section { page-break-before: always; padding: 48px 0 32px; }
+    .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #4a7c3f; margin-bottom: 6px; }
+    .section-title { font-size: 26px; font-weight: 900; color: #1a202c; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .section-intro { font-size: 14px; color: #4a5568; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #e2e8f0; line-height: 1.7; }
 
     /* ── Steps ── */
     .steps { display: flex; flex-direction: column; gap: 0; }
-
-    .step {
-      display: grid;
-      grid-template-columns: 48px 1fr;
-      gap: 0 20px;
-      margin-bottom: 8px;
-    }
-
-    .step-num-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .step-num {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #3b82f6;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      font-weight: 900;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-    }
-
-    .step-line {
-      width: 2px;
-      flex: 1;
-      background: #e2e8f0;
-      margin-top: 4px;
-      min-height: 24px;
-    }
-
+    .step { display: grid; grid-template-columns: 48px 1fr; gap: 0 20px; margin-bottom: 8px; }
+    .step-num-col { display: flex; flex-direction: column; align-items: center; }
+    .step-num { width: 36px; height: 36px; border-radius: 50%; background: #4a7c3f; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; flex-shrink: 0; position: relative; z-index: 1; }
+    .step-line { width: 2px; flex: 1; background: #e2e8f0; margin-top: 4px; min-height: 24px; }
     .step:last-child .step-line { display: none; }
+    .step-body { padding-bottom: 28px; }
+    .step-title { font-size: 15px; font-weight: 800; color: #1a202c; margin-bottom: 4px; padding-top: 6px; }
+    .step-desc { font-size: 13px; color: #4a5568; line-height: 1.65; margin-bottom: 10px; }
 
-    .step-body {
-      padding-bottom: 28px;
-    }
-
-    .step-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #1a202c;
-      margin-bottom: 4px;
-      padding-top: 6px;
-    }
-
-    .step-desc {
-      font-size: 13px;
-      color: #4a5568;
-      line-height: 1.65;
-      margin-bottom: 10px;
-    }
-
-    /* ── Field list ── */
-    .fields {
-      background: #f7fafc;
+    /* ── Screenshot image ── */
+    .shot {
+      display: block;
+      width: 100%;
+      border-radius: 8px;
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      overflow: hidden;
-      margin-top: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+      margin: 14px 0;
     }
 
-    .field-row {
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
+    /* ── Field table ── */
+    .fields { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-top: 10px; }
+    .field-row { display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid #e2e8f0; }
     .field-row:last-child { border-bottom: none; }
+    .field-name { padding: 9px 14px; font-size: 12px; font-weight: 700; color: #2d3748; background: #edf2f7; border-right: 1px solid #e2e8f0; }
+    .field-name .req { color: #e53e3e; margin-left: 2px; }
+    .field-desc { padding: 9px 14px; font-size: 12px; color: #4a5568; }
 
-    .field-name {
-      padding: 9px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #2d3748;
-      background: #edf2f7;
-      border-right: 1px solid #e2e8f0;
-    }
-
-    .field-name .req {
-      color: #e53e3e;
-      margin-left: 2px;
-    }
-
-    .field-desc {
-      padding: 9px 14px;
-      font-size: 12px;
-      color: #4a5568;
-    }
-
-    /* ── Screenshot placeholder ── */
-    .screenshot {
-      margin: 16px 0;
-      border: 2px dashed #cbd5e0;
-      border-radius: 8px;
-      background: #f7fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: #a0aec0;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .screenshot-sm  { height: 140px; }
-    .screenshot-md  { height: 200px; }
-    .screenshot-lg  { height: 280px; }
-
-    .screenshot svg { opacity: 0.4; }
-
-    /* ── Tip box ── */
-    .tip {
-      display: flex;
-      gap: 12px;
-      background: #ebf8ff;
-      border: 1px solid #bee3f8;
-      border-left: 4px solid #3b82f6;
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin: 12px 0;
-      font-size: 12.5px;
-      color: #2c5282;
-      line-height: 1.6;
-    }
-
+    /* ── Tip / Note ── */
+    .tip { display: flex; gap: 12px; background: #f0fff4; border: 1px solid #c6f6d5; border-left: 4px solid #4a7c3f; border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 12.5px; color: #22543d; line-height: 1.6; }
     .tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .tip strong { color: #1c4532; }
 
-    .tip strong { color: #1a365d; }
-
-    /* ── Note box ── */
-    .note {
-      display: flex;
-      gap: 12px;
-      background: #fffff0;
-      border: 1px solid #faf089;
-      border-left: 4px solid #d69e2e;
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin: 12px 0;
-      font-size: 12.5px;
-      color: #744210;
-      line-height: 1.6;
-    }
-
+    .note { display: flex; gap: 12px; background: #fffff0; border: 1px solid #faf089; border-left: 4px solid #d69e2e; border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 12.5px; color: #744210; line-height: 1.6; }
     .note-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
     /* ── Sub-section ── */
-    .subsection {
-      margin: 28px 0 12px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .subsection-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: #2d3748;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .subsection-title .badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 2px 8px;
-      border-radius: 99px;
-      background: #ebf8ff;
-      color: #2b6cb0;
-    }
-
-    .subsection-desc {
-      font-size: 13px;
-      color: #718096;
-      margin-bottom: 10px;
-    }
-
-    /* ── Reading the report ── */
-    .report-row {
-      display: grid;
-      grid-template-columns: 160px 1fr;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .report-row:last-child { border-bottom: none; }
-
-    .report-col-label {
-      padding: 9px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #2d3748;
-      background: #edf2f7;
-      border-right: 1px solid #e2e8f0;
-    }
-
-    .report-col-desc {
-      padding: 9px 14px;
-      font-size: 12px;
-      color: #4a5568;
-    }
+    .subsection { margin: 24px 0 10px; padding-top: 18px; border-top: 1px solid #e2e8f0; }
+    .subsection-title { font-size: 14px; font-weight: 800; color: #2d3748; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .subsection-title .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 99px; background: #f0fff4; color: #276749; border: 1px solid #c6f6d5; }
+    .subsection-desc { font-size: 13px; color: #718096; margin-bottom: 10px; }
 
     /* ── Footer ── */
-    .footer {
-      margin-top: 48px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      color: #a0aec0;
-    }
+    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #a0aec0; }
 
     /* ── Print ── */
     @media print {
-      @page {
-        size: letter;
-        margin: 0.75in 0.85in;
-      }
-
+      @page { size: letter; margin: 0.65in 0.8in; }
       body { font-size: 12px; }
-
       .page { padding: 0; max-width: 100%; }
-
-      .cover {
-        min-height: auto;
-        padding: 80px 0;
-      }
-
+      .cover { min-height: auto; padding: 80px 0; }
       .section { padding-top: 32px; }
-
-      .no-print { display: none !important; }
-
+      .shot { box-shadow: none; border: 1px solid #cbd5e0; break-inside: avoid; }
+      .step { break-inside: avoid; }
       a { color: inherit; text-decoration: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════ COVER ══ -->
+<!-- ══════════════ COVER ══════════════ -->
 <div class="cover">
   <img src="/haul-monitor-full.png" alt="HaulMonitor" class="cover-logo" />
   <div class="cover-title">User Guide</div>
   <div class="cover-subtitle">Getting started with fleet setup, backhaul requests, and estimate requests</div>
   <div class="cover-divider"></div>
-
   <ul class="cover-toc">
-    <li>
-      <span class="toc-num">1</span>
-      Setting Up Your Fleet
-    </li>
-    <li>
-      <span class="toc-num">2</span>
-      Creating a Backhaul Request
-    </li>
-    <li>
-      <span class="toc-num">3</span>
-      Creating an Estimate Request
-    </li>
+    <li><span class="toc-num">1</span>Setting Up Your Fleet</li>
+    <li><span class="toc-num">2</span>Creating a Backhaul Request</li>
+    <li><span class="toc-num">3</span>Creating an Estimate Request</li>
   </ul>
 </div>
 
-
-<!-- ══════════════════════════════════════════════ PAGE WRAPPER ══ -->
 <div class="page">
 
-  <!-- ══════════ SECTION 1: FLEET SETUP ══════════ -->
-  <div class="section">
-    <div class="section-label">Section 1</div>
-    <div class="section-title">Setting Up Your Fleet</div>
-    <p class="section-intro">
-      Your fleet profile is the foundation of HaulMonitor. It stores your equipment details, home base location, and the rate structure used to calculate net revenue on every backhaul opportunity. Complete your fleet profile before creating any requests.
-    </p>
+<!-- ══════════════ SECTION 1 ══════════════ -->
+<div class="section">
+  <div class="section-label">Section 1</div>
+  <div class="section-title">Setting Up Your Fleet</div>
+  <p class="section-intro">
+    Your fleet profile is the foundation of HaulMonitor. It stores your equipment details, home base location, and the rate structure used to calculate net revenue on every backhaul opportunity. Complete your fleet profile before creating any requests.
+  </p>
 
-    <div class="steps">
+  <div class="steps">
 
-      <!-- Step 1 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">1</div>
-          <div class="step-line"></div>
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Navigate to Fleet Setup</div>
+        <p class="step-desc">Open the navigation menu (<strong>☰ Menu</strong>) in the top-right corner and select <strong>Fleets</strong>. On the Fleets page, click <strong>+ Add Fleet</strong> to open the setup form.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.33.52 PM.png" alt="Fleets page showing existing fleets and Add Fleet button" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">2</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Enter Fleet Information</div>
+        <p class="step-desc">Fill in your fleet's basic contact and identification details. Fields marked * are required.</p>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Fleet Name <span class="req">*</span></div><div class="field-desc">Your company or fleet name (e.g., Carolina Transport Fleet)</div></div>
+          <div class="field-row"><div class="field-name">MC Number</div><div class="field-desc">Your FMCSA Motor Carrier number (e.g., MC-123456)</div></div>
+          <div class="field-row"><div class="field-name">DOT Number</div><div class="field-desc">Your USDOT number (e.g., DOT-123456)</div></div>
+          <div class="field-row"><div class="field-name">Fleet Manager Phone <span class="req">*</span></div><div class="field-desc">Used for text notifications when opportunities change</div></div>
+          <div class="field-row"><div class="field-name">Fleet Manager Email <span class="req">*</span></div><div class="field-desc">Used for email notifications</div></div>
         </div>
-        <div class="step-body">
-          <div class="step-title">Navigate to Fleet Setup</div>
-          <p class="step-desc">
-            Open the navigation menu (☰) in the top-right corner of any page and select <strong>Fleets</strong>. On the Fleets page, click <strong>Create Fleet Profile</strong> to open the setup form.
-          </p>
-          <div class="screenshot screenshot-sm">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            Screenshot: Navigation menu → Fleets
-          </div>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.34.43 PM.png" alt="Create Fleet Profile form showing all fields" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Set Your Home Base Location</div>
+        <p class="step-desc">Enter your fleet's home base address — this is where your trucks return to after deliveries. HaulMonitor uses this to calculate out-of-route miles for each backhaul opportunity.</p>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Home Base Address <span class="req">*</span></div><div class="field-desc">City and state or full street address (e.g., Davidson, NC or 123 Fleet Dr, Davidson, NC 28036)</div></div>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span>After you type the address and tab away, HaulMonitor automatically verifies it using PC*MILER and shows a <strong>✓ Verified</strong> confirmation with the exact coordinates. No manual lookup needed.</span>
         </div>
       </div>
+    </div>
 
-      <!-- Step 2 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">2</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Enter Fleet Information</div>
-          <p class="step-desc">Fill in your fleet's basic contact and identification details.</p>
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Configure Rate Structure</div>
+        <p class="step-desc">The Rate Configuration section drives all financial calculations in your backhaul and estimate reports. Scroll down past the fleet information to find it.</p>
+
+        <div class="subsection">
+          <div class="subsection-title">Revenue Split</div>
+          <div class="subsection-desc">How gross load revenue is divided between your fleet (carrier) and the shipper (customer).</div>
           <div class="fields">
-            <div class="field-row">
-              <div class="field-name">Fleet Name <span class="req">*</span></div>
-              <div class="field-desc">Your company or fleet name (e.g., Carolina Transport Fleet)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">MC Number</div>
-              <div class="field-desc">Your FMCSA Motor Carrier number (e.g., MC-123456)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">DOT Number</div>
-              <div class="field-desc">Your USDOT number (e.g., DOT-123456)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Fleet Manager Phone <span class="req">*</span></div>
-              <div class="field-desc">Used for text notifications when opportunities change</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Fleet Manager Email <span class="req">*</span></div>
-              <div class="field-desc">Used for email notifications</div>
-            </div>
+            <div class="field-row"><div class="field-name">Carrier %</div><div class="field-desc">Percentage of load revenue paid to your fleet. The Customer % is auto-calculated as the complement (e.g., Carrier 20% → Customer 80%).</div></div>
           </div>
         </div>
-      </div>
 
-      <!-- Step 3 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">3</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Set Your Home Base Location</div>
-          <p class="step-desc">
-            Enter your fleet's home base address — this is where your trucks return to after deliveries. HaulMonitor uses this to calculate out-of-route miles for each backhaul opportunity.
-          </p>
+        <div class="subsection">
+          <div class="subsection-title">Mileage &amp; Stop Rates</div>
+          <div class="subsection-desc">Rates charged for out-of-route miles and extra stops created by taking the backhaul.</div>
           <div class="fields">
-            <div class="field-row">
-              <div class="field-name">Home Base Address <span class="req">*</span></div>
-              <div class="field-desc">City and state or full street address (e.g., Davidson, NC or 123 Fleet Dr, Davidson, NC 28036)</div>
-            </div>
+            <div class="field-row"><div class="field-name">Mileage Rate ($/mi)</div><div class="field-desc">Your cost per out-of-route mile, loaded and empty (e.g., 2.00)</div></div>
+            <div class="field-row"><div class="field-name">Stop Rate ($/stop)</div><div class="field-desc">Cost per additional stop on the backhaul route (e.g., 50.00)</div></div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-title">Other Charges <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Up to two additional per-load charges (e.g., detention fees, lumper fees).</div>
+          <div class="fields">
+            <div class="field-row"><div class="field-name">Charge Name</div><div class="field-desc">Short label shown on reports (e.g., Detention fee)</div></div>
+            <div class="field-row"><div class="field-name">Description</div><div class="field-desc">Brief explanation, max 25 characters (e.g., 2+ hr wait time)</div></div>
+            <div class="field-row"><div class="field-name">Amount ($/load)</div><div class="field-desc">Fixed cost applied per load</div></div>
+          </div>
+        </div>
+
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.34.57 PM.png" alt="Rate Configuration showing Revenue Split, Mileage & Stop Rates, and Other Charges" />
+
+        <div class="subsection">
+          <div class="subsection-title">Fuel Surcharge (FSC)</div>
+          <div class="subsection-desc">HaulMonitor calculates FSC automatically using live DOE diesel prices, or you can enter a rate manually.</div>
+          <div class="fields">
+            <div class="field-row"><div class="field-name">PEG ($/gal)</div><div class="field-desc">Your baseline fuel cost per gallon already included in your mileage rate (e.g., 1.200)</div></div>
+            <div class="field-row"><div class="field-name">MPG</div><div class="field-desc">Average fuel economy of your fleet — typically 6–8 mpg (default: 6.0)</div></div>
+            <div class="field-row"><div class="field-name">PADD Region</div><div class="field-desc">Select your region for live DOE diesel price feeds. The current price auto-fills from EIA.gov.</div></div>
+            <div class="field-row"><div class="field-name">DOE PADD Rate ($/gal)</div><div class="field-desc">Current diesel price. Auto-populated when a PADD Region is selected, or enter manually.</div></div>
           </div>
           <div class="tip">
             <span class="tip-icon">💡</span>
-            <span>After you type the address and tab away, HaulMonitor automatically verifies it using PC*MILER and shows a <strong>✓ Verified</strong> confirmation with the exact coordinates. No manual lookup needed.</span>
-          </div>
-          <div class="screenshot screenshot-sm">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-            Screenshot: Address field with ✓ Verified status
+            <span>FSC per mile = <strong>(DOE PADD Rate − PEG) ÷ MPG</strong>. For example: ($3.736 − $1.200) ÷ 6.0 = $0.423/mile.</span>
           </div>
         </div>
+
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.35.04 PM.png" alt="Fuel Surcharge section with PEG, MPG, PADD Region fields and Create Fleet Profile button" />
       </div>
+    </div>
 
-      <!-- Step 4 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">4</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Configure Rate Structure</div>
-          <p class="step-desc">
-            The rate configuration section drives all financial calculations in your backhaul and estimate reports. Scroll down past the fleet information to find it.
-          </p>
-
-          <div class="subsection">
-            <div class="subsection-title">Revenue Split</div>
-            <div class="subsection-desc">How gross load revenue is divided between your fleet (carrier) and the shipper (customer).</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Carrier % Split</div>
-                <div class="field-desc">Percentage of load revenue paid to your fleet. The remaining % is the Customer Net Credit. Default: 20% to customer, 80% to carrier.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Mileage &amp; Stop Rates</div>
-            <div class="subsection-desc">Rates charged for out-of-route miles and extra stops created by taking the backhaul.</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Mileage Rate ($/mi)</div>
-                <div class="field-desc">Your cost per out-of-route mile (e.g., 2.50)</div>
-              </div>
-              <div class="field-row">
-                <div class="field-name">Stop Rate ($/stop)</div>
-                <div class="field-desc">Cost per additional stop added by the backhaul (e.g., 75.00)</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Fuel Surcharge (FSC)</div>
-            <div class="subsection-desc">HaulMonitor can calculate FSC automatically using live DOE fuel price data, or you can enter a fixed rate.</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Fuel Peg ($/gal)</div>
-                <div class="field-desc">Your baseline fuel cost per gallon used in the FSC formula</div>
-              </div>
-              <div class="field-row">
-                <div class="field-name">Truck MPG</div>
-                <div class="field-desc">Average fuel economy of your fleet (default: 6.0 mpg)</div>
-              </div>
-              <div class="field-row">
-                <div class="field-name">PADD Region</div>
-                <div class="field-desc">Select your region for live DOE diesel price feeds. HaulMonitor fetches the current average automatically.</div>
-              </div>
-            </div>
-            <div class="tip">
-              <span class="tip-icon">💡</span>
-              <span>FSC is calculated as: <strong>(DOE Diesel Price − Fuel Peg) ÷ MPG</strong> per mile. When a PADD region is selected, the DOE price updates automatically.</span>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Other Charges <span class="badge">Optional</span></div>
-            <div class="subsection-desc">Up to two additional per-load charges (e.g., lumper fees, trailer tracking).</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Charge Name</div>
-                <div class="field-desc">Short label shown on reports (e.g., Lumper Fee)</div>
-              </div>
-              <div class="field-row">
-                <div class="field-name">Description</div>
-                <div class="field-desc">Brief explanation (max 25 characters)</div>
-              </div>
-              <div class="field-row">
-                <div class="field-name">Amount ($/load)</div>
-                <div class="field-desc">Fixed cost per load</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="screenshot screenshot-md">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-            Screenshot: Rate Configuration section
-          </div>
-        </div>
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Save the Fleet Profile</div>
+        <p class="step-desc">Click <strong>Create Fleet Profile</strong> at the bottom of the form. You'll see a success confirmation and be returned to the Fleets list. You can edit your fleet profile at any time — changes take effect on the next request run.</p>
       </div>
+    </div>
 
-      <!-- Step 5 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">5</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Save the Fleet Profile</div>
-          <p class="step-desc">
-            Click <strong>Save Fleet Profile</strong> at the bottom of the form. You'll see a success confirmation and be returned to the Fleets list. You can edit your fleet profile at any time — changes take effect on the next request run.
-          </p>
-        </div>
-      </div>
-
-    </div><!-- /steps -->
-  </div><!-- /section 1 -->
-
-
-  <!-- ══════════ SECTION 2: BACKHAUL REQUEST ══════════ -->
-  <div class="section">
-    <div class="section-label">Section 2</div>
-    <div class="section-title">Creating a Backhaul Request</div>
-    <p class="section-intro">
-      A Backhaul Request tells HaulMonitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
-    </p>
-
-    <div class="steps">
-
-      <!-- Step 1 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">1</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Open the Request Form</div>
-          <p class="step-desc">
-            From the navigation menu (☰), select <strong>Start Backhaul Request</strong>.
-          </p>
-          <div class="screenshot screenshot-sm">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-            Screenshot: Navigation menu → Start Backhaul Request
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 2 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">2</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Fill in the Request Details</div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="field-name">Request Name <span class="req">*</span></div>
-              <div class="field-desc">A descriptive name to identify this request (e.g., Backhaul Request 12/30/2025)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Datum Point <span class="req">*</span></div>
-              <div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter a city/state or ZIP (e.g., Charlotte, NC or 28036).</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Select Fleet <span class="req">*</span></div>
-              <div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Equipment Available <span class="req">*</span></div>
-              <div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Equipment Needed Back <span class="req">*</span></div>
-              <div class="field-desc">The date the equipment must be returned home by</div>
-            </div>
-          </div>
-          <div class="screenshot screenshot-md">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            Screenshot: Backhaul Request form fields
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">3</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Set Options (Relay, Auto-Refresh, Notifications)</div>
-
-          <div class="subsection">
-            <div class="subsection-title">Relay Request <span class="badge">Optional</span></div>
-            <div class="subsection-desc">Enable this if the load will be handed off to a relay driver rather than your truck running the full route home.</div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Auto Refresh <span class="badge">Optional</span></div>
-            <div class="subsection-desc">HaulMonitor can automatically re-run the search on a schedule so your results stay current without manual intervention.</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Refresh Interval</div>
-                <div class="field-desc">How often to re-run the match (30 min, 1 hr, 2 hr, 4 hr, 8 hr, 24 hr)</div>
-              </div>
-            </div>
-            <div class="tip">
-              <span class="tip-icon">💡</span>
-              <span>Even with auto-refresh off, you can always click <strong>Refresh Now</strong> on the Open Requests page to re-run the search on demand.</span>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Notifications <span class="badge">Optional</span></div>
-            <div class="subsection-desc">Get alerted when auto-refresh detects a change in the top result.</div>
-            <div class="fields">
-              <div class="field-row">
-                <div class="field-name">Notification Method</div>
-                <div class="field-desc">Email, Text (SMS), or Both — sent to the phone and email on your fleet profile</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 4 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">4</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Submit the Request</div>
-          <p class="step-desc">
-            Click <strong>Find Backhaul Opportunities</strong>. HaulMonitor will geocode the datum point, build the route corridor from your current location to fleet home, and score all matching loads. This typically takes 5–15 seconds.
-          </p>
-        </div>
-      </div>
-
-      <!-- Step 5 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">5</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Review Results on the Open Requests Page</div>
-          <p class="step-desc">
-            After submitting, your request appears in <strong>Open Backhaul Requests</strong>. Click the request card to see the full results — a ranked list of backhaul opportunities and a route map showing opportunities along the corridor home.
-          </p>
-
-          <div class="fields">
-            <div class="field-row">
-              <div class="field-name">Rank / Net Credit</div>
-              <div class="field-desc">Opportunities are ranked by Customer Net Credit (highest first). The best load shows a 🥇 badge.</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Carrier Revenue</div>
-              <div class="field-desc">Total revenue your fleet earns from the load (gross)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">OOR Miles</div>
-              <div class="field-desc">Out-of-route miles added versus driving straight home</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Net Credit</div>
-              <div class="field-desc">Revenue minus mileage, stop, and fuel surcharge costs — your bottom-line benefit per load</div>
-            </div>
-          </div>
-
-          <div class="screenshot screenshot-lg">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-            Screenshot: Open Requests results page with route map and ranked list
-          </div>
-
-          <div class="note">
-            <span class="note-icon">⚠️</span>
-            <span>Results are <strong>estimates only</strong>. Always validate mileage figures with your own routing engine before committing to a load.</span>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /steps -->
-  </div><!-- /section 2 -->
-
-
-  <!-- ══════════ SECTION 3: ESTIMATE REQUEST ══════════ -->
-  <div class="section">
-    <div class="section-label">Section 3</div>
-    <div class="section-title">Creating an Estimate Request</div>
-    <p class="section-intro">
-      An Estimate Request is a planning tool. Instead of searching for a specific live load, it projects the annual financial value of backhaul opportunities along a given route — useful for customer proposals, pricing negotiations, and fleet planning. The output is a formatted report showing highest, top-5 average, and overall average net credit per load.
-    </p>
-
-    <div class="steps">
-
-      <!-- Step 1 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">1</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Open the Estimate Request Form</div>
-          <p class="step-desc">
-            From the navigation menu (☰), select <strong>Create Estimate Request</strong>.
-          </p>
-          <div class="screenshot screenshot-sm">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3M9 7V5a2 2 0 012-2h2M9 7h6m0 0v2m0-2a2 2 0 012 2v3"/></svg>
-            Screenshot: Navigation menu → Create Estimate Request
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 2 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">2</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Fill in the Request Details</div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="field-name">Request Name <span class="req">*</span></div>
-              <div class="field-desc">A descriptive label for this estimate (e.g., Estimate Request 03/05/2026)</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Datum Point <span class="req">*</span></div>
-              <div class="field-desc">The starting location for the return route. Enter a city/state or ZIP (e.g., Charlotte, NC or 28036).</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Select Fleet <span class="req">*</span></div>
-              <div class="field-desc">The fleet whose rate config will be used to calculate financials</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Equipment Available <span class="req">*</span></div>
-              <div class="field-desc">Start of the date window to search for available loads</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Equipment Needed Back <span class="req">*</span></div>
-              <div class="field-desc">End of the date window — equipment must be home by this date</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Annual Volume</div>
-              <div class="field-desc">Expected number of loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly).</div>
-            </div>
-            <div class="field-row">
-              <div class="field-name">Minimum Net Credit</div>
-              <div class="field-desc">Only opportunities meeting or exceeding this net credit per load are included in averages and totals (e.g., $100). Keeps low-value or negative loads from skewing results.</div>
-            </div>
-          </div>
-          <div class="screenshot screenshot-md">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
-            Screenshot: Estimate Request form
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">3</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Relay Mode (Optional)</div>
-          <p class="step-desc">
-            Enable <strong>Relay Request</strong> if the backhaul will be run by a relay driver rather than the outbound truck. In relay mode, mileage is calculated as the relay driver's full round trip (home → pickup → delivery → home) minus the deadhead back, giving a more accurate cost picture for relay operations.
-          </p>
-        </div>
-      </div>
-
-      <!-- Step 4 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">4</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Submit and View the Report</div>
-          <p class="step-desc">
-            Click <strong>Create Estimate Request</strong>. HaulMonitor searches for matching opportunities and generates a formatted estimate report. The report is saved under <strong>Open Estimate Requests</strong> and can be printed or saved as a PDF at any time.
-          </p>
-          <div class="screenshot screenshot-sm">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm1-4h4"/></svg>
-            Screenshot: Create Estimate Request button
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 5 -->
-      <div class="step">
-        <div class="step-num-col">
-          <div class="step-num">5</div>
-          <div class="step-line"></div>
-        </div>
-        <div class="step-body">
-          <div class="step-title">Reading the Estimate Report</div>
-          <p class="step-desc">
-            The report presents three columns — <strong>Highest Net</strong>, <strong>Average (All)</strong>, and <strong>Top 5 Average</strong> — across four metric groups.
-          </p>
-
-          <div class="subsection">
-            <div class="subsection-title">Customer Credit</div>
-          </div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="report-col-label">Net Credit per Load</div>
-              <div class="report-col-desc">The bottom-line credit per load: carrier revenue share minus all OOR costs (miles, stops, FSC)</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">Annual Credit</div>
-              <div class="report-col-desc">Net Credit × Annual Volume — total projected yearly benefit</div>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Route Activity</div>
-          </div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="report-col-label">Carrier Miles (per load)</div>
-              <div class="report-col-desc">Out-of-route miles added per load versus driving straight home</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">Annual Mileage Add</div>
-              <div class="report-col-desc">Total additional miles driven across the full annual volume</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">Stops Added (per load)</div>
-              <div class="report-col-desc">Number of extra stops per load (pickup + delivery = 2 typical)</div>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Carrier Annual Revenue Components</div>
-          </div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="report-col-label">Backhaul % Split</div>
-              <div class="report-col-desc">Annual revenue from your carrier percentage of gross load revenue</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">OOR Miles</div>
-              <div class="report-col-desc">Annual cost of out-of-route miles (miles × mileage rate × volume)</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">OOR Stops</div>
-              <div class="report-col-desc">Annual cost of additional stops (stops × stop rate × volume)</div>
-            </div>
-            <div class="field-row">
-              <div class="report-col-label">OOR Fuel Surcharge</div>
-              <div class="report-col-desc">Annual FSC cost on out-of-route miles (FSC rate × OOR miles × volume)</div>
-            </div>
-          </div>
-
-          <div class="subsection">
-            <div class="subsection-title">Total Carrier Revenue Addition</div>
-          </div>
-          <div class="fields">
-            <div class="field-row">
-              <div class="report-col-label">Total Carrier Revenue</div>
-              <div class="report-col-desc">Sum of all annual revenue components — the total financial impact of this backhaul lane on your operation</div>
-            </div>
-          </div>
-
-          <div class="screenshot screenshot-lg">
-            <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
-            Screenshot: Estimate Report — full table view
-          </div>
-
-          <div class="tip">
-            <span class="tip-icon">💡</span>
-            <span>Click <strong>Print / Save as PDF</strong> in the top-right of the report to export it. Use <strong>Edit Estimate Request</strong> to adjust dates, annual volume, or minimum net credit and regenerate the report at any time.</span>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /steps -->
-  </div><!-- /section 3 -->
-
-
-  <!-- ── Footer ── -->
-  <div class="footer">
-    <span>HaulMonitor — User Guide</span>
-    <span>Estimates only. Validate with your mileage engine before committing to any load.</span>
   </div>
+</div>
+
+
+<!-- ══════════════ SECTION 2 ══════════════ -->
+<div class="section">
+  <div class="section-label">Section 2</div>
+  <div class="section-title">Creating a Backhaul Request</div>
+  <p class="section-intro">
+    A Backhaul Request tells HaulMonitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
+  </p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Open the Request Form</div>
+        <p class="step-desc">From the navigation menu (<strong>☰ Menu</strong>) in the top-right corner, select <strong>Start Backhaul Request</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">2</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Fill in the Request Details</div>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive name for this request (e.g., Backhaul Request 12/30/2025)</div></div>
+          <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
+          <div class="field-row"><div class="field-name">Select Fleet <span class="req">*</span></div><div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div></div>
+          <div class="field-row"><div class="field-name">Equipment Available <span class="req">*</span></div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
+          <div class="field-row"><div class="field-name">Equipment Needed Back <span class="req">*</span></div><div class="field-desc">The date the equipment must be returned home by</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Set Options — Relay, Auto-Refresh, Notifications</div>
+
+        <div class="subsection">
+          <div class="subsection-title">Relay Request <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Enable if the load will be handled by a relay driver rather than your outbound truck running the full route home. Mileage is calculated as the relay driver's complete loop.</div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-title">Auto Refresh <span class="badge">Optional</span></div>
+          <div class="subsection-desc">HaulMonitor can automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-title">Notifications <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Get alerted by email, text, or both when auto-refresh detects a change in the top result. Sent to the phone and email on your fleet profile.</div>
+        </div>
+
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.35.28 PM.png" alt="Start Backhaul Request form showing all fields, Relay, Auto Refresh, Notifications, and Create button" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Submit the Request</div>
+        <p class="step-desc">Click <strong>+ Create Backhaul Request</strong>. HaulMonitor geocodes the datum point, builds the route corridor from your location to fleet home, and scores all matching loads. This typically takes 5–15 seconds.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Review Results</div>
+        <p class="step-desc">Your request appears in <strong>Open Backhaul Requests</strong>. Click a request card to open the full results view.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.35.43 PM.png" alt="Open Backhaul Requests page showing active request cards" />
+        <p class="step-desc" style="margin-top:12px;">The <strong>Route Home Map</strong> shows the top 10 opportunities plotted along your corridor home. The red <strong>A</strong> marker is your datum point; the green <strong>B</strong> is fleet home. Numbered circles show pickup locations.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.35.54 PM.png" alt="Route Home Map showing datum point, fleet home, and opportunity markers along the corridor" />
+        <p class="step-desc" style="margin-top:12px;">Below the map, opportunities are ranked by <strong>Customer Net Credit</strong> (highest first) with a full financial breakdown per load.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.36.04 PM.png" alt="Backhaul results ranked list showing financial breakdown with Customer Share, Mileage Exp, Stop Exp, Fuel Surcharge, and Net" />
+        <div class="fields" style="margin-top:12px;">
+          <div class="field-row"><div class="field-name">Customer Net Credit</div><div class="field-desc">Bottom-line benefit per load: carrier revenue share minus all OOR costs</div></div>
+          <div class="field-row"><div class="field-name">Gross / $/mi</div><div class="field-desc">Total gross revenue from the load and revenue per mile</div></div>
+          <div class="field-row"><div class="field-name">OOR Miles</div><div class="field-desc">Out-of-route miles added versus driving straight home</div></div>
+          <div class="field-row"><div class="field-name">To Pickup</div><div class="field-desc">Miles from your datum point to the load's pickup location</div></div>
+        </div>
+        <div class="note" style="margin-top:12px;">
+          <span class="note-icon">⚠️</span>
+          <span>Results are <strong>estimates only</strong>. Always validate mileage figures with your own routing engine before committing to a load.</span>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span>Use <strong>Refresh Now</strong> in the top bar at any time to re-run the search against current load data. If auto-refresh is enabled, the countdown shows when the next automatic refresh will run.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 3 ══════════════ -->
+<div class="section">
+  <div class="section-label">Section 3</div>
+  <div class="section-title">Creating an Estimate Request</div>
+  <p class="section-intro">
+    An Estimate Request is a planning and proposal tool. Instead of searching for a specific live load, it projects the annual financial value of backhaul opportunities along a given route — useful for customer proposals, pricing negotiations, and fleet planning. The output is a formatted report you can print or save as a PDF.
+  </p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Open the Estimate Request Form</div>
+        <p class="step-desc">From the navigation menu (<strong>☰ Menu</strong>), select <strong>Create Estimate Request</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">2</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Fill in the Request Details</div>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive label for this estimate (e.g., Estimate Request 03/05/2026)</div></div>
+          <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">The starting location for the return route. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
+          <div class="field-row"><div class="field-name">Select Fleet <span class="req">*</span></div><div class="field-desc">The fleet whose rate config will be used for all financial calculations</div></div>
+          <div class="field-row"><div class="field-name">Equipment Available <span class="req">*</span></div><div class="field-desc">Start of the date window to search for available loads</div></div>
+          <div class="field-row"><div class="field-name">Equipment Needed Back <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date</div></div>
+          <div class="field-row"><div class="field-name">Annual Volume</div><div class="field-desc">Expected loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly, 120 for roughly weekly with some weeks doubled).</div></div>
+          <div class="field-row"><div class="field-name">Minimum Net Credit</div><div class="field-desc">Only opportunities at or above this net credit per load are included in the report averages. Prevents low-value or negative loads from skewing results (e.g., $50 or $100).</div></div>
+        </div>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.36.18 PM.png" alt="Create Estimate Request form showing all fields including Annual Volume, Min Net Credit, Relay, and Create button" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Relay Mode <span style="font-weight:400; font-size:13px; color:#718096;">(Optional)</span></div>
+        <p class="step-desc">Enable <strong>Relay Request</strong> if the backhaul will be run by a relay driver. In relay mode, mileage is calculated as the relay driver's full round trip (home → pickup → delivery → home minus the deadhead), giving a more accurate cost picture for relay operations.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Submit and View the Report</div>
+        <p class="step-desc">Click <strong>+ Create Estimate Request</strong>. HaulMonitor finds matching opportunities and generates the report. It's saved under <strong>Open Estimate Requests</strong> — click any card to open it.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.36.29 PM.png" alt="Open Estimate Requests page showing saved estimate request cards with datum point, dates, annual volume, and min net credit" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Reading the Estimate Report</div>
+        <p class="step-desc">The report shows three columns — <strong>Highest Net</strong>, <strong>Average (All)</strong>, and <strong>Top 5 Average</strong> — across four metric groups. Only opportunities meeting your Minimum Net Credit threshold are included.</p>
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.36.41 PM.png" alt="Estimate Report top half showing header metadata, opportunity count with exclusion note, and Customer Credit / Route Activity rows" />
+
+        <div class="subsection"><div class="subsection-title">Customer Credit</div></div>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Net Credit per Load</div><div class="field-desc">Bottom-line credit per load: carrier revenue share minus all OOR costs (miles, stops, FSC). Highlighted green on the best opportunity.</div></div>
+          <div class="field-row"><div class="field-name">Annual Credit</div><div class="field-desc">Net Credit × Annual Volume — total projected yearly benefit to the customer</div></div>
+        </div>
+
+        <div class="subsection"><div class="subsection-title">Route Activity</div></div>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Carrier Miles (per load)</div><div class="field-desc">Out-of-route miles added per load versus driving straight home</div></div>
+          <div class="field-row"><div class="field-name">Total Annual Mileage Add</div><div class="field-desc">Total additional miles driven across the full annual volume</div></div>
+          <div class="field-row"><div class="field-name">Stops Added (per load)</div><div class="field-desc">Extra stops added per load — typically 2 (one pickup, one delivery)</div></div>
+        </div>
+
+        <img class="shot" src="/guide/Screenshot 2026-03-09 at 2.36.50 PM.png" alt="Estimate Report bottom half showing Carrier Annual Revenue Components and Total Carrier Revenue Addition" />
+
+        <div class="subsection"><div class="subsection-title">Carrier Annual Revenue Components</div></div>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Backhaul % Split</div><div class="field-desc">Annual revenue from your carrier percentage of gross load revenue</div></div>
+          <div class="field-row"><div class="field-name">OOR Miles</div><div class="field-desc">Annual cost of out-of-route miles (miles × mileage rate × volume)</div></div>
+          <div class="field-row"><div class="field-name">OOR Stops</div><div class="field-desc">Annual cost of additional stops (stops × stop rate × volume)</div></div>
+          <div class="field-row"><div class="field-name">OOR Fuel Surcharge</div><div class="field-desc">Annual FSC on out-of-route miles (FSC rate × OOR miles × volume)</div></div>
+          <div class="field-row"><div class="field-name">Total Carrier Revenue</div><div class="field-desc">Sum of all annual revenue components — the total financial impact of this backhaul lane</div></div>
+        </div>
+
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span>Click <strong>Print / Save as PDF</strong> in the top bar to export the report. Use <strong>Edit Estimate Request</strong> to adjust dates, annual volume, or minimum net credit and regenerate at any time.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<div class="footer">
+  <span>HaulMonitor — User Guide</span>
+  <span>Estimates only. Validate with your mileage engine before committing to any load.</span>
+</div>
 
 </div><!-- /page -->
 </body>
