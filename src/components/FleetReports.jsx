@@ -568,7 +568,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
   return (
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
       {/* Header */}
-      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

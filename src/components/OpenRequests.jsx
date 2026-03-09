@@ -354,7 +354,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
-      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
+      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -376,14 +376,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
             
             {/* Auto-refresh controls - only show when request is selected */}
             {selectedRequest && (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '16px',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
                 padding: '12px 20px',
                 background: colors.background.card,
                 border: `1px solid ${colors.border.primary}`,
-                borderRadius: '12px'
+                borderRadius: '12px',
+                minWidth: 0
               }}>
                 {/* Manual Refresh Button */}
                 <button
@@ -415,7 +417,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <div style={{ width: '1px', height: '32px', background: colors.border.secondary }} />
 
                 {/* Auto-refresh status */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', minWidth: 0 }}>
                   {selectedRequest.auto_refresh ? (
                     <>
                       {/* Auto-refresh is enabled */}
