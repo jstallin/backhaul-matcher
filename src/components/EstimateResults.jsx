@@ -106,8 +106,11 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
 
   const annualVolume = request.annual_volume || 0;
   const minNetCredit = request.min_net_credit ?? null;
-  const metrics      = computeMetrics(matches, annualVolume);
-  const hasRates     = matches.length > 0 && matches[0].has_rate_config;
+  const filteredMatches = minNetCredit !== null
+    ? matches.filter(m => (Number(m.customer_net_credit) || 0) >= minNetCredit)
+    : matches;
+  const metrics      = computeMetrics(filteredMatches, annualVolume);
+  const hasRates     = filteredMatches.length > 0 && filteredMatches[0].has_rate_config;
   const today        = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   const handlePrint = () => window.print();
@@ -263,6 +266,11 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
             <TrendingUp size={20} color={colors.accent.primary} />
             <span style={{ fontSize: '15px', fontWeight: 800, color: colors.text.primary }}>
               {metrics?.totalOpportunities ?? 0} Available Opportunities Found
+              {minNetCredit !== null && filteredMatches.length < matches.length && (
+                <span style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary, marginLeft: '8px' }}>
+                  ({matches.length - filteredMatches.length} below {fmt$(minNetCredit)} min excluded)
+                </span>
+              )}
             </span>
           </div>
           {request.is_relay && (
@@ -392,12 +400,7 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
             {/* Min net credit note */}
             {minNetCredit !== null && (
               <div style={{ padding: '16px 24px', borderTop: `1px solid ${colors.border.secondary}`, fontSize: '13px', color: colors.text.secondary }}>
-                <strong>Minimum Net Credit Threshold:</strong> {fmt$(minNetCredit)} per load
-                {metrics.highestNet.netCredit < minNetCredit && (
-                  <span style={{ marginLeft: '12px', color: '#EF4444', fontWeight: 700 }}>
-                    ⚠ No opportunities currently meet this threshold
-                  </span>
-                )}
+                <strong>Minimum Net Credit Threshold:</strong> {fmt$(minNetCredit)} per load — report shows only qualifying opportunities
               </div>
             )}
           </>
@@ -410,8 +413,17 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
         ) : (
           <div style={{ padding: '48px', textAlign: 'center', color: colors.text.secondary }}>
             <TrendingUp size={48} color={colors.text.tertiary} style={{ marginBottom: '16px' }} />
-            <p style={{ fontSize: '15px', fontWeight: 600 }}>No matching opportunities found for this route.</p>
-            <p style={{ fontSize: '13px' }}>Try a different datum point or check fleet equipment settings.</p>
+            {minNetCredit !== null && matches.length > 0 && filteredMatches.length === 0 ? (
+              <>
+                <p style={{ fontSize: '15px', fontWeight: 600 }}>No opportunities meet the {fmt$(minNetCredit)} minimum net credit threshold.</p>
+                <p style={{ fontSize: '13px' }}>{matches.length} {matches.length === 1 ? 'opportunity was' : 'opportunities were'} found but none qualified. Try lowering the minimum net credit.</p>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: '15px', fontWeight: 600 }}>No matching opportunities found for this route.</p>
+                <p style={{ fontSize: '13px' }}>Try a different datum point or check fleet equipment settings.</p>
+              </>
+            )}
           </div>
         )}
       </div>
