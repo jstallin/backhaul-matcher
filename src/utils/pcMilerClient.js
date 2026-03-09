@@ -126,6 +126,28 @@ export const getRouteGeometry = async (points) => {
 };
 
 /**
+ * Geocode an address string to lat/lng using PC*MILER via server proxy.
+ *
+ * @param {string} address - Address, city/state, or full street address
+ * @returns {Promise<{lat: number, lng: number, label: string}|null>}
+ */
+export const geocodeAddress = async (address) => {
+  if (!address || !address.trim()) return null;
+  try {
+    const response = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address.trim())}`);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.warn('PC Miler geocode failed:', response.status, err.error);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error geocoding address via PC Miler:', error);
+    return null;
+  }
+};
+
+/**
  * Get both driving distance and route geometry in parallel.
  *
  * @param {Array<{lat: number, lng: number}>} points - 2+ points

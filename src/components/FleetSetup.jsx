@@ -3,6 +3,7 @@ import { MapPin, Truck, Save, AlertCircle } from '../icons';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { geocodeAddress } from '../utils/pcMilerClient';
 
 const PADD_REGIONS = [
   { value: '', label: 'Select PADD Region' },
@@ -20,6 +21,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeStatus, setGeocodeStatus] = useState(null); // { ok: bool, label: string }
 
   const [formData, setFormData] = useState({
     name: '',
@@ -61,6 +64,9 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         homeLat: fleet.home_lat || '',
         homeLng: fleet.home_lng || ''
       });
+      if (fleet.home_lat && fleet.home_lng) {
+        setGeocodeStatus({ ok: true, label: fleet.home_address || 'Verified' });
+      }
       loadFleetProfile(fleet.id);
     } else {
       setFormData({
@@ -124,6 +130,23 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     setSaving(true);
 
     try {
+      let { homeLat, homeLng } = formData;
+
+      // If address changed or coords not yet set, geocode via PC*MILER before saving
+      if (formData.homeAddress && (!homeLat || !homeLng)) {
+        setGeocoding(true);
+        const result = await geocodeAddress(formData.homeAddress.trim());
+        setGeocoding(false);
+        if (result) {
+          homeLat = result.lat;
+          homeLng = result.lng;
+          setFormData(prev => ({ ...prev, homeLat, homeLng }));
+          setGeocodeStatus({ ok: true, label: result.label });
+        } else {
+          setGeocodeStatus({ ok: false, label: 'Could not verify address — check spelling or try City, ST format' });
+        }
+      }
+
       const fleetData = {
         name: formData.name,
         mc_number: formData.mcNumber,
@@ -131,8 +154,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         phone_number: formData.phoneNumber,
         email: formData.email,
         home_address: formData.homeAddress,
-        home_lat: formData.homeLat ? parseFloat(formData.homeLat) : null,
-        home_lng: formData.homeLng ? parseFloat(formData.homeLng) : null
+        home_lat: homeLat ? parseFloat(homeLat) : null,
+        home_lng: homeLng ? parseFloat(homeLng) : null
       };
 
       let savedFleetId;
@@ -185,6 +208,21 @@ export const FleetSetup = ({ fleet, onComplete }) => {
 
   const handleRateChange = (field, value) => {
     setRateData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddressBlur = async () => {
+    const addr = formData.homeAddress.trim();
+    if (!addr) return;
+    setGeocoding(true);
+    setGeocodeStatus(null);
+    const result = await geocodeAddress(addr);
+    if (result) {
+      setFormData(prev => ({ ...prev, homeLat: result.lat, homeLng: result.lng }));
+      setGeocodeStatus({ ok: true, label: result.label });
+    } else {
+      setGeocodeStatus({ ok: false, label: 'Could not verify address — check spelling or try City, ST format' });
+    }
+    setGeocoding(false);
   };
 
   const customerPct = 100 - (parseInt(rateData.revenueSplitCarrier) || 0);
@@ -375,54 +413,47 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           </div>
 
           {/* Home */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '32px' }}>
             <label style={labelStyle}>Home (Fleet Base Location) *</label>
             <input
               type="text"
               value={formData.homeAddress}
-              onChange={(e) => handleChange('homeAddress', e.target.value)}
+              onChange={(e) => {
+                // Clear verified coords when address is edited
+                setGeocodeStatus(null);
+                setFormData(prev => ({ ...prev, homeAddress: e.target.value, homeLat: '', homeLng: '' }));
+              }}
+              onBlur={handleAddressBlur}
               required
-              disabled={saving}
+              disabled={saving || geocoding}
               placeholder="e.g., Davidson, NC or 123 Fleet Dr, Davidson, NC 28036"
               style={inputStyle}
             />
-            <p style={{
-              margin: '8px 0 0 0',
-              fontSize: '13px',
-              color: colors.text.tertiary
-            }}>
-              This is where your trucks return to after deliveries
-            </p>
-          </div>
-
-          {/* Coordinates (Optional) */}
-          <div style={{ marginBottom: '32px' }}>
-            <label style={labelStyle}>Coordinates (Optional)</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <input
-                type="text"
-                value={formData.homeLat}
-                onChange={(e) => handleChange('homeLat', e.target.value)}
-                disabled={saving}
-                placeholder="Latitude (e.g., 35.4993)"
-                style={inputStyle}
-              />
-              <input
-                type="text"
-                value={formData.homeLng}
-                onChange={(e) => handleChange('homeLng', e.target.value)}
-                disabled={saving}
-                placeholder="Longitude (e.g., -80.8481)"
-                style={inputStyle}
-              />
+            <div style={{ marginTop: '8px', fontSize: '13px' }}>
+              {geocoding && (
+                <span style={{ color: colors.text.tertiary }}>Verifying address via PC*MILER...</span>
+              )}
+              {!geocoding && geocodeStatus?.ok && (
+                <span style={{ color: colors.accent.success, fontWeight: 600 }}>
+                  ✓ Verified: {geocodeStatus.label}
+                  {formData.homeLat && formData.homeLng && (
+                    <span style={{ fontWeight: 400, color: colors.text.tertiary, marginLeft: '8px' }}>
+                      ({Number(formData.homeLat).toFixed(4)}, {Number(formData.homeLng).toFixed(4)})
+                    </span>
+                  )}
+                </span>
+              )}
+              {!geocoding && geocodeStatus && !geocodeStatus.ok && (
+                <span style={{ color: colors.accent.danger, fontWeight: 600 }}>
+                  ✗ {geocodeStatus.label}
+                </span>
+              )}
+              {!geocoding && !geocodeStatus && (
+                <span style={{ color: colors.text.tertiary }}>
+                  Enter an address then tab away to verify coordinates via PC*MILER
+                </span>
+              )}
             </div>
-            <p style={{
-              margin: '8px 0 0 0',
-              fontSize: '13px',
-              color: colors.text.tertiary
-            }}>
-              For more accurate routing. You can look these up on Google Maps.
-            </p>
           </div>
 
           {/* ========== RATE CONFIGURATION SECTION ========== */}
