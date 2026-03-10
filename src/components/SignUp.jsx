@@ -230,6 +230,7 @@ export const SignUp = ({ onToggleMode }) => {
             />
           </div>
 
+          {/* Role selector hidden for now
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
@@ -262,6 +263,7 @@ export const SignUp = ({ onToggleMode }) => {
               <option value="dispatcher">Dispatcher</option>
             </select>
           </div>
+          */}
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{
