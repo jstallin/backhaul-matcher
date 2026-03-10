@@ -30,9 +30,15 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
   };
 
   const menuItems = [
-    { 
-      id: 'fleets', 
-      label: 'Fleets', 
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: TrendingUp,
+      description: 'At-a-glance fleet overview'
+    },
+    {
+      id: 'fleets',
+      label: 'Fleets',
       icon: Truck,
       description: 'View and manage all fleets'
     },
@@ -132,10 +138,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
         }}>
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const isActive = 
-              (item.id === 'routes' && currentView === 'search') ||
-              (item.id === 'truck-search' && currentView === 'truck-search') ||
-              (item.id === 'fleet-management' && currentView === 'fleet-management');
+            const isActive = item.id === currentView;
 
             return (
               <button

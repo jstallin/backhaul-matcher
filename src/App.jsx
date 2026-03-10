@@ -18,6 +18,7 @@ import { StartEstimateRequest } from './components/StartEstimateRequest';
 import { OpenEstimateRequests } from './components/OpenEstimateRequests';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
+import { Dashboard } from './components/Dashboard';
 import { ImportedLoads } from './components/ImportedLoads';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { db } from './lib/supabase';
@@ -147,7 +148,7 @@ function App() {
   const { colors } = useTheme();
   const [userType, setUserType] = useState('fleet');
   const [activeTab, setActiveTab] = useState('fleets'); // Default to fleets
-  const [currentView, setCurrentView] = useState('fleets'); // 'fleets', 'start-request', 'open-requests', 'fleet-reports', 'fleet-management', 'settings'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'fleets', 'start-request', 'open-requests', 'fleet-reports', 'fleet-management', 'settings'
   const [relayMode, setRelayMode] = useState(false);
   const [searchRadius, setSearchRadius] = useState(50);
   const [opportunities, setOpportunities] = useState([]);
@@ -459,6 +460,11 @@ function App() {
     <AuthWrapper>
       {currentView === 'settings' ? (
         <Settings onBack={handleBackFromSettings} />
+      ) : currentView === 'dashboard' ? (
+        <Dashboard
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
       ) : currentView === 'fleets' ? (
         <Fleets 
           user={user}
