@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { MapPin, DollarSign, Navigation, TrendingUp, Truck, Calendar, Package, Edit, X, Map } from '../icons';
+import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
-import { RouteStats } from './RouteStats';
 
 export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCancel }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [showMap, setShowMap] = useState(false);
+  const [mapMatch, setMapMatch] = useState(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
@@ -258,7 +257,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   <Package size={16} />
                   View Details
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); setSelectedMatch(match); setShowMap(true); }} style={{ flex: 1, padding: '12px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}10`; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; }}>
+                <button onClick={(e) => { e.stopPropagation(); setMapMatch(match); }} style={{ flex: 1, padding: '12px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}10`; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; }}>
                   <Map size={16} />
                   View on Map
                 </button>
@@ -269,57 +268,246 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
       )}
 
       {/* Route Details Modal */}
-      {selectedMatch && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setSelectedMatch(null)}>
-          <div style={{ background: colors.background.overlay, borderRadius: '16px', maxWidth: '1200px', width: '100%', maxHeight: '90vh', overflow: 'auto', border: `1px solid ${colors.border.accent}`, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>
-                Route Details - {selectedMatch.origin.address} → {selectedMatch.destination.address}
-              </h3>
-              <button onClick={() => setSelectedMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: colors.text.secondary }}>
-                ✕
-              </button>
-            </div>
-            <div style={{ padding: '24px' }}>
-              <RouteStats 
-                routeData={{
-                  origin: selectedMatch.origin.address,
-                  destination: selectedMatch.destination.address,
-                  distance: selectedMatch.distance,
-                  revenue: selectedMatch.totalRevenue,
-                  oorMiles: selectedMatch.oorMiles,
-                  additionalMiles: selectedMatch.additionalMiles,
-                  revenuePerMile: selectedMatch.revenuePerMile,
-                  equipmentType: selectedMatch.equipmentType,
-                  weight: selectedMatch.weight,
-                  pickupDate: selectedMatch.pickupDate,
-                  deliveryDate: selectedMatch.deliveryDate
-                }}
-                showMap={() => setShowMap(true)}
-              />
+      {selectedMatch && (() => {
+        const m = selectedMatch;
+        const directMiles = m.direct_return_miles ?? m.additionalMiles ?? 0;
+        const datumToPickup = m.datum_to_pickup_miles ?? m.finalToPickup ?? 0;
+        const pickupToDelivery = m.pickup_to_delivery_miles ?? m.distance ?? 0;
+        const deliveryToHome = m.delivery_to_home_miles ?? 0;
+        const totalWithBackhaul = m.total_miles ?? m.oorMiles ?? 0;
+        const extraMiles = m.additional_miles ?? m.additionalMiles ?? 0;
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setSelectedMatch(null)}>
+            <div style={{ background: colors.background.overlay, borderRadius: '16px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflow: 'auto', border: `1px solid ${colors.border.accent}`, boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)' }} onClick={(e) => e.stopPropagation()}>
+
+              {/* Modal Header */}
+              <div style={{ padding: '20px 24px', borderBottom: `1px solid ${colors.border.secondary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
+                    {m.origin.address} → {m.destination.address}
+                  </h3>
+                  <div style={{ fontSize: '13px', color: colors.text.tertiary }}>
+                    {m.equipmentType} · {formatNumber(m.weight)} lbs · {m.trailerLength} ft · {m.freightType}
+                  </div>
+                </div>
+                <button onClick={() => setSelectedMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: colors.text.secondary, fontSize: '20px', lineHeight: 1 }}>
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Route Comparison */}
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+                    Route Comparison
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {/* Empty Return */}
+                    <div style={{ padding: '16px', background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '12px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: colors.text.secondary, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Truck size={14} color={colors.text.secondary} />
+                        EMPTY RETURN
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: colors.text.secondary }}>{request.datum_point}</span>
+                          <span style={{ color: colors.text.tertiary }}>→</span>
+                          <span style={{ color: colors.text.secondary }}>Home</span>
+                        </div>
+                        <div style={{ borderTop: `1px solid ${colors.border.secondary}`, paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 600, color: colors.text.primary }}>{formatNumber(directMiles)} mi</span>
+                          <span style={{ fontWeight: 700, color: colors.accent.danger }}>$0</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* With Backhaul */}
+                    <div style={{ padding: '16px', background: colors.background.card, border: `2px solid ${colors.accent.success}`, borderRadius: '12px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: colors.accent.success, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <TrendingUp size={14} color={colors.accent.success} />
+                        WITH BACKHAUL
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: colors.text.secondary }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Datum → Pickup</span>
+                          <span style={{ fontWeight: 600 }}>{formatNumber(datumToPickup)} mi</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Load ({m.origin.address} → {m.destination.address})</span>
+                          <span style={{ fontWeight: 600 }}>{formatNumber(pickupToDelivery)} mi</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Delivery → Home</span>
+                          <span style={{ fontWeight: 600 }}>{formatNumber(deliveryToHome)} mi</span>
+                        </div>
+                        <div style={{ borderTop: `1px solid ${colors.border.secondary}`, paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 600, fontSize: '13px', color: colors.text.primary }}>{formatNumber(totalWithBackhaul)} mi</span>
+                          <span style={{ fontWeight: 700, fontSize: '13px', color: colors.accent.success }}>+{formatCurrency(m.totalRevenue)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Net Impact Bar */}
+                  <div style={{ marginTop: '10px', padding: '12px 16px', background: `${colors.accent.success}15`, border: `1px solid ${colors.accent.success}40`, borderRadius: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: colors.accent.success }}>+{formatCurrency(m.totalRevenue)}</div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Extra Revenue</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: extraMiles > 0 ? colors.accent.warning : colors.accent.success }}>
+                        {extraMiles > 0 ? '+' : ''}{formatNumber(extraMiles)} mi
+                      </div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Extra Miles</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: colors.accent.success }}>+{formatCurrency(m.revenuePerMile)}/mi</div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Revenue Per Mile</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Breakdown */}
+                {m.has_rate_config && (
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+                      Financial Breakdown
+                    </div>
+                    <div style={{ padding: '16px', background: colors.background.card, border: `1px solid ${colors.border.accent}`, borderRadius: '12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Gross Revenue</div>
+                          <div style={{ fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>{formatCurrency(m.totalRevenue)}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Customer Share</div>
+                          <div style={{ fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>{formatCurrency(m.customer_share)}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Carrier Revenue</div>
+                          <div style={{ fontSize: '15px', fontWeight: 700, color: colors.accent.primary }}>{formatCurrency(m.carrier_revenue)}</div>
+                        </div>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${colors.border.secondary}`, paddingTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Mileage Exp</div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(m.mileage_expense)}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Stop Exp ({m.stop_count})</div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(m.stop_expense)}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Fuel Surcharge</div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(m.fuel_surcharge)}</div>
+                          <div style={{ fontSize: '10px', color: colors.text.tertiary }}>{m.fsc_per_mile?.toFixed(3)}/mi × {extraMiles} mi</div>
+                        </div>
+                        {m.other_charges > 0 && (
+                          <div>
+                            <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Other Charges</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: colors.accent.danger }}>-{formatCurrency(m.other_charges)}</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ borderTop: `2px solid ${colors.border.primary}`, paddingTop: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '14px', color: colors.text.secondary }}>Customer Net Credit:</span>
+                        <span style={{ fontSize: '22px', fontWeight: 900, color: m.customer_net_credit >= 0 ? colors.accent.success : colors.accent.danger }}>
+                          {formatCurrency(m.customer_net_credit)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Load Details */}
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>
+                    Load Details
+                  </div>
+                  <div style={{ padding: '16px', background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', fontSize: '13px' }}>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Pickup Date</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.pickupDate)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Delivery Date</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.deliveryDate)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{m.broker}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Shipper</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{m.shipper}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Freight Type</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{m.freightType}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Distance Source</div>
+                        <div style={{ fontWeight: 600, color: m.distance_source === 'pcmiler' ? colors.accent.success : colors.text.secondary }}>
+                          {m.distance_source === 'pcmiler' ? 'PC*Miler' : 'Estimated'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Accept Route CTA */}
+                <div style={{ paddingTop: '4px', display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => {
+                      // TODO: Integrate with loadboard API to claim this route
+                      alert(`Accept Route placeholder: Load ${m.load_id}\n${m.origin.address} → ${m.destination.address}\n\nThis will connect to the loadboard API to claim the route.`);
+                    }}
+                    style={{ flex: 1, padding: '14px 24px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <TrendingUp size={18} />
+                    Accept Route
+                  </button>
+                  <button
+                    onClick={() => { setSelectedMatch(null); setMapMatch(m); }}
+                    style={{ padding: '14px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '10px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Map size={16} />
+                    View on Map
+                  </button>
+                  <button
+                    onClick={() => setSelectedMatch(null)}
+                    style={{ padding: '14px 20px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '10px', color: colors.text.secondary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Close
+                  </button>
+                </div>
+
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Map Modal */}
-      {showMap && selectedMatch && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.9)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setShowMap(false)}>
+      {mapMatch && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.9)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setMapMatch(null)}>
           <div style={{ width: '100%', maxWidth: '1400px', height: '80vh', background: colors.background.overlay, borderRadius: '16px', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: '16px', borderBottom: `1px solid ${colors.border.secondary}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Route Map</h4>
-              <button onClick={() => setShowMap(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.text.secondary, fontSize: '24px' }}>✕</button>
+              <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{mapMatch.origin.address} → {mapMatch.destination.address}</h4>
+              <button onClick={() => setMapMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: colors.text.secondary, fontSize: '24px' }}>✕</button>
             </div>
             <div style={{ height: 'calc(100% - 60px)' }}>
               <RouteMap
                 route={{
-                  origin_lat: selectedMatch.origin.lat,
-                  origin_lng: selectedMatch.origin.lng,
-                  dest_lat: selectedMatch.destination.lat,
-                  dest_lng: selectedMatch.destination.lng,
-                  origin_city: selectedMatch.origin.address,
-                  dest_city: selectedMatch.destination.address,
-                  distance_miles: selectedMatch.distance
+                  origin_lat: mapMatch.origin.lat,
+                  origin_lng: mapMatch.origin.lng,
+                  dest_lat: mapMatch.destination.lat,
+                  dest_lng: mapMatch.destination.lng,
+                  origin_city: mapMatch.origin.address,
+                  dest_city: mapMatch.destination.address,
+                  distance_miles: mapMatch.distance
                 }}
               />
             </div>
