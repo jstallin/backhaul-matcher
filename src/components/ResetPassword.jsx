@@ -38,9 +38,9 @@ export const ResetPassword = () => {
 
       setSuccess(true);
 
-      // Redirect to login after 2 seconds
+      // Redirect to app after 2 seconds
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/app';
       }, 2000);
     } catch (err) {
       console.error('Password reset error:', err);

@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/app`,
           data: {
             full_name: fullName,
             role: role,
