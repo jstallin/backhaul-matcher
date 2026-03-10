@@ -19,7 +19,11 @@ export const Login = ({ onToggleMode }) => {
     try {
       await signIn(email, password);
     } catch (err) {
-      setError(err.message || 'Failed to sign in');
+      if (err.message?.toLowerCase().includes('email not confirmed')) {
+        setError('confirm-email');
+      } else {
+        setError(err.message || 'Failed to sign in');
+      }
     } finally {
       setLoading(false);
     }
@@ -91,14 +95,21 @@ export const Login = ({ onToggleMode }) => {
         {error && (
           <div style={{
             padding: '12px 16px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: error === 'confirm-email' ? 'rgba(234, 179, 8, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${error === 'confirm-email' ? 'rgba(234, 179, 8, 0.4)' : 'rgba(239, 68, 68, 0.3)'}`,
             borderRadius: '8px',
-            color: '#dc2626',
+            color: error === 'confirm-email' ? '#92400e' : '#dc2626',
             fontSize: '14px',
-            marginBottom: '24px'
+            marginBottom: '24px',
+            lineHeight: '1.5'
           }}>
-            {error}
+            {error === 'confirm-email' ? (
+              <>
+                <strong>Please confirm your email first.</strong>
+                <br />
+                Check your inbox for a confirmation link from Haul Monitor. If you don't see it, check your spam folder.
+              </>
+            ) : error}
           </div>
         )}
 
