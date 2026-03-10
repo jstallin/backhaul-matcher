@@ -31,9 +31,14 @@ export const SignUp = ({ onToggleMode }) => {
     setLoading(true);
 
     try {
-      await signUp(email, password, fullName, role);
+      const data = await signUp(email, password, fullName, role);
+      // Supabase silently "succeeds" for duplicate emails when confirmation is
+      // enabled — the user object comes back with an empty identities array.
+      if (data?.user?.identities?.length === 0) {
+        setError('An account with this email already exists. Please sign in or use a different email.');
+        return;
+      }
       setSuccess(true);
-      // Note: User will receive a confirmation email
     } catch (err) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -146,6 +151,16 @@ export const SignUp = ({ onToggleMode }) => {
             marginBottom: '24px'
           }}>
             {error}
+            {error.includes('already exists') && (
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  onClick={onToggleMode}
+                  style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 700, fontSize: '14px', padding: 0, textDecoration: 'underline' }}
+                >
+                  Go to Sign In →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
