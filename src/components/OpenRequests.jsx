@@ -224,12 +224,21 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 50;
       const corridorWidthMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 300 : 100;
 
-      // Find matches along route home (50 mile home radius, 50 mile corridor for geographic filtering)
-      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id);
+      // Build request context for Direct Freight live fetch
+      const requestContext = {
+        datumCity:     datumPoint.address || request.datum_point,
+        datumState:    '',
+        homeCity:      fleet.home_address,
+        homeState:     '',
+        equipmentType: fleetProfile.trailerType || 'Dry Van',
+        pickupDate:    request.equipment_available_date || ''
+      };
+
+      const { loads: loadsForMatching, isLive, source } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
       if (isLive) {
-        console.log(`Using ${loadsForMatching.length} live imported loads for matching`);
+        console.log(`Using ${loadsForMatching.length} live loads from: ${source}`);
       } else {
-        console.log('No imported loads found — using demo data');
+        console.log('No live loads found — using demo data');
       }
 
       const result = await findRouteHomeBackhauls(

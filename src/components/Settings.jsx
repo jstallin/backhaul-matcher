@@ -25,9 +25,19 @@ export const Settings = ({ onBack }) => {
   const [datConnection, setDatConnection] = useState(null); // { connected, account_email, connected_at }
   const [loadingDatStatus, setLoadingDatStatus] = useState(true);
 
-  // Check DAT connection status on mount
+  // Direct Freight Integration state
+  const [showDfModal, setShowDfModal] = useState(false);
+  const [dfUsername, setDfUsername] = useState('');
+  const [dfPassword, setDfPassword] = useState('');
+  const [dfConnecting, setDfConnecting] = useState(false);
+  const [dfError, setDfError] = useState('');
+  const [dfConnection, setDfConnection] = useState(null); // { connected, username, connected_at }
+  const [loadingDfStatus, setLoadingDfStatus] = useState(true);
+
+  // Check all connection statuses on mount
   useEffect(() => {
     checkDatStatus();
+    checkDfStatus();
   }, []);
 
   const checkDatStatus = async () => {
@@ -110,6 +120,92 @@ export const Settings = ({ onBack }) => {
       setDatError('An unexpected error occurred. Please try again.');
     } finally {
       setDatConnecting(false);
+    }
+  };
+
+  const checkDfStatus = async () => {
+    try {
+      setLoadingDfStatus(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/directfreight/status', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDfConnection(data);
+      }
+    } catch (error) {
+      console.error('Error checking Direct Freight status:', error);
+    } finally {
+      setLoadingDfStatus(false);
+    }
+  };
+
+  const handleDfConnect = async (e) => {
+    e.preventDefault();
+    setDfError('');
+
+    if (!dfUsername.trim() || !dfPassword.trim()) {
+      setDfError('Username and password are required');
+      return;
+    }
+
+    setDfConnecting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setDfError('Please log in to connect your Direct Freight account');
+        return;
+      }
+
+      const response = await fetch('/api/integrations/directfreight/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ username: dfUsername.trim(), password: dfPassword })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDfError(data.error || 'Failed to connect to Direct Freight');
+        return;
+      }
+
+      setDfConnection({ connected: true, username: data.username, connected_at: data.connected_at });
+      setShowDfModal(false);
+      setDfUsername('');
+      setDfPassword('');
+    } catch (error) {
+      console.error('Direct Freight connect error:', error);
+      setDfError('An unexpected error occurred. Please try again.');
+    } finally {
+      setDfConnecting(false);
+    }
+  };
+
+  const handleDfDisconnect = async () => {
+    if (!confirm('Are you sure you want to disconnect your Direct Freight account?')) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/directfreight/auth', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (response.ok) {
+        setDfConnection({ connected: false });
+      }
+    } catch (error) {
+      console.error('Error disconnecting Direct Freight:', error);
     }
   };
 
@@ -820,6 +916,89 @@ export const Settings = ({ onBack }) => {
                   </div>
                 </div>
 
+                {/* Direct Freight Integration */}
+                <div style={{
+                  border: `1px solid ${dfConnection?.connected ? colors.accent.success : colors.border.primary}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  marginBottom: '16px',
+                  background: dfConnection?.connected ? `${colors.accent.success}08` : 'transparent'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{
+                        width: '48px', height: '48px', borderRadius: '10px',
+                        background: '#1a3a5c', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '11px',
+                        textAlign: 'center', lineHeight: '1.2', padding: '4px'
+                      }}>
+                        DF
+                      </div>
+                      <div>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>
+                          Direct Freight
+                        </h3>
+                        <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
+                          Live load board access via Direct Freight credentials
+                        </p>
+                        {dfConnection?.connected && dfConnection.username && (
+                          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
+                            Connected as: {dfConnection.username}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {loadingDfStatus ? (
+                      <div style={{ fontSize: '13px', color: colors.text.tertiary }}>Checking...</div>
+                    ) : dfConnection?.connected ? (
+                      <div style={{
+                        padding: '6px 12px', background: `${colors.accent.success}20`,
+                        border: `1px solid ${colors.accent.success}40`, borderRadius: '20px',
+                        fontSize: '13px', fontWeight: 700, color: colors.accent.success
+                      }}>
+                        ● Connected
+                      </div>
+                    ) : (
+                      <div style={{
+                        padding: '6px 12px', background: `${colors.border.secondary}`,
+                        borderRadius: '20px', fontSize: '13px', fontWeight: 600,
+                        color: colors.text.tertiary
+                      }}>
+                        Not Connected
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                    {dfConnection?.connected ? (
+                      <button
+                        onClick={handleDfDisconnect}
+                        style={{
+                          padding: '10px 20px', background: 'transparent',
+                          border: `1px solid ${colors.accent.danger}`, borderRadius: '8px',
+                          color: colors.accent.danger, fontSize: '14px', fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Disconnect Direct Freight
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { setShowDfModal(true); setDfError(''); }}
+                        disabled={loadingDfStatus}
+                        style={{
+                          padding: '10px 20px', background: colors.accent.primary,
+                          border: 'none', borderRadius: '8px', color: '#fff',
+                          fontSize: '14px', fontWeight: 700, cursor: loadingDfStatus ? 'not-allowed' : 'pointer',
+                          opacity: loadingDfStatus ? 0.5 : 1
+                        }}
+                      >
+                        Connect Direct Freight
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Coming Soon Integrations */}
                 <div style={{
                   border: `1px dashed ${colors.border.primary}`,
@@ -1231,6 +1410,132 @@ export const Settings = ({ onBack }) => {
                   }}
                 >
                   {datConnecting ? 'Linking...' : 'Link Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Direct Freight Connection Modal */}
+      {showDfModal && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
+            zIndex: 10000, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', padding: '20px'
+          }}
+          onClick={() => !dfConnecting && setShowDfModal(false)}
+        >
+          <div
+            style={{
+              background: colors.background.overlay, borderRadius: '16px',
+              maxWidth: '480px', width: '100%',
+              border: `1px solid ${colors.border.accent}`,
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '10px', background: '#1a3a5c',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 900, fontSize: '11px'
+              }}>
+                DF
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 2px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
+                  Connect to Direct Freight
+                </h3>
+                <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
+                  Enter your Direct Freight login credentials
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleDfConnect} style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={dfUsername}
+                  onChange={(e) => setDfUsername(e.target.value)}
+                  placeholder="Your Direct Freight username"
+                  disabled={dfConnecting}
+                  autoComplete="username"
+                  style={{
+                    width: '100%', padding: '12px', background: colors.background.secondary,
+                    border: `1px solid ${colors.border.accent}`, borderRadius: '8px',
+                    color: colors.text.primary, fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={dfPassword}
+                  onChange={(e) => setDfPassword(e.target.value)}
+                  placeholder="Your Direct Freight password"
+                  disabled={dfConnecting}
+                  autoComplete="current-password"
+                  style={{
+                    width: '100%', padding: '12px', background: colors.background.secondary,
+                    border: `1px solid ${colors.border.accent}`, borderRadius: '8px',
+                    color: colors.text.primary, fontSize: '14px', outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {dfError && (
+                <div style={{
+                  padding: '12px', background: `${colors.accent.danger}20`,
+                  border: `1px solid ${colors.accent.danger}40`, borderRadius: '8px',
+                  color: colors.accent.danger, fontSize: '14px', marginBottom: '16px'
+                }}>
+                  {dfError}
+                </div>
+              )}
+
+              <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: colors.text.tertiary, lineHeight: '1.5' }}>
+                Your credentials are used once to obtain an API token. The password is never stored.
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDfModal(false); setDfUsername(''); setDfPassword(''); setDfError(''); }}
+                  disabled={dfConnecting}
+                  style={{
+                    flex: 1, padding: '12px', background: colors.background.secondary,
+                    border: `1px solid ${colors.border.accent}`, borderRadius: '8px',
+                    color: colors.text.primary, fontSize: '14px', fontWeight: 600,
+                    cursor: dfConnecting ? 'not-allowed' : 'pointer', opacity: dfConnecting ? 0.5 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={dfConnecting}
+                  style={{
+                    flex: 1, padding: '12px', background: '#1a3a5c',
+                    border: 'none', borderRadius: '8px', color: '#fff',
+                    fontSize: '14px', fontWeight: 700,
+                    cursor: dfConnecting ? 'not-allowed' : 'pointer', opacity: dfConnecting ? 0.7 : 1
+                  }}
+                >
+                  {dfConnecting ? 'Connecting...' : 'Connect Account'}
                 </button>
               </div>
             </form>
