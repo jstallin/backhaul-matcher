@@ -61,16 +61,16 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
     <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-          <button onClick={onBack} style={{ padding: '8px 16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+        <div className="br-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <button onClick={onBack} style={{ padding: '8px 16px', minHeight: '44px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
             ← Back to Backhaul Requests
           </button>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={onEdit} style={{ padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="br-header-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={onEdit} style={{ padding: '10px 20px', minHeight: '44px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Edit size={16} />
               Edit Backhaul Request
             </button>
-            <button onClick={() => setShowCancelDialog(true)} style={{ padding: '10px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button onClick={() => setShowCancelDialog(true)} style={{ padding: '10px 20px', minHeight: '44px', background: colors.background.secondary, border: `2px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <X size={16} />
               Cancel Backhaul Request
             </button>
@@ -138,7 +138,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
               </div>
 
               {/* Route Info */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="br-route-info" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <MapPin size={16} color={colors.accent.primary} />
@@ -244,7 +244,7 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
 
               {/* Additional Info */}
               <div style={{ marginTop: '12px', padding: '12px', background: colors.background.secondary, borderRadius: '8px', fontSize: '12px', color: colors.text.secondary }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                <div className="br-addl-info" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   <div><strong>Broker:</strong> {match.broker}</div>
                   <div><strong>Shipper:</strong> {match.shipper}</div>
                   <div><strong>Freight:</strong> {match.freightType}</div>
@@ -563,6 +563,18 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
           </div>
         </div>
       )}
+      <style>{`
+        @media (max-width: 560px) {
+          .br-header-actions { width: 100%; }
+          .br-header-actions button { flex: 1; justify-content: center; }
+          .br-route-info { grid-template-columns: 1fr !important; }
+          .br-route-info > div:nth-child(2) { display: flex; flex-direction: row; justify-content: flex-start; gap: 8px; }
+          .br-addl-info { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 380px) {
+          .br-addl-info { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 };

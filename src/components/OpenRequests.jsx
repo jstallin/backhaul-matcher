@@ -354,7 +354,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
-      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
+      <header style={{ padding: 'clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px)', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -364,7 +364,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
       </header>
 
-      <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
+      <div style={{ padding: 'clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px)', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
             <div>
@@ -396,6 +396,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '8px 16px',
+                    minHeight: '44px',
                     background: 'transparent',
                     border: `1px solid ${colors.accent.primary}`,
                     borderRadius: '8px',
@@ -494,7 +495,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)' }}>
         {selectedRequest ? (
           loadingMatches ? (
             <div style={{ textAlign: 'center', padding: '80px 20px' }}>
@@ -594,7 +595,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
               {requests.filter(r => r.status === 'active' || r.status === 'paused').map((request) => (
                 <div key={request.id} onClick={() => handleSelectRequest(request)} style={{ background: colors.background.card, border: `2px solid ${request.status === 'active' ? colors.accent.success + '40' : colors.border.primary}`, borderRadius: '16px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${colors.accent.primary}30`; e.currentTarget.style.borderColor = colors.accent.primary; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = request.status === 'active' ? colors.accent.success + '40' : colors.border.primary; }}>
                   

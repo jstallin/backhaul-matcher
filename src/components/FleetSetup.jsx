@@ -268,13 +268,13 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     <div style={{
       maxWidth: '800px',
       margin: '0 auto',
-      padding: '40px 20px'
+      padding: 'clamp(20px, 4vw, 40px) clamp(12px, 3vw, 20px)'
     }}>
-      <div style={{
+      <div className="fs-card" style={{
         background: colors.background.card,
         border: `1px solid ${colors.border.primary}`,
         borderRadius: '16px',
-        padding: '32px'
+        padding: 'clamp(20px, 4vw, 32px)'
       }}>
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
@@ -347,7 +347,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           </div>
 
           {/* MC and DOT Numbers */}
-          <div style={{
+          <div className="fs-2col" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '16px',
@@ -378,7 +378,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           </div>
 
           {/* Phone and Email */}
-          <div style={{
+          <div className="fs-2col" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '16px',
@@ -481,7 +481,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: colors.text.tertiary }}>
                 Percentage of gross backhaul revenue allocated to each party
               </p>
-              <div style={{
+              <div className="fs-2col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '16px'
@@ -523,7 +523,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: colors.text.tertiary }}>
                 Rates carrier charges customer per mile and per stop
               </p>
-              <div style={{
+              <div className="fs-2col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '16px'
@@ -565,7 +565,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: colors.text.tertiary }}>
                 For specific charges to your customer beyond standard rates
               </p>
-              <div style={{
+              <div className="fs-3col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr',
                 gap: '16px',
@@ -608,7 +608,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                   />
                 </div>
               </div>
-              <div style={{
+              <div className="fs-3col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr',
                 gap: '16px'
@@ -659,7 +659,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 FSC per mile = (DOE PADD Rate - PEG) / MPG
               </p>
 
-              <div style={{
+              <div className="fs-2col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '16px',
@@ -696,7 +696,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 </div>
               </div>
 
-              <div style={{
+              <div className="fs-2col" style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '16px',
@@ -793,6 +793,12 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           </button>
         </form>
       </div>
+      <style>{`
+        @media (max-width: 560px) {
+          .fs-2col { grid-template-columns: 1fr !important; }
+          .fs-3col { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 };

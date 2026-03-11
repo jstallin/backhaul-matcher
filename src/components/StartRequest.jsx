@@ -259,7 +259,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
-      <header style={{ padding: '24px 32px', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
+      <header style={{ padding: 'clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px)', borderBottom: `1px solid ${colors.border.secondary}`, background: colors.background.overlay, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 1001 }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -269,7 +269,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
       </header>
 
-      <div style={{ padding: '24px 32px', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
+      <div style={{ padding: 'clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px)', background: colors.background.secondary, borderBottom: `1px solid ${colors.border.secondary}` }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
             <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: colors.text.primary }}>
@@ -287,7 +287,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'clamp(16px, 4vw, 32px)' }}>
         {fleets.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
             <Truck size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
@@ -326,7 +326,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 {selectedFleet && <div style={{ marginTop: '12px', padding: '12px', background: colors.background.tertiary, borderRadius: '8px', fontSize: '13px', color: colors.text.secondary }}><div><strong>Home:</strong> {selectedFleet.home_address}</div>{selectedFleet.mc_number && <div><strong>MC:</strong> {selectedFleet.mc_number}</div>}{selectedFleet.dot_number && <div><strong>DOT:</strong> {selectedFleet.dot_number}</div>}</div>}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div className="sr-date-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Equipment Available *</label>
                   <input type="date" value={formData.equipmentAvailableDate} onChange={(e) => handleChange('equipmentAvailableDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentAvailableDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
@@ -390,7 +390,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 560px) {
+          .sr-date-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 };

@@ -113,7 +113,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
     <div style={{ minHeight: '100vh', background: colors.background.primary, color: colors.text.primary }}>
       {/* Header */}
       <header style={{
-        padding: '20px 32px',
+        padding: 'clamp(12px, 3vw, 20px) clamp(16px, 4vw, 32px)',
         borderBottom: `1px solid ${colors.border.secondary}`,
         background: colors.background.overlay,
         backdropFilter: 'blur(20px)',
@@ -131,7 +131,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
       </header>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'clamp(20px, 4vw, 32px) clamp(16px, 3vw, 24px)' }}>
         {/* Page title */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ margin: '0 0 6px 0', fontSize: '26px', fontWeight: 800, color: colors.text.primary }}>
@@ -190,7 +190,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             {/* Stat Cards */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
               gap: '16px',
               marginBottom: '32px'
             }}>
@@ -256,7 +256,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               <h2 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>
                 Quick Actions
               </h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              <div className="dash-quick-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                 {[
                   { label: '+ New Backhaul Request', view: 'start-request', primary: true },
                   { label: '+ New Estimate Request', view: 'start-estimate-request', primary: false },
@@ -268,6 +268,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                     onClick={() => onMenuNavigate(action.view)}
                     style={{
                       padding: '10px 18px',
+                      minHeight: '44px',
                       background: action.primary
                         ? `linear-gradient(135deg, ${colors.accent.primary} 0%, ${colors.accent.hover || colors.accent.primary} 100%)`
                         : colors.background.primary,
@@ -319,7 +320,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            maxWidth: '320px'
+                            maxWidth: 'min(320px, 55vw)'
                           }}>
                             {r.request_name || r.datum_point || 'Request'}
                           </div>
@@ -360,6 +361,13 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           </>
         )}
       </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 480px) {
+          .dash-quick-actions { flex-direction: column; }
+          .dash-quick-actions button { width: 100%; }
+        }
+      `}</style>
     </div>
   );
 };
