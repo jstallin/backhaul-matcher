@@ -129,7 +129,7 @@ export const Settings = ({ onBack }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch('/api/integrations/directfreight/status', {
+      const response = await fetch('/api/integrations/directfreight?action=status', {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
 
@@ -161,7 +161,7 @@ export const Settings = ({ onBack }) => {
         return;
       }
 
-      const response = await fetch('/api/integrations/directfreight/auth', {
+      const response = await fetch('/api/integrations/directfreight?action=auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ export const Settings = ({ onBack }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch('/api/integrations/directfreight/auth', {
+      const response = await fetch('/api/integrations/directfreight?action=auth', {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });

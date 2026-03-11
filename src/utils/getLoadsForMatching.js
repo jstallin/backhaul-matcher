@@ -54,7 +54,7 @@ async function getDirectFreightLoads(userId, requestContext = {}) {
       radius_miles:   '150'
     });
 
-    const response = await fetch(`/api/integrations/directfreight/loads?${params}`, {
+    const response = await fetch(`/api/integrations/directfreight?action=loads&${params}`, {
       headers: { 'Authorization': `Bearer ${session.access_token}` }
     });
 
