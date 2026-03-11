@@ -21,6 +21,7 @@ import { FleetReports } from './components/FleetReports';
 import { Dashboard } from './components/Dashboard';
 import { ImportedLoads } from './components/ImportedLoads';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
+import { InstallPrompt } from './components/InstallPrompt';
 import { db } from './lib/supabase';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
@@ -1095,6 +1096,7 @@ function App() {
         }
       `}</style>
       
+      <InstallPrompt />
       <Analytics />
     </AuthWrapper>
   );
