@@ -14,7 +14,10 @@
  * @returns {string} e.g. "-85.7585,38.2527;-82.3535,36.3134"
  */
 export const formatStops = (points) => {
-  return points.map(p => `${p.lng},${p.lat}`).join(';');
+  return points.map(p => {
+    if (p.city && p.state) return `${p.city},${p.state},US`;
+    return `${p.lng},${p.lat}`;
+  }).join(';');
 };
 
 /**

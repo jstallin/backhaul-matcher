@@ -189,29 +189,34 @@ export const findRouteHomeBackhauls = async (
     if (load.weight_lbs > fleetProfile.weightLimit) continue;
 
     // 2. Quick Haversine pre-filter: delivery must be near home
-    // Use 1.5x homeRadius since driving distance is always longer than Haversine
-    const haversineDeliveryToHome = calculateDistance(
-      load.delivery_lat, load.delivery_lng,
-      fleetHome.lat, fleetHome.lng
-    );
-    if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
+    // Skip for loads without coordinates (e.g. Direct Freight) — source already filtered by radius
+    if (load.delivery_lat !== null && load.delivery_lng !== null) {
+      const haversineDeliveryToHome = calculateDistance(
+        load.delivery_lat, load.delivery_lng,
+        fleetHome.lat, fleetHome.lng
+      );
+      if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
+    }
 
     // 3. Corridor check (no API call — Turf.js polygon or Haversine fallback)
-    let isPickupAlongRoute;
-    if (useCorridor) {
-      isPickupAlongRoute = isPointInCorridor(
-        load.pickup_lat, load.pickup_lng,
-        routeData.corridor
-      );
-    } else {
-      isPickupAlongRoute = isAlongRoute(
-        load.pickup_lat, load.pickup_lng,
-        datumPoint.lat, datumPoint.lng,
-        fleetHome.lat, fleetHome.lng,
-        corridorWidthMiles
-      );
+    // Skip for loads without coordinates — trust source's geographic filtering
+    if (load.pickup_lat !== null && load.pickup_lng !== null) {
+      let isPickupAlongRoute;
+      if (useCorridor) {
+        isPickupAlongRoute = isPointInCorridor(
+          load.pickup_lat, load.pickup_lng,
+          routeData.corridor
+        );
+      } else {
+        isPickupAlongRoute = isAlongRoute(
+          load.pickup_lat, load.pickup_lng,
+          datumPoint.lat, datumPoint.lng,
+          fleetHome.lat, fleetHome.lng,
+          corridorWidthMiles
+        );
+      }
+      if (!isPickupAlongRoute) continue;
     }
-    if (!isPickupAlongRoute) continue;
 
     corridorCandidates.push(load);
   }
@@ -259,10 +264,16 @@ export const findRouteHomeBackhauls = async (
     const batch = uncached.slice(i, i + batchSize);
     const batchPromises = batch.map(async (load) => {
       try {
+        const pickupStop = load.pickup_lat !== null
+          ? { lat: load.pickup_lat, lng: load.pickup_lng }
+          : { city: load.pickup_city, state: load.pickup_state };
+        const deliveryStop = load.delivery_lat !== null
+          ? { lat: load.delivery_lat, lng: load.delivery_lng }
+          : { city: load.delivery_city, state: load.delivery_state };
         const [dtp, dtm, dth] = await Promise.all([
-          getDrivingDistance([firstLegOrigin, { lat: load.pickup_lat, lng: load.pickup_lng }]),
-          getDrivingDistance([{ lat: load.pickup_lat, lng: load.pickup_lng }, { lat: load.delivery_lat, lng: load.delivery_lng }]),
-          getDrivingDistance([{ lat: load.delivery_lat, lng: load.delivery_lng }, fleetHome])
+          getDrivingDistance([firstLegOrigin, pickupStop]),
+          getDrivingDistance([pickupStop, deliveryStop]),
+          getDrivingDistance([deliveryStop, fleetHome])
         ]);
         loadDistCache.set(load.load_id, { dtp, dtm, dth });
         return { load, dtp, dtm, dth };
@@ -285,17 +296,19 @@ export const findRouteHomeBackhauls = async (
     // Fall back to Haversine if PC*MILER failed for any leg.
     // In relay mode, dtp = homeToPickup; in non-relay, dtp = datumToPickup.
     const firstLegOrigin = isRelay ? fleetHome : datumPoint;
-    const firstLeg = dtp ?? calculateDistance(
-      firstLegOrigin.lat, firstLegOrigin.lng, load.pickup_lat, load.pickup_lng
-    );
-    // Middle leg: prefer PC*MILER result, then load.distance_miles (live DAT data, also PC*MILER),
-    // last resort haversine×1.35.
+    const firstLeg = dtp ?? (load.pickup_lat !== null
+      ? calculateDistance(firstLegOrigin.lat, firstLegOrigin.lng, load.pickup_lat, load.pickup_lng)
+      : null);
+    // Middle leg: prefer PC*MILER result, then load.distance_miles (live DAT/DF data),
+    // last resort haversine×1.35 (only if coords available).
     const pickupToDelivery = dtm
       ?? load.distance_miles
-      ?? calculateDistance(load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng);
-    const deliveryToHome = dth ?? calculateDistance(
-      load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng
-    );
+      ?? (load.pickup_lat !== null
+        ? calculateDistance(load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng)
+        : null);
+    const deliveryToHome = dth ?? (load.delivery_lat !== null
+      ? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng)
+      : null);
 
     // Re-check delivery-to-home with real driving distance
     if (deliveryToHome > homeRadiusMiles) continue;

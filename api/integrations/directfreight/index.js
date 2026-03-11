@@ -89,11 +89,10 @@ export default async function handler(req, res) {
     }
 
     try {
-      // TODO: Verify exact request body field names with DF API docs
-      const dfRes = await fetch(`${DF_BASE_URL}/authentication`, {
+      const dfRes = await fetch(`${DF_BASE_URL}/v1/end_user_authentications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ login: username, secret: password, realm: 'username' })
       });
 
       if (!dfRes.ok) {
@@ -105,9 +104,8 @@ export default async function handler(req, res) {
         return res.status(502).json({ error: 'Direct Freight authentication failed' });
       }
 
-      // TODO: Verify exact token field names in the DF auth response
       const dfData = await dfRes.json();
-      const token = dfData.token || dfData.access_token || dfData.authToken;
+      const token = dfData['end-user-token'];
       const expiresAt = dfData.expires_at || dfData.expires
         ? new Date(dfData.expires_at || dfData.expires).toISOString()
         : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -193,25 +191,27 @@ export default async function handler(req, res) {
       radius_miles = '150'
     } = req.query;
 
-    // TODO: Verify exact query parameter names with Direct Freight API docs
-    const params = new URLSearchParams({
+    const searchBody = {
       ...(origin_city && { origin_city }),
       ...(origin_state && { origin_state }),
-      ...(dest_city && { dest_city }),
-      ...(dest_state && { dest_state }),
-      ...(equipment_type && { equipment: mapEquipmentType(equipment_type) }),
-      ...(pickup_date && { date: pickup_date }),
-      radius: radius_miles,
-      limit: '100'
-    });
+      ...(dest_city && { destination_city: dest_city }),
+      ...(dest_state && { destination_state: dest_state }),
+      ...(equipment_type && { trailer_type: mapEquipmentType(equipment_type) }),
+      ...(pickup_date && { ship_date: pickup_date }),
+      origin_radius: parseInt(radius_miles, 10),
+      destination_radius: parseInt(radius_miles, 10),
+      item_count: 100,
+      full_load: true
+    };
 
     try {
-      const dfRes = await fetch(`${DF_BASE_URL}/boards/loads?${params}`, {
+      const dfRes = await fetch(`${DF_BASE_URL}/v1/boards/loads`, {
+        method: 'POST',
         headers: {
-          // TODO: Verify exact auth header format with DF API docs
-          'Authorization': `Bearer ${integration.access_token}`,
+          'end-user-token': integration.access_token,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(searchBody)
       });
 
       if (!dfRes.ok) {
@@ -229,7 +229,7 @@ export default async function handler(req, res) {
       }
 
       const dfData = await dfRes.json();
-      const rawLoads = dfData.loads || dfData.results || dfData.data || dfData || [];
+      const rawLoads = dfData.list || [];
       const loads = rawLoads.map(normalizeDfLoad).filter(Boolean);
 
       console.log(`✅ Direct Freight: ${loads.length} loads returned`);
@@ -245,57 +245,64 @@ export default async function handler(req, res) {
 }
 
 function mapEquipmentType(appType) {
-  const map = { 'Dry Van': 'DV', 'Flatbed': 'F', 'Refrigerated': 'R', 'Step Deck': 'SD', 'Lowboy': 'LB' };
+  const map = {
+    'Dry Van': 'V',
+    'Flatbed': 'F',
+    'Refrigerated': 'R',
+    'Step Deck': 'SD',
+    'Lowboy': 'LB'
+  };
   return map[appType] || appType;
 }
 
 /**
- * Normalize a Direct Freight load to the app's canonical schema.
- * TODO: Adjust field names once actual DF API response shape is confirmed.
+ * Normalize a Direct Freight board_response_item to the app's canonical schema.
+ * Note: DF does not return lat/lng — pickup_lat/lng and delivery_lat/lng will be null.
+ * The matching algorithm skips the haversine/corridor pre-filter when coords are absent,
+ * relying on DF's own origin_radius/destination_radius filtering instead.
  */
 function normalizeDfLoad(load) {
   if (!load) return null;
   try {
-    const origin = load.origin || load.pickup || {};
-    const destination = load.destination || load.delivery || {};
-    const rate = load.rate || load.pay || {};
-    const equipment = load.equipment || load.trailer || {};
+    if (!load.origin_city || !load.origin_state) return null;
 
-    const pickupLat = parseFloat(origin.lat || origin.latitude || 0);
-    const pickupLng = parseFloat(origin.lng || origin.longitude || 0);
-    const deliveryLat = parseFloat(destination.lat || destination.latitude || 0);
-    const deliveryLng = parseFloat(destination.lng || destination.longitude || 0);
-
-    if (!pickupLat || !pickupLng || !deliveryLat || !deliveryLng) return null;
+    const trailerType = Array.isArray(load.trailer_type)
+      ? load.trailer_type[0]
+      : load.trailer_type || 'V';
 
     return {
-      load_id:          load.id || load.load_id || load.loadId,
-      broker:           load.broker || load.company || 'Direct Freight',
-      shipper:          load.shipper || load.poster || '',
-      receiver:         load.receiver || destination.name || '',
-      freight_type:     load.commodity || load.freight_type || 'General',
-      equipment_type:   equipment.type || equipment.name || 'Dry Van',
-      equipment_code:   equipment.code || 'DV',
-      pickup_city:      origin.city || '',
-      pickup_state:     origin.state || '',
-      pickup_lat:       pickupLat,
-      pickup_lng:       pickupLng,
-      pickup_date:      load.pickup_date || load.pickupDate || null,
-      delivery_city:    destination.city || '',
-      delivery_state:   destination.state || '',
-      delivery_lat:     deliveryLat,
-      delivery_lng:     deliveryLng,
-      delivery_date:    load.delivery_date || load.deliveryDate || null,
-      distance_miles:   parseFloat(load.miles || load.distance || 0),
-      weight_lbs:       parseFloat(load.weight || 0),
-      trailer_length:   parseFloat(load.length || equipment.length || 53),
-      total_revenue:    parseFloat(rate.total || rate.amount || load.rate || 0),
-      revenue_per_mile: parseFloat(rate.per_mile || rate.rate_per_mile || 0),
+      load_id:          load.entry_id,
+      broker:           load.company_name || 'Direct Freight',
+      shipper:          '',
+      receiver:         '',
+      freight_type:     load.commodity || 'General',
+      equipment_type:   mapTrailerTypeToName(trailerType),
+      equipment_code:   trailerType,
+      pickup_city:      load.origin_city || '',
+      pickup_state:     load.origin_state || '',
+      pickup_lat:       null,
+      pickup_lng:       null,
+      pickup_date:      load.ship_date || null,
+      delivery_city:    load.destination_city || '',
+      delivery_state:   load.destination_state || '',
+      delivery_lat:     null,
+      delivery_lng:     null,
+      delivery_date:    load.receive_date || null,
+      distance_miles:   load.trip_miles || 0,
+      weight_lbs:       load.weight || 0,
+      trailer_length:   load.length || 53,
+      total_revenue:    load.pay_rate || 0,
+      revenue_per_mile: load.rate_per_mile_est || 0,
       status:           'available',
-      posted_date:      load.posted_date || load.postedDate || new Date().toISOString()
+      posted_date:      new Date(Date.now() - (load.age || 0) * 60000).toISOString()
     };
   } catch (err) {
     console.warn('Failed to normalize DF load:', err);
     return null;
   }
+}
+
+function mapTrailerTypeToName(code) {
+  const map = { 'V': 'Dry Van', 'F': 'Flatbed', 'R': 'Refrigerated', 'SD': 'Step Deck', 'LB': 'Lowboy' };
+  return map[code] || code;
 }
