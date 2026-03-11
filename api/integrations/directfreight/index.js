@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       const dfRes = await fetch(`${DF_BASE_URL}/v1/end_user_authentications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: username, secret: password, realm: 'username' })
+        body: JSON.stringify({ login: username, secret: password, realm: username.includes('@') ? 'email' : 'username' })
       });
 
       if (!dfRes.ok) {

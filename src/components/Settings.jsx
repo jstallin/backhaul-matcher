@@ -1459,13 +1459,13 @@ export const Settings = ({ onBack }) => {
             <form onSubmit={handleDfConnect} style={{ padding: '24px' }}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
-                  Username
+                  Username or Email
                 </label>
                 <input
                   type="text"
                   value={dfUsername}
                   onChange={(e) => setDfUsername(e.target.value)}
-                  placeholder="Your Direct Freight username"
+                  placeholder="Username or email address"
                   disabled={dfConnecting}
                   autoComplete="username"
                   style={{
