@@ -18,6 +18,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DF_BASE_URL = process.env.DIRECTFREIGHT_API_URL || 'https://api.directfreight.com';
+const DF_API_TOKEN = process.env.DIRECTFREIGHT_API_TOKEN;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || !supabaseServiceKey || !DF_API_TOKEN) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
@@ -91,7 +92,7 @@ export default async function handler(req, res) {
     try {
       const dfRes = await fetch(`${DF_BASE_URL}/v1/end_user_authentications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'api-token': DF_API_TOKEN },
         body: JSON.stringify({ login: username, secret: password, realm: username.includes('@') ? 'email' : 'username' })
       });
 
@@ -208,6 +209,7 @@ export default async function handler(req, res) {
       const dfRes = await fetch(`${DF_BASE_URL}/v1/boards/loads`, {
         method: 'POST',
         headers: {
+          'api-token': DF_API_TOKEN,
           'end-user-token': integration.access_token,
           'Content-Type': 'application/json'
         },
