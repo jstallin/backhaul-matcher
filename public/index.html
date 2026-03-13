@@ -551,6 +551,107 @@
       .hero-cta { flex-direction: column; align-items: stretch; }
       .hero-cta .btn { text-align: center; justify-content: center; }
     }
+
+    /* ── GREEN LEAF ── */
+    .green-leaf-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .green-leaf-btn {
+      position: absolute;
+      top: -10px;
+      right: -12px;
+      width: 28px;
+      height: 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      filter: drop-shadow(0 2px 6px rgba(0,180,0,0.5));
+    }
+    .green-leaf-btn:hover { transform: scale(1.2) rotate(-8deg); }
+
+    /* ── GREEN MODAL ── */
+    .green-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .green-modal-overlay.open { display: flex; }
+    .green-modal {
+      background: #0d1a0d;
+      border: 1px solid rgba(100,200,80,0.25);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 560px;
+      width: 100%;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 60px rgba(80,200,50,0.06);
+      animation: modalIn 0.22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .green-modal-close {
+      position: absolute;
+      top: 16px; right: 18px;
+      background: none; border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 22px; cursor: pointer;
+      line-height: 1; padding: 4px 8px;
+      transition: color 0.15s;
+    }
+    .green-modal-close:hover { color: rgba(255,255,255,0.75); }
+    .green-modal h3 {
+      margin: 0 0 6px 0;
+      font-size: 20px; font-weight: 800;
+      color: #7dc520;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .green-modal .modal-sub {
+      font-size: 13px; color: rgba(255,255,255,0.4);
+      margin: 0 0 28px 0;
+    }
+    .green-stat {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .green-stat:last-child { border-bottom: none; }
+    .green-stat-num {
+      font-size: 22px; font-weight: 900;
+      color: #7dc520;
+      white-space: nowrap;
+      min-width: 120px;
+    }
+    .green-stat-label {
+      font-size: 14px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.45;
+    }
+    .green-modal-footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(100,200,80,0.15);
+      font-size: 13px;
+      font-weight: 700;
+      color: #7dc520;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
   </style>
 </head>
 <body>
@@ -580,16 +681,69 @@
   <p>Haul Monitor finds profitable backhaul loads along your trucks' return routes — giving your dispatchers ranked, profitable options in minutes, not hours.</p>
   <div class="hero-cta">
     <a href="/app" class="btn btn-primary btn-lg">Get Started →</a>
-    <a href="#how-it-works" class="btn btn-outline btn-lg">See How It Works</a>
+    <span class="green-leaf-wrap">
+      <a href="#how-it-works" class="btn btn-outline btn-lg">See How It Works</a>
+      <button class="green-leaf-btn" onclick="document.getElementById('greenModal').classList.add('open')" aria-label="Environmental impact">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M21 3C21 3 13 3 8 8C3.6 12.4 4 19 4 19C4 19 10.6 19.4 15 15C17.3 12.7 18.6 9.8 19.4 7.2" stroke="#4caf50" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M21 3C18.4 3.8 15.5 5.1 13.2 7.4" stroke="#4caf50" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M4 19C4 19 6 14 9 11" stroke="#4caf50" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="21" cy="3" r="1.5" fill="#7dc520"/>
+        </svg>
+      </button>
+    </span>
   </div>
   <p class="hero-note">Various payment options &nbsp;·&nbsp; Setup in minutes</p>
+</div>
+
+<!-- ── GREEN IMPACT MODAL ── -->
+<div id="greenModal" class="green-modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="green-modal">
+    <button class="green-modal-close" onclick="document.getElementById('greenModal').classList.remove('open')">×</button>
+    <h3>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M21 3C21 3 13 3 8 8C3.6 12.4 4 19 4 19C4 19 10.6 19.4 15 15C17.3 12.7 18.6 9.8 19.4 7.2" stroke="#7dc520" stroke-width="2" stroke-linecap="round"/>
+        <path d="M21 3C18.4 3.8 15.5 5.1 13.2 7.4" stroke="#7dc520" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 19C4 19 6 14 9 11" stroke="#7dc520" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      The Green Case for Backhaul
+    </h3>
+    <p class="modal-sub">By Chip — the math behind empty miles</p>
+
+    <div class="green-stat">
+      <div class="green-stat-num">175B mi</div>
+      <div class="green-stat-label">Annual trucking miles in the U.S.</div>
+    </div>
+    <div class="green-stat">
+      <div class="green-stat-num">43.75B mi</div>
+      <div class="green-stat-label">Driven empty — roughly 25% of all miles</div>
+    </div>
+    <div class="green-stat">
+      <div class="green-stat-num">6.26B gal</div>
+      <div class="green-stat-label">Fuel burned on empty miles (at 7 mpg)</div>
+    </div>
+    <div class="green-stat">
+      <div class="green-stat-num">62.5M gal</div>
+      <div class="green-stat-label">Fuel saved per 1% reduction in empty miles</div>
+    </div>
+    <div class="green-stat">
+      <div class="green-stat-num">$238M</div>
+      <div class="green-stat-label">Fuel cost saved per 1% reduction (at $3.82/gal avg diesel, 2025)</div>
+    </div>
+    <div class="green-stat">
+      <div class="green-stat-num">4,375</div>
+      <div class="green-stat-label">Fewer trucks needed per 1% reduction (at 100K mi/driver/yr)</div>
+    </div>
+
+    <div class="green-modal-footer">Fewer trucks. Safer highways. Cleaner air.</div>
+  </div>
 </div>
 
 <!-- ── STAT BAR ── -->
 <div class="stat-bar">
   <div class="stat-item">
     <div class="stat-num">35%</div>
-    <div class="stat-label">Average deadhead rate in trucking</div>
+    <div class="stat-label">Average deadhead in trucking</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">$1.80</div>
