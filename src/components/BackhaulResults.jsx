@@ -10,6 +10,27 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState({}); // keyed by load_id
+  const [aiLoading, setAiLoading] = useState({});   // keyed by load_id
+
+  const handleAiAnalyze = async (match) => {
+    const id = match.load_id || match.id;
+    if (aiAnalysis[id] || aiLoading[id]) return;
+    setAiLoading(prev => ({ ...prev, [id]: true }));
+    try {
+      const response = await fetch('/api/ai/analyze-load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ match: { ...match, rank: matches.indexOf(match) }, fleet, request })
+      });
+      const data = await response.json();
+      setAiAnalysis(prev => ({ ...prev, [id]: data.analysis || 'Unable to generate analysis.' }));
+    } catch {
+      setAiAnalysis(prev => ({ ...prev, [id]: 'Unable to generate analysis.' }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   const handleCancelRequest = async () => {
     if (!cancelReason.trim()) {
@@ -250,6 +271,44 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
                   <div><strong>Freight:</strong> {match.freightType}</div>
                 </div>
               </div>
+
+              {/* AI Analysis */}
+              {(() => {
+                const id = match.load_id || match.id;
+                const analysis = aiAnalysis[id];
+                const loading = aiLoading[id];
+                const verdict = analysis?.match(/^(TAKE IT|PASS|NEGOTIATE)/i)?.[0]?.toUpperCase();
+                const verdictColor = verdict === 'TAKE IT' ? colors.accent.success : verdict === 'NEGOTIATE' ? colors.accent.primary : verdict === 'PASS' ? colors.accent.danger : colors.text.secondary;
+                return (
+                  <div style={{ marginTop: '12px' }}>
+                    {!analysis && !loading && (
+                      <button
+                        onClick={() => handleAiAnalyze(match)}
+                        style={{ width: '100%', padding: '10px', background: 'transparent', border: `1px dashed ${colors.border.accent}`, borderRadius: '8px', color: colors.text.secondary, fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      >
+                        ✦ Ask AI: Should I take this load?
+                      </button>
+                    )}
+                    {loading && (
+                      <div style={{ padding: '12px', background: colors.background.secondary, borderRadius: '8px', fontSize: '13px', color: colors.text.tertiary, textAlign: 'center' }}>
+                        Analyzing load...
+                      </div>
+                    )}
+                    {analysis && (
+                      <div style={{ padding: '14px', background: `${verdictColor}0d`, border: `1px solid ${verdictColor}40`, borderRadius: '8px' }}>
+                        {verdict && (
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: verdictColor, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            ✦ {verdict}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: '1.6' }}>
+                          {analysis.replace(/^(TAKE IT|PASS|NEGOTIATE)[.:—\s]*/i, '')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Action Buttons */}
               <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>

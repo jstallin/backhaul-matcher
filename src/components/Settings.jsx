@@ -46,7 +46,7 @@ export const Settings = ({ onBack }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch('/api/integrations/dat/status', {
+      const response = await fetch('/api/integrations/dat', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
@@ -89,7 +89,7 @@ export const Settings = ({ onBack }) => {
         return;
       }
 
-      const response = await fetch('/api/integrations/dat/connect', {
+      const response = await fetch('/api/integrations/dat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ export const Settings = ({ onBack }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const response = await fetch('/api/integrations/dat/status', {
+      const response = await fetch('/api/integrations/dat', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
