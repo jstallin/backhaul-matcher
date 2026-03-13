@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
+import { CopilotChat } from './CopilotChat';
 
 export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCancel }) => {
   const { colors } = useTheme();
@@ -325,6 +326,11 @@ export const BackhaulResults = ({ request, fleet, matches, onBack, onEdit, onCan
           ))}
         </div>
       )}
+
+      <CopilotChat
+        context="results"
+        contextData={{ matches, fleet, request }}
+      />
 
       {/* Route Details Modal */}
       {selectedMatch && (() => {
