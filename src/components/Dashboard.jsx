@@ -6,6 +6,7 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { db } from '../lib/supabase';
+import { CoDriver } from './CoDriver';
 
 export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -361,6 +362,17 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           </>
         )}
       </div>
+      <CoDriver
+        context="dashboard"
+        contextData={{
+          fleets,
+          activeRequests: activeRequests.length,
+          completedRequests: completedRequests.length,
+          openEstimates: openEstimates.length,
+          recentActivity
+        }}
+      />
+
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 480px) {

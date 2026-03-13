@@ -13,7 +13,7 @@ import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
-import { CopilotChat } from './CopilotChat';
+import { CoDriver } from './CoDriver';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -666,7 +666,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         )}
       </div>
 
-      <CopilotChat
+      <CoDriver
         context="requests"
         contextData={{ requests }}
       />
