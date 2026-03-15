@@ -18,7 +18,18 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const [defaultBuyPackage, setDefaultBuyPackage] = useState(null);
   const { balance, loading: creditsLoading, openCheckout } = useCredits();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const buy = params.get('buy');
+    if (buy && ['starter', 'pro', 'fleet'].includes(buy)) {
+      setDefaultBuyPackage(buy);
+      setShowBuyCredits(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -391,6 +402,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         <BuyCreditsModal
           onClose={() => setShowBuyCredits(false)}
           onPurchase={openCheckout}
+          defaultPackage={defaultBuyPackage}
         />
       )}
 

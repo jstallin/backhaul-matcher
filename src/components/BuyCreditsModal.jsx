@@ -30,9 +30,10 @@ const PACKAGES = [
   }
 ];
 
-export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = false }) => {
+export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = false, defaultPackage = null }) => {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(null);
+  const [highlighted, setHighlighted] = useState(defaultPackage);
 
   const handleSelect = async (pkg) => {
     setLoading(pkg.id);
@@ -88,8 +89,8 @@ export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = fal
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '16px 18px',
-                background: pkg.highlight ? `${colors.accent.primary}10` : colors.background.secondary,
-                border: `1px solid ${pkg.highlight ? colors.accent.primary : colors.border.secondary}`,
+                background: pkg.highlight || highlighted === pkg.id ? `${colors.accent.primary}10` : colors.background.secondary,
+                border: `1px solid ${pkg.highlight || highlighted === pkg.id ? colors.accent.primary : colors.border.secondary}`,
                 borderRadius: '10px',
                 cursor: loading !== null ? 'wait' : 'pointer',
                 textAlign: 'left',
