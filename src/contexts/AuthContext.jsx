@@ -15,12 +15,24 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdmin = async (userId) => {
+    if (!userId) { setIsAdmin(false); return; }
+    const { data } = await supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    setIsAdmin(!!data);
+  };
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      checkAdmin(session?.user?.id);
       setLoading(false);
     });
 
@@ -30,6 +42,7 @@ export const AuthProvider = ({ children }) => {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      checkAdmin(session?.user?.id);
       setLoading(false);
     });
 
@@ -40,6 +53,7 @@ export const AuthProvider = ({ children }) => {
     user,
     session,
     loading,
+    isAdmin,
     signUp: async (email, password, fullName, role = 'fleet_manager') => {
       const { data, error } = await supabase.auth.signUp({
         email,

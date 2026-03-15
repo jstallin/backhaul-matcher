@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase';
 export const Settings = ({ onBack }) => {
   const [activeSection, setActiveSection] = useState('accessibility');
   const { theme, toggleTheme, colors } = useTheme();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -237,8 +237,23 @@ export const Settings = ({ onBack }) => {
     { id: 'general', label: 'General', icon: SettingsIcon, badge: null },
     { id: 'account', label: 'Account & Access', icon: User, badge: null },
     { id: 'integrations', label: 'Integrations', icon: Link2, badge: null },
-    { id: 'accessibility', label: 'Accessibility', icon: Sun, badge: null }
+    { id: 'accessibility', label: 'Accessibility', icon: Sun, badge: null },
+    ...(isAdmin ? [{ id: 'developer', label: 'Developer', icon: SettingsIcon, badge: null }] : [])
   ];
+
+  const [creditsBypass, setCreditsBypass] = useState(
+    localStorage.getItem('hm_credits_bypass') === 'true'
+  );
+
+  const toggleCreditsBypass = () => {
+    const next = !creditsBypass;
+    setCreditsBypass(next);
+    if (next) {
+      localStorage.setItem('hm_credits_bypass', 'true');
+    } else {
+      localStorage.removeItem('hm_credits_bypass');
+    }
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -1277,6 +1292,67 @@ export const Settings = ({ onBack }) => {
                   color: colors.text.secondary
                 }}>
                   Your theme preference is saved automatically and will persist across sessions.
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'developer' && (
+              <div style={{
+                background: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: '16px',
+                padding: '32px'
+              }}>
+                <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>
+                  Developer
+                </h2>
+                <p style={{ margin: '0 0 28px 0', color: colors.text.secondary, fontSize: '15px' }}>
+                  Testing and development tools. Not visible to end users.
+                </p>
+
+                <div style={{
+                  padding: '20px 24px',
+                  background: colors.background.secondary,
+                  border: `1px solid ${colors.border.primary}`,
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>
+                        Bypass Credit Gate
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary }}>
+                        Skip credit deduction on searches. Searches run free while enabled.
+                      </p>
+                    </div>
+                    <button
+                      onClick={toggleCreditsBypass}
+                      style={{
+                        width: '48px', height: '26px', borderRadius: '13px', border: 'none',
+                        background: creditsBypass ? colors.accent.primary : colors.border.secondary,
+                        cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                        flexShrink: 0, marginLeft: '16px'
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: '3px',
+                        left: creditsBypass ? '25px' : '3px',
+                        width: '20px', height: '20px', borderRadius: '50%',
+                        background: '#fff', transition: 'left 0.2s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                      }} />
+                    </button>
+                  </div>
+                  {creditsBypass && (
+                    <div style={{
+                      marginTop: '12px', padding: '8px 12px',
+                      background: `${colors.accent.primary}15`,
+                      border: `1px solid ${colors.accent.primary}40`,
+                      borderRadius: '6px', fontSize: '12px', color: colors.accent.primary, fontWeight: 600
+                    }}>
+                      Credit gate is bypassed — searches will not deduct credits
+                    </div>
+                  )}
                 </div>
               </div>
             )}
