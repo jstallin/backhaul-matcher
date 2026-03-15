@@ -14,6 +14,8 @@ import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFle
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { CoDriver } from './CoDriver';
+import { useCredits } from '../hooks/useCredits';
+import { BuyCreditsModal } from './BuyCreditsModal';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -28,7 +30,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [previousMatches, setPreviousMatches] = useState([]); // Track previous matches for change detection
   const previousMatchesRef = useRef([]); // Ref to avoid stale closure in auto-refresh interval
   const [loadingMatches, setLoadingMatches] = useState(false);
-  
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const { balance, fetchBalance, deductCredit, openCheckout } = useCredits();
+
   // Auto-refresh state - read from request, not local
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
   const [timeUntilRefresh, setTimeUntilRefresh] = useState('');
@@ -234,6 +238,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipmentType: fleetProfile.trailerType || 'Dry Van',
         pickupDate:    request.equipment_available_date || ''
       };
+
+      // Deduct 1 credit before running the search
+      const creditResult = await deductCredit('Backhaul search');
+      if (!creditResult.success) {
+        setLoadingMatches(false);
+        setShowBuyCredits(true);
+        return;
+      }
 
       const { loads: loadsForMatching, isLive, source } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
       if (isLive) {
@@ -665,6 +677,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           </>
         )}
       </div>
+
+      {showBuyCredits && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCredits(false)}
+          onPurchase={openCheckout}
+          insufficientCredits={true}
+        />
+      )}
 
       <CoDriver
         context="requests"

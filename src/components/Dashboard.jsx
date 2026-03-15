@@ -7,6 +7,8 @@ import { AvatarMenu } from './AvatarMenu';
 import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { db } from '../lib/supabase';
 import { CoDriver } from './CoDriver';
+import { useCredits } from '../hooks/useCredits';
+import { BuyCreditsModal } from './BuyCreditsModal';
 
 export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -15,6 +17,8 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [fleets, setFleets] = useState([]);
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const { balance, loading: creditsLoading, openCheckout } = useCredits();
 
   useEffect(() => {
     loadData();
@@ -129,7 +133,28 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           <HamburgerMenu currentView="dashboard" onNavigate={onMenuNavigate} />
           <HaulMonitorLogo size="small" variant="icon" />
         </div>
-        <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setShowBuyCredits(true)}
+            title="Credits remaining"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 12px',
+              background: balance === 0 ? 'rgba(239,68,68,0.12)' : `${colors.accent.primary}12`,
+              border: `1px solid ${balance === 0 ? 'rgba(239,68,68,0.3)' : `${colors.accent.primary}30`}`,
+              borderRadius: '20px',
+              cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+          >
+            <span style={{ fontSize: '13px', color: balance === 0 ? '#ef4444' : colors.accent.primary }}>⬡</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: balance === 0 ? '#ef4444' : colors.text.primary }}>
+              {creditsLoading ? '—' : balance ?? 0}
+            </span>
+            <span style={{ fontSize: '11px', color: colors.text.secondary }}>credits</span>
+          </button>
+          <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
+        </div>
       </header>
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'clamp(20px, 4vw, 32px) clamp(16px, 3vw, 24px)' }}>
@@ -362,6 +387,13 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           </>
         )}
       </div>
+      {showBuyCredits && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCredits(false)}
+          onPurchase={openCheckout}
+        />
+      )}
+
       <CoDriver
         context="dashboard"
         contextData={{

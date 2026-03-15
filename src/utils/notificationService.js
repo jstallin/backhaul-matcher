@@ -141,7 +141,7 @@ const sendEmail = async ({ to, subject, body, html }) => {
   console.log('📧 Sending email:', { to, subject });
   
   // Example with fetch to your backend API endpoint
-  const response = await fetch(`${NOTIFICATION_API_URL}/send-email`, {
+  const response = await fetch(`${NOTIFICATION_API_URL}?type=email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ const sendSMS = async ({ to, message }) => {
   }
 
   // Send via your backend API (more secure than client-side)
-  const response = await fetch(`${NOTIFICATION_API_URL}/send-sms`, {
+  const response = await fetch(`${NOTIFICATION_API_URL}?type=sms`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
