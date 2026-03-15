@@ -89,8 +89,8 @@ export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = fal
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '16px 18px',
-                background: pkg.highlight || highlighted === pkg.id ? `${colors.accent.primary}10` : colors.background.secondary,
-                border: `1px solid ${pkg.highlight || highlighted === pkg.id ? colors.accent.primary : colors.border.secondary}`,
+                background: (highlighted ? highlighted === pkg.id : pkg.highlight) ? `${colors.accent.primary}10` : colors.background.secondary,
+                border: `1px solid ${(highlighted ? highlighted === pkg.id : pkg.highlight) ? colors.accent.primary : colors.border.secondary}`,
                 borderRadius: '10px',
                 cursor: loading !== null ? 'wait' : 'pointer',
                 textAlign: 'left',
@@ -102,11 +102,11 @@ export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = fal
                 <div style={{
                   width: '44px', height: '44px',
                   borderRadius: '10px',
-                  background: pkg.highlight ? `${colors.accent.primary}25` : colors.background.primary,
+                  background: (highlighted ? highlighted === pkg.id : pkg.highlight) ? `${colors.accent.primary}25` : colors.background.primary,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '22px', fontWeight: 900, color: pkg.highlight ? colors.accent.primary : colors.text.primary, lineHeight: 1 }}>
+                  <span style={{ fontSize: '22px', fontWeight: 900, color: (highlighted ? highlighted === pkg.id : pkg.highlight) ? colors.accent.primary : colors.text.primary, lineHeight: 1 }}>
                     {loading === pkg.id ? '…' : pkg.credits}
                   </span>
                 </div>
