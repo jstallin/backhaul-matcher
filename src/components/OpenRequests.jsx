@@ -33,7 +33,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [datImportRequest, setDatImportRequest] = useState(null);
-  const { balance, fetchBalance, deductCredit, openCheckout } = useCredits();
+  const { balance, loading: creditsLoading, fetchBalance, deductCredit, openCheckout } = useCredits();
 
   // Auto-refresh state - read from request, not local
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
@@ -481,6 +481,25 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <HamburgerMenu currentView="open-requests" onNavigate={onMenuNavigate} />
+            <button
+              onClick={() => setShowBuyCredits(true)}
+              title="Credits remaining"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '6px 12px',
+                background: balance === 0 ? 'rgba(239,68,68,0.12)' : `${colors.accent.primary}12`,
+                border: `1px solid ${balance === 0 ? 'rgba(239,68,68,0.3)' : `${colors.accent.primary}30`}`,
+                borderRadius: '20px',
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              <span style={{ fontSize: '13px', color: balance === 0 ? '#ef4444' : colors.accent.primary }}>⬡</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: balance === 0 ? '#ef4444' : colors.text.primary }}>
+                {creditsLoading ? '—' : balance ?? 0}
+              </span>
+              <span style={{ fontSize: '11px', color: colors.text.secondary }}>credits</span>
+            </button>
             <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
           </div>
         </div>
