@@ -183,10 +183,13 @@ export const findRouteHomeBackhauls = async (
   const corridorCandidates = [];
 
   for (const load of availableLoads) {
-    // 1. Equipment compatibility
-    if (load.equipment_type !== fleetProfile.trailerType) continue;
-    if (load.trailer_length > fleetProfile.trailerLength) continue;
-    if (load.weight_lbs > fleetProfile.weightLimit) continue;
+    // 1. Equipment compatibility (handle both camelCase and snake_case fleet profile fields)
+    const reqType   = fleetProfile.trailerType   || fleetProfile.trailer_type;
+    const reqLength = fleetProfile.trailerLength  || fleetProfile.trailer_length;
+    const reqWeight = fleetProfile.weightLimit    || fleetProfile.weight_limit;
+    if (reqType   && load.equipment_type  && load.equipment_type  !== reqType)   continue;
+    if (reqLength && load.trailer_length  && load.trailer_length  >  reqLength)  continue;
+    if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
 
     // 2. Quick Haversine pre-filter: delivery must be near home
     // Skip for loads without coordinates (e.g. Direct Freight) — source already filtered by radius
