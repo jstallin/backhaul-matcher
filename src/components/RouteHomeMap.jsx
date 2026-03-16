@@ -205,46 +205,50 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
 
           return (
             <span key={`backhaul-${load.load_id}`}>
-              {/* Pickup marker (golden amber) */}
-              <Marker
-                position={[load.pickup_lat, load.pickup_lng]}
-                icon={createCircleIcon(
-                  isSelected ? '#00a300' : '#008b00',
-                  String(loadNum),
-                  pickupSize
-                )}
-              >
-                <Popup>
-                  <div style={{ padding: '4px' }}>
-                    <strong>#{loadNum} Pickup</strong><br/>
-                    {load.pickup_city}, {load.pickup_state}<br/>
-                    <span style={{ fontSize: '11px', color: '#666' }}>
-                      {load.datum_to_pickup_miles} mi from datum
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
+              {/* Pickup marker (golden amber) — only if coords available */}
+              {load.pickup_lat != null && load.pickup_lng != null && (
+                <Marker
+                  position={[load.pickup_lat, load.pickup_lng]}
+                  icon={createCircleIcon(
+                    isSelected ? '#00a300' : '#008b00',
+                    String(loadNum),
+                    pickupSize
+                  )}
+                >
+                  <Popup>
+                    <div style={{ padding: '4px' }}>
+                      <strong>#{loadNum} Pickup</strong><br/>
+                      {load.pickup_city}, {load.pickup_state}<br/>
+                      <span style={{ fontSize: '11px', color: '#666' }}>
+                        {load.datum_to_pickup_miles} mi from datum
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
 
-              {/* Delivery marker (blue) */}
-              <Marker
-                position={[load.delivery_lat, load.delivery_lng]}
-                icon={createCircleIcon(
-                  isSelected ? '#3B82F6' : '#5EA0DB',
-                  String(loadNum),
-                  deliverySize
-                )}
-              >
-                <Popup>
-                  <div style={{ padding: '4px' }}>
-                    <strong>#{loadNum} Delivery</strong><br/>
-                    {load.delivery_city}, {load.delivery_state}<br/>
-                    <span style={{ fontSize: '11px', color: '#666' }}>
-                      {load.delivery_to_home_miles} mi to home<br/>
-                      {load.formatted_revenue} &middot; {load.formatted_rpm}/mi
-                    </span>
-                  </div>
-                </Popup>
-              </Marker>
+              {/* Delivery marker (blue) — only if coords available */}
+              {load.delivery_lat != null && load.delivery_lng != null && (
+                <Marker
+                  position={[load.delivery_lat, load.delivery_lng]}
+                  icon={createCircleIcon(
+                    isSelected ? '#3B82F6' : '#5EA0DB',
+                    String(loadNum),
+                    deliverySize
+                  )}
+                >
+                  <Popup>
+                    <div style={{ padding: '4px' }}>
+                      <strong>#{loadNum} Delivery</strong><br/>
+                      {load.delivery_city}, {load.delivery_state}<br/>
+                      <span style={{ fontSize: '11px', color: '#666' }}>
+                        {load.delivery_to_home_miles} mi to home<br/>
+                        {load.formatted_revenue} &middot; {load.formatted_rpm}/mi
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
             </span>
           );
         })}
