@@ -267,7 +267,47 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         request.is_relay || false
       );
 
-      const matches = result.opportunities;
+      let matches = result.opportunities;
+
+      // Geocode pickup/delivery cities for matched loads missing coordinates (e.g. DF scraped loads)
+      const top10 = matches.slice(0, 10);
+      const needsGeocode = top10.some(m => m.pickup_lat == null || m.delivery_lat == null);
+      if (needsGeocode) {
+        // Collect unique city+state pairs missing coords
+        const cityMap = new Map();
+        top10.forEach(m => {
+          if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
+            cityMap.set(`${m.pickup_city},${m.pickup_state}`, null);
+          }
+          if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
+            cityMap.set(`${m.delivery_city},${m.delivery_state}`, null);
+          }
+        });
+        // Geocode each unique city
+        await Promise.all([...cityMap.keys()].map(async (key) => {
+          const [city, state] = key.split(',');
+          try {
+            const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(`${city}, ${state}`)}`);
+            if (res.ok) {
+              const geo = await res.json();
+              if (geo.lat && geo.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
+            }
+          } catch (e) { /* ignore */ }
+        }));
+        // Patch matches with geocoded coords
+        matches = matches.map(m => {
+          const updated = { ...m };
+          if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
+            const coords = cityMap.get(`${m.pickup_city},${m.pickup_state}`);
+            if (coords) { updated.pickup_lat = coords.lat; updated.pickup_lng = coords.lng; }
+          }
+          if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
+            const coords = cityMap.get(`${m.delivery_city},${m.delivery_state}`);
+            if (coords) { updated.delivery_lat = coords.lat; updated.delivery_lng = coords.lng; }
+          }
+          return updated;
+        });
+      }
 
       // Store route data for map visualization
       setRouteData(result.routeData);
