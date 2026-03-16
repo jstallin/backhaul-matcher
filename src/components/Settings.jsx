@@ -1325,13 +1325,15 @@ export const Settings = ({ onBack }) => {
                         Skip credit deduction on searches. Searches run free while enabled.
                       </p>
                     </div>
-                    <button
+                    <div
                       onClick={toggleCreditsBypass}
+                      role="switch"
+                      aria-checked={creditsBypass}
                       style={{
-                        width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+                        width: '44px', height: '24px', borderRadius: '12px',
                         background: creditsBypass ? colors.accent.primary : colors.border.secondary,
                         cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
-                        flexShrink: 0, marginLeft: '16px', padding: 0, display: 'block'
+                        flexShrink: 0, marginLeft: '16px'
                       }}
                     >
                       <span style={{
@@ -1341,7 +1343,7 @@ export const Settings = ({ onBack }) => {
                         background: '#fff', transition: 'left 0.2s',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
                       }} />
-                    </button>
+                    </div>
                   </div>
                   {creditsBypass && (
                     <div style={{
