@@ -1,21 +1,21 @@
 Age,Origin,Destination,Equip,Len,Wt,FP,Trip Miles,Rate,Rate/Mile,Pick Up,Company,Phone
-2h,Alachua, FL,Davidson, NC,V,53,44000,F,612,$1850,$3.02,01/18,Coyote Logistics,800-225-5051
-1h 15m,Gainesville, FL,Charlotte, NC,V,53,42000,F,623,$1950,$3.13,01/18,Echo Global Logistics,800-354-7993
-3h,Jacksonville, FL,Davidson, NC,V,48,38000,F,551,$1650,$3.00,01/18,TQL,800-580-3101
-45m,Ocala, FL,Greensboro, NC,V,53,45000,F,697,$2100,$3.01,01/18,CH Robinson,800-323-7587
-4h,Lake City, FL,Columbia, SC,V,53,40000,F,398,$1100,$2.76,01/18,Arrive Logistics,888-861-0650
-2h 30m,Live Oak, FL,Charlotte, NC,V,53,43500,F,581,$1750,$3.01,01/18,Landstar,800-872-9725
-1h,Gainesville, FL,Spartanburg, SC,V,48,37000,F,554,$1600,$2.89,01/18,MoLo Solutions,888-665-6872
-5h,Alachua, FL,Atlanta, GA,V,53,41000,F,372,$1050,$2.82,01/18,XPO Logistics,800-755-2728
-2h,High Springs, FL,Davidson, NC,V,53,44500,F,608,$1800,$2.96,01/18,Uber Freight,800-444-0164
-1h 45m,Jacksonville, FL,Charlotte, NC,V,53,39000,F,565,$1700,$3.01,01/18,Transplace,888-445-1195
-3h 20m,Macclenny, FL,Columbia, SC,V,48,36000,F,415,$1200,$2.89,01/18,Coyote Logistics,800-225-5051
-30m,Gainesville, FL,Winston-Salem, NC,V,53,42000,F,659,$2000,$3.03,01/18,TQL,800-580-3101
-2h 10m,Ocala, FL,Charlotte, NC,V,53,44000,F,659,$1980,$3.00,01/18,Echo Global Logistics,800-354-7993
-4h 30m,Palatka, FL,Raleigh, NC,V,48,38500,F,621,$1850,$2.98,01/18,Arrive Logistics,888-861-0650
-6h,Tampa, FL,Davidson, NC,V,53,45000,F,748,$2250,$3.01,01/18,CH Robinson,800-323-7587
-5h 15m,Orlando, FL,Charlotte, NC,V,53,43000,F,693,$2050,$2.96,01/18,Landstar,800-872-9725
-3h,Lake City, FL,Greenville, SC,V,53,40000,F,498,$1400,$2.81,01/18,MoLo Solutions,888-665-6872
-1h 30m,Starke, FL,Davidson, NC,V,48,41000,F,575,$1700,$2.96,01/18,XPO Logistics,800-755-2728
-2h 45m,Gainesville, FL,Rock Hill, SC,V,53,44000,F,582,$1750,$3.01,01/18,Uber Freight,800-444-0164
-3h 50m,Newberry, FL,Charlotte, NC,V,53,42500,F,638,$1900,$2.98,01/18,Transplace,888-445-1195
+2h,"Alachua, FL","Davidson, NC",V,53,44000,F,612,$1850,$3.02,01/18,Coyote Logistics,800-225-5051
+1h 15m,"Gainesville, FL","Charlotte, NC",V,53,42000,F,623,$1950,$3.13,01/18,Echo Global Logistics,800-354-7993
+3h,"Jacksonville, FL","Davidson, NC",V,48,38000,F,551,$1650,$3.00,01/18,TQL,800-580-3101
+45m,"Ocala, FL","Greensboro, NC",V,53,45000,F,697,$2100,$3.01,01/18,CH Robinson,800-323-7587
+4h,"Lake City, FL","Columbia, SC",V,53,40000,F,398,$1100,$2.76,01/18,Arrive Logistics,888-861-0650
+2h 30m,"Live Oak, FL","Charlotte, NC",V,53,43500,F,581,$1750,$3.01,01/18,Landstar,800-872-9725
+1h,"Gainesville, FL","Spartanburg, SC",V,48,37000,F,554,$1600,$2.89,01/18,MoLo Solutions,888-665-6872
+5h,"Alachua, FL","Atlanta, GA",V,53,41000,F,372,$1050,$2.82,01/18,XPO Logistics,800-755-2728
+2h,"High Springs, FL","Davidson, NC",V,53,44500,F,608,$1800,$2.96,01/18,Uber Freight,800-444-0164
+1h 45m,"Jacksonville, FL","Charlotte, NC",V,53,39000,F,565,$1700,$3.01,01/18,Transplace,888-445-1195
+3h 20m,"Macclenny, FL","Columbia, SC",V,48,36000,F,415,$1200,$2.89,01/18,Coyote Logistics,800-225-5051
+30m,"Gainesville, FL","Winston-Salem, NC",V,53,42000,F,659,$2000,$3.03,01/18,TQL,800-580-3101
+2h 10m,"Ocala, FL","Charlotte, NC",V,53,44000,F,659,$1980,$3.00,01/18,Echo Global Logistics,800-354-7993
+4h 30m,"Palatka, FL","Raleigh, NC",V,48,38500,F,621,$1850,$2.98,01/18,Arrive Logistics,888-861-0650
+6h,"Tampa, FL","Davidson, NC",V,53,45000,F,748,$2250,$3.01,01/18,CH Robinson,800-323-7587
+5h 15m,"Orlando, FL","Charlotte, NC",V,53,43000,F,693,$2050,$2.96,01/18,Landstar,800-872-9725
+3h,"Lake City, FL","Greenville, SC",V,53,40000,F,498,$1400,$2.81,01/18,MoLo Solutions,888-665-6872
+1h 30m,"Starke, FL","Davidson, NC",V,48,41000,F,575,$1700,$2.96,01/18,XPO Logistics,800-755-2728
+2h 45m,"Gainesville, FL","Rock Hill, SC",V,53,44000,F,582,$1750,$3.01,01/18,Uber Freight,800-444-0164
+3h 50m,"Newberry, FL","Charlotte, NC",V,53,42500,F,638,$1900,$2.98,01/18,Transplace,888-445-1195

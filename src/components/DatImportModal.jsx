@@ -72,7 +72,49 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
   const [parsedLoads, setParsedLoads] = useState(null);
   const [parseError, setParseError] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const fileRef = useRef();
+
+  const geocodeCities = async (loads) => {
+    // Build deduplicated set of city/state pairs needing geocoding
+    const unique = new Map();
+    for (const load of loads) {
+      if (load.pickup_city && load.pickup_state) {
+        const key = `${load.pickup_city},${load.pickup_state}`;
+        if (!unique.has(key)) unique.set(key, null);
+      }
+      if (load.delivery_city && load.delivery_state) {
+        const key = `${load.delivery_city},${load.delivery_state}`;
+        if (!unique.has(key)) unique.set(key, null);
+      }
+    }
+
+    // Geocode each unique city/state via PC*Miler
+    await Promise.all([...unique.keys()].map(async (key) => {
+      try {
+        const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(key + ',US')}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.lat && data?.lng) unique.set(key, { lat: data.lat, lng: data.lng });
+        }
+      } catch { /* leave null */ }
+    }));
+
+    // Attach coordinates to loads
+    return loads.map(load => {
+      const pickupKey = `${load.pickup_city},${load.pickup_state}`;
+      const deliveryKey = `${load.delivery_city},${load.delivery_state}`;
+      const pickupCoords = unique.get(pickupKey);
+      const deliveryCoords = unique.get(deliveryKey);
+      return {
+        ...load,
+        pickup_lat: pickupCoords?.lat ?? null,
+        pickup_lng: pickupCoords?.lng ?? null,
+        delivery_lat: deliveryCoords?.lat ?? null,
+        delivery_lng: deliveryCoords?.lng ?? null,
+      };
+    });
+  };
 
   useEffect(() => {
     db.fleets.getById(request.fleet_id).then(setFleet).catch(() => {});
@@ -98,13 +140,17 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
     if (!file) return;
     setParseError('');
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const loads = parseDatCsv(e.target.result);
-        setParsedLoads(loads);
+        setGeocoding(true);
+        const geocodedLoads = await geocodeCities(loads);
+        setParsedLoads(geocodedLoads);
         setStep(3);
       } catch (err) {
         setParseError(err.message);
+      } finally {
+        setGeocoding(false);
       }
     };
     reader.readAsText(file);
@@ -254,7 +300,18 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
                 />
               </div>
 
-              {parseError && (
+              {geocoding && (
+                <div style={{
+                  padding: '12px 14px', borderRadius: '8px', marginBottom: '16px',
+                  background: `${colors.accent.primary}08`, border: `1px solid ${colors.accent.primary}25`,
+                  fontSize: '13px', color: colors.accent.primary, display: 'flex', alignItems: 'center', gap: '10px'
+                }}>
+                  <div style={{ width: '14px', height: '14px', border: `2px solid ${colors.accent.primary}40`, borderTop: `2px solid ${colors.accent.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+                  Geocoding cities via PC*Miler...
+                </div>
+              )}
+
+              {parseError && !geocoding && (
                 <div style={{
                   padding: '12px 14px', borderRadius: '8px', marginBottom: '16px',
                   background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)',
