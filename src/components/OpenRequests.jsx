@@ -223,12 +223,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         datumPoint,
         fleetHome,
         fleetProfile,
-        homeRadiusMiles: datumPoint.lat === fleet.home_lat ? 200 : 50, // Relaxed if geocoding failed
+        homeRadiusMiles: datumPoint.lat === fleet.home_lat ? 200 : 100,
         corridorWidthMiles: datumPoint.lat === fleet.home_lat ? 300 : 100
       });
 
       // If geocoding failed (datum === home), use very relaxed criteria to still show some results
-      const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 50;
+      const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 100;
       const corridorWidthMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 300 : 100;
 
       // Build request context for Direct Freight live fetch
@@ -253,7 +253,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       if (isLive) {
         console.log(`Using ${loadsForMatching.length} live loads from: ${source}`);
       } else {
-        console.log('No live loads found — using demo data');
+        console.log(`Using ${loadsForMatching.length} loads from: ${source}`);
       }
 
       const result = await findRouteHomeBackhauls(
