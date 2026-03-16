@@ -179,7 +179,7 @@ export const findRouteHomeBackhauls = async (
   console.log('Direct return miles:', directReturnMiles, pcMilerDirect ? '(PC Miler)' : '(Haversine)');
 
   // ---- FAST FILTER: equipment + corridor + Haversine pre-check (no API calls) ----
-  const availableLoads = backhaulLoads.filter(load => load.status === 'available');
+  const availableLoads = backhaulLoads.filter(load => !load.status || load.status === 'available');
   const corridorCandidates = [];
 
   for (const load of availableLoads) {

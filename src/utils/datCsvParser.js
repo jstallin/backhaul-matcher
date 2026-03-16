@@ -50,6 +50,22 @@ const HEADER_MAP = {
 
 const parseNum = (v) => parseFloat((v || '0').replace(/[$,\s]/g, '')) || 0;
 
+// Map DAT equipment codes → internal trailer type names
+const EQUIPMENT_MAP = {
+  'v':           'Dry Van',
+  'r':           'Refrigerated',
+  'f':           'Flatbed',
+  'sd':          'Step Deck',
+  'lb':          'Lowboy',
+  'vb':          'Dry Van',
+  'fsd':         'Step Deck',
+  'van':         'Dry Van',
+  'reefer':      'Refrigerated',
+  'flatbed':     'Flatbed',
+  'step deck':   'Step Deck',
+  'dry van':     'Dry Van',
+};
+
 // Parse "Atlanta, GA" or "Atlanta GA" → { city, state }
 const parseLocation = (str) => {
   if (!str || !str.trim()) return { city: '', state: '' };
@@ -141,10 +157,18 @@ export const parseDatCsv = (csvText) => {
     const tripMiles = parseNum(get(row, 'trip_miles'));
     const rate = parseNum(get(row, 'rate'));
     const ratePerMile = parseNum(get(row, 'rate_per_mile'));
+    const rawEquip = (get(row, 'equipment') || 'V').trim();
+    const equipmentType = EQUIPMENT_MAP[rawEquip.toLowerCase()] || 'Dry Van';
+    const loadId = get(row, 'load_id') || `dat-import-${i}`;
 
     loads.push({
-      id: get(row, 'load_id') || `dat-import-${i}`,
+      // Identity — algorithm uses load_id for cache keying
+      id: loadId,
+      load_id: loadId,
       source: 'dat_import',
+      status: 'available',
+
+      // Location — no coordinates from DAT CSV
       pickup_city: pickupCity,
       pickup_state: pickupState,
       delivery_city: deliveryCity,
@@ -153,12 +177,19 @@ export const parseDatCsv = (csvText) => {
       pickup_lng: null,
       delivery_lat: null,
       delivery_lng: null,
+
+      // Distance & rate — use field names the algorithm expects
       distance_miles: tripMiles || null,
+      total_revenue: rate,
       pay_rate: rate,
       rate_per_mile: ratePerMile || (tripMiles > 0 ? rate / tripMiles : 0),
-      equipment_type: get(row, 'equipment') || 'V',
-      weight: parseNum(get(row, 'weight')),
-      length: parseNum(get(row, 'length')),
+
+      // Equipment — normalized to internal names
+      equipment_type: equipmentType,
+      trailer_length: parseNum(get(row, 'length')) || 53,
+      weight_lbs: parseNum(get(row, 'weight')) || 0,
+
+      // Metadata
       company_name: get(row, 'company'),
       ship_date: get(row, 'pickup_date'),
       age: get(row, 'age'),
