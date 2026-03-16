@@ -437,7 +437,7 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
               <div style={{
                 padding: '10px 14px', borderRadius: '8px', marginBottom: '20px',
                 background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.25)',
-                fontSize: '12px', color: 'rgba(251,191,36,0.9)', lineHeight: 1.55
+                fontSize: '12px', color: colors.text.secondary, lineHeight: 1.55
               }}>
                 <strong>Note:</strong> These are point-in-time results from your DAT export. Loads may have been booked since you exported. Always verify availability before committing.
               </div>
