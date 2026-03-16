@@ -1328,16 +1328,16 @@ export const Settings = ({ onBack }) => {
                     <button
                       onClick={toggleCreditsBypass}
                       style={{
-                        width: '48px', height: '26px', borderRadius: '13px', border: 'none',
+                        width: '44px', height: '24px', borderRadius: '12px', border: 'none',
                         background: creditsBypass ? colors.accent.primary : colors.border.secondary,
                         cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
-                        flexShrink: 0, marginLeft: '16px'
+                        flexShrink: 0, marginLeft: '16px', padding: 0, display: 'block'
                       }}
                     >
                       <span style={{
                         position: 'absolute', top: '3px',
-                        left: creditsBypass ? '25px' : '3px',
-                        width: '20px', height: '20px', borderRadius: '50%',
+                        left: creditsBypass ? '23px' : '3px',
+                        width: '18px', height: '18px', borderRadius: '50%',
                         background: '#fff', transition: 'left 0.2s',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
                       }} />
