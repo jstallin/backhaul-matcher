@@ -18,9 +18,27 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'address parameter required' });
   }
 
+  // Try to geocode the given address string. If PC*Miler returns 400 (e.g. for
+  // a full street address it can't parse), fall back to city/state extracted
+  // from the address: "302 Dura Ave, Toledo, OH 43612" → "Toledo, OH"
+  const tryGeocode = async (addr) => {
+    const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/locations?address=${encodeURIComponent(addr)}&authToken=${PCMILER_TOKEN}`;
+    const r = await fetch(url);
+    return { response: r, usedAddress: addr };
+  };
+
   try {
-    const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/locations?address=${encodeURIComponent(address)}&authToken=${PCMILER_TOKEN}`;
-    const response = await fetch(url);
+    let { response, usedAddress } = await tryGeocode(address);
+
+    // On 400, try stripping to city/state (handles full street addresses)
+    if (response.status === 400) {
+      const cityStateMatch = address.match(/,\s*([A-Za-z\s]+),\s*([A-Z]{2})\b/);
+      if (cityStateMatch) {
+        const simplified = `${cityStateMatch[1].trim()}, ${cityStateMatch[2]}`;
+        console.log(`PC Miler geocode: retrying "${address}" as "${simplified}"`);
+        ({ response, usedAddress } = await tryGeocode(simplified));
+      }
+    }
 
     if (!response.ok) {
       const text = await response.text();
