@@ -16,6 +16,7 @@ import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { CoDriver } from './CoDriver';
 import { useCredits } from '../hooks/useCredits';
 import { BuyCreditsModal } from './BuyCreditsModal';
+import { DatImportModal } from './DatImportModal';
 
 export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
@@ -31,6 +32,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const previousMatchesRef = useRef([]); // Ref to avoid stale closure in auto-refresh interval
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const [datImportRequest, setDatImportRequest] = useState(null);
   const { balance, fetchBalance, deductCredit, openCheckout } = useCredits();
 
   // Auto-refresh state - read from request, not local
@@ -327,6 +329,64 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       setBackhaulMatches(matches);
     } catch (error) {
       console.error('Error loading matches:', error);
+      setBackhaulMatches([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleRunWithImportedLoads = async (request, importedLoads) => {
+    setDatImportRequest(null);
+    setLoadingMatches(true);
+    setSelectedRequest(request);
+
+    try {
+      const creditResult = await deductCredit('DAT import search');
+      if (!creditResult.success) { setLoadingMatches(false); setShowBuyCredits(true); return; }
+
+      let fleet = await db.fleets.getById(request.fleet_id);
+      if (!fleet.home_lat || !fleet.home_lng) {
+        const success = await updateFleetCoordinates(db, fleet.id, fleet.home_address);
+        if (success) fleet = await db.fleets.getById(request.fleet_id);
+        else { setBackhaulMatches([]); setLoadingMatches(false); return; }
+      }
+
+      setSelectedFleet(fleet);
+
+      const rawProfile = Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles;
+      const fleetProfile = rawProfile || { trailerType: 'Dry Van', trailerLength: 53, weightLimit: 45000 };
+      const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
+      const rateConfig = hasRateConfig ? {
+        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+        mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+        stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+        otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+        otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+        fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+        fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+        doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0
+      } : null;
+
+      const geocoded = await parseDatumPoint(request.datum_point);
+      const datumPoint = geocoded
+        ? { address: geocoded.city, lat: geocoded.lat, lng: geocoded.lng }
+        : { address: request.datum_point, lat: fleet.home_lat, lng: fleet.home_lng };
+
+      setDatumCoordinates({ lat: datumPoint.lat, lng: datumPoint.lng });
+
+      const fleetHome = { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address };
+      const homeRadiusMiles = 50;
+      const corridorWidthMiles = 100;
+
+      const result = await findRouteHomeBackhauls(
+        datumPoint, fleetHome, fleetProfile, importedLoads,
+        homeRadiusMiles, corridorWidthMiles, rateConfig, request.is_relay || false
+      );
+
+      setRouteData(result.routeData);
+      setBackhaulMatches(result.opportunities);
+    } catch (error) {
+      console.error('DAT import match error:', error);
       setBackhaulMatches([]);
     } finally {
       setLoadingMatches(false);
@@ -671,6 +731,24 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                       RELAY REQUEST
                     </div>
                   )}
+
+                  {/* DAT Import button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDatImportRequest(request); }}
+                    style={{
+                      marginTop: '14px', width: '100%',
+                      padding: '8px', borderRadius: '7px',
+                      background: 'transparent',
+                      border: `1px solid ${colors.border.secondary}`,
+                      color: colors.text.secondary, fontSize: '12px', fontWeight: 700,
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.accent.primary; e.currentTarget.style.color = colors.accent.primary; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border.secondary; e.currentTarget.style.color = colors.text.secondary; }}
+                  >
+                    <span style={{ fontSize: '14px' }}>⬆</span> Import from DAT
+                  </button>
                 </div>
               ))}
             </div>
@@ -683,6 +761,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           onClose={() => setShowBuyCredits(false)}
           onPurchase={openCheckout}
           insufficientCredits={true}
+        />
+      )}
+
+      {datImportRequest && (
+        <DatImportModal
+          request={datImportRequest}
+          onClose={() => setDatImportRequest(null)}
+          onImport={(loads) => handleRunWithImportedLoads(datImportRequest, loads)}
         />
       )}
 
