@@ -89,16 +89,62 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
       }
     }
 
-    // Geocode each unique city/state via PC*Miler
-    await Promise.all([...unique.keys()].map(async (key) => {
+    const keys = [...unique.keys()];
+
+    // Try PC*Miler first (parallel)
+    await Promise.all(keys.map(async (key) => {
       try {
-        const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(key + ',US')}`);
+        // PC*Miler expects "City, ST" format (e.g. "Davidson, NC")
+        const [city, state] = key.split(',').map(s => s.trim());
+        const address = `${city}, ${state}`;
+        const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data?.lat && data?.lng) unique.set(key, { lat: data.lat, lng: data.lng });
+          if (data?.lat && data?.lng) {
+            unique.set(key, { lat: data.lat, lng: data.lng });
+          } else {
+            console.warn('[DatImport] PC*Miler geocode: no coords in response for', key, data);
+          }
+        } else {
+          const errText = await res.text().catch(() => '');
+          console.warn('[DatImport] PC*Miler geocode failed for', key, '- status', res.status, errText.slice(0, 200));
         }
-      } catch { /* leave null */ }
+      } catch (e) {
+        console.warn('[DatImport] PC*Miler geocode error for', key, e.message);
+      }
     }));
+
+    // Fallback: use Nominatim (OSM) for any cities still missing coords
+    const missing = keys.filter(k => !unique.get(k));
+    if (missing.length > 0) {
+      console.log('[DatImport] Falling back to Nominatim for', missing.length, 'cities:', missing);
+      for (const key of missing) {
+        try {
+          const [city, state] = key.split(',').map(s => s.trim());
+          const q = encodeURIComponent(`${city}, ${state}, United States`);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+            { headers: { 'User-Agent': 'HaulMonitor/1.0' } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data[0]?.lat && data[0]?.lon) {
+              unique.set(key, { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+              console.log('[DatImport] Nominatim geocoded', key, '->', data[0].lat, data[0].lon);
+            } else {
+              console.warn('[DatImport] Nominatim: no result for', key);
+            }
+          }
+        } catch (e) {
+          console.warn('[DatImport] Nominatim error for', key, e.message);
+        }
+        // Nominatim rate limit: 1 req/sec
+        await new Promise(r => setTimeout(r, 1100));
+      }
+    }
+
+    const resolved = keys.filter(k => unique.get(k)).length;
+    console.log(`[DatImport] Geocoded ${resolved}/${keys.length} unique cities`);
 
     // Attach coordinates to loads
     return loads.map(load => {
@@ -307,7 +353,7 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
                   fontSize: '13px', color: colors.accent.primary, display: 'flex', alignItems: 'center', gap: '10px'
                 }}>
                   <div style={{ width: '14px', height: '14px', border: `2px solid ${colors.accent.primary}40`, borderTop: `2px solid ${colors.accent.primary}`, borderRadius: '50%', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
-                  Geocoding cities via PC*Miler...
+                  Geocoding cities (this may take a few seconds)...
                 </div>
               )}
 
