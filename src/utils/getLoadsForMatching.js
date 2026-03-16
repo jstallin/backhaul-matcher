@@ -125,6 +125,20 @@ export async function getLoadsForMatching(userId, fleetId = null, requestContext
     console.warn('Failed to fetch imported loads, falling back to demo data:', error);
   }
 
-  // 3. Demo data
+  // 3. Scraped Direct Freight JSON (refreshed periodically via browser script)
+  try {
+    const res = await fetch('/df-loads.json');
+    if (res.ok) {
+      const dfLoads = await res.json();
+      if (Array.isArray(dfLoads) && dfLoads.length > 0) {
+        console.log(`Using ${dfLoads.length} scraped Direct Freight loads`);
+        return { loads: dfLoads, isLive: false, source: 'df-scraped' };
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load df-loads.json, falling back to demo data');
+  }
+
+  // 4. Demo data
   return { loads: demoLoadsData, isLive: false, source: 'demo' };
 }
