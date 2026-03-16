@@ -20,8 +20,45 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'stops parameter required' });
   }
 
+  // Geocode any city/state stops (e.g. "Logansport,IN,US") to lng,lat format
+  // PC*Miler routeReports only accepts coordinate format
+  const geocodeCityState = async (stop) => {
+    // Already coordinates: "-86.123,41.456"
+    if (/^-?\d+\.\d+,-?\d+\.\d+$/.test(stop.trim())) return stop.trim();
+    // City,State,US format → geocode via Nominatim
+    const parts = stop.split(',').map(s => s.trim());
+    const city = parts[0];
+    const state = parts[1];
+    if (!city || !state) return stop;
+    try {
+      const q = encodeURIComponent(`${city}, ${state}, United States`);
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'HaulMonitor/1.0' } }
+      );
+      if (r.ok) {
+        const data = await r.json();
+        if (data[0]?.lat && data[0]?.lon) {
+          return `${data[0].lon},${data[0].lat}`;
+        }
+      }
+    } catch (e) {
+      console.warn('Nominatim geocode failed for stop:', stop, e.message);
+    }
+    return stop; // return original if geocoding fails
+  };
+
   try {
-    const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports?stops=${encodeURIComponent(stops)}&reports=${encodeURIComponent(reports)}&authToken=${PCMILER_TOKEN}`;
+    // Resolve any city/state stops to coordinates
+    const rawStops = stops.split(';');
+    const resolvedStops = await Promise.all(rawStops.map(geocodeCityState));
+    const resolvedStopsStr = resolvedStops.join(';');
+
+    if (resolvedStopsStr !== stops) {
+      console.log('Route proxy: resolved stops from', stops, 'to', resolvedStopsStr);
+    }
+
+    const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports?stops=${encodeURIComponent(resolvedStopsStr)}&reports=${encodeURIComponent(reports)}&authToken=${PCMILER_TOKEN}`;
     const response = await fetch(url);
 
     if (!response.ok) {
