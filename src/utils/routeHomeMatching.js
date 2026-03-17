@@ -191,34 +191,22 @@ export const findRouteHomeBackhauls = async (
     if (reqLength && load.trailer_length  && load.trailer_length  >  reqLength)  continue;
     if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
 
-    // 2. Quick Haversine pre-filter: delivery must be near home
-    // Skip for loads without coordinates (e.g. Direct Freight) — source already filtered by radius
-    if (load.delivery_lat !== null && load.delivery_lng !== null) {
-      const haversineDeliveryToHome = calculateDistance(
-        load.delivery_lat, load.delivery_lng,
-        fleetHome.lat, fleetHome.lng
-      );
-      if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
+    // 2. Corridor check on pickup — must be along the datum→home route
+    // Skip for loads without coordinates — handled at PC*Miler stage
+    if (load.pickup_lat !== null && load.pickup_lng !== null) {
+      const inCorridor = useCorridor
+        ? isPointInCorridor(load.pickup_lat, load.pickup_lng, routeData.corridor)
+        : isAlongRoute(load.pickup_lat, load.pickup_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+      if (!inCorridor) continue;
     }
 
-    // 3. Corridor check (no API call — Turf.js polygon or Haversine fallback)
-    // Skip for loads without coordinates — trust source's geographic filtering
-    if (load.pickup_lat !== null && load.pickup_lng !== null) {
-      let isPickupAlongRoute;
-      if (useCorridor) {
-        isPickupAlongRoute = isPointInCorridor(
-          load.pickup_lat, load.pickup_lng,
-          routeData.corridor
-        );
-      } else {
-        isPickupAlongRoute = isAlongRoute(
-          load.pickup_lat, load.pickup_lng,
-          datumPoint.lat, datumPoint.lng,
-          fleetHome.lat, fleetHome.lng,
-          corridorWidthMiles
-        );
-      }
-      if (!isPickupAlongRoute) continue;
+    // 3. Corridor check on delivery — ensures load moves driver along the route, not off-corridor
+    // Skip for loads without coordinates — handled at PC*Miler stage
+    if (load.delivery_lat !== null && load.delivery_lng !== null) {
+      const inCorridor = useCorridor
+        ? isPointInCorridor(load.delivery_lat, load.delivery_lng, routeData.corridor)
+        : isAlongRoute(load.delivery_lat, load.delivery_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+      if (!inCorridor) continue;
     }
 
     corridorCandidates.push(load);
@@ -230,11 +218,7 @@ export const findRouteHomeBackhauls = async (
   const maxCandidates = 25;
   let candidatesToProcess = corridorCandidates;
   if (corridorCandidates.length > maxCandidates) {
-    corridorCandidates.sort((a, b) => {
-      const aDeliveryDist = calculateDistance(a.delivery_lat, a.delivery_lng, fleetHome.lat, fleetHome.lng);
-      const bDeliveryDist = calculateDistance(b.delivery_lat, b.delivery_lng, fleetHome.lat, fleetHome.lng);
-      return aDeliveryDist - bDeliveryDist;
-    });
+    corridorCandidates.sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0));
     candidatesToProcess = corridorCandidates.slice(0, maxCandidates);
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
   }
@@ -313,8 +297,10 @@ export const findRouteHomeBackhauls = async (
       ? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng)
       : null);
 
-    // Re-check delivery-to-home with real driving distance
-    if (deliveryToHome > homeRadiusMiles) continue;
+    // Delivery must make forward progress toward home — it can't drop the driver
+    // farther from home than the datum point (i.e. moving backward).
+    // Exception: if delivery is within homeRadiusMiles it's always valid.
+    if (deliveryToHome > directReturnMiles && deliveryToHome > homeRadiusMiles) continue;
 
     // Guard against NaN — skip load if any distance is not a valid number
     if (isNaN(firstLeg) || isNaN(pickupToDelivery) || isNaN(deliveryToHome)) {
