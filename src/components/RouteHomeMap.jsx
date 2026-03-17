@@ -126,7 +126,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
     geometry: fallbackRouteRef.current
   } : null);
 
-  if (!datumPoint) return null;
+  if (!datumPoint || datumPoint.lat == null || datumPoint.lng == null) return null;
 
   return (
     <div style={{
@@ -182,7 +182,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
         </Marker>
 
         {/* Fleet home marker (Point B - green) */}
-        {fleetHome && (
+        {fleetHome && fleetHome.lat != null && fleetHome.lng != null && (
           <Marker
             position={[fleetHome.lat, fleetHome.lng]}
             icon={createCircleIcon('#10B981', 'B', 36)}

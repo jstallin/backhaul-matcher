@@ -155,6 +155,13 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
   }, [route, backhaul]);
 
   if (!route) return null;
+  if (route.origin_lat == null || route.origin_lng == null || route.dest_lat == null || route.dest_lng == null) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9CA3AF' }}>
+        Map unavailable — coordinates not found for this load.
+      </div>
+    );
+  }
 
   // OSM tile URLs — free, no API key needed
   const tileUrl = theme === 'dark'
