@@ -696,17 +696,19 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     {routeData?.corridor && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '20px', height: '12px', background: 'rgba(0, 139, 0, 0.15)', border: '2px dashed #008b00', borderRadius: '2px' }} />
-                        <span><strong>Search Corridor</strong> = 50-mile buffer along route</span>
+                        <span><strong>Search Corridor</strong> = 100-mile buffer along route</span>
                       </div>
                     )}
                   </div>
                 </div>
               )}
               
-              <BackhaulResults 
+              <BackhaulResults
                 request={selectedRequest}
                 fleet={selectedFleet}
                 matches={backhaulMatches}
+                datumCoordinates={datumCoordinates}
+                fleetHome={{ lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
                 onBack={() => setSelectedRequest(null)}
                 onEdit={handleEditRequest}
                 onCancel={handleCancelRequest}
