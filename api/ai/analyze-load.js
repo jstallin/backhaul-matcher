@@ -267,48 +267,57 @@ export default async function handler(req, res) {
   }
 
   const hasRateConfig = match.has_rate_config;
-  const financialSection = hasRateConfig
-    ? `
-FINANCIAL BREAKDOWN (fleet rate config applied):
-- Gross revenue: $${match.totalRevenue?.toFixed(2)}
-- Customer share: $${match.customer_share?.toFixed(2)}
-- Mileage expense: $${match.mileage_expense?.toFixed(2)}
-- Stop expense (${match.stop_count} stops): $${match.stop_expense?.toFixed(2)}
-- Fuel surcharge: $${match.fuel_surcharge?.toFixed(2)}
-- Other charges: $${match.other_charges?.toFixed(2)}
-- Carrier revenue: $${match.carrier_revenue?.toFixed(2)}
-- Customer net credit: $${match.customer_net_credit?.toFixed(2)}
-- Fleet cost/mile: $${fleet.cost_per_mile?.toFixed(3)}/mi
-- Fleet target RPM: $${fleet.target_rpm?.toFixed(3)}/mi`
-    : `
-RATE INFO:
-- Gross revenue: $${match.totalRevenue?.toFixed(2)}
-- Rate per mile: $${match.revenuePerMile?.toFixed(3)}/mi`;
 
-  const prompt = `Analyze this backhaul load opportunity for a fleet dispatcher:
+  // Resolve field names — match object uses several aliases
+  const loadMiles   = match.pickup_to_delivery_miles ?? match.distance_miles ?? match.distance ?? 0;
+  const oorMiles    = match.additionalMiles ?? match.additional_miles ?? 0;
+  const toPickup    = match.datum_to_pickup_miles ?? match.finalToPickup ?? 0;
+  const toHome      = match.delivery_to_home_miles ?? 0;
+  const rpm         = match.revenuePerMile ?? match.revenue_per_mile ?? 0;
+  const revenue     = match.totalRevenue ?? match.total_revenue ?? 0;
+  const pickupDate  = match.ship_date ?? match.pickupDate ?? 'Not specified';
+  const equipment   = match.equipmentType ?? match.equipment_type ?? '';
+  const weight      = match.weight_lbs ?? match.weight;
+
+  const financialSection = hasRateConfig
+    ? `FINANCIAL BREAKDOWN (fleet rate config applied):
+- Gross revenue: $${revenue.toFixed(2)}
+- Customer net credit: $${match.customer_net_credit?.toFixed(2)} (positive = profitable for customer)
+- Carrier revenue: $${match.carrier_revenue?.toFixed(2)}
+- Mileage expense: $${match.mileage_expense?.toFixed(2)} (${oorMiles} OOR mi × fleet rate)
+- Fuel surcharge: $${match.fuel_surcharge?.toFixed(2)}
+- Fleet cost/mile: $${(fleet.cost_per_mile ?? 0).toFixed(3)}/mi
+- Fleet target RPM: $${(fleet.target_rpm ?? 0).toFixed(3)}/mi`
+    : `RATE INFO:
+- Gross revenue: $${revenue.toFixed(2)}
+- Rate per mile (load miles only): $${rpm.toFixed(3)}/mi
+- No fleet cost config — evaluate against typical dry van market rate ($2.00–$2.80/mi loaded)`;
+
+  const prompt = `You are advising a freight dispatcher on a BACKHAUL opportunity — the truck is already out and needs to get home. The alternative to taking this load is deadheading home empty with zero revenue. Evaluate accordingly: a load that covers fuel + some profit is almost always better than nothing.
 
 LOAD:
 - Route: ${match.origin?.address} → ${match.destination?.address}
-- Load distance: ${match.distance} miles
-- Equipment: ${match.equipmentType}, ${match.weight?.toLocaleString()} lbs, ${match.trailerLength} ft
-- Pickup date: ${match.pickupDate || 'Not specified'}
+- Load miles: ${loadMiles} mi
+- Equipment: ${equipment}${weight ? `, ${Number(weight).toLocaleString()} lbs` : ''}
+- Pickup date: ${pickupDate}
 - Broker: ${match.broker || 'Unknown'}
-- Freight type: ${match.freightType || 'General'}
+
 ${financialSection}
 
 ROUTE CONTEXT:
-- Datum point (where truck currently is): ${request.datum_point}
+- Truck currently at: ${request.datum_point}
 - Fleet home: ${fleet.home_city || fleet.home_address || 'on file'}
-- Miles to pickup from datum: ${match.finalToPickup} mi
-- Miles out of route (OOR): ${match.additionalMiles} mi
-- Rank among results: #${(match.rank ?? 0) + 1}
+- Miles to pickup from current location: ${toPickup} mi
+- Out-of-route (OOR) miles added vs. going straight home: ${oorMiles} mi
+- Miles from delivery to home: ${toHome} mi
+- Rank among all matches: #${(match.rank ?? 0) + 1}
 
-Give a concise dispatcher recommendation. Lead with TAKE IT, PASS, or NEGOTIATE. Then 2-3 sentences max on the key factors. Be direct and practical — this is for a working dispatcher, not a report.`;
+Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Only say PASS if the OOR miles are excessive, the rate is genuinely below cost, or there's a clear red flag.`;
 
   try {
     const result = await callClaude({
       messages: [{ role: 'user', content: prompt }],
-      system: 'You are a practical freight dispatching advisor. You give short, direct load recommendations to fleet dispatchers. Focus on the numbers that matter: rate per mile vs cost, out-of-route miles, and whether the load actually gets the driver toward home. Never use bullet points — write in plain sentences.',
+      system: 'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? Be direct. Never use bullet points. 2–3 sentences after your verdict.',
       maxTokens: 300
     });
     return res.status(200).json({ analysis: result.content?.find(b => b.type === 'text')?.text || '' });
