@@ -185,7 +185,13 @@ ${loadRows}
 (function() {
   var data = ${JSON.stringify(mapData)};
 
-  var map = L.map('map');
+  // Use datum (or home, or US center) as initial view so map has a size before fitBounds
+  var initLat = (data.datum && data.datum.lat != null) ? data.datum.lat
+              : (data.home && data.home.lat != null) ? data.home.lat : 39;
+  var initLng = (data.datum && data.datum.lng != null) ? data.datum.lng
+              : (data.home && data.home.lng != null) ? data.home.lng : -86;
+
+  var map = L.map('map', { center: [initLat, initLng], zoom: 6 });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
@@ -228,17 +234,22 @@ ${loadRows}
     }
   });
 
-  if (bounds.length > 0) {
-    map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 8 });
-  }
-
-  // Wait for tiles before printing
+  // Defer fitBounds so the map container is fully sized first
   var printed = false;
   function doPrint() {
     if (!printed) { printed = true; window.print(); }
   }
-  map.once('load', function() { setTimeout(doPrint, 1200); });
-  setTimeout(doPrint, 4000); // fallback
+
+  setTimeout(function() {
+    if (bounds.length > 0) {
+      map.invalidateSize();
+      map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 8 });
+    }
+    // After the pan/zoom animation settles, wait for tiles then print
+    map.once('moveend', function() { setTimeout(doPrint, 2000); });
+  }, 200);
+
+  setTimeout(doPrint, 6000); // hard fallback
 })();
 </script>
 </body>
