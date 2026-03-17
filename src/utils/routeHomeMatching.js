@@ -302,17 +302,26 @@ export const findRouteHomeBackhauls = async (
     // Exception: if delivery is within homeRadiusMiles it's always valid.
     if (deliveryToHome > directReturnMiles && deliveryToHome > homeRadiusMiles) continue;
 
-    // Guard against NaN — skip load if any distance is not a valid number
-    if (isNaN(firstLeg) || isNaN(pickupToDelivery) || isNaN(deliveryToHome)) {
+    // Guard against NaN — skip load if any distance resolved to NaN (not null, which is unknown).
+    // null is valid here — it means no distance data available, handled by fallbacks below.
+    if ((firstLeg !== null && isNaN(firstLeg)) ||
+        (pickupToDelivery !== null && isNaN(pickupToDelivery)) ||
+        (deliveryToHome !== null && isNaN(deliveryToHome))) {
       console.warn(`Skipping load ${load.load_id}: invalid distance (firstLeg=${firstLeg}, ptd=${pickupToDelivery}, dth=${deliveryToHome})`);
       continue;
     }
 
     // Enforce 5-mile minimum on datum→pickup and pickup→delivery legs.
     // delivery→home is excluded — being close to home is desirable.
+    // Only apply when we have a real distance — null means unknown (no coords + no PC*MILER),
+    // and null coerces to 0 in JS comparisons, which would incorrectly filter every such load.
     const MIN_LEG_MILES = 5;
-    if (firstLeg < MIN_LEG_MILES || pickupToDelivery < MIN_LEG_MILES) {
-      console.warn(`Skipping load ${load.load_id}: leg below 5mi minimum (firstLeg=${firstLeg}, ptd=${pickupToDelivery})`);
+    if (firstLeg !== null && firstLeg < MIN_LEG_MILES) {
+      console.warn(`Skipping load ${load.load_id}: firstLeg below 5mi minimum (${firstLeg})`);
+      continue;
+    }
+    if (pickupToDelivery !== null && pickupToDelivery < MIN_LEG_MILES) {
+      console.warn(`Skipping load ${load.load_id}: pickupToDelivery below 5mi minimum (${pickupToDelivery})`);
       continue;
     }
 
