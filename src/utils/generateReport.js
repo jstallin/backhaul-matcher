@@ -107,6 +107,7 @@ export function generateTop10Report({ request, fleet, matches, datumCoordinates,
 <title>Backhaul Report – ${request.request_name}</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; background: #fff; padding: 32px; }
@@ -144,8 +145,7 @@ export function generateTop10Report({ request, fleet, matches, datumCoordinates,
   .disclaimer { font-size: 11px; color: #aaa; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
   @media print {
     body { padding: 16px; }
-    /* Fixed dimensions prevent Leaflet from re-rendering when the print viewport resizes */
-    #map { height: 320px !important; width: 760px !important; }
+    #map { height: 320px; }
     .no-print { display: none !important; }
     .load-card { break-inside: avoid; }
   }
@@ -260,17 +260,46 @@ ${loadRows}
   }
   setTimeout(fitAll, 150);
 
-  // beforeprint: re-validate and re-fit with print-fixed dimensions so the viewport
-  // resize from the print dialog doesn't move the map view.
-  window.addEventListener('beforeprint', function() {
-    map.invalidateSize();
-    fitAll();
-  });
-
-  // Save as PDF: refit, wait for tiles to settle, then print.
+  // Save as PDF: snapshot the live map to a static <img> using html2canvas,
+  // swap it in, print, then restore the live map.
+  // This avoids the print-viewport resize moving the Leaflet view.
   document.getElementById('printBtn').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Preparing...';
+
     fitAll();
-    setTimeout(function() { window.print(); }, 800);
+
+    // Wait for tiles to load at the fitted bounds, then snapshot
+    setTimeout(function() {
+      var mapEl = document.getElementById('map');
+      html2canvas(mapEl, { useCORS: true, allowTaint: true, logging: false })
+        .then(function(canvas) {
+          var img = document.createElement('img');
+          img.src = canvas.toDataURL('image/png');
+          img.style.cssText = 'width:100%;height:' + mapEl.offsetHeight + 'px;border-radius:10px;border:1px solid #ddd;display:block;object-fit:cover;';
+          img.id = 'map-snapshot';
+          mapEl.style.display = 'none';
+          mapEl.parentNode.insertBefore(img, mapEl.nextSibling);
+
+          window.print();
+
+          // Restore after dialog closes
+          setTimeout(function() {
+            var snap = document.getElementById('map-snapshot');
+            if (snap) snap.remove();
+            mapEl.style.display = '';
+            btn.disabled = false;
+            btn.textContent = '\u2b07 Save as PDF';
+          }, 1000);
+        })
+        .catch(function() {
+          // Fallback: just print without snapshot
+          window.print();
+          btn.disabled = false;
+          btn.textContent = '\u2b07 Save as PDF';
+        });
+    }, 1000);
   });
 })();
 </script>
