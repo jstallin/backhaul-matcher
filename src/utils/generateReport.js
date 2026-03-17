@@ -270,18 +270,24 @@ ${loadRows}
 
     var mapEl = document.getElementById('map');
 
-    // Wait for tiles to settle at the fitted view, then lock + print
-    setTimeout(function() {
-      var w = mapEl.offsetWidth;
-      var h = mapEl.offsetHeight;
-      mapEl.style.width  = w + 'px';
-      mapEl.style.height = h + 'px';
+    // Lock map to print-safe width (720px fits US Letter with standard margins).
+    // Then refit bounds at that width so nothing is clipped on the right.
+    var PRINT_WIDTH = 720;
+    var h = mapEl.offsetHeight;
+    mapEl.style.width  = PRINT_WIDTH + 'px';
+    mapEl.style.height = h + 'px';
+    map.invalidateSize({ animate: false });
+    fitAll();
 
+    // Wait for tiles to load at the print dimensions, then print
+    setTimeout(function() {
       window.print();
 
       setTimeout(function() {
         mapEl.style.width  = '';
         mapEl.style.height = '';
+        map.invalidateSize({ animate: false });
+        fitAll();
         btn.disabled = false;
         btn.textContent = '\u2b07 Save as PDF';
       }, 500);
