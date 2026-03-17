@@ -332,6 +332,11 @@ export const findRouteHomeBackhauls = async (
       ? relayOrBackhaulMiles  // relay driver starts at home; entire loop is out-of-route
       : Math.max(0, relayOrBackhaulMiles - directReturnMiles);
 
+    // Cap out-of-route miles — a point can be at most corridorWidthMiles off the route,
+    // so additional miles beyond corridorWidthMiles×2 means the load is clearly off-corridor.
+    // Skip loads without coordinates that slipped past the spatial filter.
+    if (!isRelay && additionalMiles > corridorWidthMiles * 2) continue;
+
     // Calculate value metrics.
     // Revenue/mile uses the relay driver's miles in relay mode (not the full datum→home leg).
     const totalRevenue = load.total_revenue || 0;
