@@ -22,6 +22,37 @@ const getDistanceCacheKey = (datumPoint, fleetHome, isRelay) => {
   return `${r(datumPoint.lat)},${r(datumPoint.lng)}->${r(fleetHome.lat)},${r(fleetHome.lng)}:relay=${isRelay}`;
 };
 
+// Approximate geographic centroids for US states.
+// Used as a fallback when a load has no pickup/delivery coordinates,
+// so the corridor filter can still reject loads from the wrong region.
+const STATE_CENTROIDS = {
+  AL: { lat: 32.7,  lng: -86.7  }, AK: { lat: 64.2,  lng: -153.4 },
+  AZ: { lat: 34.3,  lng: -111.1 }, AR: { lat: 34.9,  lng: -92.4  },
+  CA: { lat: 36.8,  lng: -119.7 }, CO: { lat: 39.0,  lng: -105.5 },
+  CT: { lat: 41.6,  lng: -72.7  }, DE: { lat: 39.0,  lng: -75.5  },
+  FL: { lat: 27.8,  lng: -81.7  }, GA: { lat: 32.7,  lng: -83.4  },
+  HI: { lat: 20.3,  lng: -156.4 }, ID: { lat: 44.4,  lng: -114.6 },
+  IL: { lat: 40.0,  lng: -89.2  }, IN: { lat: 40.3,  lng: -86.1  },
+  IA: { lat: 42.0,  lng: -93.2  }, KS: { lat: 38.5,  lng: -98.4  },
+  KY: { lat: 37.7,  lng: -84.9  }, LA: { lat: 31.0,  lng: -91.8  },
+  ME: { lat: 45.4,  lng: -69.0  }, MD: { lat: 39.1,  lng: -76.8  },
+  MA: { lat: 42.2,  lng: -71.5  }, MI: { lat: 44.0,  lng: -85.5  },
+  MN: { lat: 46.4,  lng: -93.1  }, MS: { lat: 32.7,  lng: -89.7  },
+  MO: { lat: 38.5,  lng: -92.3  }, MT: { lat: 47.0,  lng: -110.5 },
+  NE: { lat: 41.5,  lng: -99.9  }, NV: { lat: 38.5,  lng: -117.0 },
+  NH: { lat: 44.0,  lng: -71.6  }, NJ: { lat: 40.1,  lng: -74.5  },
+  NM: { lat: 34.5,  lng: -106.0 }, NY: { lat: 42.9,  lng: -75.5  },
+  NC: { lat: 35.6,  lng: -79.4  }, ND: { lat: 47.5,  lng: -100.4 },
+  OH: { lat: 40.4,  lng: -82.8  }, OK: { lat: 35.6,  lng: -96.9  },
+  OR: { lat: 44.1,  lng: -120.5 }, PA: { lat: 40.6,  lng: -77.2  },
+  RI: { lat: 41.7,  lng: -71.5  }, SC: { lat: 33.9,  lng: -80.9  },
+  SD: { lat: 44.4,  lng: -100.2 }, TN: { lat: 35.8,  lng: -86.7  },
+  TX: { lat: 31.5,  lng: -99.3  }, UT: { lat: 39.3,  lng: -111.1 },
+  VT: { lat: 44.1,  lng: -72.7  }, VA: { lat: 37.8,  lng: -78.2  },
+  WA: { lat: 47.4,  lng: -120.4 }, WV: { lat: 38.6,  lng: -80.6  },
+  WI: { lat: 44.3,  lng: -89.6  }, WY: { lat: 42.8,  lng: -107.6 },
+};
+
 // Road distance correction factor for Haversine estimates.
 // Driving distances are typically 1.2-1.5x straight-line distance.
 // 1.35 is a good approximation for the US Southeast road network.
@@ -191,21 +222,26 @@ export const findRouteHomeBackhauls = async (
     if (reqLength && load.trailer_length  && load.trailer_length  >  reqLength)  continue;
     if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
 
-    // 2. Corridor check on pickup — must be along the datum→home route
-    // Skip for loads without coordinates — handled at PC*Miler stage
-    if (load.pickup_lat !== null && load.pickup_lng !== null) {
+    // 2. Corridor check on pickup — must be along the datum→home route.
+    // When exact coordinates are missing, fall back to the state centroid so loads
+    // from the wrong region (e.g. Illinois on a GA→FL route) are still rejected.
+    const pickupLat = load.pickup_lat ?? STATE_CENTROIDS[load.pickup_state]?.lat ?? null;
+    const pickupLng = load.pickup_lng ?? STATE_CENTROIDS[load.pickup_state]?.lng ?? null;
+    if (pickupLat !== null && pickupLng !== null) {
       const inCorridor = useCorridor
-        ? isPointInCorridor(load.pickup_lat, load.pickup_lng, routeData.corridor)
-        : isAlongRoute(load.pickup_lat, load.pickup_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+        ? isPointInCorridor(pickupLat, pickupLng, routeData.corridor)
+        : isAlongRoute(pickupLat, pickupLng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
       if (!inCorridor) continue;
     }
 
-    // 3. Corridor check on delivery — ensures load moves driver along the route, not off-corridor
-    // Skip for loads without coordinates — handled at PC*Miler stage
-    if (load.delivery_lat !== null && load.delivery_lng !== null) {
+    // 3. Corridor check on delivery — ensures load moves driver along the route, not off-corridor.
+    // Same state-centroid fallback when exact coordinates are missing.
+    const deliveryLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? null;
+    const deliveryLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? null;
+    if (deliveryLat !== null && deliveryLng !== null) {
       const inCorridor = useCorridor
-        ? isPointInCorridor(load.delivery_lat, load.delivery_lng, routeData.corridor)
-        : isAlongRoute(load.delivery_lat, load.delivery_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+        ? isPointInCorridor(deliveryLat, deliveryLng, routeData.corridor)
+        : isAlongRoute(deliveryLat, deliveryLng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
       if (!inCorridor) continue;
     }
 

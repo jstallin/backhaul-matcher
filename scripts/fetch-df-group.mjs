@@ -74,7 +74,34 @@ try {
     const TOTAL_PAGES = cfg.TOTAL_PAGES || 1;
     const urlStates = window.location.pathname.split('/').pop().split(',');
 
-    const equipMap = { V: 'Dry Van', F: 'Flatbed', R: 'Refrigerated', SD: 'Step Deck', LB: 'Lowboy' };
+    const equipMap = {
+      V:    'Dry Van',
+      VV:   'Dry Van',        // Van+Vented
+      VINT: 'Dry Van',        // Van Intermodal
+      CRG:  'Cargo Van',
+      CV:   'Curtain Van',
+      F:    'Flatbed',
+      FS:   'Flatbed',        // Flat+Sides
+      FT:   'Flatbed',        // Flat+Tarp
+      MX:   'Flatbed',        // Maxi Flat
+      FINT: 'Flatbed',        // Flat Intermodal
+      R:    'Refrigerated',
+      RINT: 'Refrigerated',   // Reefer Intermodal
+      SD:   'Step Deck',
+      DD:   'Step Deck',      // Double Drop
+      LB:   'Lowboy',
+      RGN:  'Lowboy',         // Removable Gooseneck
+      HS:   'Hotshot',
+      BT:   'Box Truck',
+      TNK:  'Tanker',
+      PNEU: 'Tanker',         // Pneumatic
+      CONT: 'Container',
+      LA:   'Landall',
+      AC:   'Auto Carrier',
+      DT:   'Dump Trailer',
+      HB:   'Hopper Bottom',
+      PO:   'Power Only',
+    };
 
     const normalize = (r) => {
       const trailerCode = Array.isArray(r.trailer_type)
