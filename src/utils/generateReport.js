@@ -193,10 +193,8 @@ ${loadRows}
               : (data.home && data.home.lng != null) ? data.home.lng : -86;
 
   var map = L.map('map', { center: [initLat, initLng], zoom: 6 });
-  // crossOrigin: 'anonymous' is required so tiles can be drawn to canvas later
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    crossOrigin: 'anonymous'
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   // Corridor polygon
@@ -260,106 +258,34 @@ ${loadRows}
   }
   setTimeout(fitAll, 150);
 
-  // Save as PDF: manually composite the map to a canvas, swap in a static image,
-  // print, then restore. Tiles must be loaded with crossOrigin:'anonymous' (above).
-  function captureMap() {
-    return new Promise(function(resolve, reject) {
-      var mapEl = document.getElementById('map');
-      var W = mapEl.offsetWidth, H = mapEl.offsetHeight;
-      var mapRect = mapEl.getBoundingClientRect();
-      var canvas = document.createElement('canvas');
-      canvas.width = W; canvas.height = H;
-      var ctx = canvas.getContext('2d');
-
-      // 1. Draw tile images (loaded with crossOrigin:anonymous so this is safe)
-      var tiles = Array.from(mapEl.querySelectorAll('.leaflet-tile:not(.leaflet-tile-loading)'));
-      tiles.forEach(function(img) {
-        if (!img.complete || !img.naturalWidth) return;
-        var r = img.getBoundingClientRect();
-        try { ctx.drawImage(img, r.left - mapRect.left, r.top - mapRect.top, r.width, r.height); }
-        catch(e) {}
-      });
-
-      // 2. Draw SVG overlays (corridor polygon, route line) via serialized blob
-      var svgs = Array.from(mapEl.querySelectorAll('.leaflet-overlay-pane svg'));
-      var svgJobs = svgs.map(function(svg) {
-        return new Promise(function(res) {
-          var r = svg.getBoundingClientRect();
-          var str = new XMLSerializer().serializeToString(svg);
-          var blob = new Blob([str], { type: 'image/svg+xml;charset=utf-8' });
-          var url = URL.createObjectURL(blob);
-          var i = new Image();
-          i.onload = function() {
-            ctx.drawImage(i, r.left - mapRect.left, r.top - mapRect.top, r.width, r.height);
-            URL.revokeObjectURL(url); res();
-          };
-          i.onerror = function() { URL.revokeObjectURL(url); res(); };
-          i.src = url;
-        });
-      });
-
-      Promise.all(svgJobs).then(function() {
-        // 3. Redraw div-icon markers manually (circle + label)
-        var markers = Array.from(mapEl.querySelectorAll('.leaflet-marker-icon'));
-        markers.forEach(function(m) {
-          var inner = m.querySelector('div');
-          if (!inner) return;
-          var r = m.getBoundingClientRect();
-          var cx = r.left - mapRect.left + r.width / 2;
-          var cy = r.top - mapRect.top + r.height / 2;
-          var radius = r.width / 2;
-          var bg = inner.style.background || '#888';
-          var label = inner.textContent.trim();
-          var fs = Math.max(10, Math.round(radius * 0.9));
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-          ctx.fillStyle = bg;
-          ctx.fill();
-          ctx.strokeStyle = 'white';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-          ctx.fillStyle = 'white';
-          ctx.font = 'bold ' + fs + 'px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(label, cx, cy);
-          ctx.restore();
-        });
-
-        resolve(canvas.toDataURL('image/png'));
-      }).catch(reject);
-    });
-  }
-
+  // Save as PDF:
+  // Lock the map div to its current pixel dimensions with inline styles before
+  // calling window.print(). Inline styles beat @media print CSS, so the container
+  // won't resize, Leaflet won't repaint, and the view stays exactly as on screen.
   document.getElementById('printBtn').addEventListener('click', function() {
     var btn = this;
     btn.disabled = true;
     btn.textContent = 'Preparing...';
     fitAll();
 
+    var mapEl = document.getElementById('map');
+
+    // Wait for tiles to settle at the fitted view, then lock + print
     setTimeout(function() {
-      captureMap().then(function(dataUrl) {
-        var mapEl = document.getElementById('map');
-        var snap = document.createElement('img');
-        snap.id = 'map-snapshot';
-        snap.src = dataUrl;
-        snap.style.cssText = 'width:100%;height:' + mapEl.offsetHeight + 'px;border-radius:10px;border:1px solid #ddd;display:block;';
-        mapEl.style.display = 'none';
-        mapEl.parentNode.insertBefore(snap, mapEl.nextSibling);
-        window.print();
-        setTimeout(function() {
-          document.getElementById('map-snapshot').remove();
-          mapEl.style.display = '';
-          btn.disabled = false;
-          btn.textContent = '\u2b07 Save as PDF';
-        }, 1000);
-      }).catch(function() {
-        window.print();
+      var w = mapEl.offsetWidth;
+      var h = mapEl.offsetHeight;
+      mapEl.style.width  = w + 'px';
+      mapEl.style.height = h + 'px';
+
+      window.print();
+
+      setTimeout(function() {
+        mapEl.style.width  = '';
+        mapEl.style.height = '';
         btn.disabled = false;
         btn.textContent = '\u2b07 Save as PDF';
-      });
-    }, 1200);
+      }, 500);
+    }, 1500);
   });
 })();
 </script>
