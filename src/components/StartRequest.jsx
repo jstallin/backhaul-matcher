@@ -49,14 +49,18 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     return () => {
       localStorage.removeItem('editingRequest');
       localStorage.removeItem('editingRequestProcessed');
+      localStorage.removeItem('editingRequestIntent');
     };
   }, []);
 
   const loadEditingRequest = () => {
     const editingRequest = localStorage.getItem('editingRequest');
+    const editingIntent = localStorage.getItem('editingRequestIntent');
     console.log('🔍 Checking for editingRequest in localStorage:', editingRequest ? 'Found' : 'Not found');
-    
-    if (editingRequest) {
+
+    // Only load editing data if it was intentionally set (not stale from a previous session)
+    if (editingRequest && editingIntent) {
+      localStorage.removeItem('editingRequestIntent');
       // Check if we've already processed to avoid double-removing
       const alreadyProcessed = localStorage.getItem('editingRequestProcessed');
       
@@ -101,7 +105,13 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         console.error('❌ Error loading editing request:', error);
       }
     } else {
-      console.log('ℹ️ No editingRequest found in localStorage - creating new request');
+      // Clear any stale editing data (no intent flag means this is a fresh start)
+      if (editingRequest) {
+        localStorage.removeItem('editingRequest');
+        localStorage.removeItem('editingRequestProcessed');
+        console.log('🗑️ Cleared stale editingRequest (no intent flag)');
+      }
+      console.log('ℹ️ No editingRequest found - creating new request');
     }
   };
 

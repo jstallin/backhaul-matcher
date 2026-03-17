@@ -443,6 +443,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     // Navigate to edit mode - pass request to StartRequest component
     // For now, we'll store in localStorage and navigate
     localStorage.setItem('editingRequest', JSON.stringify(selectedRequest));
+    localStorage.setItem('editingRequestIntent', 'true');
     onMenuNavigate('start-request');
   };
 
