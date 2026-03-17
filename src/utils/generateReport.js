@@ -12,7 +12,7 @@ const formatDate = (d) => {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export function generateTop10Report({ request, fleet, matches, datumCoordinates, fleetHome }) {
+export function generateTop10Report({ request, fleet, matches, datumCoordinates, fleetHome, routeData }) {
   const top10 = matches.slice(0, 10);
   const reportDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -20,6 +20,8 @@ export function generateTop10Report({ request, fleet, matches, datumCoordinates,
   const mapData = {
     datum: datumCoordinates,
     home: fleetHome,
+    corridor: routeData?.corridor ?? null,
+    route: routeData?.route ?? null,
     loads: top10.map((m, i) => ({
       num: i + 1,
       pickupLat: m.pickup_lat,
@@ -142,7 +144,8 @@ export function generateTop10Report({ request, fleet, matches, datumCoordinates,
   .disclaimer { font-size: 11px; color: #aaa; margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
   @media print {
     body { padding: 16px; }
-    #map { height: 320px; }
+    /* Fixed dimensions prevent Leaflet from re-rendering when the print viewport resizes */
+    #map { height: 320px !important; width: 760px !important; }
     .no-print { display: none !important; }
     .load-card { break-inside: avoid; }
   }
@@ -154,7 +157,7 @@ export function generateTop10Report({ request, fleet, matches, datumCoordinates,
     <h1>${request.request_name}</h1>
     <div class="subtitle">Top 10 Backhaul Opportunities</div>
   </div>
-  <button class="no-print" onclick="window.print()" style="padding:10px 20px;background:#10b981;border:none;border-radius:8px;color:white;font-size:14px;font-weight:700;cursor:pointer;">
+  <button id="printBtn" class="no-print" style="padding:10px 20px;background:#10b981;border:none;border-radius:8px;color:white;font-size:14px;font-weight:700;cursor:pointer;">
     ⬇ Save as PDF
   </button>
 </div>
@@ -196,6 +199,20 @@ ${loadRows}
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
+  // Corridor polygon
+  if (data.corridor) {
+    L.geoJSON({ type: 'Feature', geometry: data.corridor }, {
+      style: { fillColor: '#008b00', fillOpacity: 0.12, color: '#008b00', weight: 2, opacity: 0.5, dashArray: '8 8' }
+    }).addTo(map);
+  }
+
+  // Route line
+  if (data.route) {
+    L.geoJSON({ type: 'Feature', geometry: data.route }, {
+      style: { color: '#6B7280', weight: 3, opacity: 0.7 }
+    }).addTo(map);
+  }
+
   function circleIcon(color, label, size) {
     size = size || 30;
     return L.divIcon({
@@ -234,22 +251,27 @@ ${loadRows}
     }
   });
 
-  // Defer fitBounds so the map container is fully sized first
-  var printed = false;
-  function doPrint() {
-    if (!printed) { printed = true; window.print(); }
-  }
-
-  setTimeout(function() {
+  // Fit bounds after container is sized
+  function fitAll() {
     if (bounds.length > 0) {
       map.invalidateSize();
-      map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 8 });
+      map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 8, animate: false });
     }
-    // After the pan/zoom animation settles, wait for tiles then print
-    map.once('moveend', function() { setTimeout(doPrint, 2000); });
-  }, 200);
+  }
+  setTimeout(fitAll, 150);
 
-  setTimeout(doPrint, 6000); // hard fallback
+  // beforeprint: re-validate and re-fit with print-fixed dimensions so the viewport
+  // resize from the print dialog doesn't move the map view.
+  window.addEventListener('beforeprint', function() {
+    map.invalidateSize();
+    fitAll();
+  });
+
+  // Save as PDF: refit, wait for tiles to settle, then print.
+  document.getElementById('printBtn').addEventListener('click', function() {
+    fitAll();
+    setTimeout(function() { window.print(); }, 800);
+  });
 })();
 </script>
 </body>

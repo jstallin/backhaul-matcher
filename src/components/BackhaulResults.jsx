@@ -5,7 +5,7 @@ import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { generateTop10Report } from '../utils/generateReport';
 
-export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, onBack, onEdit, onCancel }) => {
+export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [mapMatch, setMapMatch] = useState(null);
@@ -91,7 +91,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           <div className="br-header-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {matches.length > 0 && (
               <button
-                onClick={() => generateTop10Report({ request, fleet, matches, datumCoordinates, fleetHome })}
+                onClick={() => generateTop10Report({ request, fleet, matches, datumCoordinates, fleetHome, routeData })}
                 style={{ padding: '10px 20px', minHeight: '44px', background: colors.background.secondary, border: `2px solid ${colors.accent.success}`, borderRadius: '8px', color: colors.accent.success, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 ⬇ Download Report

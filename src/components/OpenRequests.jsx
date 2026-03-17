@@ -709,6 +709,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 matches={backhaulMatches}
                 datumCoordinates={datumCoordinates}
                 fleetHome={{ lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
+                routeData={routeData}
                 onBack={() => setSelectedRequest(null)}
                 onEdit={handleEditRequest}
                 onCancel={handleCancelRequest}
