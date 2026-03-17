@@ -1,0 +1,86 @@
+name: Fetch DirectFreight Loads
+
+on:
+  schedule:
+    # 3:00 AM Eastern (8:00 AM UTC)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  fetch:
+    name: Fetch - ${{ matrix.group.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false   # other groups keep running if one fails
+      matrix:
+        group:
+          - name: southeast
+            states: FL,GA,AL,MS,SC,NC,TN,KY,VA,WV
+          - name: south-central
+            states: TX,OK,AR,LA,NM,AZ,CA,NV,UT,CO
+          - name: midwest
+            states: OH,IN,IL,MI,WI,MN,IA,MO,KS,NE
+          - name: northeast
+            states: PA,NY,NJ,MD,DE,CT,MA,RI,VT,NH,ME
+          - name: mountain-nw
+            states: MT,ID,WY,ND,SD,OR,WA,AK,HI
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Fetch loads
+        env:
+          STATES: ${{ matrix.group.states }}
+          OUTPUT: df-loads-${{ matrix.group.name }}.json
+          DF_EMAIL: ${{ secrets.DF_EMAIL }}
+          DF_PASSWORD: ${{ secrets.DF_PASSWORD }}
+        run: node scripts/fetch-df-group.mjs
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: df-loads-${{ matrix.group.name }}
+          path: df-loads-${{ matrix.group.name }}.json
+          retention-days: 1
+
+  merge-and-commit:
+    name: Merge & Commit
+    needs: fetch
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: df-artifacts
+          merge-multiple: true
+
+      - name: Merge load files
+        run: node scripts/merge-df-loads.mjs df-artifacts/*.json
+
+      - name: Commit updated df-loads.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/df-loads.json
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update df-loads.json [$(date -u '+%Y-%m-%d')]"
+          git push
