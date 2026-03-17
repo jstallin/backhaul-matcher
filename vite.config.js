@@ -8,5 +8,9 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'app.html')
     }
+  },
+  test: {
+    environment: 'node',
+    globals: true,
   }
 })

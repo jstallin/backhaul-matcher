@@ -17,6 +17,9 @@ import { getDrivingDistance } from './pcMilerClient';
 // Value: Map<load_id, { dtp: number|null, dth: number|null }>
 const distanceCache = new Map();
 
+// Exposed for test isolation only — do not call in production code
+export const clearDistanceCache = () => distanceCache.clear();
+
 const getDistanceCacheKey = (datumPoint, fleetHome, isRelay) => {
   const r = (n) => Math.round(n * 100) / 100; // 2 decimal precision (~1km)
   return `${r(datumPoint.lat)},${r(datumPoint.lng)}->${r(fleetHome.lat)},${r(fleetHome.lng)}:relay=${isRelay}`;
@@ -114,7 +117,7 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
  * Customer Net Credit = Customer Share - (OOR Miles × Mileage Rate) - (Stops × Stop Rate) - (OOR Miles × FSC/mile)
  * Carrier Revenue = Gross Revenue × Carrier %
  */
-const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
+export const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) => {
   const safeRevenue = Number(totalRevenue) || 0;
   const safeAdditionalMiles = Number(additionalMiles) || 0;
   const carrierPct = (rateConfig.revenueSplitCarrier || 20) / 100;
