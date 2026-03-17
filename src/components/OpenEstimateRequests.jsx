@@ -266,7 +266,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Calendar size={16} color={colors.text.tertiary} />
                         <div>
-                          <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Available</div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Begin Pickup</div>
                           <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.primary }}>{formatDate(request.equipment_available_date)}</div>
                         </div>
                       </div>

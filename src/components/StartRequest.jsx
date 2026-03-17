@@ -328,12 +328,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <div className="sr-date-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Equipment Available *</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Begin Pickup Window *</label>
                   <input type="date" value={formData.equipmentAvailableDate} onChange={(e) => handleChange('equipmentAvailableDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentAvailableDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                   {errors.equipmentAvailableDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentAvailableDate}</div>}
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Equipment Needed Back *</label>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />End Pickup Window *</label>
                   <input type="date" value={formData.equipmentNeededDate} onChange={(e) => handleChange('equipmentNeededDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentNeededDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                   {errors.equipmentNeededDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentNeededDate}</div>}
                 </div>

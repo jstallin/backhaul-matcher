@@ -256,7 +256,7 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
               <div><strong>Fleet:</strong> {fleet?.name || 'Unknown Fleet'}</div>
               {fleet?.home_address && <div><strong>Fleet Home:</strong> {fleet.home_address}</div>}
               <div><strong>Datum:</strong> {request.datum_point}</div>
-              <div><strong>Available:</strong> {fmtDate(request.equipment_available_date)} – {fmtDate(request.equipment_needed_date)}</div>
+              <div><strong>Pickup Window:</strong> {fmtDate(request.equipment_available_date)} – {fmtDate(request.equipment_needed_date)}</div>
               {annualVolume > 0 && <div><strong>Annual Volume:</strong> {annualVolume} loads/yr</div>}
             </div>
           </div>
