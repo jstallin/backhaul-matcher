@@ -7,6 +7,8 @@ import { AvatarMenu } from './AvatarMenu';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
+const today = () => new Date().toISOString().split('T')[0];
+
 export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -19,8 +21,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     requestName: '',
     datumPoint: '',
     selectedFleetId: '',
-    equipmentAvailableDate: '',
-    equipmentNeededDate: '',
+    equipmentAvailableDate: today(),
+    equipmentNeededDate: today(),
     isRelay: false,
     autoRefresh: false,
     autoRefreshInterval: '0.5',  // 30 minutes default
@@ -67,8 +69,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           requestName: request.request_name || '',
           datumPoint: request.datum_point || '',
           selectedFleetId: request.fleet_id || '',
-          equipmentAvailableDate: request.equipment_available_date || '',
-          equipmentNeededDate: request.equipment_needed_date || '',
+          equipmentAvailableDate: request.equipment_available_date || today(),
+          equipmentNeededDate: request.equipment_needed_date || today(),
           isRelay: request.is_relay || false,
           autoRefresh: request.auto_refresh || false,
           autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
@@ -227,8 +229,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         requestName: '',
         datumPoint: '',
         selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
-        equipmentAvailableDate: '',
-        equipmentNeededDate: '',
+        equipmentAvailableDate: today(),
+        equipmentNeededDate: today(),
         isRelay: false,
         autoRefresh: false,
         autoRefreshInterval: '0.5',
