@@ -45,6 +45,11 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     loadEditingRequest();
     // Then load fleets (async)
     loadFleets();
+    // Clean up localStorage on unmount so stale edit data never bleeds into a new request
+    return () => {
+      localStorage.removeItem('editingRequest');
+      localStorage.removeItem('editingRequestProcessed');
+    };
   }, []);
 
   const loadEditingRequest = () => {
@@ -385,7 +390,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
                 <Plus size={20} />
-                {saving ? (formData.editingId ? 'Updating Backhaul Request...' : 'Creating Backhaul Request...') : (formData.editingId ? 'Update Backhaul Request' : 'Create Backhaul Request')}
+                {saving ? (formData.editingId ? 'Updating...' : 'Saving...') : (formData.editingId ? 'Update Backhaul Request' : 'Save Backhaul Request')}
               </button>
             </div>
           </form>
