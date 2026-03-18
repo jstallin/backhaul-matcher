@@ -4,66 +4,184 @@
 
 | | Count |
 |---|---|
-| Previous total | 14280 |
-| New total | 100 |
-| Net change | -14180 |
-| Added | +100 |
-| Removed | -14280 |
-| Avg pay (new file) | $1,721 |
+| Previous total | 100 |
+| New total | 22217 |
+| Net change | +22117 |
+| Added | +22185 |
+| Removed | -68 |
+| Avg pay (new file) | $1,111 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 62 |
-| F+T | 17 |
-| Dry Van | 12 |
-| Refrigerated | 8 |
-| Step Deck | 1 |
+| Flatbed | 12917 |
+| Dry Van | 3167 |
+| OTHER | 1861 |
+| F+T | 1678 |
+| Refrigerated | 1560 |
+| Step Deck | 400 |
+| Power Only | 355 |
+| Hotshot | 51 |
+|  48 FT | 44 |
+| Container | 42 |
+| Box Truck | 34 |
+| Curtain Van | 27 |
+| Lowboy | 26 |
+|  AIR_RIDE | 10 |
+|  STRAIGHT | 7 |
+|  FLATBED | 7 |
+| VAN OR REFRIGERATED | 6 |
+| HAZC | 5 |
+| V+A | 4 |
+|  40+BOTTOM | 3 |
+|  FLCS | 2 |
+| Dump Trailer | 2 |
+|  PO | 1 |
+|  CONESTOGA | 1 |
+|  DD_DECK | 1 |
+|  FOOD_GRADE | 1 |
+|  TANKER_STEEL | 1 |
+|  VAN | 1 |
+| V+V | 1 |
+| HOPPERBOTTOM | 1 |
+| VAN--48FT | 1 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| AR | 16 |
-| AL | 15 |
-| MD | 14 |
-| OR | 10 |
-| IA | 9 |
-| OH | 6 |
-| IL | 5 |
-| ID | 4 |
-| SD | 3 |
-| ME | 3 |
-| NJ | 3 |
-| MS | 3 |
-| WA | 2 |
-| TX | 2 |
-| AZ | 2 |
+| AL | 2866 |
+| GA | 2371 |
+| CA | 1179 |
+| NC | 1050 |
+| IL | 1026 |
+| AR | 876 |
+| WI | 870 |
+| IN | 825 |
+| LA | 790 |
+| MS | 768 |
+| SC | 754 |
+| MA | 678 |
+| MN | 676 |
+| NY | 608 |
+| VA | 577 |
 
-## Added Loads (+100)
+## Added Loads (+22185)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
-| Chillicothe, OH → Chicago, IL | Dry Van | $0 | 461 |
-| Jeffersonville, OH → Chicago, IL | Dry Van | $0 | 423 |
-| Lebanon, OH → Chicago, IL | Dry Van | $0 | 329 |
-| Loveland, OH → Chicago, IL | Dry Van | $0 | 378 |
-| Mount Orab, OH → Chicago, IL | Dry Van | $0 | 329 |
-| Washington Court House, OH → Chicago, IL | Dry Van | $0 | 378 |
+| Blue Island, IL → Sycamore, IL | Flatbed | $405 | 77 |
+| Riverdale, IL → Green Bay, WI | Flatbed | $830 | 224 |
+| Odon, IN → Hanceville, AL | Flatbed | $920 | 384 |
+| Odon, IN → Morton, IL | Flatbed | $645 | 237 |
+| Odon, IN → Gettysburg, PA | Flatbed | $1,565 | 613 |
+| Paola, KS → Manhattan, KS | Flatbed | $505 | 136 |
+| Paola, KS → Manhattan, KS | Flatbed | $505 | 136 |
+| Paola, KS → Salina, KS | Flatbed | $645 | 189 |
+| Paola, KS → Salina, KS | Flatbed | $645 | 189 |
+| Topeka, KS → Brownsville, TX | Flatbed | $0 | 1022 |
+| Detroit, MI → Bickmore, WV | Flatbed | $1,170 | 413 |
+| Detroit, MI → Sand Fork, WV | Flatbed | $1,170 | 397 |
+| Edwardsburg, MI → Lake City, FL | Flatbed | $2,575 | 986 |
+| Edwardsburg, MI → Sullivan, IL | Flatbed | $875 | 280 |
+| Burley, ID → Rochelle, IL | Refrigerated | $4,200 | 1464 |
+| Bellingham, WA → Curtis, NE | Flatbed | $3,310 | 1569 |
+| Greybull, WY → Elko, NV | Flatbed | $2,000 | 630 |
+| Lee, MA → Framingham, MA | Flatbed | $530 | 106 |
+| Baltimore, MD → Gadsden, AL | Flatbed | $1,380 | 724 |
+| Baltimore, MD → Hindsville, AR | Flatbed | $2,025 | 1133 |
+| Baltimore, MD → Lawrenceville, GA | Flatbed | $1,380 | 653 |
+| Baltimore, MD → Lawrenceville, GA | Flatbed | $1,470 | 653 |
+| Baltimore, MD → Royston, GA | Flatbed | $1,565 | 600 |
+| Baltimore, MD → Royston, GA | Flatbed | $1,655 | 600 |
+| Baltimore, MD → Royston, GA | Flatbed | $1,750 | 600 |
+| Baltimore, MD → Chariton, IA | Flatbed | $2,300 | 1035 |
+| Baltimore, MD → Chariton, IA | Flatbed | $2,115 | 1035 |
+| Baltimore, MD → Bluffton, IN | Flatbed | $1,105 | 576 |
+| Baltimore, MD → Guthrie, KY | Flatbed | $1,470 | 751 |
+| Baltimore, MD → Owenton, KY | Flatbed | $1,290 | 549 |
+| Baltimore, MD → Owenton, KY | Flatbed | $1,380 | 549 |
+| Baltimore, MD → Princeton, KY | Flatbed | $1,380 | 743 |
+| Baltimore, MD → Princeton, KY | Flatbed | $1,750 | 743 |
+| Baltimore, MD → Russell Springs, KY | Flatbed | $1,470 | 618 |
+| Baltimore, MD → Russell Springs, KY | Flatbed | $1,565 | 618 |
+| Baltimore, MD → Goldsboro, NC | Flatbed | $880 | 319 |
+| Baltimore, MD → Harmony, NC | Flatbed | $1,290 | 406 |
+| Emerson, AR → Tampa, FL | Flatbed | $2,300 | 906 |
+| Gurdon, AR → Ripley, MS | F+T | $810 | 303 |
+| Gurdon, AR → Ripley, MS | F+T | $810 | 303 |
+| Plumerville, AR → El Paso, TX | F+T | $2,250 | 984 |
+| Plumerville, AR → El Paso, TX | F+T | $2,250 | 984 |
+| Plumerville, AR → Fort Worth, TX | Flatbed | $1,147.5 | 387 |
+| Plumerville, AR → Fort Worth, TX | Flatbed | $1,147.5 | 387 |
+| Garden Grove, CA → Langhorne, PA | Flatbed | $0 | 2721 |
+| Riverside, CA → Glenford, OH | Flatbed | $4,500 | 2253 |
+| Terra Bella, CA → Chandler, AZ | Flatbed | $1,424 | 547 |
+| Terra Bella, CA → Amarillo, TX | Flatbed | $2,270 | 1130 |
+| Terra Bella, CA → El Paso, TX | Flatbed | $2,314 | 959 |
+| Terra Bella, CA → Lubbock, TX | Flatbed | $2,314 | 1166 |
+| Terra Bella, CA → Lubbock, TX | Flatbed | $2,314 | 1166 |
+| Terra Bella, CA → Midland, TX | Flatbed | $2,314 | 1256 |
+| Terra Bella, CA → Midland, TX | Flatbed | $2,225 | 1256 |
+| Terra Bella, CA → Midland, TX | Flatbed | $2,314 | 1256 |
+| Terra Bella, CA → Midland, TX | Flatbed | $2,225 | 1256 |
+| Birmingham, AL → Athens, GA | Flatbed | $900 | 215 |
+| Birmingham, AL → Lavonia, GA | Flatbed | $965 | 240 |
+| Birmingham, AL → Martinez, GA | Flatbed | $965 | 286 |
+| Birmingham, AL → Mount Holly, NC | Flatbed | $1,470 | 382 |
+| Birmingham, AL → Johnsonville, SC | Flatbed | $1,700 | 463 |
+| Birmingham, AL → Knoxville, TN | Flatbed | $1,010 | 254 |
+| Birmingham, AL → Morristown, TN | Flatbed | $1,290 | 303 |
+| Cottonton, AL → Guin, AL | Flatbed | $735 | 239 |
+| Demopolis, AL → Guin, AL | Flatbed | $550 | 123 |
+| Demopolis, AL → Acworth, GA | Flatbed | $935 | 259 |
+| Demopolis, AL → Fort Worth, TX | Flatbed | $1,800 | 579 |
+| Demopolis, AL → Fort Worth, TX | Flatbed | $1,800 | 579 |
+| Eastaboga, AL → Morristown, TN | Dry Van | $780 | 281 |
+| Eufaula, AL → Savannah, GA | Flatbed | $920 | 282 |
+| Fulton, AL → Guin, AL | Flatbed | $735 | 179 |
+| Albany, GA → Guin, AL | Flatbed | $830 | 307 |
+| Barnesville, GA → Green Cove Springs, FL | Flatbed | $990 | 303 |
+| Fitzgerald, GA → Groveland, FL | Flatbed | $1,105 | 264 |
+| Fitzgerald, GA → Groveland, FL | Flatbed | $1,195 | 264 |
+| Folkston, GA → Hudson, NC | Dry Van | $650 | 425 |
+| Hazlehurst, GA → Guin, AL | Flatbed | $830 | 413 |
+| Hazlehurst, GA → Lakeland, FL | Flatbed | $1,080 | 298 |
+| Hazlehurst, GA → Richfield, NC | Flatbed | $965 | 338 |
+| Hazlehurst, GA → Moncks Corner, SC | Flatbed | $810 | 230 |
+| Hazlehurst, GA → Spartanburg, SC | Flatbed | $810 | 255 |
+| Hazlehurst, GA → Points, WV | Flatbed | $1,840 | 700 |
+| Hazlehurst, GA → Points, WV | Flatbed | $1,930 | 700 |
+| Rome, GA → Murfreesboro, TN | Flatbed | $690 | 167 |
+| Ackerman, MS → Birmingham, AL | Flatbed | $735 | 167 |
+| Gloster, MS → Hudson, NC | Flatbed | $1,964 | 739 |
+| Louisville, MS → Tampa, FL | Flatbed | $2,025 | 691 |
+| Louisville, MS → Tampa, FL | Flatbed | $2,115 | 691 |
+| Meridian, MS → Halls, TN | Flatbed | $920 | 299 |
+| Meridian, MS → Nashville, TN | Flatbed | $1,010 | 335 |
+| Aberdeen, NC → Orlando, FL | Flatbed | $1,650 | 536 |
+| Harmony, NC → Beaver, WV | Flatbed | $0 | 161 |
+| Louisburg, NC → Garner, NC | Flatbed | $300 | 47 |
+| Mount Pleasant, NC → Guin, AL | Flatbed | $1,010 | 496 |
+| Statesville, NC → Norcross, GA | Dry Van | $750 | 252 |
+| Columbia, SC → Robertsdale, AL | Step Deck | $1,377 | 537 |
+| Effingham, SC → Cleveland, GA | Flatbed | $1,035 | 274 |
+| Newberry, SC → Richfield, NC | Flatbed | $550 | 135 |
+| Memphis, TN → Birmingham, AL | Flatbed | $780 | 231 |
+| Troy, NC → Morristown, TN | Flatbed | $830 | 269 |
+| Galax, VA → Lebanon, TN | Flatbed | $1,080 | 370 |
+| … and 22085 more | | | |
+
+## Removed Loads (-68)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
 | Ankeny, IA → Murphy, NC | Dry Van | $3,600 | 881 |
 | Boone, IA → Cherryvale, KS | Dry Van | $1,035 | 373 |
 | Hopkinton, IA → Willard, WI | Flatbed | $550 | 210 |
-| Oskaloosa, IA → Pocahontas, IA | Flatbed | $625 | 194 |
-| Oskaloosa, IA → Pocahontas, IA | Flatbed | $625 | 194 |
-| Oskaloosa, IA → Lincoln, NE | Flatbed | $850 | 248 |
-| Oskaloosa, IA → Lincoln, NE | Flatbed | $850 | 248 |
-| Oskaloosa, IA → Papillion, NE | Flatbed | $800 | 203 |
-| Oskaloosa, IA → Papillion, NE | Flatbed | $800 | 203 |
 | Carol Stream, IL → Taneytown, MD | F+T | $2,385 | 677 |
-| Chicago, IL → Dubuque, IA | Flatbed | $1,000 | 180 |
 | Chicago, IL → Effingham, IL | Refrigerated | $750 | 211 |
-| Chicago, IL → Avon, IN | Flatbed | $1,000 | 176 |
 | Chicago Heights, IL → Blair, NE | Refrigerated | $1,250 | 476 |
 | Emmett, ID → Aurora, CO | Flatbed | $1,500 | 858 |
 | Kamiah, ID → Delaware, IA | Flatbed | $3,050 | 1502 |
@@ -94,17 +212,11 @@
 | Avenel, NJ → Blue Island, IL | Flatbed | $1,750 | 783 |
 | Avenel, NJ → Asheboro, NC | Flatbed | $1,300 | 539 |
 | Avenel, NJ → Rochester, NY | Flatbed | $1,300 | 336 |
-| Fort Worth, TX → Winona, TX | Refrigerated | $0 | 139 |
-| Fort Worth, TX → Winona, TX | Refrigerated | $0 | 139 |
 | Emerson, AR → Lubbock, TX | Flatbed | $1,950 | 590 |
 | Mansfield, AR → Denton, TX | Flatbed | $1,100 | 262 |
 | Ola, AR → Saint Paul, KS | Flatbed | $1,500 | 290 |
-| Pocahontas, AR → Trinity, TX | Flatbed | $0 | 507 |
-| Pocahontas, AR → Trinity, TX | Flatbed | $0 | 507 |
 | Viola, AR → Harrisonville, MO | Flatbed | $0 | 266 |
 | Viola, AR → Harrisonville, MO | Flatbed | $0 | 266 |
-| Viola, AR → Trinity, TX | Flatbed | $0 | 524 |
-| Viola, AR → Trinity, TX | Flatbed | $0 | 524 |
 | Waldo, AR → Jamesport, MO | Flatbed | $1,890 | 628 |
 | Warren, AR → Oskaloosa, IA | Flatbed | $1,850 | 650 |
 | Warren, AR → Oskaloosa, IA | Flatbed | $1,850 | 650 |
@@ -113,20 +225,10 @@
 | Warren, AR → Jamesport, MO | Flatbed | $1,845 | 597 |
 | Warren, AR → Greenville, TX | Flatbed | $1,100 | 263 |
 | Phoenix, AZ → North Las Vegas, NV | Dry Van | $499 | 289 |
-| Phoenix, AZ → North Las Vegas, NV | Flatbed | $650 | 289 |
-| Jackson, MS → Shreveport, LA | Refrigerated | $0 | 219 |
-| Jackson, MS → Shreveport, LA | Refrigerated | $0 | 219 |
-| Jackson, MS → Shreveport, LA | Refrigerated | $0 | 219 |
-| Spartanburg, SC → Bowling Green, KY | Dry Van | $0 | 370 |
-| Wellford, SC → Bowling Green, KY | Dry Van | $0 | 370 |
 | Brewton, AL → Pocatello, ID | Flatbed | $5,100 | 2016 |
-| Cottonton, AL → Guin, AL | F+T | $736 | 239 |
-| Cottonton, AL → Guin, AL | F+T | $736 | 239 |
 | Cottonton, AL → Guin, AL | F+T | $736 | 239 |
 | Cottonton, AL → Gastonia, NC | Flatbed | $1,250 | 356 |
 | Cottonton, AL → Cookeville, TN | Flatbed | $1,300 | 340 |
-| Cottonton, AL → Cookeville, TN | Flatbed | $1,309 | 340 |
-| Cottonton, AL → Cookeville, TN | Flatbed | $1,309 | 340 |
 | Demopolis, AL → Garnett, KS | Flatbed | $2,900 | 712 |
 | Demopolis, AL → Toledo, OH | Flatbed | $2,150 | 774 |
 | Demopolis, AL → Whitewood, SD | Flatbed | $4,650 | 1441 |
@@ -139,115 +241,7 @@
 | Gilchrist, OR → Henderson, CO | F+T | $0 | 1175 |
 | Gilchrist, OR → Dacula, GA | F+T | $0 | 2559 |
 | Gilchrist, OR → Edwardsburg, MI | F+T | $0 | 2153 |
-| Gilchrist, OR → McKenzie, ND | F+T | $0 | 1395 |
 | Gilchrist, OR → Oklahoma City, OK | F+T | $0 | 1845 |
-| Gilchrist, OR → Rapid City, SD | F+T | $0 | 1282 |
 | Gilchrist, OR → West Jordan, UT | F+T | $0 | 714 |
 | Spearfish, SD → Edwardsburg, MI | F+T | $0 | 1068 |
 | Spearfish, SD → Lansing, MI | F+T | $0 | 1077 |
-
-## Removed Loads (-14280)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Falkville, AL → Hialeah, FL | F+T | $3,000 | 806 |
-| Birmingham, AL → Lakeland, FL | Flatbed | $0 | 532 |
-| Decatur, AL → Lake Wales, FL | Flatbed | $0 | 640 |
-| Decatur, AL → Norcross, GA | Flatbed | $0 | 215 |
-| Pelham, AL → Cartersville, GA | Flatbed | $0 | 164 |
-| Darlington, SC → Claxton, GA | Flatbed | $700 | 232 |
-| Huger, SC → Talladega, AL | Flatbed | $1,200 | 419 |
-| Huger, SC → Woodstock, AL | Flatbed | $1,350 | 491 |
-| Huger, SC → Jacksonville, FL | Flatbed | $900 | 264 |
-| Huger, SC → Dublin, GA | Flatbed | $1,150 | 237 |
-| Shady Dale, GA → Alpharetta, GA | Flatbed | $525 | 83 |
-| Shady Dale, GA → Alpharetta, GA | Flatbed | $525 | 83 |
-| Shady Dale, GA → Augusta, GA | Flatbed | $500 | 107 |
-| Shady Dale, GA → Augusta, GA | Flatbed | $500 | 107 |
-| Shady Dale, GA → Clayton, GA | Flatbed | $550 | 126 |
-| Shady Dale, GA → Clayton, GA | Flatbed | $550 | 126 |
-| Shady Dale, GA → Commerce, GA | Flatbed | $475 | 72 |
-| Shady Dale, GA → Commerce, GA | Flatbed | $475 | 72 |
-| Shady Dale, GA → Doraville, GA | Flatbed | $500 | 64 |
-| Shady Dale, GA → Doraville, GA | Flatbed | $500 | 64 |
-| Shady Dale, GA → Augusta, GA | Flatbed | $500 | 107 |
-| Shady Dale, GA → Clayton, GA | Flatbed | $550 | 126 |
-| Shady Dale, GA → Clayton, GA | Flatbed | $550 | 126 |
-| Shady Dale, GA → Commerce, GA | Flatbed | $475 | 72 |
-| Shady Dale, GA → Commerce, GA | Flatbed | $475 | 72 |
-| Shady Dale, GA → Doraville, GA | Flatbed | $500 | 64 |
-| Shady Dale, GA → Doraville, GA | Flatbed | $500 | 64 |
-| Shady Dale, GA → Duluth, GA | Flatbed | $550 | 74 |
-| Shady Dale, GA → Duluth, GA | Flatbed | $550 | 74 |
-| Shady Dale, GA → Evans, GA | Flatbed | $500 | 103 |
-| Shady Dale, GA → Evans, GA | Flatbed | $500 | 103 |
-| Shady Dale, GA → Flowery Branch, GA | Flatbed | $525 | 69 |
-| Shady Dale, GA → Flowery Branch, GA | Flatbed | $525 | 69 |
-| Shady Dale, GA → Lagrange, GA | Flatbed | $500 | 100 |
-| Shady Dale, GA → Lagrange, GA | Flatbed | $500 | 100 |
-| Shady Dale, GA → Suwanee, GA | Flatbed | $475 | 62 |
-| Shady Dale, GA → Suwanee, GA | Flatbed | $475 | 62 |
-| Shady Dale, GA → Toccoa, GA | Flatbed | $550 | 115 |
-| Shady Dale, GA → Toccoa, GA | Flatbed | $550 | 115 |
-| Tylertown, MS → Mobile, AL | Flatbed | $575 | 145 |
-| Tylertown, MS → Gautier, MS | Flatbed | $575 | 130 |
-| Tylertown, MS → Mobile, AL | Flatbed | $575 | 145 |
-| Tylertown, MS → Mobile, AL | Flatbed | $575 | 145 |
-| Talladega, AL → Savannah, GA | Flatbed | $1,305 | 355 |
-| Tylertown, MS → Gautier, MS | Flatbed | $575 | 130 |
-| Tylertown, MS → Gautier, MS | Flatbed | $575 | 130 |
-| Gloster, MS → Indiantown, FL | Flatbed | $2,350 | 826 |
-| Chester, SC → Charleston, SC | Flatbed | $600 | 174 |
-| Cumming, GA → Phenix City, AL | Flatbed | $475 | 149 |
-| Cumming, GA → Phenix City, AL | Flatbed | $475 | 149 |
-| Cumming, GA → Columbus, GA | Flatbed | $475 | 145 |
-| Cumming, GA → Columbus, GA | Flatbed | $475 | 145 |
-| Cumming, GA → Columbus, GA | Flatbed | $475 | 145 |
-| Homerville, GA → Fort Oglethorpe, GA | Flatbed | $875 | 350 |
-| Homerville, GA → Fort Oglethorpe, GA | Flatbed | $875 | 350 |
-| Hoschton, GA → Cape Canaveral, FL | Flatbed | $0 | ? |
-| Buford, GA → Orlando, FL | Flatbed | $0 | ? |
-| Boaz, AL → Pompano Beach, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | ? |
-| Valdosta, GA → Columbus, GA | RGN | $0 | ? |
-| Rock Hill, SC → Davie, FL | Step Deck | $0 | ? |
-| Stone Mountain, GA → Opa Locka, FL | Dry Van | $1,012 | 652 |
-| Jackson, GA → West Palm Beach, FL | Dry Van | $1,799 | 556 |
-| Pooler, GA → Biloxi, MS | Flatbed | $750 | 553 |
-| Darlington, SC → Claxton, GA | Flatbed | $0 | 232 |
-| Huger, SC → Talladega, AL | Flatbed | $0 | 419 |
-| Huger, SC → Apopka, FL | Flatbed | $0 | 398 |
-| Huger, SC → Winder, GA | Flatbed | $0 | 285 |
-| Huger, SC → Kosciusko, MS | Flatbed | $0 | 659 |
-| Birmingham, AL → Wrens, GA | Flatbed | $0 | 280 |
-| Decatur, AL → Goodwater, AL | Flatbed | $0 | 146 |
-| Decatur, AL → Dade City, FL | Flatbed | $0 | 590 |
-| Decatur, AL → Alpharetta, GA | Flatbed | $0 | 204 |
-| Decatur, AL → Norcross, GA | Flatbed | $0 | 215 |
-| Decatur, AL → Norcross, GA | Flatbed | $0 | 215 |
-| Troy, AL → Spanish Fort, AL | F+T | $725 | 166 |
-| Barnesville, GA → Andrews, SC | F+T | $850 | 321 |
-| Cedar Springs, GA → Sarasota, FL | F+T | $0 | 400 |
-| Cedar Springs, GA → Covington, GA | F+T | $0 | 241 |
-| Louisville, MS → Laurel, MS | Flatbed | $0 | 119 |
-| Darlington, SC → Tampa, FL | Flatbed | $0 | 509 |
-| Darlington, SC → Claxton, GA | Flatbed | $0 | 232 |
-| Huger, SC → Birmingham, AL | Flatbed | $0 | 456 |
-| Huger, SC → Talladega, AL | Flatbed | $0 | 419 |
-| Huger, SC → Theodore, AL | Flatbed | $0 | 645 |
-| Huger, SC → Apopka, FL | Flatbed | $0 | 398 |
-| Huger, SC → Azalea Park, FL | Flatbed | $0 | 404 |
-| Huger, SC → Jacksonville, FL | Flatbed | $0 | 264 |
-| Huger, SC → Winder, GA | Flatbed | $0 | 285 |
-| Huger, SC → Kosciusko, MS | Flatbed | $0 | 659 |
-| Atmore, AL → Muscle Shoals, AL | Flatbed | $0 | 323 |
-| Cottonton, AL → Muscle Shoals, AL | Flatbed | $0 | 271 |
-| Cottonton, AL → Live Oak, FL | Flatbed | $700 | 215 |
-| Fulton, AL → Nokomis, FL | Flatbed | $2,050 | 599 |
-| Lanett, AL → Duluth, GA | Flatbed | $600 | 111 |
-| … and 14180 more | | | |
