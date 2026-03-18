@@ -70,8 +70,18 @@ try {
   // --- Navigate to loads ---
   const url = `https://www.directfreight.com/home/boards/find/loads/all/${STATES}`;
   console.log(`[${STATES}] Navigating to ${url}`);
-  await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
   console.log(`[${STATES}] Loads page landed on: ${page.url()}`);
+
+  // Debug: check what __RESULTS looks like before waiting
+  const resultsDebug = await page.evaluate(() => ({
+    exists: typeof window.__RESULTS !== 'undefined',
+    type: typeof window.__RESULTS,
+    keys: window.__RESULTS ? Object.keys(window.__RESULTS) : null,
+    totalPages: window.__RESULTS?.TOTAL_PAGES,
+    resultCount: window.__RESULTS?.RESULTS?.length ?? window.__RESULTS?.results?.length ?? null,
+  }));
+  console.log(`[${STATES}] __RESULTS debug: ${JSON.stringify(resultsDebug)}`);
 
   // Wait for page-1 data to be injected into window.__RESULTS
   await page.waitForFunction(
