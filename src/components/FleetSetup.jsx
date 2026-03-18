@@ -36,6 +36,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
   });
 
   const [rateData, setRateData] = useState({
+    trailerType: '',
+    equipmentVariation: '',
     revenueSplitCarrier: 20,
     mileageRate: '',
     stopRate: '',
@@ -80,6 +82,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         homeLng: ''
       });
       setRateData({
+        trailerType: '',
+        equipmentVariation: '',
         revenueSplitCarrier: 20,
         mileageRate: '',
         stopRate: '',
@@ -103,6 +107,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       const profile = await db.fleetProfiles.get(fleetId);
       if (profile) {
         setRateData({
+          trailerType: profile.trailer_type ?? '',
+          equipmentVariation: profile.equipment_variation ?? '',
           revenueSplitCarrier: profile.revenue_split_carrier ?? 20,
           mileageRate: profile.mileage_rate ?? '',
           stopRate: profile.stop_rate ?? '',
@@ -172,6 +178,8 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       // Save rate configuration to fleet_profiles
       const carrierPct = parseInt(rateData.revenueSplitCarrier) || 80;
       const profileData = {
+        trailer_type: rateData.trailerType || null,
+        equipment_variation: rateData.equipmentVariation || null,
         revenue_split_carrier: carrierPct,
         revenue_split_customer: 100 - carrierPct,
         mileage_rate: rateData.mileageRate !== '' ? parseFloat(rateData.mileageRate) : null,
@@ -453,6 +461,67 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                   Enter an address then tab away to verify coordinates via PC*MILER
                 </span>
               )}
+            </div>
+          </div>
+
+          {/* ========== EQUIPMENT TYPE SECTION ========== */}
+          <div style={{
+            borderTop: `2px solid ${colors.border.accent}`,
+            paddingTop: '32px',
+            marginTop: '8px',
+            marginBottom: '32px'
+          }}>
+            <h3 style={{
+              margin: '0 0 8px 0',
+              fontSize: '22px',
+              fontWeight: 800,
+              color: colors.text.primary
+            }}>
+              Equipment Type
+            </h3>
+            <p style={{ margin: '0 0 20px 0', color: colors.text.secondary, fontSize: '14px' }}>
+              Primary trailer type this fleet hauls — used to filter backhaul matches
+            </p>
+            <div className="fs-2col" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px'
+            }}>
+              <div>
+                <label style={labelStyle}>Trailer Type *</label>
+                <select
+                  value={rateData.trailerType}
+                  onChange={(e) => handleRateChange('trailerType', e.target.value)}
+                  required
+                  disabled={saving}
+                  style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+                >
+                  <option value="">Select trailer type</option>
+                  <option value="Dry Van">Dry Van (V)</option>
+                  <option value="Refrigerated">Refrigerated / Reefer (R)</option>
+                  <option value="Flatbed">Flatbed (F)</option>
+                  <option value="Step Deck">Step Deck / Drop Deck (SD)</option>
+                  <option value="Removable Gooseneck">Removable Gooseneck (RGN)</option>
+                  <option value="Hotshot">Hot Shot (HS)</option>
+                  <option value="Power Only">Power Only (PO)</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Equipment Variation <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(optional)</span></label>
+                <select
+                  value={rateData.equipmentVariation}
+                  onChange={(e) => handleRateChange('equipmentVariation', e.target.value)}
+                  disabled={saving}
+                  style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+                >
+                  <option value="">None</option>
+                  <option value="Conestoga">Conestoga (CN)</option>
+                  <option value="Tanker">Tanker (TNK)</option>
+                  <option value="Curtain Side">Curtain Side (CS)</option>
+                  <option value="Extendable">Extendable (EX)</option>
+                  <option value="Lowboy">Lowboy (LB)</option>
+                </select>
+              </div>
             </div>
           </div>
 
