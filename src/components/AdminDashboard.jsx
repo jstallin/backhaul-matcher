@@ -284,11 +284,11 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               <div style={{ marginTop: '16px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary, marginBottom: '10px' }}>Recent Requests</div>
                 <Table
-                  headers={['Datum', 'Home', 'Equipment', 'Created']}
+                  headers={['Request Name', 'Datum Point', 'Fleet', 'Created']}
                   rows={requestStats.recent.map(r => [
-                    r.datum_city ? `${r.datum_city}, ${r.datum_state}` : '—',
-                    r.home_city ? `${r.home_city}, ${r.home_state}` : '—',
-                    r.equipment_type || '—',
+                    r.request_name || '—',
+                    r.datum_point || '—',
+                    r.fleets?.name || '—',
                     fmtDate(r.created_at),
                   ])}
                   colors={colors}
