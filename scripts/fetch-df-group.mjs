@@ -192,14 +192,6 @@ try {
 
 } catch (err) {
   console.error(`[${STATES}] ❌ Fatal: ${err.message}`);
-  // Dump page state to log so we can see what the browser is looking at
-  try {
-    console.error(`[${STATES}] 🌐 Page URL at failure: ${page.url()}`);
-    const html = await page.content();
-    console.error(`[${STATES}] 📄 Page HTML (first 3000 chars):\n${html.slice(0, 3000)}`);
-  } catch (dbgErr) {
-    console.warn(`[${STATES}] Could not dump page state: ${dbgErr.message}`);
-  }
   process.exit(1);
 } finally {
   await browser.close();
