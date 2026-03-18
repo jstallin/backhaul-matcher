@@ -82,19 +82,23 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
   const [resolvedRoute, setResolvedRoute] = useState(null);
   const [geocoding, setGeocoding] = useState(false);
 
-  // Geocode city strings when lat/lng coordinates are missing
+  // Geocode city strings when lat/lng coordinates are missing.
+  // Depend on primitive values, not the route object reference, to avoid
+  // re-firing on every render when route is created inline by the parent.
   useEffect(() => {
     if (!route) { setResolvedRoute(null); return; }
 
     const needsGeocode = route.origin_lat == null || route.dest_lat == null;
     if (!needsGeocode) { setResolvedRoute(route); return; }
 
+    let cancelled = false;
     const resolve = async () => {
       setGeocoding(true);
       const [originResult, destResult] = await Promise.all([
         route.origin_lat == null && route.origin_city ? geocodeAddress(route.origin_city) : Promise.resolve(null),
         route.dest_lat == null && route.dest_city     ? geocodeAddress(route.dest_city)   : Promise.resolve(null),
       ]);
+      if (cancelled) return;
       setResolvedRoute({
         ...route,
         origin_lat: originResult?.lat ?? route.origin_lat,
@@ -105,7 +109,9 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       setGeocoding(false);
     };
     resolve();
-  }, [route]);
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route?.origin_lat, route?.origin_lng, route?.dest_lat, route?.dest_lng, route?.origin_city, route?.dest_city]);
 
   // Fetch primary route geometry from PC Miler
   useEffect(() => {
@@ -134,7 +140,8 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       }
     };
     fetchRoute();
-  }, [resolvedRoute]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedRoute?.origin_lat, resolvedRoute?.origin_lng, resolvedRoute?.dest_lat, resolvedRoute?.dest_lng]);
 
   // Fetch backhaul route geometry from PC Miler
   useEffect(() => {
@@ -165,7 +172,8 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       }
     };
     fetchBackhaulRoute();
-  }, [backhaul, resolvedRoute]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedRoute?.dest_lat, resolvedRoute?.dest_lng, backhaul?.pickup_lat, backhaul?.delivery_lat]);
 
   // Bounds points for fitting
   const boundsPoints = useMemo(() => {
