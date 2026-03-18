@@ -178,14 +178,35 @@ try {
 
     for (let pageNum = 2; pageNum <= TOTAL_PAGES; pageNum++) {
       try {
+        // Get a fresh reCAPTCHA token from the loaded page for each request
+        const token = await page.evaluate(async (siteKey) => {
+          if (typeof grecaptcha === 'undefined') return '';
+          try {
+            return await grecaptcha.execute(siteKey, { action: 'search' });
+          } catch(e) { return ''; }
+        }, SITE_KEY);
+
         const params = new URLSearchParams(baseParams);
         params.set('page_number', String(pageNum));
         params.set('_', String(Date.now()));
+        if (token) params.set('google_recaptcha_response', token);
 
         const response = await context.request.get(
           `https://www.directfreight.com/home/api_search/loads?${params}`,
           { headers: { accept: 'application/json' } }
         );
+
+        // Log first page response for debugging
+        if (pageNum === 2) {
+          const bodyText = await response.text();
+          console.log(`[${STATES}] Page 2 status: ${response.status()}, body snippet: ${bodyText.substring(0, 200)}`);
+          const data = JSON.parse(bodyText);
+          const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
+          allLoads.push(...pageLoads);
+          console.log(`[${STATES}] Page 2: ${pageLoads.length} loads (token: ${token ? 'yes' : 'no'})`);
+          await new Promise(r => setTimeout(r, 300));
+          continue;
+        }
 
         if (!response.ok()) {
           console.warn(`[${STATES}] Page ${pageNum} failed: ${response.status()}`);
