@@ -183,38 +183,79 @@ try {
     }
   }
 
-  // Fallback: check window.__RESULTS and common variants
+  // Check window globals — including DF_ads_results and common variants
   if (!page1Result) {
     page1Result = await page.evaluate(() => {
-      for (const key of ['__RESULTS', '__DATA', '__INITIAL_DATA', '__LOADS', '__STATE']) {
-        if (window[key] && (window[key].RESULTS || window[key].results || window[key].list)) {
-          return { _foundKey: key, ...window[key] };
-        }
+      const candidates = [
+        '__RESULTS', '__DATA', '__INITIAL_DATA', '__LOADS', '__STATE',
+        'DF_ads_results',
+      ];
+      for (const key of candidates) {
+        try {
+          const val = window[key];
+          if (!val) continue;
+          // Direct array of load records
+          if (Array.isArray(val) && val.length > 0 && val[0]?.entry_id) {
+            return { _foundKey: key, RESULTS: val, TOTAL_PAGES: 1 };
+          }
+          // Object with nested results
+          const arr = val.RESULTS || val.results || val.list || val.loads;
+          if (Array.isArray(arr)) {
+            return { _foundKey: key, RESULTS: arr, TOTAL_PAGES: val.TOTAL_PAGES || val.total_pages || 1 };
+          }
+        } catch(e) {}
       }
       return null;
     });
     if (page1Result) {
-      console.log(`[${STATES}] Found page 1 data in window.${page1Result._foundKey}`);
+      console.log(`[${STATES}] Found page 1 data in window.${page1Result._foundKey} (${page1Result.RESULTS.length} loads, ${page1Result.TOTAL_PAGES} pages)`);
     }
   }
 
   if (!page1Result) {
-    // Last attempt: wait a few seconds and re-check for any globals or XHR
+    // Last attempt: wait a few seconds and broad-scan all window vars safely
     console.log(`[${STATES}] No data found yet, waiting 5s for late-loading content...`);
     await page.waitForTimeout(5000);
 
     const lateCheck = await page.evaluate(() => {
       const found = {};
-      for (const key of Object.keys(window)) {
-        const val = window[key];
-        if (val && typeof val === 'object' && (val.RESULTS || val.results || val.list || val.loads)) {
-          try { found[key] = { count: (val.RESULTS || val.results || val.list || val.loads).length }; } catch(e) {}
-        }
+      let keys = [];
+      try { keys = Object.keys(window); } catch(e) {}
+      for (const key of keys) {
+        try {
+          const val = window[key];
+          if (!val || typeof val !== 'object') continue;
+          if (Array.isArray(val) && val.length > 0 && val[0]?.entry_id) {
+            found[key] = { type: 'direct-array', count: val.length };
+            continue;
+          }
+          const arr = val.RESULTS || val.results || val.list || val.loads;
+          if (Array.isArray(arr)) {
+            found[key] = { type: 'nested', count: arr.length, sample: arr[0]?.entry_id || arr[0] };
+          }
+        } catch(e) { /* skip cross-origin frames */ }
       }
       return found;
     });
-    console.log(`[${STATES}] Late-check window objects with results/list: ${JSON.stringify(lateCheck)}`);
+    console.log(`[${STATES}] Late-check window scan: ${JSON.stringify(lateCheck)}`);
     console.log(`[${STATES}] Late-check intercepted ${capturedResponses.length} JSON responses total`);
+
+    // Also dump all DF_ globals for clues
+    const dfGlobals = await page.evaluate(() => {
+      const out = {};
+      let keys = [];
+      try { keys = Object.keys(window); } catch(e) {}
+      for (const key of keys) {
+        if (!key.startsWith('DF_') && !key.startsWith('__DF')) continue;
+        try {
+          const val = window[key];
+          const type = Array.isArray(val) ? `array[${val.length}]` : typeof val;
+          out[key] = type === 'string' ? val.substring(0, 100) : type;
+        } catch(e) {}
+      }
+      return out;
+    });
+    console.log(`[${STATES}] DF_ globals dump: ${JSON.stringify(dfGlobals)}`);
 
     throw new Error('Could not find loads data on page — check debug output above for clues.');
   }
