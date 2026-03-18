@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
-export const HamburgerMenu = ({ currentView, onNavigate, isAdmin = false }) => {
+export const HamburgerMenu = ({ currentView, onNavigate }) => {
   const { colors } = useTheme();
+  const { isAdmin } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 

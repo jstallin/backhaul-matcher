@@ -547,7 +547,6 @@ function App() {
             <HamburgerMenu
               currentView={currentView}
               onNavigate={handleMenuNavigation}
-              isAdmin={isAdmin}
             />
             <AvatarMenu onNavigateToSettings={handleNavigateToSettings} />
           </div>

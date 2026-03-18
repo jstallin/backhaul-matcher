@@ -153,7 +153,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <HaulMonitorLogo size="medium" />
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <HamburgerMenu currentView="admin-dashboard" onNavigate={onMenuNavigate} isAdmin={true} />
+            <HamburgerMenu currentView="admin-dashboard" onNavigate={onMenuNavigate} />
             <AvatarMenu onNavigateToSettings={onNavigateToSettings} />
           </div>
         </div>
