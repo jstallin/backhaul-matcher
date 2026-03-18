@@ -70,12 +70,13 @@ try {
   // --- Navigate to loads ---
   const url = `https://www.directfreight.com/home/boards/find/loads/all/${STATES}`;
   console.log(`[${STATES}] Navigating to ${url}`);
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+  console.log(`[${STATES}] Loads page landed on: ${page.url()}`);
 
   // Wait for page-1 data to be injected into window.__RESULTS
   await page.waitForFunction(
     () => window.__RESULTS && Array.isArray(window.__RESULTS.RESULTS),
-    { timeout: 30000 }
+    { timeout: 60000 }
   );
 
   // --- Run fetch logic inside the browser context (grecaptcha is available there) ---
