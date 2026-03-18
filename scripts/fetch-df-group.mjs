@@ -196,18 +196,6 @@ try {
           { headers: { accept: 'application/json' } }
         );
 
-        // Log first page response for debugging
-        if (pageNum === 2) {
-          const bodyText = await response.text();
-          console.log(`[${STATES}] Page 2 status: ${response.status()}, body snippet: ${bodyText.substring(0, 200)}`);
-          const data = JSON.parse(bodyText);
-          const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
-          allLoads.push(...pageLoads);
-          console.log(`[${STATES}] Page 2: ${pageLoads.length} loads (token: ${token ? 'yes' : 'no'})`);
-          await new Promise(r => setTimeout(r, 300));
-          continue;
-        }
-
         if (!response.ok()) {
           console.warn(`[${STATES}] Page ${pageNum} failed: ${response.status()}`);
           continue;
@@ -215,14 +203,21 @@ try {
 
         const data = await response.json();
         const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
+
+        // Log if a page returns 0 loads (likely reCAPTCHA rate limit)
+        if (pageLoads.length === 0) {
+          const bodyText = JSON.stringify(data).substring(0, 150);
+          console.warn(`[${STATES}] Page ${pageNum} returned 0 loads (token: ${token ? 'yes' : 'no'}) — response: ${bodyText}`);
+        }
+
         allLoads.push(...pageLoads);
 
         if (pageNum % 10 === 0 || pageNum === TOTAL_PAGES) {
           console.log(`[${STATES}] Page ${pageNum}/${TOTAL_PAGES}: ${allLoads.length} loads total`);
         }
 
-        // Brief pause to be polite
-        await new Promise(r => setTimeout(r, 300));
+        // 1.5s delay — gives reCAPTCHA token service room between calls
+        await new Promise(r => setTimeout(r, 1500));
       } catch (err) {
         console.warn(`[${STATES}] Page ${pageNum} error: ${err.message}`);
       }
