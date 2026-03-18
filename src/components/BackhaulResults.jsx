@@ -208,7 +208,16 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', paddingTop: '16px', borderTop: `1px solid ${colors.border.secondary}` }}>
                 <div>
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Equipment</div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.primary }}>{match.equipmentType}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: match.trailer_type_match === false ? colors.text.secondary : colors.text.primary }}>
+                      {match.equipmentType}
+                    </span>
+                    {match.trailer_type_match === false && (
+                      <span style={{ fontSize: '10px', fontWeight: 600, color: '#f59e0b', background: '#f59e0b18', border: '1px solid #f59e0b40', borderRadius: '4px', padding: '1px 5px', whiteSpace: 'nowrap' }}>
+                        type mismatch
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Weight</div>

@@ -216,14 +216,16 @@ export const findRouteHomeBackhauls = async (
   const availableLoads = backhaulLoads.filter(load => !load.status || load.status === 'available');
   const corridorCandidates = [];
 
+  // Trailer type from fleet profile — used for soft-ranking (not hard filtering)
+  const fleetTrailerType = fleetProfile.trailerType || fleetProfile.trailer_type;
+
   for (const load of availableLoads) {
-    // 1. Equipment compatibility (handle both camelCase and snake_case fleet profile fields)
-    const reqType   = fleetProfile.trailerType   || fleetProfile.trailer_type;
+    // 1. Physical constraints — hard filters (can't haul a load that doesn't fit)
     const reqLength = fleetProfile.trailerLength  || fleetProfile.trailer_length;
     const reqWeight = fleetProfile.weightLimit    || fleetProfile.weight_limit;
-    if (reqType   && load.equipment_type  && load.equipment_type  !== reqType)   continue;
     if (reqLength && load.trailer_length  && load.trailer_length  >  reqLength)  continue;
     if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
+    // Note: trailer type is soft-ranked in the sort step, not hard-filtered here
 
     // 2. Corridor check on pickup — must be along the datum→home route.
     // When exact coordinates are missing, fall back to the state centroid so loads
@@ -402,6 +404,10 @@ export const findRouteHomeBackhauls = async (
     // Track whether all three legs came from PC*MILER
     const usedPCMiler = dtp !== null && dtm !== null && dth !== null;
 
+    // Trailer type match: true when both sides have a value and they match,
+    // or when either side is missing (no preference → neutral, not penalized)
+    const trailerTypeMatch = !fleetTrailerType || !load.equipment_type || load.equipment_type === fleetTrailerType;
+
     opportunities.push({
       ...load,
       // Route metrics
@@ -453,6 +459,9 @@ export const findRouteHomeBackhauls = async (
         lng: load.delivery_lng
       },
 
+      // Trailer type ranking
+      trailer_type_match: trailerTypeMatch,
+
       // Ranking category
       is_excellent: efficiencyScore > 50 && additionalMiles < 50,
       is_good: efficiencyScore > 30 && additionalMiles < 100,
@@ -460,16 +469,20 @@ export const findRouteHomeBackhauls = async (
     });
   }
 
-  // Sort: if rate config available, rank by customer net credit first, then carrier revenue
-  // Otherwise fall back to efficiency score
+  // Sort: trailer type matches always come first (when fleet has a type set).
+  // Within each tier, rank by customer net credit (if rate config) or efficiency score.
   if (rateConfig) {
     opportunities.sort((a, b) => {
+      if (a.trailer_type_match !== b.trailer_type_match) return a.trailer_type_match ? -1 : 1;
       const creditDiff = (b.customer_net_credit || 0) - (a.customer_net_credit || 0);
       if (creditDiff !== 0) return creditDiff;
       return (b.carrier_revenue || 0) - (a.carrier_revenue || 0);
     });
   } else {
-    opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
+    opportunities.sort((a, b) => {
+      if (a.trailer_type_match !== b.trailer_type_match) return a.trailer_type_match ? -1 : 1;
+      return b.efficiency_score - a.efficiency_score;
+    });
   }
 
   console.log(`Matching complete: ${opportunities.length} opportunities found`);
