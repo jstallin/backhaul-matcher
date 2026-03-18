@@ -146,7 +146,7 @@ function App() {
     return <ResetPassword />;
   }
 
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { colors } = useTheme();
   const [userType, setUserType] = useState('fleet');
   const [activeTab, setActiveTab] = useState('fleets'); // Default to fleets
@@ -164,7 +164,6 @@ function App() {
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   // Load user's fleet data
   useEffect(() => {
@@ -176,11 +175,7 @@ function App() {
 
     setLoadingFleet(true);
     try {
-      const [fleets, userProfile] = await Promise.all([
-        db.fleets.getAll(user.id),
-        db.userProfiles.get(user.id).catch(() => null),
-      ]);
-      setIsAdmin(userProfile?.is_admin === true);
+      const fleets = await db.fleets.getAll(user.id);
       if (fleets && fleets.length > 0) {
         const fleet = fleets[0];
         
