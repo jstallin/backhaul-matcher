@@ -202,14 +202,15 @@ try {
         }
 
         const data = await response.json();
-        const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
 
-        // Log if a page returns 0 loads (likely reCAPTCHA rate limit)
-        if (pageLoads.length === 0) {
-          const bodyText = JSON.stringify(data).substring(0, 150);
-          console.warn(`[${STATES}] Page ${pageNum} returned 0 loads (token: ${token ? 'yes' : 'no'}) — response: ${bodyText}`);
+        // API clamps page_number to its max — detect and stop
+        const returnedPage = data.page_number ?? pageNum;
+        if (returnedPage < pageNum) {
+          console.log(`[${STATES}] API capped at page ${returnedPage} (requested ${pageNum}) — stopping pagination. ${allLoads.length} loads total.`);
+          break;
         }
 
+        const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
         allLoads.push(...pageLoads);
 
         if (pageNum % 10 === 0 || pageNum === TOTAL_PAGES) {
