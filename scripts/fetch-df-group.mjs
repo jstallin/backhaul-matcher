@@ -25,38 +25,68 @@ if (!STATES || !DF_EMAIL || !DF_PASSWORD) {
 const SITE_KEY = '6LcuTEsaAAAAAG0R486Jz2_o05TNIiuW8lbz9GtY';
 
 const equipMap = {
-  V:    'Dry Van',
-  VV:   'Dry Van',
-  VINT: 'Dry Van',
-  CRG:  'Cargo Van',
-  CV:   'Curtain Van',
-  F:    'Flatbed',
-  FS:   'Flatbed',
-  FT:   'Flatbed',
-  MX:   'Flatbed',
-  FINT: 'Flatbed',
-  R:    'Refrigerated',
-  RINT: 'Refrigerated',
-  SD:   'Step Deck',
-  DD:   'Step Deck',
-  LB:   'Lowboy',
-  RGN:  'Lowboy',
-  HS:   'Hotshot',
-  BT:   'Box Truck',
-  TNK:  'Tanker',
-  PNEU: 'Tanker',
-  CONT: 'Container',
-  LA:   'Landall',
-  AC:   'Auto Carrier',
-  DT:   'Dump Trailer',
-  HB:   'Hopper Bottom',
-  PO:   'Power Only',
+  // Dry Van
+  V:              'Dry Van',
+  VV:             'Dry Van',
+  VA:             'Dry Van',
+  VAN:            'Dry Van',
+  VINT:           'Dry Van',
+  'V+A':          'Dry Van',
+  'V+V':          'Dry Van',
+  'VAN--48FT':    'Dry Van',
+  'VAN OR REFRIGERATED': 'Dry Van',
+  // Cargo/Curtain
+  CRG:            'Cargo Van',
+  CV:             'Curtain Van',
+  // Flatbed
+  F:              'Flatbed',
+  FS:             'Flatbed',
+  FT:             'Flatbed',
+  'F+T':          'Flatbed',
+  'F+S':          'Flatbed',
+  MX:             'Flatbed',
+  FINT:           'Flatbed',
+  FLCS:           'Flatbed',
+  FLATBED:        'Flatbed',
+  '48FT':         'Flatbed',
+  CONESTOGA:      'Flatbed',
+  // Refrigerated
+  R:              'Refrigerated',
+  RINT:           'Refrigerated',
+  FOOD_GRADE:     'Refrigerated',
+  // Step Deck / Drop
+  SD:             'Step Deck',
+  DD:             'Step Deck',
+  DD_DECK:        'Step Deck',
+  // Lowboy
+  LB:             'Lowboy',
+  RGN:            'Lowboy',
+  // Specialty
+  HS:             'Hotshot',
+  BT:             'Box Truck',
+  STRAIGHT:       'Box Truck',
+  TNK:            'Tanker',
+  PNEU:           'Tanker',
+  TANKER_STEEL:   'Tanker',
+  CONT:           'Container',
+  LA:             'Landall',
+  AC:             'Auto Carrier',
+  DT:             'Dump Trailer',
+  HB:             'Hopper Bottom',
+  HOPPERBOTTOM:   'Hopper Bottom',
+  '40+BOTTOM':    'Hopper Bottom',
+  PO:             'Power Only',
+  HAZC:           'Hazmat',
+  OTHER:          'Other',
+  AIR_RIDE:       'Dry Van',
 };
 
 const normalize = (r) => {
-  const trailerCode = Array.isArray(r.trailer_type)
+  const rawCode = Array.isArray(r.trailer_type)
     ? r.trailer_type[0]
     : r.trailer_type || 'V';
+  // Trim whitespace and look up — fall back to the raw code if still unknown
+  const trailerCode = String(rawCode).trim();
   return {
     load_id:        r.entry_id,
     source:         'directfreight',

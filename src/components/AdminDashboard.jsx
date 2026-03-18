@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Package, TrendingUp, RefreshCw, CheckCircle, AlertCircle, Calendar, DollarSign, BarChart2, FileText, Users, ArrowLeft } from '../icons';
+import { Shield, Package, TrendingUp, RefreshCw, AlertCircle, Calendar, DollarSign, BarChart2, FileText, Download } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -161,14 +161,35 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 32px' }}>
         {/* Page title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-          <Shield size={28} color={colors.accent.primary} />
-          <div>
-            <div style={{ fontSize: '24px', fontWeight: 700 }}>Admin Dashboard</div>
-            <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '2px' }}>
-              System health &amp; data overview
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Shield size={28} color={colors.accent.primary} />
+            <div>
+              <div style={{ fontSize: '24px', fontWeight: 700 }}>Admin Dashboard</div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '2px' }}>
+                System health &amp; data overview
+              </div>
             </div>
           </div>
+          <a
+            href="/df-loads-diff-latest.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 18px',
+              background: colors.background.secondary,
+              border: `1px solid ${colors.border.secondary}`,
+              borderRadius: '8px',
+              color: colors.text.primary,
+              fontSize: '13px', fontWeight: 600,
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Download size={15} color={colors.text.secondary} />
+            Latest Diff Report
+          </a>
         </div>
 
         {/* ── DATA HEALTH ── */}
