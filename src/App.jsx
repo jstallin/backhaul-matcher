@@ -20,6 +20,7 @@ import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
 import { Dashboard } from './components/Dashboard';
 import { ImportedLoads } from './components/ImportedLoads';
+import { AdminDashboard } from './components/AdminDashboard';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { InstallPrompt } from './components/InstallPrompt';
 import { db } from './lib/supabase';
@@ -163,6 +164,7 @@ function App() {
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Load user's fleet data
   useEffect(() => {
@@ -171,10 +173,14 @@ function App() {
 
   const loadFleetData = async () => {
     if (!user) return;
-    
+
     setLoadingFleet(true);
     try {
-      const fleets = await db.fleets.getAll(user.id);
+      const [fleets, userProfile] = await Promise.all([
+        db.fleets.getAll(user.id),
+        db.userProfiles.get(user.id).catch(() => null),
+      ]);
+      setIsAdmin(userProfile?.is_admin === true);
       if (fleets && fleets.length > 0) {
         const fleet = fleets[0];
         
@@ -185,10 +191,10 @@ function App() {
         setFleetProfile({
           id: fleet.id,
           name: fleet.name,
-          fleetHome: { 
-            address: fleet.home_address, 
-            lat: fleet.home_lat || 35.4993, 
-            lng: fleet.home_lng || -80.8481 
+          fleetHome: {
+            address: fleet.home_address,
+            lat: fleet.home_lat || 35.4993,
+            lng: fleet.home_lng || -80.8481
           },
           trailerType: firstTruck?.trailer_type || 'Dry Van',
           trailerLength: firstTruck?.trailer_length || 53,
@@ -196,6 +202,7 @@ function App() {
           mcNumber: fleet.mc_number || 'Not Set',
           trucks: trucks || []
         });
+
       } else {
         // No fleet created yet, use defaults
         setFleetProfile({
@@ -511,6 +518,11 @@ function App() {
         <ImportedLoads
           onMenuNavigate={handleMenuNavigation}
         />
+      ) : currentView === 'admin-dashboard' ? (
+        <AdminDashboard
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+        />
       ) : currentView === 'fleet-management' ? (
         <FleetDashboard 
           fleetId={selectedFleetId}
@@ -537,9 +549,10 @@ function App() {
           <HaulMonitorLogo size="medium" />
           
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <HamburgerMenu 
+            <HamburgerMenu
               currentView={currentView}
               onNavigate={handleMenuNavigation}
+              isAdmin={isAdmin}
             />
             <AvatarMenu onNavigateToSettings={handleNavigateToSettings} />
           </div>

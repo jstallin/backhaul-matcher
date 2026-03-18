@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package } from '../icons';
+import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 
-export const HamburgerMenu = ({ currentView, onNavigate }) => {
+export const HamburgerMenu = ({ currentView, onNavigate, isAdmin = false }) => {
   const { colors } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
@@ -80,6 +80,18 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
     // }
   ];
 
+  const adminItems = isAdmin ? [
+    {
+      id: 'admin-dashboard',
+      label: 'Admin Dashboard',
+      icon: Shield,
+      description: 'System health & data overview',
+      isAdmin: true,
+    }
+  ] : [];
+
+  const allItems = [...menuItems, ...adminItems];
+
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
       {/* Menu Button */}
@@ -136,9 +148,10 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           zIndex: 1000,
           overflow: 'hidden'
         }}>
-          {menuItems.map((item, index) => {
+          {allItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = item.id === currentView;
+            const itemColor = item.isAdmin ? '#a855f7' : colors.accent.primary;
 
             return (
               <button
@@ -147,9 +160,10 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                 style={{
                   width: '100%',
                   padding: '16px 20px',
-                  background: isActive ? `${colors.accent.primary}20` : 'transparent',
+                  background: isActive ? `${itemColor}20` : item.isAdmin ? `#a855f710` : 'transparent',
                   border: 'none',
-                  borderBottom: index < menuItems.length - 1 ? `1px solid ${colors.border.secondary}` : 'none',
+                  borderTop: item.isAdmin ? `1px solid ${colors.border.secondary}` : 'none',
+                  borderBottom: index < allItems.length - 1 && !allItems[index + 1]?.isAdmin ? `1px solid ${colors.border.secondary}` : 'none',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -165,16 +179,16 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <Icon 
-                  size={20} 
-                  color={isActive ? colors.accent.primary : colors.text.secondary} 
+                <Icon
+                  size={20}
+                  color={isActive ? itemColor : item.isAdmin ? '#a855f7' : colors.text.secondary}
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: isActive ? colors.accent.primary : colors.text.primary,
+                    color: isActive ? itemColor : item.isAdmin ? '#a855f7' : colors.text.primary,
                     marginBottom: '4px',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',

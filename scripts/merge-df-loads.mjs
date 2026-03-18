@@ -157,6 +157,28 @@ writeFileSync(reportPath, lines.join('\n'));
 console.log(`📋 Diff report → diff-reports/df-loads-diff-${date}.md`);
 console.log(`   +${added.length} added, -${removed.length} removed`);
 
+// --- Write meta.json for admin dashboard ---
+const paidLoads = merged.filter(l => l.pay_rate > 0);
+const avgPayRaw = paidLoads.length
+  ? Math.round(paidLoads.reduce((s, l) => s + l.pay_rate, 0) / paidLoads.length)
+  : 0;
+
+const metaPath = resolve(__dirname, '../public/df-loads-meta.json');
+writeFileSync(metaPath, JSON.stringify({
+  runDate: date,
+  runAt: new Date().toISOString(),
+  totalLoads: merged.length,
+  previousTotal: existing.length,
+  netChange: merged.length - existing.length,
+  added: added.length,
+  removed: removed.length,
+  avgPay: avgPayRaw,
+  loadsWithPay: paidLoads.length,
+  equipmentTypes: countBy(merged, 'equipment_type'),
+  topPickupStates: countBy(merged, 'pickup_state').slice(0, 20),
+}, null, 2));
+console.log(`📊 Meta → public/df-loads-meta.json`);
+
 // --- Overwrite df-loads.json ---
 writeFileSync(outputPath, JSON.stringify(merged, null, 2));
 console.log(`\n✅ Merged ${merged.length} unique loads → public/df-loads.json`);
