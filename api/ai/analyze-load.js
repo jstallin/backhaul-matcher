@@ -279,6 +279,15 @@ export default async function handler(req, res) {
   const equipment   = match.equipmentType ?? match.equipment_type ?? '';
   const weight      = match.weight_lbs ?? match.weight;
 
+  // Trailer type match context
+  const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
+  const isTypeMismatch = match.trailer_type_match === false;
+  const typeMatchLine = isTypeMismatch
+    ? `- Equipment match: MISMATCH — fleet runs ${fleetTrailerType}, load requires ${equipment}`
+    : (fleetTrailerType && equipment)
+      ? `- Equipment match: ✓ Both ${fleetTrailerType}`
+      : `- Equipment match: N/A (type not specified on one or both sides)`;
+
   const financialSection = hasRateConfig
     ? `FINANCIAL BREAKDOWN (fleet rate config applied):
 - Gross revenue: $${revenue.toFixed(2)}
@@ -291,7 +300,11 @@ export default async function handler(req, res) {
     : `RATE INFO:
 - Gross revenue: $${revenue.toFixed(2)}
 - Rate per mile (load miles only): $${rpm.toFixed(3)}/mi
-- No fleet cost config — evaluate against typical dry van market rate ($2.00–$2.80/mi loaded)`;
+- No fleet cost config — evaluate against typical market rate for ${equipment || 'this equipment type'}`;
+
+  const typeMismatchNote = isTypeMismatch
+    ? `\nEQUIPMENT NOTE: This load requires ${equipment} but the fleet runs ${fleetTrailerType}. Factor in whether the driver can legally and practically haul this load type. If it's incompatible (e.g., reefer load on a dry van), that's a hard PASS. If it's adjacent (e.g., flatbed load on a step deck), note the constraint and let the dispatcher decide.`
+    : '';
 
   const prompt = `You are advising a freight dispatcher on a BACKHAUL opportunity — the truck is already out and needs to get home. The alternative to taking this load is deadheading home empty with zero revenue. Evaluate accordingly: a load that covers fuel + some profit is almost always better than nothing.
 
@@ -299,6 +312,7 @@ LOAD:
 - Route: ${match.origin?.address} → ${match.destination?.address}
 - Load miles: ${loadMiles} mi
 - Equipment: ${equipment}${weight ? `, ${Number(weight).toLocaleString()} lbs` : ''}
+${typeMatchLine}
 - Pickup date: ${pickupDate}
 - Broker: ${match.broker || 'Unknown'}
 
@@ -307,17 +321,18 @@ ${financialSection}
 ROUTE CONTEXT:
 - Truck currently at: ${request.datum_point}
 - Fleet home: ${fleet.home_city || fleet.home_address || 'on file'}
+- Fleet trailer type: ${fleetTrailerType || 'not specified'}
 - Miles to pickup from current location: ${toPickup} mi
 - Out-of-route (OOR) miles added vs. going straight home: ${oorMiles} mi
 - Miles from delivery to home: ${toHome} mi
 - Rank among all matches: #${(match.rank ?? 0) + 1}
-
-Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Only say PASS if the OOR miles are excessive, the rate is genuinely below cost, or there's a clear red flag.`;
+${typeMismatchNote}
+Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Only say PASS if the OOR miles are excessive, the rate is genuinely below cost, there's a clear red flag, or the equipment type is incompatible.`;
 
   try {
     const result = await callClaude({
       messages: [{ role: 'user', content: prompt }],
-      system: 'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? Be direct. Never use bullet points. 2–3 sentences after your verdict.',
+      system: 'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? If there is an equipment type mismatch, flag it clearly — a reefer load on a dry van is a hard no, but adjacent types (flatbed/step deck, dry van/power only) are judgment calls worth flagging. Be direct. Never use bullet points. 2–3 sentences after your verdict.',
       maxTokens: 300
     });
     return res.status(200).json({ analysis: result.content?.find(b => b.type === 'text')?.text || '' });
@@ -370,10 +385,12 @@ For backhaul estimates, reason through typical lane rates and market conditions.
 
   if (context === 'results') {
     const { matches = [], fleet = {}, request = {} } = contextData;
+    const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
     const matchSummary = matches.map((m, i) => {
       const rpm = m.revenuePerMile ? `$${m.revenuePerMile.toFixed(2)}/mi` : 'no rate';
       const net = m.has_rate_config ? ` | net $${m.customer_net_credit?.toFixed(0)}` : '';
-      return `  #${i + 1}: ${m.origin?.address} → ${m.destination?.address} | ${m.distance} mi | $${m.totalRevenue?.toFixed(0)} (${rpm})${net} | ${m.additionalMiles} OOR mi | ${m.finalToPickup} mi to pickup | broker: ${m.broker || 'unknown'}`;
+      const typeFlag = m.trailer_type_match === false ? ' ⚠ type mismatch' : '';
+      return `  #${i + 1}: ${m.origin?.address} → ${m.destination?.address} | ${m.equipmentType || m.equipment_type || '?'} | $${m.totalRevenue?.toFixed(0)} (${rpm})${net} | ${m.additionalMiles} OOR mi | ${m.finalToPickup} mi to pickup${typeFlag}`;
     }).join('\n');
 
     return `You are Co-driver, an AI dispatch assistant built into Haul Monitor. Help the dispatcher evaluate these backhaul results.
@@ -382,7 +399,7 @@ ${actionInstructions}
 REQUEST: ${request.request_name || 'Open request'}
 Datum (truck location): ${request.datum_point || 'unknown'}
 Fleet home: ${fleet.home_city || fleet.home_address || 'on file'}
-Equipment: ${fleet.trailer_type || 'on file'}
+Fleet trailer type: ${fleetTrailerType || 'not specified'}
 
 LOAD RESULTS (${matches.length} matches, best first):
 ${matchSummary || '  No matches.'}
