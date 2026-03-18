@@ -55,13 +55,6 @@ jobs:
           path: df-loads-${{ matrix.group.name }}.json
           retention-days: 1
 
-      - name: Upload debug screenshot on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-screenshot-${{ matrix.group.name }}
-          path: debug-screenshot-*.png
-          retention-days: 3
 
   merge-and-commit:
     name: Merge & Commit

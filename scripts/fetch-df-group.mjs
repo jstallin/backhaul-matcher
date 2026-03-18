@@ -192,12 +192,13 @@ try {
 
 } catch (err) {
   console.error(`[${STATES}] ❌ Fatal: ${err.message}`);
-  // Screenshot on failure so we can see exactly what the browser is looking at
+  // Dump page state to log so we can see what the browser is looking at
   try {
-    await page.screenshot({ path: `debug-screenshot-${STATES.replace(/,/g, '_')}.png`, fullPage: true });
-    console.log(`[${STATES}] 📸 Screenshot saved for debugging`);
-  } catch (ssErr) {
-    console.warn(`[${STATES}] Could not save screenshot: ${ssErr.message}`);
+    console.error(`[${STATES}] 🌐 Page URL at failure: ${page.url()}`);
+    const html = await page.content();
+    console.error(`[${STATES}] 📄 Page HTML (first 3000 chars):\n${html.slice(0, 3000)}`);
+  } catch (dbgErr) {
+    console.warn(`[${STATES}] Could not dump page state: ${dbgErr.message}`);
   }
   process.exit(1);
 } finally {
