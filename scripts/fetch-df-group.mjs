@@ -47,6 +47,11 @@ try {
   console.log(`[${STATES}] Logging in...`);
   await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'networkidle' });
 
+  // Dump page state so we can identify the correct selectors
+  console.log(`[${STATES}] 🌐 Login page URL: ${page.url()}`);
+  const loginHtml = await page.content();
+  console.log(`[${STATES}] 📄 Login page HTML (first 3000 chars):\n${loginHtml.slice(0, 3000)}`);
+
   await page.fill('input[name="email"], input[type="email"], #email', DF_EMAIL);
   await page.fill('input[name="password"], input[type="password"], #password', DF_PASSWORD);
   await page.click('button[type="submit"], input[type="submit"]');
