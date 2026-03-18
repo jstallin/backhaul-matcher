@@ -45,7 +45,8 @@ const page = await context.newPage();
 try {
   // --- Login ---
   console.log(`[${STATES}] Logging in...`);
-  await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'networkidle' });
+  await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#user', { timeout: 30000 });
 
   await page.fill('#user', DF_EMAIL);
   await page.fill('#password', DF_PASSWORD);
