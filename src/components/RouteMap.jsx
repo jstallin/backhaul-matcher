@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation, DollarSign } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
-import { getRouteGeometry } from '../utils/pcMilerClient';
+import { getRouteGeometry, geocodeAddress } from '../utils/pcMilerClient';
 
 // Create a colored circle icon for markers
 const createCircleIcon = (color, size = 32) => L.divIcon({
@@ -79,15 +79,42 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
   const { colors, theme } = useTheme();
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [backhaulRouteGeoJSON, setBackhaulRouteGeoJSON] = useState(null);
+  const [resolvedRoute, setResolvedRoute] = useState(null);
+  const [geocoding, setGeocoding] = useState(false);
+
+  // Geocode city strings when lat/lng coordinates are missing
+  useEffect(() => {
+    if (!route) { setResolvedRoute(null); return; }
+
+    const needsGeocode = route.origin_lat == null || route.dest_lat == null;
+    if (!needsGeocode) { setResolvedRoute(route); return; }
+
+    const resolve = async () => {
+      setGeocoding(true);
+      const [originResult, destResult] = await Promise.all([
+        route.origin_lat == null && route.origin_city ? geocodeAddress(route.origin_city) : Promise.resolve(null),
+        route.dest_lat == null && route.dest_city     ? geocodeAddress(route.dest_city)   : Promise.resolve(null),
+      ]);
+      setResolvedRoute({
+        ...route,
+        origin_lat: originResult?.lat ?? route.origin_lat,
+        origin_lng: originResult?.lng ?? route.origin_lng,
+        dest_lat:   destResult?.lat   ?? route.dest_lat,
+        dest_lng:   destResult?.lng   ?? route.dest_lng,
+      });
+      setGeocoding(false);
+    };
+    resolve();
+  }, [route]);
 
   // Fetch primary route geometry from PC Miler
   useEffect(() => {
     const fetchRoute = async () => {
-      if (!route) return;
+      if (!resolvedRoute) return;
 
       const geometry = await getRouteGeometry([
-        { lat: route.origin_lat, lng: route.origin_lng },
-        { lat: route.dest_lat, lng: route.dest_lng }
+        { lat: resolvedRoute.origin_lat, lng: resolvedRoute.origin_lng },
+        { lat: resolvedRoute.dest_lat, lng: resolvedRoute.dest_lng }
       ]);
 
       if (geometry) {
@@ -99,23 +126,23 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
           geometry: {
             type: 'LineString',
             coordinates: [
-              [route.origin_lng, route.origin_lat],
-              [route.dest_lng, route.dest_lat]
+              [resolvedRoute.origin_lng, resolvedRoute.origin_lat],
+              [resolvedRoute.dest_lng, resolvedRoute.dest_lat]
             ]
           }
         });
       }
     };
     fetchRoute();
-  }, [route]);
+  }, [resolvedRoute]);
 
   // Fetch backhaul route geometry from PC Miler
   useEffect(() => {
     const fetchBackhaulRoute = async () => {
-      if (!backhaul || !route) return;
+      if (!backhaul || !resolvedRoute) return;
 
       const geometry = await getRouteGeometry([
-        { lat: route.dest_lat, lng: route.dest_lng },
+        { lat: resolvedRoute.dest_lat, lng: resolvedRoute.dest_lng },
         { lat: backhaul.pickup_lat, lng: backhaul.pickup_lng },
         { lat: backhaul.delivery_lat, lng: backhaul.delivery_lng }
       ]);
@@ -129,7 +156,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
           geometry: {
             type: 'LineString',
             coordinates: [
-              [route.dest_lng, route.dest_lat],
+              [resolvedRoute.dest_lng, resolvedRoute.dest_lat],
               [backhaul.pickup_lng, backhaul.pickup_lat],
               [backhaul.delivery_lng, backhaul.delivery_lat]
             ]
@@ -138,24 +165,31 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       }
     };
     fetchBackhaulRoute();
-  }, [backhaul, route]);
+  }, [backhaul, resolvedRoute]);
 
   // Bounds points for fitting
   const boundsPoints = useMemo(() => {
-    if (!route) return [];
+    if (!resolvedRoute) return [];
     const pts = [
-      [route.origin_lat, route.origin_lng],
-      [route.dest_lat, route.dest_lng]
+      [resolvedRoute.origin_lat, resolvedRoute.origin_lng],
+      [resolvedRoute.dest_lat, resolvedRoute.dest_lng]
     ];
     if (backhaul) {
       pts.push([backhaul.pickup_lat, backhaul.pickup_lng]);
       pts.push([backhaul.delivery_lat, backhaul.delivery_lng]);
     }
     return pts;
-  }, [route, backhaul]);
+  }, [resolvedRoute, backhaul]);
 
   if (!route) return null;
-  if (route.origin_lat == null || route.origin_lng == null || route.dest_lat == null || route.dest_lng == null) {
+  if (geocoding) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9CA3AF' }}>
+        Locating route...
+      </div>
+    );
+  }
+  if (!resolvedRoute || resolvedRoute.origin_lat == null || resolvedRoute.origin_lng == null || resolvedRoute.dest_lat == null || resolvedRoute.dest_lng == null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9CA3AF' }}>
         Map unavailable — coordinates not found for this load.
@@ -193,7 +227,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       border: `1px solid ${colors.border.primary}`
     }}>
       <MapContainer
-        center={[(route.origin_lat + route.dest_lat) / 2, (route.origin_lng + route.dest_lng) / 2]}
+        center={[(resolvedRoute.origin_lat + resolvedRoute.dest_lat) / 2, (resolvedRoute.origin_lng + resolvedRoute.dest_lng) / 2]}
         zoom={6}
         style={{ width: '100%', height: '100%' }}
         scrollWheelZoom={true}
@@ -208,7 +242,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
         {/* Primary Route Line */}
         {routeGeoJSON && (
           <GeoJSON
-            key={`route-${route.origin_lat}-${route.dest_lat}`}
+            key={`route-${resolvedRoute.origin_lat}-${resolvedRoute.dest_lat}`}
             data={routeGeoJSON}
             style={routeLineStyle}
           />
@@ -225,7 +259,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
 
         {/* Origin Marker */}
         <Marker
-          position={[route.origin_lat, route.origin_lng]}
+          position={[resolvedRoute.origin_lat, resolvedRoute.origin_lng]}
           icon={createLabeledIcon(colors.accent.primary, 'ORIGIN', 32)}
         >
           <Popup>
@@ -234,7 +268,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
                 Origin
               </div>
               <div style={{ fontSize: '12px', color: '#666' }}>
-                {route.origin_city}
+                {resolvedRoute.origin_city}
               </div>
             </div>
           </Popup>
@@ -242,7 +276,7 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
 
         {/* Destination Marker */}
         <Marker
-          position={[route.dest_lat, route.dest_lng]}
+          position={[resolvedRoute.dest_lat, resolvedRoute.dest_lng]}
           icon={createLabeledIcon(
             backhaul ? colors.accent.primary : colors.accent.info,
             'DELIVERY',
@@ -255,10 +289,10 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
                 Primary Delivery
               </div>
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-                {route.dest_city}
+                {resolvedRoute.dest_city}
               </div>
               <div style={{ fontSize: '11px', fontWeight: 600 }}>
-                {route.distance} mi &middot; ${route.revenue?.toLocaleString()}
+                {resolvedRoute.distance} mi &middot; ${resolvedRoute.revenue?.toLocaleString()}
               </div>
             </div>
           </Popup>
