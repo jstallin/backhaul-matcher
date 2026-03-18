@@ -53,7 +53,7 @@ const page = await context.newPage();
 try {
   // --- Login ---
   console.log(`[${STATES}] Logging in...`);
-  await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'load', timeout: 60000 });
+  await page.goto('https://www.directfreight.com/', { waitUntil: 'load', timeout: 60000 });
   console.log(`[${STATES}] Landed on: ${page.url()}`);
   await page.waitForSelector('#user', { timeout: 60000 });
 
