@@ -40,13 +40,22 @@ const context = await browser.newContext({
   viewport: { width: 1280, height: 800 },
 });
 
+// Hide automation signals that trigger bot detection
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+  Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+  Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+  window.chrome = { runtime: {} };
+});
+
 const page = await context.newPage();
 
 try {
   // --- Login ---
   console.log(`[${STATES}] Logging in...`);
-  await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#user', { timeout: 30000 });
+  await page.goto('https://www.directfreight.com/home/login', { waitUntil: 'load', timeout: 60000 });
+  console.log(`[${STATES}] Landed on: ${page.url()}`);
+  await page.waitForSelector('#user', { timeout: 60000 });
 
   await page.fill('#user', DF_EMAIL);
   await page.fill('#password', DF_PASSWORD);
