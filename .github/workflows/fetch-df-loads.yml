@@ -83,7 +83,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/df-loads.json diff-reports/
+          git add public/df-loads.json public/df-loads-meta.json public/df-loads-diff-latest.html diff-reports/
           git diff --staged --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update df-loads.json [$(date -u '+%Y-%m-%d')]"
           git pull --rebase origin main
