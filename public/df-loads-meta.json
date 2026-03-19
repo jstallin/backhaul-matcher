@@ -1,219 +1,167 @@
 {
-  "runDate": "2026-03-18",
-  "runAt": "2026-03-18T20:05:11.492Z",
-  "totalLoads": 22217,
+  "runDate": "2026-03-19",
+  "runAt": "2026-03-19T11:10:32.788Z",
+  "totalLoads": 17286,
   "previousTotal": 22217,
-  "netChange": 0,
-  "added": 0,
-  "removed": 0,
-  "avgPay": 1111,
-  "loadsWithPay": 15859,
+  "netChange": -4931,
+  "added": 9329,
+  "removed": 14260,
+  "avgPay": 1280,
+  "loadsWithPay": 12236,
   "equipmentTypes": [
     [
       "Flatbed",
-      12917
+      11998
     ],
     [
       "Dry Van",
-      3167
-    ],
-    [
-      "OTHER",
-      1861
-    ],
-    [
-      "F+T",
-      1678
+      2957
     ],
     [
       "Refrigerated",
-      1560
+      1400
     ],
     [
       "Step Deck",
-      400
+      362
     ],
     [
       "Power Only",
-      355
+      348
     ],
     [
-      "Hotshot",
-      51
-    ],
-    [
-      " 48 FT",
-      44
-    ],
-    [
-      "Container",
-      42
+      "48 FT",
+      43
     ],
     [
       "Box Truck",
-      34
-    ],
-    [
-      "Curtain Van",
-      27
+      36
     ],
     [
       "Lowboy",
-      26
+      33
     ],
     [
-      " AIR_RIDE",
-      10
+      "Hotshot",
+      32
     ],
     [
-      " STRAIGHT",
-      7
+      "Other",
+      28
     ],
     [
-      " FLATBED",
-      7
+      "Curtain Van",
+      22
     ],
     [
-      "VAN OR REFRIGERATED",
-      6
+      "Container",
+      17
     ],
     [
-      "HAZC",
-      5
-    ],
-    [
-      "V+A",
-      4
-    ],
-    [
-      " 40+BOTTOM",
+      "Hopper Bottom",
       3
-    ],
-    [
-      " FLCS",
-      2
     ],
     [
       "Dump Trailer",
       2
     ],
     [
-      " PO",
+      "DS",
+      2
+    ],
+    [
+      "Cargo Van",
       1
     ],
     [
-      " CONESTOGA",
+      "PVA",
       1
     ],
     [
-      " DD_DECK",
-      1
-    ],
-    [
-      " FOOD_GRADE",
-      1
-    ],
-    [
-      " TANKER_STEEL",
-      1
-    ],
-    [
-      " VAN",
-      1
-    ],
-    [
-      "V+V",
-      1
-    ],
-    [
-      "HOPPERBOTTOM",
-      1
-    ],
-    [
-      "VAN--48FT",
+      "Tanker",
       1
     ]
   ],
   "topPickupStates": [
     [
       "AL",
-      2866
+      2064
     ],
     [
       "GA",
-      2371
+      1822
     ],
     [
       "CA",
-      1179
-    ],
-    [
-      "NC",
-      1050
+      863
     ],
     [
       "IL",
-      1026
+      827
     ],
     [
-      "AR",
-      876
-    ],
-    [
-      "WI",
-      870
-    ],
-    [
-      "IN",
-      825
-    ],
-    [
-      "LA",
-      790
+      "NC",
+      785
     ],
     [
       "MS",
-      768
+      686
     ],
     [
-      "SC",
-      754
+      "WI",
+      664
     ],
     [
       "MA",
-      678
+      657
     ],
     [
       "MN",
-      676
+      639
     ],
     [
-      "NY",
-      608
+      "IN",
+      611
+    ],
+    [
+      "SC",
+      594
+    ],
+    [
+      "AR",
+      576
+    ],
+    [
+      "LA",
+      519
     ],
     [
       "VA",
-      577
+      511
+    ],
+    [
+      "NY",
+      499
     ],
     [
       "MI",
-      545
+      434
     ],
     [
       "TN",
-      478
+      394
     ],
     [
       "MO",
-      449
+      357
     ],
     [
-      "IA",
-      405
+      "KY",
+      328
     ],
     [
-      "AZ",
-      398
+      "MD",
+      327
     ]
   ]
 }
