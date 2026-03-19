@@ -61,6 +61,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const completedRequests = requests.filter(r => r.status === 'completed');
   const openEstimates = estimateRequests.filter(r => r.status === 'active' || r.status === 'open' || r.status === 'pending');
   const totalRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.revenue_amount) || 0), 0);
+  const totalNetRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.net_revenue) || 0), 0);
 
   // Recent activity — last 8 requests combined, sorted by created_at
   const recentActivity = [...requests, ...estimateRequests]
@@ -178,6 +179,23 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             At-a-glance overview of your fleet activity
           </p>
         </div>
+
+        {/* Net Revenue Hero Banner */}
+        {!loading && totalNetRevenue > 0 && (
+          <div style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `${colors.accent.success}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <DollarSign size={26} color={colors.accent.success} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: colors.accent.success, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Net Revenue Earned</div>
+              <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>${totalNetRevenue.toLocaleString()}</div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>across {completedRequests.length} completed haul{completedRequests.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <TrendingUp size={32} color={`${colors.accent.success}60`} />
+            </div>
+          </div>
+        )}
 
         {/* First-run empty state */}
         {isEmpty ? (

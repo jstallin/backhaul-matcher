@@ -464,6 +464,23 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     }
   };
 
+  const handleCompleteRequest = async (match) => {
+    try {
+      await db.requests.update(selectedRequest.id, {
+        status: 'completed',
+        revenue_amount: match.totalRevenue,
+        net_revenue: match.customer_net_credit ?? match.netRevenue ?? null,
+        out_of_route_miles: match.additionalMiles,
+        completed_at: new Date().toISOString()
+      });
+      setSelectedRequest(null);
+      loadRequests();
+    } catch (error) {
+      console.error('Error completing request:', error);
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: colors.background.primary, padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -714,6 +731,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 onBack={() => setSelectedRequest(null)}
                 onEdit={handleEditRequest}
                 onCancel={handleCancelRequest}
+                onComplete={handleCompleteRequest}
               />
             </>
           )

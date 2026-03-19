@@ -5,13 +5,15 @@ import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { generateTop10Report } from '../utils/generateReport';
 
-export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel }) => {
+export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel, onComplete }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [mapMatch, setMapMatch] = useState(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [haulMatch, setHaulMatch] = useState(null); // load selected for "haul this" confirmation
+  const [completing, setCompleting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState({}); // keyed by load_id
   const [aiLoading, setAiLoading] = useState({});   // keyed by load_id
 
@@ -49,6 +51,21 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
       alert('Failed to cancel request');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleHaulConfirm = async () => {
+    if (!haulMatch || !onComplete) return;
+    setCompleting(true);
+    try {
+      await onComplete(haulMatch);
+      setHaulMatch(null);
+      setSelectedMatch(null);
+    } catch (error) {
+      console.error('Error completing haul:', error);
+      alert('Failed to record haul');
+    } finally {
+      setCompleting(false);
     }
   };
 
@@ -540,17 +557,14 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                 </div>
 
-                {/* Accept Route CTA */}
+                {/* Haul This Load CTA */}
                 <div style={{ paddingTop: '4px', display: 'flex', gap: '12px' }}>
                   <button
-                    onClick={() => {
-                      // TODO: Integrate with loadboard API to claim this route
-                      alert(`Accept Route placeholder: Load ${m.load_id}\n${m.origin.address} → ${m.destination.address}\n\nThis will connect to the loadboard API to claim the route.`);
-                    }}
+                    onClick={() => { setHaulMatch(m); setSelectedMatch(null); }}
                     style={{ flex: 1, padding: '14px 24px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
                     <TrendingUp size={18} />
-                    Accept Route
+                    Haul This Load
                   </button>
                   <button
                     onClick={() => { setSelectedMatch(null); setMapMatch(m); }}
@@ -572,6 +586,48 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           </div>
         );
       })()}
+
+      {/* Haul This Load Confirmation Dialog */}
+      {haulMatch && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => !completing && setHaulMatch(null)}>
+          <div style={{ background: colors.background.overlay, borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '100%', border: `1px solid ${colors.border.primary}` }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>Confirm Haul</h3>
+            <p style={{ margin: '0 0 24px', fontSize: '14px', color: colors.text.secondary }}>
+              Record this as a completed haul? This will log the net revenue to your dashboard.
+            </p>
+            <div style={{ background: colors.background.secondary, borderRadius: '10px', padding: '16px', marginBottom: '24px' }}>
+              <div style={{ fontWeight: 700, marginBottom: '4px', color: colors.text.primary }}>{haulMatch.origin.address} → {haulMatch.destination.address}</div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '12px' }}>{haulMatch.additionalMiles} out-of-route miles</div>
+              <div style={{ display: 'flex', gap: '24px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Gross Revenue</div>
+                  <div style={{ fontWeight: 700, color: colors.text.primary }}>${haulMatch.totalRevenue?.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Net Revenue</div>
+                  <div style={{ fontWeight: 700, color: colors.accent.success }}>${(haulMatch.customer_net_credit ?? haulMatch.netRevenue ?? 0).toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={handleHaulConfirm}
+                disabled={completing}
+                style={{ flex: 1, padding: '12px 20px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#fff', fontSize: '15px', fontWeight: 800, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
+              >
+                {completing ? 'Recording...' : 'Confirm Haul'}
+              </button>
+              <button
+                onClick={() => setHaulMatch(null)}
+                disabled={completing}
+                style={{ padding: '12px 20px', background: 'none', border: `1px solid ${colors.border.accent}`, borderRadius: '10px', color: colors.text.secondary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Map Modal */}
       {mapMatch && (
