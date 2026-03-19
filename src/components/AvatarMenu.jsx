@@ -61,6 +61,8 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
         style={{
           width: '40px',
           height: '40px',
+          padding: 0,
+          boxSizing: 'border-box',
           borderRadius: '50%',
           background: isOpen 
             ? colors.accent.secondary
