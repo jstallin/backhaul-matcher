@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export const useCredits = () => {
+  const { isAdmin } = useAuth();
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,7 @@ export const useCredits = () => {
   useEffect(() => { fetchBalance(); }, [fetchBalance]);
 
   const deductCredit = async (description = 'Backhaul search') => {
-    if (localStorage.getItem('hm_credits_bypass') === 'true') {
+    if (isAdmin && localStorage.getItem('hm_credits_bypass') === 'true') {
       return { success: true, balance: balance ?? 999 };
     }
     const { data: { session } } = await supabase.auth.getSession();
