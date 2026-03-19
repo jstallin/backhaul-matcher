@@ -41,3 +41,6 @@ lerna-debug.log*
 .vercel
 Haul_Monitor_Gap_Analysis.pdf
 Haul_Monitor_Gap_Analysis.md
+
+# Local docs (not for repo)
+docs/
