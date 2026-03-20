@@ -16,6 +16,15 @@ vi.mock('../pcMilerClient.js', () => ({
   getDrivingDistance: vi.fn(),
 }));
 
+vi.mock('../../lib/supabase', () => ({
+  db: {
+    distanceCache: {
+      getBatch: vi.fn().mockResolvedValue([]),       // No DB hits — fall through to PC*MILER
+      upsertBatch: vi.fn().mockResolvedValue(undefined),
+    },
+  },
+}));
+
 import { getDrivingDistance } from '../pcMilerClient.js';
 
 // ---------------------------------------------------------------------------
