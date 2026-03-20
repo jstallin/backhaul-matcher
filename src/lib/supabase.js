@@ -384,6 +384,27 @@ export const db = {
     }
   },
 
+  // Route distance cache — shared across all users, keyed by lane (origin→dest)
+  distanceCache: {
+    async getBatch(routeKeys) {
+      if (!routeKeys.length) return [];
+      const { data, error } = await supabase
+        .from('route_distance_cache')
+        .select('route_key, distance_miles')
+        .in('route_key', routeKeys);
+      if (error) throw error;
+      return data || [];
+    },
+
+    async upsertBatch(entries) {
+      if (!entries.length) return;
+      const { error } = await supabase
+        .from('route_distance_cache')
+        .upsert(entries, { onConflict: 'route_key' });
+      if (error) throw error;
+    }
+  },
+
   // Estimate request operations
   estimateRequests: {
     async getAll(userId) {

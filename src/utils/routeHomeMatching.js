@@ -10,6 +10,7 @@
 
 import { getRouteWithCorridor, isPointInCorridor } from './routeCorridorService';
 import { getDrivingDistance } from './pcMilerClient';
+import { db } from '../lib/supabase';
 
 // Session-level cache for per-load driving distances.
 // Survives tab switches and request re-opens within the same browser session.
@@ -24,6 +25,13 @@ const getDistanceCacheKey = (datumPoint, fleetHome, isRelay) => {
   const r = (n) => Math.round(n * 100) / 100; // 2 decimal precision (~1km)
   return `${r(datumPoint.lat)},${r(datumPoint.lng)}->${r(fleetHome.lat)},${r(fleetHome.lng)}:relay=${isRelay}`;
 };
+
+// DB cache key for a single origin→dest leg (shared across all users)
+const r2 = (n) => Math.round(n * 100) / 100;
+const getStopKey = (stop) => stop.lat != null
+  ? `${r2(stop.lat)},${r2(stop.lng)}`
+  : `${stop.city},${stop.state}`;
+const getLegKey = (origin, dest) => `${getStopKey(origin)}->${getStopKey(dest)}`;
 
 // Approximate geographic centroids for US states.
 // Used as a fallback when a load has no pickup/delivery coordinates,
@@ -264,60 +272,112 @@ export const findRouteHomeBackhauls = async (
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
   }
 
-  // ---- PRECISE DISTANCES: Call PC*MILER with session caching ----
-  // We fetch all 3 legs per load via PC*MILER for accurate truck distances.
-  // Cached results from previous visits to this same request are reused immediately.
+  // ---- PRECISE DISTANCES: session cache → DB cache → PC*MILER ----
+  // Three-tier lookup: in-memory session cache (fastest), then shared DB cache
+  // (across users and sessions), then PC*MILER API (only on true cache misses).
   const distCacheKey = getDistanceCacheKey(datumPoint, fleetHome, isRelay);
   const loadDistCache = distanceCache.get(distCacheKey) || new Map();
 
   const uncached = candidatesToProcess.filter(load => !loadDistCache.has(load.load_id));
   const cached   = candidatesToProcess.filter(load =>  loadDistCache.has(load.load_id));
 
-  console.log(`Distance cache: ${cached.length} hits, ${uncached.length} misses`);
+  console.log(`Session cache: ${cached.length} hits, ${uncached.length} misses`);
 
   const cachedResults = cached.map(load => {
     const { dtp, dtm, dth } = loadDistCache.get(load.load_id);
     return { load, dtp, dtm, dth };
   });
 
-  // Fetch all 3 legs per load via PC*MILER:
-  //   dtp: datum (or home in relay) → pickup
-  //   dtm: pickup → delivery  (middle leg — replaces load.distance_miles for accuracy)
-  //   dth: delivery → home
-  const batchSize = 4; // 12 API calls per batch (3 legs × 4 loads)
-  const freshResults = [];
   const firstLegOrigin = isRelay ? fleetHome : datumPoint;
 
-  for (let i = 0; i < uncached.length; i += batchSize) {
-    const batch = uncached.slice(i, i + batchSize);
-    const batchPromises = batch.map(async (load) => {
+  // Build stop objects and per-leg DB keys for all session-uncached loads
+  const uncachedWithStops = uncached.map(load => {
+    const pickupStop = load.pickup_lat !== null
+      ? { lat: load.pickup_lat, lng: load.pickup_lng }
+      : { city: load.pickup_city, state: load.pickup_state };
+    const deliveryStop = load.delivery_lat !== null
+      ? { lat: load.delivery_lat, lng: load.delivery_lng }
+      : { city: load.delivery_city, state: load.delivery_state };
+    return {
+      load,
+      pickupStop,
+      deliveryStop,
+      dtpKey: getLegKey(firstLegOrigin, pickupStop),
+      dtmKey: getLegKey(pickupStop, deliveryStop),
+      dthKey: getLegKey(deliveryStop, fleetHome),
+    };
+  });
+
+  // Batch fetch all needed legs from DB cache (one query, shared across all users)
+  let dbCacheMap = new Map();
+  try {
+    const allLegKeys = [...new Set(uncachedWithStops.flatMap(({ dtpKey, dtmKey, dthKey }) => [dtpKey, dtmKey, dthKey]))];
+    if (allLegKeys.length > 0) {
+      const dbRows = await db.distanceCache.getBatch(allLegKeys);
+      dbCacheMap = new Map(dbRows.map(r => [r.route_key, r.distance_miles]));
+      console.log(`DB cache: ${dbCacheMap.size} leg hits of ${allLegKeys.length} legs needed`);
+    }
+  } catch (err) {
+    console.warn('DB distance cache lookup failed, proceeding with PC*MILER:', err.message);
+  }
+
+  // Full DB hit → no API call. Partial or full miss → PC*MILER for missing legs only.
+  const dbHitResults = [];
+  const pcMilerNeeded = [];
+
+  for (const item of uncachedWithStops) {
+    const dtp = dbCacheMap.get(item.dtpKey);
+    const dtm = dbCacheMap.get(item.dtmKey);
+    const dth = dbCacheMap.get(item.dthKey);
+    if (dtp !== undefined && dtm !== undefined && dth !== undefined) {
+      loadDistCache.set(item.load.load_id, { dtp, dtm, dth });
+      dbHitResults.push({ load: item.load, dtp, dtm, dth });
+    } else {
+      pcMilerNeeded.push({ ...item, cachedDtp: dtp, cachedDtm: dtm, cachedDth: dth });
+    }
+  }
+
+  console.log(`DB hits: ${dbHitResults.length}, PC*MILER needed: ${pcMilerNeeded.length}`);
+
+  // Call PC*MILER only for legs not already in DB cache
+  const batchSize = 4;
+  const newCacheEntries = [];
+  const freshResults = [];
+
+  for (let i = 0; i < pcMilerNeeded.length; i += batchSize) {
+    const batch = pcMilerNeeded.slice(i, i + batchSize);
+    const batchPromises = batch.map(async (item) => {
       try {
-        const pickupStop = load.pickup_lat !== null
-          ? { lat: load.pickup_lat, lng: load.pickup_lng }
-          : { city: load.pickup_city, state: load.pickup_state };
-        const deliveryStop = load.delivery_lat !== null
-          ? { lat: load.delivery_lat, lng: load.delivery_lng }
-          : { city: load.delivery_city, state: load.delivery_state };
         const [dtp, dtm, dth] = await Promise.all([
-          getDrivingDistance([firstLegOrigin, pickupStop]),
-          getDrivingDistance([pickupStop, deliveryStop]),
-          getDrivingDistance([deliveryStop, fleetHome])
+          item.cachedDtp !== undefined ? Promise.resolve(item.cachedDtp) : getDrivingDistance([firstLegOrigin, item.pickupStop]),
+          item.cachedDtm !== undefined ? Promise.resolve(item.cachedDtm) : getDrivingDistance([item.pickupStop, item.deliveryStop]),
+          item.cachedDth !== undefined ? Promise.resolve(item.cachedDth) : getDrivingDistance([item.deliveryStop, fleetHome]),
         ]);
-        loadDistCache.set(load.load_id, { dtp, dtm, dth });
-        return { load, dtp, dtm, dth };
+        if (item.cachedDtp === undefined && dtp !== null) newCacheEntries.push({ route_key: item.dtpKey, distance_miles: dtp });
+        if (item.cachedDtm === undefined && dtm !== null) newCacheEntries.push({ route_key: item.dtmKey, distance_miles: dtm });
+        if (item.cachedDth === undefined && dth !== null) newCacheEntries.push({ route_key: item.dthKey, distance_miles: dth });
+        loadDistCache.set(item.load.load_id, { dtp, dtm, dth });
+        return { load: item.load, dtp, dtm, dth };
       } catch (error) {
-        console.warn(`PC Miler distance failed for load ${load.load_id}:`, error.message);
-        return { load, dtp: null, dtm: null, dth: null };
+        console.warn(`PC Miler distance failed for load ${item.load.load_id}:`, error.message);
+        return { load: item.load, dtp: null, dtm: null, dth: null };
       }
     });
     const batchResults = await Promise.all(batchPromises);
     freshResults.push(...batchResults);
   }
 
-  // Persist updated cache for this session
+  // Write new distances to DB — fire-and-forget, don't block results
+  if (newCacheEntries.length > 0) {
+    db.distanceCache.upsertBatch(newCacheEntries).catch(err =>
+      console.warn('DB distance cache write failed:', err.message)
+    );
+  }
+
+  // Persist updated session cache
   distanceCache.set(distCacheKey, loadDistCache);
 
-  const distanceResults = [...cachedResults, ...freshResults];
+  const distanceResults = [...cachedResults, ...dbHitResults, ...freshResults];
 
   // ---- SCORE with real driving distances ----
   for (const { load, dtp, dtm, dth } of distanceResults) {
