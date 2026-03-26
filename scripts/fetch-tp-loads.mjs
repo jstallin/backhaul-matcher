@@ -173,10 +173,6 @@ function normalize(item) {
 
 // ─── Build search payload for one state ───────────────────────────────────────
 function buildPayload(centroid, offset = 0) {
-  const now   = new Date();
-  const month = new Date(now);
-  month.setDate(month.getDate() + 30);
-
   return {
     sort:          [{ smart_sort: 'desc' }],
     offset,
@@ -186,31 +182,16 @@ function buildPayload(centroid, offset = 0) {
     road_miles:    true,
     include_auth_required: false,
     paging_enable: true,
-    other: {
-      source:       'list',
-      pickup_type:  'home location',
-      dropoff_type: 'anywhere',
-      chr_switch:   false,
-    },
     query: {
-      weight:    { allow_null: true },
-      length:    { allow_null: true },
-      equipment: [],
       pickup: {
         geo: {
           location: {
-            address: `${centroid.state},US`,
-            lat:     centroid.lat,
-            lng:     centroid.lng,
+            lat: centroid.lat,
+            lng: centroid.lng,
           },
-          deadhead: { max: 300 },
-        },
-        date_local: {
-          from: `${now.toISOString().slice(0, 10)}T00:00:00`,
-          to:   `${month.toISOString().slice(0, 10)}T23:59:59`,
+          radius: 300,
         },
       },
-      // drop_off omitted — we want loads going anywhere
     },
   };
 }
