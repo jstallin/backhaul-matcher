@@ -1,0 +1,47 @@
+name: Fetch TruckerPath Loads
+
+on:
+  schedule:
+    # 4:00 AM Eastern (9:00 AM UTC) — 1 hour after the DirectFreight run
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  fetch-and-commit:
+    name: Fetch TruckerPath Loads
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Fetch loads
+        env:
+          TP_EMAIL:    ${{ secrets.TP_EMAIL }}
+          TP_PASSWORD: ${{ secrets.TP_PASSWORD }}
+          OUTPUT:      tp-loads.json
+        run: node scripts/fetch-tp-loads.mjs
+
+      - name: Commit updated tp-loads.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mv tp-loads.json public/tp-loads.json
+          git add public/tp-loads.json
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "chore: update tp-loads.json [$(date -u '+%Y-%m-%d')]"
+          git pull --rebase origin main
+          git push

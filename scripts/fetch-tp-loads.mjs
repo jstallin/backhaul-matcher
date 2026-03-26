@@ -1,0 +1,356 @@
+/**
+ * Fetches TruckerPath loads for all 50 US states.
+ *
+ * Strategy:
+ *   1. Playwright logs in to TruckerPath and extracts the x-auth-token from localStorage.
+ *   2. Browser closes — all subsequent calls are direct API fetches with the token.
+ *   3. For each state, POST to the search API using the state's geographic centroid
+ *      + 300-mile pickup deadhead. Drop-off is left unconstrained (all destinations).
+ *   4. Paginate with offset until fewer than PAGE_LIMIT results are returned.
+ *   5. Write deduplicated, normalized loads to OUTPUT.
+ *
+ * Required env vars:
+ *   TP_EMAIL     - TruckerPath account email
+ *   TP_PASSWORD  - TruckerPath account password
+ *   OUTPUT       - output filename (default: tp-loads.json)
+ */
+
+import { chromium } from 'playwright';
+import { writeFileSync } from 'fs';
+
+const TP_EMAIL    = process.env.TP_EMAIL;
+const TP_PASSWORD = process.env.TP_PASSWORD;
+const OUTPUT      = process.env.OUTPUT || 'tp-loads.json';
+
+const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
+const LOGIN_URL  = 'https://loadboard.truckerpath.com/';
+const PAGE_LIMIT = 100;
+const DELAY_MS   = 1000; // between state queries — be polite
+
+if (!TP_EMAIL || !TP_PASSWORD) {
+  console.error('Missing required env vars: TP_EMAIL, TP_PASSWORD');
+  process.exit(1);
+}
+
+// ─── Geographic centroids for all 50 states ───────────────────────────────────
+const STATE_CENTROIDS = [
+  { state: 'AL', lat: 32.7,  lng: -86.7  },
+  { state: 'AK', lat: 64.2,  lng: -153.4 },
+  { state: 'AZ', lat: 34.3,  lng: -111.1 },
+  { state: 'AR', lat: 34.9,  lng: -92.4  },
+  { state: 'CA', lat: 36.8,  lng: -119.7 },
+  { state: 'CO', lat: 39.0,  lng: -105.5 },
+  { state: 'CT', lat: 41.6,  lng: -72.7  },
+  { state: 'DE', lat: 39.0,  lng: -75.5  },
+  { state: 'FL', lat: 27.8,  lng: -81.7  },
+  { state: 'GA', lat: 32.7,  lng: -83.4  },
+  { state: 'HI', lat: 20.3,  lng: -156.4 },
+  { state: 'ID', lat: 44.4,  lng: -114.6 },
+  { state: 'IL', lat: 40.0,  lng: -89.2  },
+  { state: 'IN', lat: 40.3,  lng: -86.1  },
+  { state: 'IA', lat: 42.0,  lng: -93.2  },
+  { state: 'KS', lat: 38.5,  lng: -98.4  },
+  { state: 'KY', lat: 37.7,  lng: -84.9  },
+  { state: 'LA', lat: 31.0,  lng: -91.8  },
+  { state: 'ME', lat: 45.4,  lng: -69.0  },
+  { state: 'MD', lat: 39.1,  lng: -76.8  },
+  { state: 'MA', lat: 42.2,  lng: -71.5  },
+  { state: 'MI', lat: 44.0,  lng: -85.5  },
+  { state: 'MN', lat: 46.4,  lng: -93.1  },
+  { state: 'MS', lat: 32.7,  lng: -89.7  },
+  { state: 'MO', lat: 38.5,  lng: -92.5  },
+  { state: 'MT', lat: 47.0,  lng: -110.4 },
+  { state: 'NE', lat: 41.5,  lng: -99.9  },
+  { state: 'NV', lat: 39.5,  lng: -116.4 },
+  { state: 'NH', lat: 44.0,  lng: -71.6  },
+  { state: 'NJ', lat: 40.1,  lng: -74.7  },
+  { state: 'NM', lat: 34.5,  lng: -106.2 },
+  { state: 'NY', lat: 43.0,  lng: -75.5  },
+  { state: 'NC', lat: 35.5,  lng: -79.4  },
+  { state: 'ND', lat: 47.5,  lng: -100.5 },
+  { state: 'OH', lat: 40.4,  lng: -82.8  },
+  { state: 'OK', lat: 35.6,  lng: -96.9  },
+  { state: 'OR', lat: 44.1,  lng: -120.5 },
+  { state: 'PA', lat: 41.2,  lng: -77.2  },
+  { state: 'RI', lat: 41.7,  lng: -71.5  },
+  { state: 'SC', lat: 33.8,  lng: -80.9  },
+  { state: 'SD', lat: 44.4,  lng: -100.2 },
+  { state: 'TN', lat: 35.8,  lng: -86.7  },
+  { state: 'TX', lat: 31.5,  lng: -99.3  },
+  { state: 'UT', lat: 39.3,  lng: -111.1 },
+  { state: 'VT', lat: 44.0,  lng: -72.7  },
+  { state: 'VA', lat: 37.5,  lng: -79.5  },
+  { state: 'WA', lat: 47.4,  lng: -120.6 },
+  { state: 'WV', lat: 38.9,  lng: -80.5  },
+  { state: 'WI', lat: 44.3,  lng: -89.8  },
+  { state: 'WY', lat: 43.0,  lng: -107.6 },
+];
+
+// ─── Equipment type normalization ─────────────────────────────────────────────
+const EQUIP_MAP = {
+  van:          'Dry Van',
+  dryvan:       'Dry Van',
+  dry_van:      'Dry Van',
+  reefer:       'Refrigerated',
+  refrigerated: 'Refrigerated',
+  flatbed:      'Flatbed',
+  stepdeck:     'Step Deck',
+  step_deck:    'Step Deck',
+  conestoga:    'Conestoga',
+  hotshot:      'Hot Shot',
+  hot_shot:     'Hot Shot',
+  power_only:   'Power Only',
+  poweronly:    'Power Only',
+  container:    'Container',
+  tanker:       'Tanker',
+  box_truck:    'Box Truck',
+  boxtruck:     'Box Truck',
+  rgn:          'Removable Gooseneck',
+  lowboy:       'Lowboy',
+};
+
+function normalizeEquipment(equipArray) {
+  if (!Array.isArray(equipArray) || equipArray.length === 0) return 'Dry Van';
+  const key = String(equipArray[0]).toLowerCase().replace(/[\s-]+/g, '_');
+  return EQUIP_MAP[key] || equipArray[0];
+}
+
+function normalize(item) {
+  if (!item) return null;
+  try {
+    const pickup  = item.pickup   || {};
+    const dropOff = item.drop_off || {};
+    const broker  = item.broker   || {};
+
+    const price    = item.price || item.price_total || 0;
+    const distance = item.distance || item.distance_total || null;
+
+    return {
+      load_id:       item.external_id || item.shipment_id,
+      source:        'truckerpath',
+      status:        'available',
+
+      equipment_type: normalizeEquipment(item.equipment),
+      // TruckerPath doesn't expose trailer length — default to 53
+      trailer_length: 53,
+      weight_lbs:     item.weight || 0,
+      full_load:      item.load_size === 'full',
+      freight_type:   item.description || '',
+
+      pickup_city:   pickup.address?.city  || '',
+      pickup_state:  pickup.address?.state || '',
+      pickup_lat:    pickup.location?.lat  ?? null,
+      pickup_lng:    pickup.location?.lng  ?? null,
+      pickup_date:   pickup.date_local     || null,
+
+      delivery_city:  dropOff.address?.city  || '',
+      delivery_state: dropOff.address?.state || '',
+      delivery_lat:   dropOff.location?.lat  ?? null,
+      delivery_lng:   dropOff.location?.lng  ?? null,
+
+      distance_miles:  distance,
+      total_revenue:   price,
+      pay_rate:        price,
+      rate_per_mile:   distance > 0 ? Math.round((price / distance) * 100) / 100 : 0,
+
+      company_name:   broker.company      || '',
+      contact_name:   broker.contact_name || '',
+      phone:          broker.phone?.number || '',
+      contact_email:  broker.email        || '',
+      mc_number:      broker.mc           || '',
+      dot_number:     broker.dot          || '',
+      credit_score:   broker.transcredit_rating?.score       ?? null,
+      days_to_pay:    broker.transcredit_rating?.days_to_pay ?? null,
+
+      // age is in milliseconds in the TruckerPath API
+      age_minutes:    item.age ? Math.round(item.age / 60000) : 0,
+    };
+  } catch (err) {
+    console.warn('Failed to normalize TP load:', err.message);
+    return null;
+  }
+}
+
+// ─── Build search payload for one state ───────────────────────────────────────
+function buildPayload(centroid, offset = 0) {
+  const now   = new Date();
+  const month = new Date(now);
+  month.setDate(month.getDate() + 30);
+
+  return {
+    sort:   [{ smart_sort: 'desc' }],
+    offset,
+    limit:  PAGE_LIMIT,
+    options: {
+      repeat_search:        false,
+      mark_new_since:       now.toISOString(),
+      road_miles:           true,
+      include_auth_required: false,
+      origins:              ['TRUCKERPATH'],
+      paging_enable:        true,
+      other: {
+        source:        'list',
+        pickup_type:   'home location',
+        dropoff_type:  'anywhere',
+        chr_switch:    false,
+      },
+      query: {
+        weight:    { allow_null: true },
+        length:    { allow_null: true },
+        equipment: [],
+        pickup: {
+          geo: {
+            location: {
+              address: `${centroid.state},US`,
+              lat:     centroid.lat,
+              lng:     centroid.lng,
+            },
+            deadhead: { max: 300 },
+          },
+          date_local: {
+            from: `${now.toISOString().slice(0, 10)}T00:00:00`,
+            to:   `${month.toISOString().slice(0, 10)}T23:59:59`,
+          },
+        },
+        // drop_off omitted — we want loads going anywhere
+      },
+      search_id: null,
+    },
+  };
+}
+
+// ─── Fetch all loads for one state (with pagination) ──────────────────────────
+async function fetchStateLoads(centroid, token) {
+  const loads = [];
+  let   offset = 0;
+
+  while (true) {
+    const body = buildPayload(centroid, offset);
+
+    const res = await fetch(API_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': token,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}`);
+      break;
+    }
+
+    const data  = await res.json();
+    const items = data.items || [];
+    loads.push(...items.map(normalize).filter(Boolean));
+
+    if (items.length < PAGE_LIMIT) break; // last page
+    offset += PAGE_LIMIT;
+
+    await new Promise(r => setTimeout(r, DELAY_MS));
+  }
+
+  return loads;
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+const browser = await chromium.launch({
+  headless: true,
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled'],
+});
+
+const context = await browser.newContext({
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  viewport:  { width: 1280, height: 800 },
+});
+
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+});
+
+const page = await context.newPage();
+let authToken = null;
+
+try {
+  // ── Login ──────────────────────────────────────────────────────────────────
+  console.log('Logging in to TruckerPath...');
+  await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: 60000 });
+
+  // Intercept the auth token from any API response header
+  page.on('response', async (response) => {
+    if (authToken) return;
+    const token = response.headers()['x-auth-token'];
+    if (token) {
+      authToken = token;
+      console.log('Captured x-auth-token from response header');
+    }
+  });
+
+  // Fill login form — selectors may need adjustment if TruckerPath's form changes
+  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i]', { timeout: 30000 });
+  await page.fill('input[type="email"], input[name="email"], input[placeholder*="email" i]', TP_EMAIL);
+  await page.fill('input[type="password"], input[name="password"]', TP_PASSWORD);
+  await page.click('button[type="submit"], input[type="submit"]');
+  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {});
+
+  // Give response interceptor a moment to fire
+  await page.waitForTimeout(2000);
+
+  // If header interception didn't catch it, check localStorage
+  if (!authToken) {
+    authToken = await page.evaluate(() => {
+      for (const key of Object.keys(localStorage)) {
+        const val = localStorage.getItem(key);
+        if (typeof val === 'string' && val.startsWith('r:')) return val;
+      }
+      // Fallback: look for any key containing 'auth' or 'token'
+      for (const key of Object.keys(localStorage)) {
+        if (/auth|token/i.test(key)) {
+          const val = localStorage.getItem(key);
+          if (val && val.length > 10) return val;
+        }
+      }
+      return null;
+    });
+    if (authToken) console.log('Captured x-auth-token from localStorage');
+  }
+
+  if (!authToken) {
+    throw new Error('Could not capture x-auth-token after login. Check credentials or login form selectors.');
+  }
+
+  console.log('Login successful.\n');
+
+} finally {
+  await browser.close();
+}
+
+// ─── Fetch loads for each state ───────────────────────────────────────────────
+const seen    = new Set();
+const allLoads = [];
+
+for (const centroid of STATE_CENTROIDS) {
+  try {
+    const loads = await fetchStateLoads(centroid, authToken);
+    let added = 0;
+    for (const load of loads) {
+      if (load.load_id && !seen.has(load.load_id)) {
+        seen.add(load.load_id);
+        allLoads.push(load);
+        added++;
+      }
+    }
+    console.log(`[${centroid.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
+  } catch (err) {
+    console.warn(`[${centroid.state}] Error: ${err.message}`);
+  }
+
+  await new Promise(r => setTimeout(r, DELAY_MS));
+}
+
+// Sort freshest first (smallest age_minutes)
+allLoads.sort((a, b) => (a.age_minutes || 0) - (b.age_minutes || 0));
+
+writeFileSync(OUTPUT, JSON.stringify(allLoads, null, 2));
+console.log(`\n✅ ${allLoads.length} unique TruckerPath loads → ${OUTPUT}`);
