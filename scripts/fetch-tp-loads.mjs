@@ -455,20 +455,25 @@ try {
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
 
-  // Grab Installation-ID from localStorage — the app generates it on first run
+  // Grab Installation-ID — check localStorage then sessionStorage
   installationId = await page.evaluate(() => {
-    for (const key of Object.keys(localStorage)) {
-      if (/install/i.test(key)) {
-        const val = localStorage.getItem(key);
-        if (val && val.length > 4) return val;
+    const stores = [localStorage, sessionStorage];
+    for (const store of stores) {
+      for (const key of Object.keys(store)) {
+        if (/install/i.test(key)) {
+          const val = store.getItem(key);
+          if (val && val.length > 4) return val;
+        }
       }
     }
-    // Dump all keys so we can find it if the name is different
-    return JSON.stringify(Object.fromEntries(
-      Object.keys(localStorage).map(k => [k, (localStorage.getItem(k) || '').slice(0, 60)])
-    ));
+    // Not found — generate a stable UUID for this session
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    return uuid;
   });
-  console.log('Installation-ID lookup:', String(installationId).slice(0, 200));
+  console.log(`Installation-ID: ${installationId}`);
 
   console.log('Login successful.\n');
 
