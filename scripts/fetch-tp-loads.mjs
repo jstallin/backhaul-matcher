@@ -220,6 +220,8 @@ function buildPayload(centroid, offset = 0) {
 }
 
 // ─── Fetch all loads for one state (with pagination) ──────────────────────────
+let _firstCall = true;
+
 async function fetchStateLoads(centroid, token) {
   const loads = [];
   let   offset = 0;
@@ -237,12 +239,21 @@ async function fetchStateLoads(centroid, token) {
     });
 
     if (!res.ok) {
-      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}`);
+      const errText = await res.text().catch(() => '');
+      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}: ${errText.slice(0, 200)}`);
       break;
     }
 
     const data  = await res.json();
-    const items = data.items || [];
+
+    // Log the full response for the first call to diagnose structure
+    if (_firstCall) {
+      _firstCall = false;
+      const preview = JSON.stringify(data).slice(0, 800);
+      console.log(`[${centroid.state}] First API response preview: ${preview}`);
+    }
+
+    const items = data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
 
     if (items.length < PAGE_LIMIT) break; // last page
@@ -421,6 +432,7 @@ try {
     throw new Error('Could not capture x-auth-token. Check screenshots and localStorage keys above.');
   }
 
+  console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
   console.log('Login successful.\n');
 
 } finally {
