@@ -216,49 +216,53 @@ function buildPayload(centroid, offset = 0, template = null) {
   };
 }
 
-// ─── Fetch all loads for one state (with pagination) ──────────────────────────
+// ─── Fetch all loads for one state via in-browser fetch ───────────────────────
+// Running fetch() inside page.evaluate() uses the browser's full cookie jar
+// and session state — no need to manually reconstruct auth headers.
 let _firstCall = true;
 
-async function fetchStateLoads(centroid, token) {
+async function fetchStateLoads(centroid, page, token) {
   const loads = [];
   let   offset = 0;
 
   while (true) {
     const body = buildPayload(centroid, offset, _capturedTemplate);
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-auth-token': token,
-      'client':       'web',
-    };
-    if (sessionCookies) headers['Cookie'] = sessionCookies;
+    const result = await page.evaluate(async ([url, payload, tok]) => {
+      try {
+        const res = await fetch(url, {
+          method:  'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': tok,
+            'client':       'web',
+          },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        return { status: res.status, text };
+      } catch (err) {
+        return { status: 0, text: err.message };
+      }
+    }, [API_URL, body, token]);
 
-    const res = await fetch(API_URL, {
-      method:  'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    const rawText = await res.text();
-
-    if (!res.ok) {
-      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}: ${rawText.slice(0, 200)}`);
+    if (result.status === 0 || result.status >= 400) {
+      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
       break;
     }
 
-    // Log the full response for the first call to diagnose structure
     if (_firstCall) {
       _firstCall = false;
-      console.log(`[${centroid.state}] HTTP ${res.status}, response (800 chars): ${rawText.slice(0, 800)}`);
+      console.log(`[${centroid.state}] HTTP ${result.status}, response (800 chars): ${result.text.slice(0, 800)}`);
     }
 
     let data;
-    try { data = JSON.parse(rawText); } catch { console.warn(`[${centroid.state}] Non-JSON response`); break; }
+    try { data = JSON.parse(result.text); } catch { console.warn(`[${centroid.state}] Non-JSON response`); break; }
 
     const items = data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
 
-    if (items.length < PAGE_LIMIT) break; // last page
+    if (items.length < PAGE_LIMIT) break;
     offset += PAGE_LIMIT;
 
     await new Promise(r => setTimeout(r, DELAY_MS));
@@ -284,7 +288,6 @@ await context.addInitScript(() => {
 
 const page = await context.newPage();
 let authToken = null;
-let sessionCookies = ''; // cookie header string for post-browser API calls
 let capturedPayload = null; // payload the browser sends to the search API
 
 try {
@@ -476,79 +479,71 @@ try {
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
 
-  // Capture cookies so API calls after browser.close() carry the session
-  const cookies = await context.cookies(['https://api.truckerpath.com', 'https://loadboard.truckerpath.com']);
-  if (cookies.length > 0) {
-    sessionCookies = cookies.map(c => `${c.name}=${c.value}`).join('; ');
-    console.log(`Captured ${cookies.length} session cookie(s): ${cookies.map(c => c.name).join(', ')}`);
+  console.log('Login successful.\n');
+
+  // ── Fetch loads for each state (browser stays open — uses its full session) ──
+  const _capturedTemplate = capturedPayload;
+  if (_capturedTemplate) {
+    console.log('Using captured browser payload as template');
   } else {
-    console.log('No cookies captured');
+    console.log('No browser payload captured — using fallback template');
   }
 
-  console.log('Login successful.\n');
+  const seen     = new Set();
+  const allLoads = [];
+
+  for (const centroid of STATE_CENTROIDS) {
+    try {
+      const loads = await fetchStateLoads(centroid, page, authToken);
+      let added = 0;
+      for (const load of loads) {
+        if (load.load_id && !seen.has(load.load_id)) {
+          seen.add(load.load_id);
+          allLoads.push(load);
+          added++;
+        }
+      }
+      console.log(`[${centroid.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
+    } catch (err) {
+      console.warn(`[${centroid.state}] Error: ${err.message}`);
+    }
+
+    await new Promise(r => setTimeout(r, DELAY_MS));
+  }
+
+  // Sort freshest first (smallest age_minutes)
+  allLoads.sort((a, b) => (a.age_minutes || 0) - (b.age_minutes || 0));
+
+  writeFileSync(OUTPUT, JSON.stringify(allLoads, null, 2));
+  console.log(`\n✅ ${allLoads.length} unique TruckerPath loads → ${OUTPUT}`);
+
+  // ── Write meta.json ──────────────────────────────────────────────────────────
+  const countBy = (loads, key) => {
+    const counts = {};
+    for (const l of loads) {
+      const val = l[key] || 'Unknown';
+      counts[val] = (counts[val] || 0) + 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  };
+
+  const paidLoads  = allLoads.filter(l => l.pay_rate > 0);
+  const metaOutput = OUTPUT.replace(/\.json$/, '-meta.json');
+
+  writeFileSync(metaOutput, JSON.stringify({
+    runDate:        new Date().toISOString().slice(0, 10),
+    runAt:          new Date().toISOString(),
+    totalLoads:     allLoads.length,
+    loadsWithPay:   paidLoads.length,
+    avgPay:         paidLoads.length
+      ? Math.round(paidLoads.reduce((s, l) => s + l.pay_rate, 0) / paidLoads.length)
+      : 0,
+    equipmentTypes:  countBy(allLoads, 'equipment_type'),
+    topPickupStates: countBy(allLoads, 'pickup_state').slice(0, 20),
+  }, null, 2));
+  console.log(`📊 Meta → ${metaOutput}`);
 
 } finally {
   await browser.close();
 }
 
-// ─── Fetch loads for each state ───────────────────────────────────────────────
-const _capturedTemplate = capturedPayload;
-if (_capturedTemplate) {
-  console.log('Using captured browser payload as template');
-} else {
-  console.log('No browser payload captured — using fallback template');
-}
-
-const seen    = new Set();
-const allLoads = [];
-
-for (const centroid of STATE_CENTROIDS) {
-  try {
-    const loads = await fetchStateLoads(centroid, authToken);
-    let added = 0;
-    for (const load of loads) {
-      if (load.load_id && !seen.has(load.load_id)) {
-        seen.add(load.load_id);
-        allLoads.push(load);
-        added++;
-      }
-    }
-    console.log(`[${centroid.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
-  } catch (err) {
-    console.warn(`[${centroid.state}] Error: ${err.message}`);
-  }
-
-  await new Promise(r => setTimeout(r, DELAY_MS));
-}
-
-// Sort freshest first (smallest age_minutes)
-allLoads.sort((a, b) => (a.age_minutes || 0) - (b.age_minutes || 0));
-
-writeFileSync(OUTPUT, JSON.stringify(allLoads, null, 2));
-console.log(`\n✅ ${allLoads.length} unique TruckerPath loads → ${OUTPUT}`);
-
-// ─── Write meta.json for admin dashboard ──────────────────────────────────────
-const countBy = (loads, key) => {
-  const counts = {};
-  for (const l of loads) {
-    const val = l[key] || 'Unknown';
-    counts[val] = (counts[val] || 0) + 1;
-  }
-  return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-};
-
-const paidLoads = allLoads.filter(l => l.pay_rate > 0);
-const metaOutput = OUTPUT.replace(/\.json$/, '-meta.json');
-
-writeFileSync(metaOutput, JSON.stringify({
-  runDate:        new Date().toISOString().slice(0, 10),
-  runAt:          new Date().toISOString(),
-  totalLoads:     allLoads.length,
-  loadsWithPay:   paidLoads.length,
-  avgPay:         paidLoads.length
-    ? Math.round(paidLoads.reduce((s, l) => s + l.pay_rate, 0) / paidLoads.length)
-    : 0,
-  equipmentTypes:  countBy(allLoads, 'equipment_type'),
-  topPickupStates: countBy(allLoads, 'pickup_state').slice(0, 20),
-}, null, 2));
-console.log(`📊 Meta → ${metaOutput}`);
