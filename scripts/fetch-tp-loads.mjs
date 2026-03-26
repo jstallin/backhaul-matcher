@@ -287,61 +287,49 @@ try {
   });
 
   await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
+  console.log(`Landed on: ${page.url()}`);
 
-  // Dump page structure to help debug selector issues
-  const pageTitle = await page.title();
-  const pageUrl   = page.url();
-  console.log(`Page: "${pageTitle}" @ ${pageUrl}`);
+  // The load board is publicly visible — login is behind a "Log In" nav button.
+  // Click it to open the login modal/page.
+  await page.waitForSelector('a:has-text("Log In"), button:has-text("Log In"), a:has-text("Login"), button:has-text("Login")', { timeout: 15000 });
+  await page.click('a:has-text("Log In"), button:has-text("Log In"), a:has-text("Login"), button:has-text("Login")');
+  console.log('Clicked Log In button');
 
-  // Save screenshot so we can see what loaded
+  // Wait for email input to appear (modal or new page)
+  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i]', { timeout: 15000 });
+
+  // Save screenshot to confirm login form is visible
   await page.screenshot({ path: 'tp-login-debug.png', fullPage: false });
-  console.log('Screenshot saved → tp-login-debug.png');
 
-  // Log all input fields present on the page
-  const inputs = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('input')).map(el => ({
-      type: el.type, name: el.name, id: el.id,
-      placeholder: el.placeholder, className: el.className.slice(0, 60),
-    }))
-  );
-  console.log('Inputs found on page:', JSON.stringify(inputs, null, 2));
-
-  // Wait for ANY input to appear (gives SPA time to render)
-  await page.waitForSelector('input', { timeout: 30000 });
-
-  // Try common email/username selectors in priority order
+  // Fill credentials
   const emailSelectors = [
     'input[type="email"]',
     'input[name="email"]',
     'input[name="username"]',
-    'input[id="email"]',
-    'input[id="username"]',
     'input[placeholder*="email" i]',
     'input[placeholder*="user" i]',
   ];
   let emailFilled = false;
   for (const sel of emailSelectors) {
     const el = await page.$(sel);
-    if (el) {
+    if (el && await el.isVisible()) {
       await el.fill(TP_EMAIL);
       console.log(`Filled email with selector: ${sel}`);
       emailFilled = true;
       break;
     }
   }
-  if (!emailFilled) throw new Error('Could not find email/username input. Check tp-login-debug.png artifact.');
+  if (!emailFilled) throw new Error('Could not find visible email input after clicking Log In.');
 
   await page.fill('input[type="password"]', TP_PASSWORD);
 
-  // Click submit — try button first, then any clickable submit
-  const submitted = await page.$('button[type="submit"]') || await page.$('input[type="submit"]') || await page.$('button');
-  if (submitted) await submitted.click();
-  else throw new Error('Could not find submit button.');
+  const submitBtn = await page.$('button[type="submit"]') || await page.$('input[type="submit"]');
+  if (!submitBtn) throw new Error('Could not find submit button.');
+  await submitBtn.click();
 
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
-  await page.waitForTimeout(3000); // give SPA time to process auth response
+  await page.waitForTimeout(3000);
 
-  // Save post-login screenshot
   await page.screenshot({ path: 'tp-postlogin-debug.png', fullPage: false });
   console.log(`Post-login URL: ${page.url()}`);
 
