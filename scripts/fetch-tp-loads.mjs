@@ -292,13 +292,22 @@ try {
 
   await page.screenshot({ path: 'tp-login-debug.png', fullPage: false });
 
-  // If the direct /login URL redirected back to the dashboard, click the nav button
+  // If the direct /login URL redirected back to the dashboard, click the nav link
   if (!page.url().includes('/login')) {
-    console.log('Direct /login redirected — trying to click nav Log In button');
+    console.log('Direct /login redirected — dismissing cookie modal then clicking Log In');
     await page.waitForTimeout(2000); // let React render
-    const loginBtn = page.getByRole('link', { name: /log\s*in/i }).or(page.getByRole('button', { name: /log\s*in/i }));
-    await loginBtn.first().click({ timeout: 10000 });
-    console.log('Clicked Log In button');
+
+    // Dismiss cookie consent if present — it blocks clicks on nav elements
+    const acceptBtn = page.locator('button:has-text("Accept")');
+    if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await acceptBtn.click();
+      console.log('Dismissed cookie consent');
+      await page.waitForTimeout(500);
+    }
+
+    // Click the "Log In" nav link by text
+    await page.locator('text="Log In"').first().click({ timeout: 10000 });
+    console.log('Clicked Log In');
   }
 
   // Wait for email input to appear (login form or modal)
