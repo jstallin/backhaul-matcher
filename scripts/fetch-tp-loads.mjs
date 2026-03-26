@@ -226,13 +226,16 @@ async function fetchStateLoads(centroid, token) {
   while (true) {
     const body = buildPayload(centroid, offset, _capturedTemplate);
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-auth-token': token,
+      'client':       'web',
+    };
+    if (sessionCookies) headers['Cookie'] = sessionCookies;
+
     const res = await fetch(API_URL, {
       method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-auth-token': token,
-        'client':       'web',
-      },
+      headers,
       body: JSON.stringify(body),
     });
 
@@ -281,6 +284,7 @@ await context.addInitScript(() => {
 
 const page = await context.newPage();
 let authToken = null;
+let sessionCookies = ''; // cookie header string for post-browser API calls
 let capturedPayload = null; // payload the browser sends to the search API
 
 try {
@@ -471,6 +475,16 @@ try {
   }
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
+
+  // Capture cookies so API calls after browser.close() carry the session
+  const cookies = await context.cookies(['https://api.truckerpath.com', 'https://loadboard.truckerpath.com']);
+  if (cookies.length > 0) {
+    sessionCookies = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+    console.log(`Captured ${cookies.length} session cookie(s): ${cookies.map(c => c.name).join(', ')}`);
+  } else {
+    console.log('No cookies captured');
+  }
+
   console.log('Login successful.\n');
 
 } finally {
