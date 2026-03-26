@@ -172,7 +172,30 @@ function normalize(item) {
 }
 
 // ─── Build search payload for one state ───────────────────────────────────────
-function buildPayload(centroid, offset = 0) {
+function buildPayload(centroid, offset = 0, template = null) {
+  // If we captured the browser's own payload, use it as a template and just
+  // swap in our state centroid + reset pagination. This ensures field names
+  // and nesting exactly match what the API expects.
+  if (template) {
+    const payload = JSON.parse(JSON.stringify(template)); // deep clone
+    payload.offset     = offset;
+    payload.limit      = PAGE_LIMIT;
+    payload.search_id  = null;
+
+    // Overwrite pickup location with our state centroid
+    const pickup = payload?.query?.pickup ?? payload?.options?.query?.pickup;
+    if (pickup?.geo?.location) {
+      pickup.geo.location = { lat: centroid.lat, lng: centroid.lng };
+      if (pickup.geo.deadhead)  pickup.geo.deadhead  = { max: 300 };
+      if (pickup.geo.radius !== undefined) pickup.geo.radius = 300;
+    }
+    // Remove date filter so we get all upcoming loads
+    if (pickup?.date_local) delete pickup.date_local;
+
+    return payload;
+  }
+
+  // Fallback: best-guess payload if no template was captured
   return {
     sort:          [{ smart_sort: 'desc' }],
     offset,
@@ -185,11 +208,8 @@ function buildPayload(centroid, offset = 0) {
     query: {
       pickup: {
         geo: {
-          location: {
-            lat: centroid.lat,
-            lng: centroid.lng,
-          },
-          radius: 300,
+          location: { lat: centroid.lat, lng: centroid.lng },
+          deadhead: { max: 300 },
         },
       },
     },
@@ -204,7 +224,7 @@ async function fetchStateLoads(centroid, token) {
   let   offset = 0;
 
   while (true) {
-    const body = buildPayload(centroid, offset);
+    const body = buildPayload(centroid, offset, _capturedTemplate);
 
     const res = await fetch(API_URL, {
       method:  'POST',
@@ -261,18 +281,33 @@ await context.addInitScript(() => {
 
 const page = await context.newPage();
 let authToken = null;
+let capturedPayload = null; // payload the browser sends to the search API
 
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
   console.log('Logging in to TruckerPath...');
 
-  // Intercept the auth token from any API response header before navigation
+  // Intercept auth token from any API response header
   page.on('response', async (response) => {
     if (authToken) return;
     const token = response.headers()['x-auth-token'];
     if (token) {
       authToken = token;
       console.log('Captured x-auth-token from response header');
+    }
+  });
+
+  // Intercept the search API request the browser makes after login so we can
+  // use the exact payload structure (field names, nesting) as our template.
+  page.on('request', (request) => {
+    if (capturedPayload) return;
+    if (request.url().includes('/tl/search/filter') && request.method() === 'POST') {
+      try {
+        capturedPayload = JSON.parse(request.postData() || '{}');
+        console.log('Captured browser search payload:', JSON.stringify(capturedPayload).slice(0, 600));
+      } catch {
+        // ignore parse errors
+      }
     }
   });
 
@@ -419,6 +454,13 @@ try {
 }
 
 // ─── Fetch loads for each state ───────────────────────────────────────────────
+const _capturedTemplate = capturedPayload;
+if (_capturedTemplate) {
+  console.log('Using captured browser payload as template');
+} else {
+  console.log('No browser payload captured — using fallback template');
+}
+
 const seen    = new Set();
 const allLoads = [];
 
