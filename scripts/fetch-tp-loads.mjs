@@ -23,7 +23,7 @@ const TP_PASSWORD = process.env.TP_PASSWORD;
 const OUTPUT      = process.env.OUTPUT || 'tp-loads.json';
 
 const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
-const LOGIN_URL  = 'https://loadboard.truckerpath.com/';
+const LOGIN_URL  = 'https://loadboard.truckerpath.com/login';
 const PAGE_LIMIT = 100;
 const DELAY_MS   = 1000; // between state queries — be polite
 
@@ -286,20 +286,23 @@ try {
     }
   });
 
+  // Try direct login URL first; fall back to home + clicking the nav button
   await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
   console.log(`Landed on: ${page.url()}`);
 
-  // The load board is publicly visible — login is behind a "Log In" nav button.
-  // Click it to open the login modal/page.
-  await page.waitForSelector('a:has-text("Log In"), button:has-text("Log In"), a:has-text("Login"), button:has-text("Login")', { timeout: 15000 });
-  await page.click('a:has-text("Log In"), button:has-text("Log In"), a:has-text("Login"), button:has-text("Login")');
-  console.log('Clicked Log In button');
-
-  // Wait for email input to appear (modal or new page)
-  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i]', { timeout: 15000 });
-
-  // Save screenshot to confirm login form is visible
   await page.screenshot({ path: 'tp-login-debug.png', fullPage: false });
+
+  // If the direct /login URL redirected back to the dashboard, click the nav button
+  if (!page.url().includes('/login')) {
+    console.log('Direct /login redirected — trying to click nav Log In button');
+    await page.waitForTimeout(2000); // let React render
+    const loginBtn = page.getByRole('link', { name: /log\s*in/i }).or(page.getByRole('button', { name: /log\s*in/i }));
+    await loginBtn.first().click({ timeout: 10000 });
+    console.log('Clicked Log In button');
+  }
+
+  // Wait for email input to appear (login form or modal)
+  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i]', { timeout: 20000 });
 
   // Fill credentials
   const emailSelectors = [
