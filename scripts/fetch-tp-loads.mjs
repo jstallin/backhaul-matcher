@@ -337,11 +337,58 @@ try {
 
   // Wait for the SIGN IN button to confirm the modal is open
   await page.waitForSelector('button:has-text("SIGN IN")', { state: 'attached', timeout: 20000 });
+  console.log('SIGN IN button found — filling credentials');
 
-  // Modal inputs may report as non-visible due to floating label CSS — use force
-  await page.locator('input[placeholder="Email address"]').fill(TP_EMAIL, { force: true });
-  await page.locator('input[placeholder="Password"]').fill(TP_PASSWORD, { force: true });
+  // Log all visible inputs so we know what we're working with
+  const inputInfo = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('input'))
+      .filter(el => el.type !== 'hidden')
+      .map(el => ({ type: el.type, id: el.id, name: el.name, placeholder: el.placeholder, visible: el.offsetParent !== null }))
+  );
+  console.log('Visible inputs:', JSON.stringify(inputInfo));
+
+  // Strategy 1: Use Playwright's native fill() which simulates keystrokes and
+  // works with React controlled inputs without needing a placeholder attribute.
+  const visibleInputs = page.locator('input:not([type="hidden"])');
+  const inputCount = await visibleInputs.count();
+  console.log(`Found ${inputCount} visible input(s)`);
+
+  if (inputCount >= 2) {
+    // First non-password input is email; password input by type
+    await visibleInputs.first().click();
+    await visibleInputs.first().fill(TP_EMAIL);
+    await page.locator('input[type="password"]').click();
+    await page.locator('input[type="password"]').fill(TP_PASSWORD);
+    console.log('Filled via Playwright native fill()');
+  } else {
+    // Fallback: inject values via React's native setter so onChange fires
+    const fillResult = await page.evaluate(([email, password]) => {
+      const inputs = Array.from(document.querySelectorAll('input'))
+        .filter(el => el.type !== 'hidden');
+      const emailInput    = inputs.find(el => el.type !== 'password');
+      const passwordInput = inputs.find(el => el.type === 'password');
+
+      const fill = (el, val) => {
+        el.focus();
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        setter.call(el, val);
+        el.dispatchEvent(new Event('focus',  { bubbles: true }));
+        el.dispatchEvent(new Event('input',  { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.dispatchEvent(new Event('blur',   { bubbles: true }));
+      };
+
+      if (emailInput)    fill(emailInput,    email);
+      if (passwordInput) fill(passwordInput, password);
+
+      return { emailFound: !!emailInput, passwordFound: !!passwordInput };
+    }, [TP_EMAIL, TP_PASSWORD]);
+    console.log('Filled via JS evaluate:', JSON.stringify(fillResult));
+  }
+
+  await page.waitForTimeout(500); // let React process state updates
   await page.locator('button:has-text("SIGN IN")').click({ force: true });
+  console.log('Clicked SIGN IN');
 
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(3000);
