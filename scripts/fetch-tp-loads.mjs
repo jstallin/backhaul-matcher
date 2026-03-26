@@ -288,7 +288,8 @@ await context.addInitScript(() => {
 
 const page = await context.newPage();
 let authToken = null;
-let capturedPayload = null; // payload the browser sends to the search API
+let capturedPayload   = null; // payload the browser sends to the search API
+let _capturedTemplate = null; // set after login, used by fetchStateLoads
 
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -482,7 +483,7 @@ try {
   console.log('Login successful.\n');
 
   // ── Fetch loads for each state (browser stays open — uses its full session) ──
-  const _capturedTemplate = capturedPayload;
+  _capturedTemplate = capturedPayload;
   if (_capturedTemplate) {
     console.log('Using captured browser payload as template');
   } else {
