@@ -335,12 +335,13 @@ try {
     }
   }
 
-  // Wait for the login modal's email input (placeholder: "Email address")
-  await page.waitForSelector('input[placeholder="Email address"]', { timeout: 20000 });
+  // Wait for the SIGN IN button to confirm the modal is open
+  await page.waitForSelector('button:has-text("SIGN IN")', { state: 'attached', timeout: 20000 });
 
-  await page.fill('input[placeholder="Email address"]', TP_EMAIL);
-  await page.fill('input[placeholder="Password"]', TP_PASSWORD);
-  await page.locator('button:has-text("SIGN IN")').click();
+  // Modal inputs may report as non-visible due to floating label CSS — use force
+  await page.locator('input[placeholder="Email address"]').fill(TP_EMAIL, { force: true });
+  await page.locator('input[placeholder="Password"]').fill(TP_PASSWORD, { force: true });
+  await page.locator('button:has-text("SIGN IN")').click({ force: true });
 
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(3000);
