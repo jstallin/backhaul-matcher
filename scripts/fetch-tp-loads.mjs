@@ -178,43 +178,39 @@ function buildPayload(centroid, offset = 0) {
   month.setDate(month.getDate() + 30);
 
   return {
-    sort:   [{ smart_sort: 'desc' }],
+    sort:          [{ smart_sort: 'desc' }],
     offset,
-    limit:  PAGE_LIMIT,
-    options: {
-      repeat_search:        false,
-      mark_new_since:       now.toISOString(),
-      road_miles:           true,
-      include_auth_required: false,
-      origins:              ['TRUCKERPATH'],
-      paging_enable:        true,
-      other: {
-        source:        'list',
-        pickup_type:   'home location',
-        dropoff_type:  'anywhere',
-        chr_switch:    false,
-      },
-      query: {
-        weight:    { allow_null: true },
-        length:    { allow_null: true },
-        equipment: [],
-        pickup: {
-          geo: {
-            location: {
-              address: `${centroid.state},US`,
-              lat:     centroid.lat,
-              lng:     centroid.lng,
-            },
-            deadhead: { max: 300 },
+    limit:         PAGE_LIMIT,
+    search_id:     null,
+    repeat_search: false,
+    road_miles:    true,
+    include_auth_required: false,
+    paging_enable: true,
+    other: {
+      source:       'list',
+      pickup_type:  'home location',
+      dropoff_type: 'anywhere',
+      chr_switch:   false,
+    },
+    query: {
+      weight:    { allow_null: true },
+      length:    { allow_null: true },
+      equipment: [],
+      pickup: {
+        geo: {
+          location: {
+            address: `${centroid.state},US`,
+            lat:     centroid.lat,
+            lng:     centroid.lng,
           },
-          date_local: {
-            from: `${now.toISOString().slice(0, 10)}T00:00:00`,
-            to:   `${month.toISOString().slice(0, 10)}T23:59:59`,
-          },
+          deadhead: { max: 300 },
         },
-        // drop_off omitted — we want loads going anywhere
+        date_local: {
+          from: `${now.toISOString().slice(0, 10)}T00:00:00`,
+          to:   `${month.toISOString().slice(0, 10)}T23:59:59`,
+        },
       },
-      search_id: null,
+      // drop_off omitted — we want loads going anywhere
     },
   };
 }
@@ -239,20 +235,21 @@ async function fetchStateLoads(centroid, token) {
       body: JSON.stringify(body),
     });
 
+    const rawText = await res.text();
+
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}: ${errText.slice(0, 200)}`);
+      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${res.status}: ${rawText.slice(0, 200)}`);
       break;
     }
-
-    const data  = await res.json();
 
     // Log the full response for the first call to diagnose structure
     if (_firstCall) {
       _firstCall = false;
-      const preview = JSON.stringify(data).slice(0, 800);
-      console.log(`[${centroid.state}] First API response preview: ${preview}`);
+      console.log(`[${centroid.state}] HTTP ${res.status}, response (800 chars): ${rawText.slice(0, 800)}`);
     }
+
+    let data;
+    try { data = JSON.parse(rawText); } catch { console.warn(`[${centroid.state}] Non-JSON response`); break; }
 
     const items = data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
