@@ -203,18 +203,16 @@ let _firstCall = true;
 const AUTOCOMPLETE_URL = 'https://api.truckerpath.com/tl/city/city-auto-complete';
 
 async function resolveCity(cityStr, page, token) {
-  const result = await page.evaluate(async ([url, city, tok]) => {
+  const result = await page.evaluate(async ([url, city, tok, instId]) => {
     try {
-      const res = await fetch(url, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'x-auth-token': tok, 'client': 'web' },
-        body: JSON.stringify({ city }),
-      });
+      const headers = { 'Content-Type': 'application/json', 'x-auth-token': tok, 'client': 'web' };
+      if (instId) headers['Installation-ID'] = instId;
+      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ city }) });
       return { status: res.status, text: await res.text() };
     } catch (err) {
       return { status: 0, text: err.message };
     }
-  }, [AUTOCOMPLETE_URL, cityStr, token]);
+  }, [AUTOCOMPLETE_URL, cityStr, token, installationId]);
 
   // Log the raw autocomplete response once for diagnosis
   if (!resolveCity._logged) {
@@ -251,23 +249,16 @@ async function fetchStateLoads(stateEntry, page, token) {
   while (true) {
     const body = buildPayload(location, offset);
 
-    const result = await page.evaluate(async ([url, payload, tok]) => {
+    const result = await page.evaluate(async ([url, payload, tok, instId]) => {
       try {
-        const res = await fetch(url, {
-          method:  'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': tok,
-            'client':       'web',
-          },
-          body: JSON.stringify(payload),
-        });
-        const text = await res.text();
-        return { status: res.status, text };
+        const headers = { 'Content-Type': 'application/json', 'x-auth-token': tok, 'client': 'web' };
+        if (instId) headers['Installation-ID'] = instId;
+        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+        return { status: res.status, text: await res.text() };
       } catch (err) {
         return { status: 0, text: err.message };
       }
-    }, [API_URL, body, token]);
+    }, [API_URL, body, token, installationId]);
 
     if (result.status === 0 || result.status >= 400) {
       console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
@@ -310,7 +301,8 @@ await context.addInitScript(() => {
 });
 
 const page = await context.newPage();
-let authToken = null;
+let authToken      = null;
+let installationId = null;
 
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -462,6 +454,22 @@ try {
   }
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
+
+  // Grab Installation-ID from localStorage — the app generates it on first run
+  installationId = await page.evaluate(() => {
+    for (const key of Object.keys(localStorage)) {
+      if (/install/i.test(key)) {
+        const val = localStorage.getItem(key);
+        if (val && val.length > 4) return val;
+      }
+    }
+    // Dump all keys so we can find it if the name is different
+    return JSON.stringify(Object.fromEntries(
+      Object.keys(localStorage).map(k => [k, (localStorage.getItem(k) || '').slice(0, 60)])
+    ));
+  });
+  console.log('Installation-ID lookup:', String(installationId).slice(0, 200));
+
   console.log('Login successful.\n');
 
   // ── Fetch loads for each state (browser stays open — uses its full session) ──
