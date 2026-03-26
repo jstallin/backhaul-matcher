@@ -416,7 +416,31 @@ try {
   console.log('Clicked SIGN IN');
 
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(2000);
+
+  // Force a reload of the loads page so the React app makes a fresh search request.
+  // The initial load may use cached results and skip the API call.
+  if (page.url().includes('/carrier/loads')) {
+    console.log('Reloading loads page to trigger fresh search request...');
+    await page.reload({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
+  }
+
+  // Wait up to 10s for the search API call to fire
+  const searchReq = await page.waitForRequest(
+    req => req.url().includes('/tl/search/filter') && req.method() === 'POST',
+    { timeout: 10000 }
+  ).catch(() => null);
+
+  if (searchReq) {
+    try {
+      capturedPayload = JSON.parse(searchReq.postData() || '{}');
+      console.log('Captured browser search payload:', JSON.stringify(capturedPayload).slice(0, 800));
+    } catch {
+      console.log('Could not parse captured search payload');
+    }
+  } else {
+    console.log('No search request captured within 10s');
+  }
 
   await page.screenshot({ path: 'tp-postlogin-debug.png', fullPage: false });
   console.log(`Post-login URL: ${page.url()}`);
