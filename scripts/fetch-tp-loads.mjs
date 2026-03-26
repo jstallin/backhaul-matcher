@@ -203,13 +203,13 @@ function buildPayload(centroid, offset = 0, template = null) {
     search_id:     null,
     repeat_search: false,
     road_miles:    true,
-    include_auth_required: true,
+    include_auth_required: false,
     paging_enable: true,
     query: {
       pickup: {
         geo: {
           location: { lat: centroid.lat, lng: centroid.lng },
-          deadhead: { max: 9999 },
+          deadhead: { max: 300 },
         },
       },
     },
@@ -491,6 +491,27 @@ try {
   }
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
+
+  // ── Inspect what's visible on the page ────────────────────────────────────
+  // Check for SSR data (Next.js __NEXT_DATA__, React initial state, etc.)
+  const pageInspection = await page.evaluate(() => {
+    const result = {};
+    // Next.js
+    if (window.__NEXT_DATA__) result.nextData = JSON.stringify(window.__NEXT_DATA__).slice(0, 1000);
+    // Redux / generic window state
+    if (window.__INITIAL_STATE__) result.initialState = JSON.stringify(window.__INITIAL_STATE__).slice(0, 500);
+    if (window.__REDUX_STATE__)   result.reduxState   = JSON.stringify(window.__REDUX_STATE__).slice(0, 500);
+    // Count visible load-card-like elements in the DOM
+    result.loadCardCount = document.querySelectorAll('[class*="load-card"], [class*="LoadCard"], [data-testid*="load"]').length;
+    result.listItemCount = document.querySelectorAll('[class*="list-item"], [class*="ListItem"], li[class*="load"]').length;
+    // Page title
+    result.title = document.title;
+    // Any text mentioning loads
+    const body = document.body.innerText.slice(0, 500);
+    result.bodyPreview = body;
+    return result;
+  });
+  console.log('Page inspection:', JSON.stringify(pageInspection, null, 2));
 
   console.log('Login successful.\n');
 
