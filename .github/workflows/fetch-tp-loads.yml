@@ -35,6 +35,16 @@ jobs:
           OUTPUT:      tp-loads.json
         run: node scripts/fetch-tp-loads.mjs
 
+      - name: Upload debug screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tp-login-debug
+          path: |
+            tp-login-debug.png
+            tp-postlogin-debug.png
+          retention-days: 3
+
       - name: Commit updated tp-loads.json and meta
         run: |
           git config user.name "github-actions[bot]"

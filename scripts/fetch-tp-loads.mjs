@@ -275,9 +275,8 @@ let authToken = null;
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
   console.log('Logging in to TruckerPath...');
-  await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
 
-  // Intercept the auth token from any API response header
+  // Intercept the auth token from any API response header before navigation
   page.on('response', async (response) => {
     if (authToken) return;
     const token = response.headers()['x-auth-token'];
@@ -287,24 +286,72 @@ try {
     }
   });
 
-  // Fill login form — selectors may need adjustment if TruckerPath's form changes
-  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i]', { timeout: 30000 });
-  await page.fill('input[type="email"], input[name="email"], input[placeholder*="email" i]', TP_EMAIL);
-  await page.fill('input[type="password"], input[name="password"]', TP_PASSWORD);
-  await page.click('button[type="submit"], input[type="submit"]');
+  await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
+
+  // Dump page structure to help debug selector issues
+  const pageTitle = await page.title();
+  const pageUrl   = page.url();
+  console.log(`Page: "${pageTitle}" @ ${pageUrl}`);
+
+  // Save screenshot so we can see what loaded
+  await page.screenshot({ path: 'tp-login-debug.png', fullPage: false });
+  console.log('Screenshot saved → tp-login-debug.png');
+
+  // Log all input fields present on the page
+  const inputs = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('input')).map(el => ({
+      type: el.type, name: el.name, id: el.id,
+      placeholder: el.placeholder, className: el.className.slice(0, 60),
+    }))
+  );
+  console.log('Inputs found on page:', JSON.stringify(inputs, null, 2));
+
+  // Wait for ANY input to appear (gives SPA time to render)
+  await page.waitForSelector('input', { timeout: 30000 });
+
+  // Try common email/username selectors in priority order
+  const emailSelectors = [
+    'input[type="email"]',
+    'input[name="email"]',
+    'input[name="username"]',
+    'input[id="email"]',
+    'input[id="username"]',
+    'input[placeholder*="email" i]',
+    'input[placeholder*="user" i]',
+  ];
+  let emailFilled = false;
+  for (const sel of emailSelectors) {
+    const el = await page.$(sel);
+    if (el) {
+      await el.fill(TP_EMAIL);
+      console.log(`Filled email with selector: ${sel}`);
+      emailFilled = true;
+      break;
+    }
+  }
+  if (!emailFilled) throw new Error('Could not find email/username input. Check tp-login-debug.png artifact.');
+
+  await page.fill('input[type="password"]', TP_PASSWORD);
+
+  // Click submit — try button first, then any clickable submit
+  const submitted = await page.$('button[type="submit"]') || await page.$('input[type="submit"]') || await page.$('button');
+  if (submitted) await submitted.click();
+  else throw new Error('Could not find submit button.');
+
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(3000); // give SPA time to process auth response
 
-  // Give response interceptor a moment to fire
-  await page.waitForTimeout(2000);
+  // Save post-login screenshot
+  await page.screenshot({ path: 'tp-postlogin-debug.png', fullPage: false });
+  console.log(`Post-login URL: ${page.url()}`);
 
-  // If header interception didn't catch it, check localStorage
+  // Check localStorage for auth token
   if (!authToken) {
     authToken = await page.evaluate(() => {
       for (const key of Object.keys(localStorage)) {
         const val = localStorage.getItem(key);
         if (typeof val === 'string' && val.startsWith('r:')) return val;
       }
-      // Fallback: look for any key containing 'auth' or 'token'
       for (const key of Object.keys(localStorage)) {
         if (/auth|token/i.test(key)) {
           const val = localStorage.getItem(key);
@@ -317,7 +364,10 @@ try {
   }
 
   if (!authToken) {
-    throw new Error('Could not capture x-auth-token after login. Check credentials or login form selectors.');
+    // Dump localStorage keys to help debug
+    const lsKeys = await page.evaluate(() => Object.keys(localStorage));
+    console.log('localStorage keys:', lsKeys);
+    throw new Error('Could not capture x-auth-token. Check screenshots and localStorage keys above.');
   }
 
   console.log('Login successful.\n');
