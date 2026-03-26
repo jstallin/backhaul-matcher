@@ -222,9 +222,10 @@ async function resolveCity(cityStr, page, token) {
   if (result.status !== 200) return null;
   try {
     const data = JSON.parse(result.text);
-    // Response is typically an array or { cities: [...] } — grab the first hit
-    const hits = Array.isArray(data) ? data : (data.cities || data.results || data.data || []);
-    return hits[0] || null;
+    const hits = Array.isArray(data) ? data : (data.content || data.cities || data.results || data.data || []);
+    if (!hits[0]) return null;
+    // Return just the placeId — the search API location field uses placeId
+    return { placeId: hits[0].placeId, title: hits[0].title };
   } catch {
     console.log('Autocomplete JSON parse failed:', result.text.slice(0, 200));
     return null;
