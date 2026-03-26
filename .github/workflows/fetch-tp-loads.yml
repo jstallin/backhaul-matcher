@@ -35,12 +35,13 @@ jobs:
           OUTPUT:      tp-loads.json
         run: node scripts/fetch-tp-loads.mjs
 
-      - name: Commit updated tp-loads.json
+      - name: Commit updated tp-loads.json and meta
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           mv tp-loads.json public/tp-loads.json
-          git add public/tp-loads.json
+          mv tp-loads-meta.json public/tp-loads-meta.json
+          git add public/tp-loads.json public/tp-loads-meta.json
           git diff --staged --quiet && echo "No changes to commit" && exit 0
           git commit -m "chore: update tp-loads.json [$(date -u '+%Y-%m-%d')]"
           git pull --rebase origin main

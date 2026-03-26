@@ -81,23 +81,33 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const [meta, setMeta] = useState(null);
+  const [dfMeta, setDfMeta] = useState(null);
+  const [tpMeta, setTpMeta] = useState(null);
   const [metaError, setMetaError] = useState(false);
   const [requestStats, setRequestStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchMeta(), fetchRequestStats()]).finally(() => setLoading(false));
+    Promise.all([fetchMetas(), fetchRequestStats()]).finally(() => setLoading(false));
   }, []);
 
-  const fetchMeta = async () => {
-    try {
-      const res = await fetch('/df-loads-meta.json?_=' + Date.now());
-      if (!res.ok) throw new Error('not found');
-      setMeta(await res.json());
-    } catch {
-      setMetaError(true);
+  const fetchMetas = async () => {
+    const bust = '?_=' + Date.now();
+    const [dfRes, tpRes] = await Promise.allSettled([
+      fetch('/df-loads-meta.json' + bust),
+      fetch('/tp-loads-meta.json' + bust),
+    ]);
+
+    let gotAny = false;
+    if (dfRes.status === 'fulfilled' && dfRes.value.ok) {
+      const data = await dfRes.value.json().catch(() => null);
+      if (data && Object.keys(data).length > 0) { setDfMeta(data); gotAny = true; }
     }
+    if (tpRes.status === 'fulfilled' && tpRes.value.ok) {
+      const data = await tpRes.value.json().catch(() => null);
+      if (data && Object.keys(data).length > 0) { setTpMeta(data); gotAny = true; }
+    }
+    if (!gotAny) setMetaError(true);
   };
 
   const fetchRequestStats = async () => {
@@ -171,25 +181,27 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
             </div>
           </div>
-          <a
-            href="/df-loads-diff-latest.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px',
-              background: colors.background.secondary,
-              border: `1px solid ${colors.border.secondary}`,
-              borderRadius: '8px',
-              color: colors.text.primary,
-              fontSize: '13px', fontWeight: 600,
-              textDecoration: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <Download size={15} color={colors.text.secondary} />
-            Latest Diff Report
-          </a>
+          {dfMeta && (
+            <a
+              href="/df-loads-diff-latest.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px',
+                background: colors.background.secondary,
+                border: `1px solid ${colors.border.secondary}`,
+                borderRadius: '8px',
+                color: colors.text.primary,
+                fontSize: '13px', fontWeight: 600,
+                textDecoration: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <Download size={15} color={colors.text.secondary} />
+              DF Diff Report
+            </a>
+          )}
         </div>
 
         {/* ── DATA HEALTH ── */}
@@ -202,72 +214,80 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             color: colors.text.secondary,
           }}>
             <AlertCircle size={20} color="#f59e0b" />
-            No df-loads-meta.json found. Run the data fetch workflow to generate it.
+            No load metadata found. Run the data fetch workflows to generate it.
           </div>
-        ) : meta ? (
+        ) : (dfMeta || tpMeta) ? (
           <>
-            {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-              <StatCard
-                label="Total Loads"
-                value={meta.totalLoads?.toLocaleString() ?? '—'}
-                sub={`${meta.loadsWithPay?.toLocaleString()} with pay data`}
-                icon={Package}
-                color={colors.accent.primary}
-                colors={colors}
-              />
-              <StatCard
-                label="vs Previous Run"
-                value={fmtChange(meta.netChange)}
-                sub={`+${meta.added?.toLocaleString()} added · -${meta.removed?.toLocaleString()} removed`}
-                icon={TrendingUp}
-                color={changeColor(meta.netChange)}
-                colors={colors}
-              />
-              <StatCard
-                label="Avg Pay Rate"
-                value={meta.avgPay ? `$${meta.avgPay.toLocaleString()}` : '—'}
-                sub="loads with pay > $0"
-                icon={DollarSign}
-                color="#22c55e"
-                colors={colors}
-              />
-              <StatCard
-                label="Last Run"
-                value={fmtDate(meta.runDate)}
-                sub={meta.runAt ? new Date(meta.runAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
-                icon={RefreshCw}
-                color={colors.accent.cyan || '#06b6d4'}
-                colors={colors}
-              />
-            </div>
+            {/* Per-source panels */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '24px' }}>
+              {[
+                { meta: dfMeta, label: 'DirectFreight', abbr: 'DF', color: colors.accent.primary },
+                { meta: tpMeta, label: 'TruckerPath',   abbr: 'TP', color: '#8b5cf6' },
+              ].map(({ meta, label, abbr, color }) => meta ? (
+                <div key={abbr} style={{ background: colors.background.secondary, border: `1px solid ${colors.border.secondary}`, borderRadius: '12px', padding: '20px 24px' }}>
+                  {/* Source header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ padding: '4px 10px', background: `${color}20`, border: `1px solid ${color}40`, borderRadius: '6px', fontSize: '12px', fontWeight: 700, color }}>
+                      {abbr}
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>{label}</div>
+                    <div style={{ marginLeft: 'auto', fontSize: '12px', color: colors.text.tertiary }}>
+                      Last run: {fmtDate(meta.runDate)}
+                      {meta.runAt && ` · ${new Date(meta.runAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
+                    </div>
+                  </div>
 
-            {/* Equipment & States side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary, marginBottom: '10px' }}>Equipment Types</div>
-                <Table
-                  headers={['Type', 'Count', '%']}
-                  rows={(meta.equipmentTypes || []).map(([type, count]) => [
-                    type,
-                    count.toLocaleString(),
-                    `${Math.round((count / meta.totalLoads) * 100)}%`,
-                  ])}
-                  colors={colors}
-                />
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary, marginBottom: '10px' }}>Top Pickup States</div>
-                <Table
-                  headers={['State', 'Count', '%']}
-                  rows={(meta.topPickupStates || []).map(([state, count]) => [
-                    state,
-                    count.toLocaleString(),
-                    `${Math.round((count / meta.totalLoads) * 100)}%`,
-                  ])}
-                  colors={colors}
-                />
-              </div>
+                  {/* Summary stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                    {[
+                      { label: 'Total Loads', value: meta.totalLoads?.toLocaleString() ?? '—' },
+                      { label: 'With Pay Data', value: meta.loadsWithPay?.toLocaleString() ?? '—' },
+                      { label: 'Avg Pay', value: meta.avgPay ? `$${meta.avgPay.toLocaleString()}` : '—' },
+                      ...(meta.netChange !== undefined ? [
+                        { label: 'vs Prev Run', value: fmtChange(meta.netChange), valueColor: changeColor(meta.netChange) },
+                        { label: 'Added', value: `+${meta.added?.toLocaleString() ?? 0}`, valueColor: '#22c55e' },
+                        { label: 'Removed', value: `-${meta.removed?.toLocaleString() ?? 0}`, valueColor: meta.removed > 0 ? '#f59e0b' : colors.text.secondary },
+                      ] : []),
+                    ].map(({ label, value, valueColor }) => (
+                      <div key={label} style={{ background: colors.background.primary, borderRadius: '8px', padding: '10px 12px' }}>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                        <div style={{ fontSize: '16px', fontWeight: 700, color: valueColor || colors.text.primary }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Equipment & States side by side */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: colors.text.secondary, marginBottom: '8px' }}>Equipment Types</div>
+                      <Table
+                        headers={['Type', 'Count', '%']}
+                        rows={(meta.equipmentTypes || []).map(([type, count]) => [
+                          type, count.toLocaleString(),
+                          `${Math.round((count / meta.totalLoads) * 100)}%`,
+                        ])}
+                        colors={colors}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: colors.text.secondary, marginBottom: '8px' }}>Top Pickup States</div>
+                      <Table
+                        headers={['State', 'Count', '%']}
+                        rows={(meta.topPickupStates || []).slice(0, 10).map(([state, count]) => [
+                          state, count.toLocaleString(),
+                          `${Math.round((count / meta.totalLoads) * 100)}%`,
+                        ])}
+                        colors={colors}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div key={abbr} style={{ background: colors.background.secondary, border: `1px solid ${colors.border.secondary}`, borderRadius: '12px', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ padding: '4px 10px', background: `${color}10`, border: `1px solid ${color}30`, borderRadius: '6px', fontSize: '12px', fontWeight: 700, color: `${color}80` }}>{abbr}</div>
+                  <div style={{ fontSize: '14px', color: colors.text.tertiary }}>{label} — no data yet. Trigger the fetch workflow to populate.</div>
+                </div>
+              ))}
             </div>
           </>
         ) : null}

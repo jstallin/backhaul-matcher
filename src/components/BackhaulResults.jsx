@@ -156,8 +156,15 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
               
               {/* Rank Badge */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
-                  {getRankLabel(index)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
+                    {getRankLabel(index)}
+                  </div>
+                  {match.source && match.source !== 'demo' && (
+                    <div style={{ padding: '4px 8px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: colors.text.tertiary, letterSpacing: '0.05em' }}>
+                      {match.source === 'truckerpath' ? 'TP' : match.source === 'directfreight' ? 'DF' : match.source.toUpperCase()}
+                    </div>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {match.has_rate_config ? (

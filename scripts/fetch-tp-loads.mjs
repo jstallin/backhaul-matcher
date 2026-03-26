@@ -354,3 +354,29 @@ allLoads.sort((a, b) => (a.age_minutes || 0) - (b.age_minutes || 0));
 
 writeFileSync(OUTPUT, JSON.stringify(allLoads, null, 2));
 console.log(`\n✅ ${allLoads.length} unique TruckerPath loads → ${OUTPUT}`);
+
+// ─── Write meta.json for admin dashboard ──────────────────────────────────────
+const countBy = (loads, key) => {
+  const counts = {};
+  for (const l of loads) {
+    const val = l[key] || 'Unknown';
+    counts[val] = (counts[val] || 0) + 1;
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]);
+};
+
+const paidLoads = allLoads.filter(l => l.pay_rate > 0);
+const metaOutput = OUTPUT.replace(/\.json$/, '-meta.json');
+
+writeFileSync(metaOutput, JSON.stringify({
+  runDate:        new Date().toISOString().slice(0, 10),
+  runAt:          new Date().toISOString(),
+  totalLoads:     allLoads.length,
+  loadsWithPay:   paidLoads.length,
+  avgPay:         paidLoads.length
+    ? Math.round(paidLoads.reduce((s, l) => s + l.pay_rate, 0) / paidLoads.length)
+    : 0,
+  equipmentTypes:  countBy(allLoads, 'equipment_type'),
+  topPickupStates: countBy(allLoads, 'pickup_state').slice(0, 20),
+}, null, 2));
+console.log(`📊 Meta → ${metaOutput}`);
