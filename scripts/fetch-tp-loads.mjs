@@ -203,13 +203,13 @@ function buildPayload(centroid, offset = 0, template = null) {
     search_id:     null,
     repeat_search: false,
     road_miles:    true,
-    include_auth_required: false,
+    include_auth_required: true,
     paging_enable: true,
     query: {
       pickup: {
         geo: {
           location: { lat: centroid.lat, lng: centroid.lng },
-          deadhead: { max: 300 },
+          deadhead: { max: 9999 },
         },
       },
     },
@@ -305,17 +305,29 @@ try {
     }
   });
 
-  // Intercept the search API request the browser makes after login so we can
-  // use the exact payload structure (field names, nesting) as our template.
+  // Log ALL api.truckerpath.com requests so we can see what the app calls
   page.on('request', (request) => {
-    if (capturedPayload) return;
-    if (request.url().includes('/tl/search/filter') && request.method() === 'POST') {
-      try {
-        capturedPayload = JSON.parse(request.postData() || '{}');
-        console.log('Captured browser search payload:', JSON.stringify(capturedPayload).slice(0, 600));
-      } catch {
-        // ignore parse errors
+    const url = request.url();
+    if (!url.includes('truckerpath.com')) return;
+    if (request.method() === 'POST') {
+      const body = (request.postData() || '').slice(0, 300);
+      console.log(`[REQ] ${request.method()} ${url} | ${body}`);
+      // Capture the first /tl/search/filter call as our payload template
+      if (!capturedPayload && url.includes('/tl/search/filter')) {
+        try {
+          const parsed = JSON.parse(request.postData() || '{}');
+          // Only use as template if it's NOT one of our own calls (lat/lng won't match centroids exactly if from the app)
+          capturedPayload = parsed;
+          console.log('Captured search payload as template');
+        } catch { /* ignore */ }
       }
+    }
+  });
+
+  page.on('response', async (response) => {
+    const url = response.url();
+    if (url.includes('truckerpath.com') && response.request().method() === 'GET') {
+      console.log(`[RES] GET ${url} → ${response.status()}`);
     }
   });
 
