@@ -335,34 +335,12 @@ try {
     }
   }
 
-  // Wait for email input to appear (login form or modal)
-  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i], input[type="text"]', { timeout: 20000 });
+  // Wait for the login modal's email input (placeholder: "Email address")
+  await page.waitForSelector('input[placeholder="Email address"]', { timeout: 20000 });
 
-  // Fill credentials
-  const emailSelectors = [
-    'input[type="email"]',
-    'input[name="email"]',
-    'input[name="username"]',
-    'input[placeholder*="email" i]',
-    'input[placeholder*="user" i]',
-  ];
-  let emailFilled = false;
-  for (const sel of emailSelectors) {
-    const el = await page.$(sel);
-    if (el && await el.isVisible()) {
-      await el.fill(TP_EMAIL);
-      console.log(`Filled email with selector: ${sel}`);
-      emailFilled = true;
-      break;
-    }
-  }
-  if (!emailFilled) throw new Error('Could not find visible email input after clicking Log In.');
-
-  await page.fill('input[type="password"]', TP_PASSWORD);
-
-  const submitBtn = await page.$('button[type="submit"]') || await page.$('input[type="submit"]');
-  if (!submitBtn) throw new Error('Could not find submit button.');
-  await submitBtn.click();
+  await page.fill('input[placeholder="Email address"]', TP_EMAIL);
+  await page.fill('input[placeholder="Password"]', TP_PASSWORD);
+  await page.locator('button:has-text("SIGN IN")').click();
 
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(3000);
