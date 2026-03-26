@@ -305,13 +305,38 @@ try {
       await page.waitForTimeout(500);
     }
 
+    // Listen for any popup window that Log In might open
+    const popupPromise = context.waitForEvent('page', { timeout: 8000 }).catch(() => null);
+
     // Click the "Log In" nav link by text
     await page.locator('text="Log In"').first().click({ timeout: 10000 });
     console.log('Clicked Log In');
+
+    // Wait a moment then capture what happened
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'tp-afterclick-debug.png', fullPage: false });
+    console.log(`URL after click: ${page.url()}`);
+
+    // Dump all inputs and their attributes so we can see the login form structure
+    const inputsAfterClick = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('input')).map(el => ({
+        type: el.type, name: el.name, id: el.id,
+        placeholder: el.placeholder, visible: el.offsetParent !== null,
+      }))
+    );
+    console.log('Inputs after click:', JSON.stringify(inputsAfterClick, null, 2));
+
+    // Check if a popup opened
+    const popup = await popupPromise;
+    if (popup) {
+      console.log(`Popup opened: ${popup.url()}`);
+      await popup.waitForLoadState('load');
+      await popup.screenshot({ path: 'tp-popup-debug.png', fullPage: false });
+    }
   }
 
   // Wait for email input to appear (login form or modal)
-  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i]', { timeout: 20000 });
+  await page.waitForSelector('input[type="email"], input[name="email"], input[placeholder*="email" i], input[name="username"], input[placeholder*="user" i], input[type="text"]', { timeout: 20000 });
 
   // Fill credentials
   const emailSelectors = [
