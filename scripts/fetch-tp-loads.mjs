@@ -216,6 +216,11 @@ async function resolveCity(cityStr, page, token) {
     }
   }, [AUTOCOMPLETE_URL, cityStr, token]);
 
+  // Log the raw autocomplete response once for diagnosis
+  if (!resolveCity._logged) {
+    resolveCity._logged = true;
+    console.log(`Autocomplete status: ${result.status}, response: ${result.text.slice(0, 400)}`);
+  }
   if (result.status !== 200) return null;
   try {
     const data = JSON.parse(result.text);
@@ -223,6 +228,7 @@ async function resolveCity(cityStr, page, token) {
     const hits = Array.isArray(data) ? data : (data.cities || data.results || data.data || []);
     return hits[0] || null;
   } catch {
+    console.log('Autocomplete JSON parse failed:', result.text.slice(0, 200));
     return null;
   }
 }
