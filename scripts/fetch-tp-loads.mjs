@@ -486,9 +486,21 @@ try {
   };
   page.on('request', headerCapture);
   try {
+    // Dismiss any onboarding/upgrade modal that intercepts clicks
+    const modalClose = page.locator('.tlant-modal-root button, .tlant-modal-wrap button, [aria-label="Close"], button:has-text("×"), button:has-text("Skip"), button:has-text("Maybe Later"), button:has-text("Close")').first();
+    if (await modalClose.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await modalClose.click({ force: true });
+      console.log('Dismissed modal');
+      await page.waitForTimeout(500);
+    } else {
+      // Click outside the modal to close it
+      await page.mouse.click(10, 10);
+      await page.waitForTimeout(500);
+      console.log('Clicked outside to dismiss modal');
+    }
+
     await page.locator('#search_pickup').fill('Birmingham, AL');
     await page.waitForTimeout(1200);
-    // Select first autocomplete suggestion
     const firstOption = page.locator('[role="option"], [class*="autocomplete"] li, [class*="suggest"] li').first();
     if (await firstOption.isVisible({ timeout: 3000 }).catch(() => false)) {
       await firstOption.click();
@@ -503,7 +515,7 @@ try {
       res => res.url().includes('/tl/search/filter') && res.request().method() === 'POST',
       { timeout: 10000 }
     ).catch(() => null);
-    await page.locator('button:has-text("SEARCH")').first().click();
+    await page.locator('button:has-text("SEARCH")').first().click({ force: true });
     const searchRes = await searchResPromise;
     if (searchRes) {
       const body = await searchRes.text().catch(() => '');
