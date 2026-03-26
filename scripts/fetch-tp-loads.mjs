@@ -274,7 +274,7 @@ async function fetchStateLoads(stateEntry, page, token) {
     let data;
     try { data = JSON.parse(result.text); } catch { console.warn(`[${stateEntry.state}] Non-JSON response`); break; }
 
-    const items = data.items || data.loads || data.results || data.data || [];
+    const items = data.content || data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
 
     if (items.length < PAGE_LIMIT) break;
@@ -475,6 +475,46 @@ try {
     return uuid;
   });
   console.log(`Installation-ID: ${installationId}`);
+
+  // ── Perform a real UI search to capture all headers the app sends ───────────
+  let capturedSearchHeaders = null;
+  const headerCapture = (request) => {
+    if (request.url().includes('/tl/search/filter') && request.method() === 'POST') {
+      capturedSearchHeaders = request.headers();
+      console.log('App search headers:', JSON.stringify(capturedSearchHeaders));
+    }
+  };
+  page.on('request', headerCapture);
+  try {
+    await page.locator('#search_pickup').fill('Birmingham, AL');
+    await page.waitForTimeout(1200);
+    // Select first autocomplete suggestion
+    const firstOption = page.locator('[role="option"], [class*="autocomplete"] li, [class*="suggest"] li').first();
+    if (await firstOption.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await firstOption.click();
+      console.log('Selected from autocomplete dropdown');
+    } else {
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
+      console.log('Selected via ArrowDown+Enter');
+    }
+    await page.waitForTimeout(500);
+    const searchResPromise = page.waitForResponse(
+      res => res.url().includes('/tl/search/filter') && res.request().method() === 'POST',
+      { timeout: 10000 }
+    ).catch(() => null);
+    await page.locator('button:has-text("SEARCH")').first().click();
+    const searchRes = await searchResPromise;
+    if (searchRes) {
+      const body = await searchRes.text().catch(() => '');
+      console.log(`UI search response: ${body.slice(0, 800)}`);
+    } else {
+      console.log('No UI search response captured');
+    }
+  } catch (err) {
+    console.log('UI search error:', err.message);
+  }
+  page.off('request', headerCapture);
 
   console.log('Login successful.\n');
 
