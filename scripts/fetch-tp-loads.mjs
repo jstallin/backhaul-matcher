@@ -32,58 +32,60 @@ if (!TP_EMAIL || !TP_PASSWORD) {
   process.exit(1);
 }
 
-// ─── Geographic centroids for all 50 states ───────────────────────────────────
-const STATE_CENTROIDS = [
-  { state: 'AL', lat: 32.7,  lng: -86.7  },
-  { state: 'AK', lat: 64.2,  lng: -153.4 },
-  { state: 'AZ', lat: 34.3,  lng: -111.1 },
-  { state: 'AR', lat: 34.9,  lng: -92.4  },
-  { state: 'CA', lat: 36.8,  lng: -119.7 },
-  { state: 'CO', lat: 39.0,  lng: -105.5 },
-  { state: 'CT', lat: 41.6,  lng: -72.7  },
-  { state: 'DE', lat: 39.0,  lng: -75.5  },
-  { state: 'FL', lat: 27.8,  lng: -81.7  },
-  { state: 'GA', lat: 32.7,  lng: -83.4  },
-  { state: 'HI', lat: 20.3,  lng: -156.4 },
-  { state: 'ID', lat: 44.4,  lng: -114.6 },
-  { state: 'IL', lat: 40.0,  lng: -89.2  },
-  { state: 'IN', lat: 40.3,  lng: -86.1  },
-  { state: 'IA', lat: 42.0,  lng: -93.2  },
-  { state: 'KS', lat: 38.5,  lng: -98.4  },
-  { state: 'KY', lat: 37.7,  lng: -84.9  },
-  { state: 'LA', lat: 31.0,  lng: -91.8  },
-  { state: 'ME', lat: 45.4,  lng: -69.0  },
-  { state: 'MD', lat: 39.1,  lng: -76.8  },
-  { state: 'MA', lat: 42.2,  lng: -71.5  },
-  { state: 'MI', lat: 44.0,  lng: -85.5  },
-  { state: 'MN', lat: 46.4,  lng: -93.1  },
-  { state: 'MS', lat: 32.7,  lng: -89.7  },
-  { state: 'MO', lat: 38.5,  lng: -92.5  },
-  { state: 'MT', lat: 47.0,  lng: -110.4 },
-  { state: 'NE', lat: 41.5,  lng: -99.9  },
-  { state: 'NV', lat: 39.5,  lng: -116.4 },
-  { state: 'NH', lat: 44.0,  lng: -71.6  },
-  { state: 'NJ', lat: 40.1,  lng: -74.7  },
-  { state: 'NM', lat: 34.5,  lng: -106.2 },
-  { state: 'NY', lat: 43.0,  lng: -75.5  },
-  { state: 'NC', lat: 35.5,  lng: -79.4  },
-  { state: 'ND', lat: 47.5,  lng: -100.5 },
-  { state: 'OH', lat: 40.4,  lng: -82.8  },
-  { state: 'OK', lat: 35.6,  lng: -96.9  },
-  { state: 'OR', lat: 44.1,  lng: -120.5 },
-  { state: 'PA', lat: 41.2,  lng: -77.2  },
-  { state: 'RI', lat: 41.7,  lng: -71.5  },
-  { state: 'SC', lat: 33.8,  lng: -80.9  },
-  { state: 'SD', lat: 44.4,  lng: -100.2 },
-  { state: 'TN', lat: 35.8,  lng: -86.7  },
-  { state: 'TX', lat: 31.5,  lng: -99.3  },
-  { state: 'UT', lat: 39.3,  lng: -111.1 },
-  { state: 'VT', lat: 44.0,  lng: -72.7  },
-  { state: 'VA', lat: 37.5,  lng: -79.5  },
-  { state: 'WA', lat: 47.4,  lng: -120.6 },
-  { state: 'WV', lat: 38.9,  lng: -80.5  },
-  { state: 'WI', lat: 44.3,  lng: -89.8  },
-  { state: 'WY', lat: 43.0,  lng: -107.6 },
+// ─── Major city per state for autocomplete lookup ─────────────────────────────
+// The TruckerPath search API needs a resolved city object from their autocomplete,
+// not just raw lat/lng. We use the largest trucking hub city per state.
+const STATE_CITIES = [
+  { state: 'AL', city: 'Birmingham, AL' },
+  { state: 'AK', city: 'Anchorage, AK' },
+  { state: 'AZ', city: 'Phoenix, AZ' },
+  { state: 'AR', city: 'Little Rock, AR' },
+  { state: 'CA', city: 'Los Angeles, CA' },
+  { state: 'CO', city: 'Denver, CO' },
+  { state: 'CT', city: 'Hartford, CT' },
+  { state: 'DE', city: 'Wilmington, DE' },
+  { state: 'FL', city: 'Jacksonville, FL' },
+  { state: 'GA', city: 'Atlanta, GA' },
+  { state: 'HI', city: 'Honolulu, HI' },
+  { state: 'ID', city: 'Boise, ID' },
+  { state: 'IL', city: 'Chicago, IL' },
+  { state: 'IN', city: 'Indianapolis, IN' },
+  { state: 'IA', city: 'Des Moines, IA' },
+  { state: 'KS', city: 'Wichita, KS' },
+  { state: 'KY', city: 'Louisville, KY' },
+  { state: 'LA', city: 'New Orleans, LA' },
+  { state: 'ME', city: 'Portland, ME' },
+  { state: 'MD', city: 'Baltimore, MD' },
+  { state: 'MA', city: 'Boston, MA' },
+  { state: 'MI', city: 'Detroit, MI' },
+  { state: 'MN', city: 'Minneapolis, MN' },
+  { state: 'MS', city: 'Jackson, MS' },
+  { state: 'MO', city: 'St. Louis, MO' },
+  { state: 'MT', city: 'Billings, MT' },
+  { state: 'NE', city: 'Omaha, NE' },
+  { state: 'NV', city: 'Las Vegas, NV' },
+  { state: 'NH', city: 'Manchester, NH' },
+  { state: 'NJ', city: 'Newark, NJ' },
+  { state: 'NM', city: 'Albuquerque, NM' },
+  { state: 'NY', city: 'New York, NY' },
+  { state: 'NC', city: 'Charlotte, NC' },
+  { state: 'ND', city: 'Fargo, ND' },
+  { state: 'OH', city: 'Columbus, OH' },
+  { state: 'OK', city: 'Oklahoma City, OK' },
+  { state: 'OR', city: 'Portland, OR' },
+  { state: 'PA', city: 'Philadelphia, PA' },
+  { state: 'RI', city: 'Providence, RI' },
+  { state: 'SC', city: 'Columbia, SC' },
+  { state: 'SD', city: 'Sioux Falls, SD' },
+  { state: 'TN', city: 'Nashville, TN' },
+  { state: 'TX', city: 'Dallas, TX' },
+  { state: 'UT', city: 'Salt Lake City, UT' },
+  { state: 'VT', city: 'Burlington, VT' },
+  { state: 'VA', city: 'Richmond, VA' },
+  { state: 'WA', city: 'Seattle, WA' },
+  { state: 'WV', city: 'Charleston, WV' },
+  { state: 'WI', city: 'Milwaukee, WI' },
+  { state: 'WY', city: 'Cheyenne, WY' },
 ];
 
 // ─── Equipment type normalization ─────────────────────────────────────────────
@@ -172,30 +174,7 @@ function normalize(item) {
 }
 
 // ─── Build search payload for one state ───────────────────────────────────────
-function buildPayload(centroid, offset = 0, template = null) {
-  // If we captured the browser's own payload, use it as a template and just
-  // swap in our state centroid + reset pagination. This ensures field names
-  // and nesting exactly match what the API expects.
-  if (template) {
-    const payload = JSON.parse(JSON.stringify(template)); // deep clone
-    payload.offset     = offset;
-    payload.limit      = PAGE_LIMIT;
-    payload.search_id  = null;
-
-    // Overwrite pickup location with our state centroid
-    const pickup = payload?.query?.pickup ?? payload?.options?.query?.pickup;
-    if (pickup?.geo?.location) {
-      pickup.geo.location = { lat: centroid.lat, lng: centroid.lng };
-      if (pickup.geo.deadhead)  pickup.geo.deadhead  = { max: 300 };
-      if (pickup.geo.radius !== undefined) pickup.geo.radius = 300;
-    }
-    // Remove date filter so we get all upcoming loads
-    if (pickup?.date_local) delete pickup.date_local;
-
-    return payload;
-  }
-
-  // Fallback: best-guess payload if no template was captured
+function buildPayload(location, offset = 0) {
   return {
     sort:          [{ smart_sort: 'desc' }],
     offset,
@@ -208,7 +187,7 @@ function buildPayload(centroid, offset = 0, template = null) {
     query: {
       pickup: {
         geo: {
-          location: { lat: centroid.lat, lng: centroid.lng },
+          location,          // full resolved object from city autocomplete
           deadhead: { max: 300 },
         },
       },
@@ -221,12 +200,50 @@ function buildPayload(centroid, offset = 0, template = null) {
 // and session state — no need to manually reconstruct auth headers.
 let _firstCall = true;
 
-async function fetchStateLoads(centroid, page, token) {
+const AUTOCOMPLETE_URL = 'https://api.truckerpath.com/tl/city/city-auto-complete';
+
+async function resolveCity(cityStr, page, token) {
+  const result = await page.evaluate(async ([url, city, tok]) => {
+    try {
+      const res = await fetch(url, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': tok, 'client': 'web' },
+        body: JSON.stringify({ city }),
+      });
+      return { status: res.status, text: await res.text() };
+    } catch (err) {
+      return { status: 0, text: err.message };
+    }
+  }, [AUTOCOMPLETE_URL, cityStr, token]);
+
+  if (result.status !== 200) return null;
+  try {
+    const data = JSON.parse(result.text);
+    // Response is typically an array or { cities: [...] } — grab the first hit
+    const hits = Array.isArray(data) ? data : (data.cities || data.results || data.data || []);
+    return hits[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchStateLoads(stateEntry, page, token) {
   const loads = [];
   let   offset = 0;
 
+  // Step 1: resolve the city to get TruckerPath's own location object
+  const resolved = await resolveCity(stateEntry.city, page, token);
+  let location;
+  if (resolved) {
+    console.log(`  [${stateEntry.state}] Resolved city: ${JSON.stringify(resolved).slice(0, 150)}`);
+    location = resolved;
+  } else {
+    console.warn(`  [${stateEntry.state}] City autocomplete failed — skipping`);
+    return [];
+  }
+
   while (true) {
-    const body = buildPayload(centroid, offset, _capturedTemplate);
+    const body = buildPayload(location, offset);
 
     const result = await page.evaluate(async ([url, payload, tok]) => {
       try {
@@ -247,17 +264,17 @@ async function fetchStateLoads(centroid, page, token) {
     }, [API_URL, body, token]);
 
     if (result.status === 0 || result.status >= 400) {
-      console.warn(`  [${centroid.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
+      console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
       break;
     }
 
     if (_firstCall) {
       _firstCall = false;
-      console.log(`[${centroid.state}] HTTP ${result.status}, response (800 chars): ${result.text.slice(0, 800)}`);
+      console.log(`[${stateEntry.state}] HTTP ${result.status}, response (800 chars): ${result.text.slice(0, 800)}`);
     }
 
     let data;
-    try { data = JSON.parse(result.text); } catch { console.warn(`[${centroid.state}] Non-JSON response`); break; }
+    try { data = JSON.parse(result.text); } catch { console.warn(`[${stateEntry.state}] Non-JSON response`); break; }
 
     const items = data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
@@ -288,8 +305,6 @@ await context.addInitScript(() => {
 
 const page = await context.newPage();
 let authToken = null;
-let capturedPayload   = null; // payload the browser sends to the search API
-let _capturedTemplate = null; // set after login, used by fetchStateLoads
 
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -305,31 +320,6 @@ try {
     }
   });
 
-  // Log ALL api.truckerpath.com requests so we can see what the app calls
-  page.on('request', (request) => {
-    const url = request.url();
-    if (!url.includes('truckerpath.com')) return;
-    if (request.method() === 'POST') {
-      const body = (request.postData() || '').slice(0, 300);
-      console.log(`[REQ] ${request.method()} ${url} | ${body}`);
-      // Capture the first /tl/search/filter call as our payload template
-      if (!capturedPayload && url.includes('/tl/search/filter')) {
-        try {
-          const parsed = JSON.parse(request.postData() || '{}');
-          // Only use as template if it's NOT one of our own calls (lat/lng won't match centroids exactly if from the app)
-          capturedPayload = parsed;
-          console.log('Captured search payload as template');
-        } catch { /* ignore */ }
-      }
-    }
-  });
-
-  page.on('response', async (response) => {
-    const url = response.url();
-    if (url.includes('truckerpath.com') && response.request().method() === 'GET') {
-      console.log(`[RES] GET ${url} → ${response.status()}`);
-    }
-  });
 
   // Try direct login URL first; fall back to home + clicking the nav button
   await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
@@ -438,30 +428,6 @@ try {
   await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(2000);
 
-  // Force a reload of the loads page so the React app makes a fresh search request.
-  // The initial load may use cached results and skip the API call.
-  if (page.url().includes('/carrier/loads')) {
-    console.log('Reloading loads page to trigger fresh search request...');
-    await page.reload({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
-  }
-
-  // Wait up to 10s for the search API call to fire
-  const searchReq = await page.waitForRequest(
-    req => req.url().includes('/tl/search/filter') && req.method() === 'POST',
-    { timeout: 10000 }
-  ).catch(() => null);
-
-  if (searchReq) {
-    try {
-      capturedPayload = JSON.parse(searchReq.postData() || '{}');
-      console.log('Captured browser search payload:', JSON.stringify(capturedPayload).slice(0, 800));
-    } catch {
-      console.log('Could not parse captured search payload');
-    }
-  } else {
-    console.log('No search request captured within 10s');
-  }
-
   await page.screenshot({ path: 'tp-postlogin-debug.png', fullPage: false });
   console.log(`Post-login URL: ${page.url()}`);
 
@@ -484,70 +450,21 @@ try {
   }
 
   if (!authToken) {
-    // Dump localStorage keys to help debug
     const lsKeys = await page.evaluate(() => Object.keys(localStorage));
     console.log('localStorage keys:', lsKeys);
     throw new Error('Could not capture x-auth-token. Check screenshots and localStorage keys above.');
   }
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
-
-  // ── Perform a UI search to capture the real API request/response ────────────
-  // The programmatic API calls return 0 results on a free account. We'll use
-  // the page's own search UI to trigger a search and intercept the response.
-  console.log('Performing UI search to capture real API response...');
-
-  // Listen for the next search API response
-  const searchResponsePromise = page.waitForResponse(
-    res => res.url().includes('/tl/search/filter') && res.request().method() === 'POST',
-    { timeout: 15000 }
-  ).catch(() => null);
-
-  // Fill the pickup DH field (deadhead) — use the search_pickupDH input
-  // The search_pickup field expects a city/state string
-  try {
-    await page.locator('#search_pickup').fill('Birmingham, AL');
-    await page.waitForTimeout(1000); // let autocomplete settle
-    // Press Escape to dismiss any autocomplete dropdown
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-    // Click the SEARCH button
-    await page.locator('button:has-text("SEARCH")').first().click();
-    console.log('Clicked SEARCH button');
-  } catch (err) {
-    console.log('UI search interaction failed:', err.message);
-  }
-
-  const searchRes = await searchResponsePromise;
-  if (searchRes) {
-    const reqBody  = searchRes.request().postData() || '';
-    const resBody  = await searchRes.text().catch(() => '');
-    console.log('UI search request:', reqBody.slice(0, 600));
-    console.log('UI search response (800 chars):', resBody.slice(0, 800));
-    // Use this payload as our template
-    if (!capturedPayload) {
-      try { capturedPayload = JSON.parse(reqBody); } catch { /* ignore */ }
-    }
-  } else {
-    console.log('No search response captured from UI search');
-  }
-
   console.log('Login successful.\n');
 
   // ── Fetch loads for each state (browser stays open — uses its full session) ──
-  _capturedTemplate = capturedPayload;
-  if (_capturedTemplate) {
-    console.log('Using captured browser payload as template');
-  } else {
-    console.log('No browser payload captured — using fallback template');
-  }
-
   const seen     = new Set();
   const allLoads = [];
 
-  for (const centroid of STATE_CENTROIDS) {
+  for (const stateEntry of STATE_CITIES) {
     try {
-      const loads = await fetchStateLoads(centroid, page, authToken);
+      const loads = await fetchStateLoads(stateEntry, page, authToken);
       let added = 0;
       for (const load of loads) {
         if (load.load_id && !seen.has(load.load_id)) {
@@ -556,9 +473,9 @@ try {
           added++;
         }
       }
-      console.log(`[${centroid.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
+      console.log(`[${stateEntry.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
     } catch (err) {
-      console.warn(`[${centroid.state}] Error: ${err.message}`);
+      console.warn(`[${stateEntry.state}] Error: ${err.message}`);
     }
 
     await new Promise(r => setTimeout(r, DELAY_MS));
