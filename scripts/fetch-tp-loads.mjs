@@ -275,7 +275,7 @@ let authToken = null;
 try {
   // ── Login ──────────────────────────────────────────────────────────────────
   console.log('Logging in to TruckerPath...');
-  await page.goto(LOGIN_URL, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(LOGIN_URL, { waitUntil: 'load', timeout: 60000 });
 
   // Intercept the auth token from any API response header
   page.on('response', async (response) => {
@@ -292,7 +292,7 @@ try {
   await page.fill('input[type="email"], input[name="email"], input[placeholder*="email" i]', TP_EMAIL);
   await page.fill('input[type="password"], input[name="password"]', TP_PASSWORD);
   await page.click('button[type="submit"], input[type="submit"]');
-  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {});
+  await page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => {});
 
   // Give response interceptor a moment to fire
   await page.waitForTimeout(2000);
