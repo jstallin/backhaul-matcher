@@ -234,6 +234,7 @@ async function fetchStateLoads(centroid, token) {
       headers: {
         'Content-Type': 'application/json',
         'x-auth-token': token,
+        'client':       'web',
       },
       body: JSON.stringify(body),
     });
