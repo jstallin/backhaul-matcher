@@ -492,26 +492,45 @@ try {
 
   console.log(`Token preview: ${authToken.slice(0, 8)}... (length ${authToken.length})`);
 
-  // ── Inspect what's visible on the page ────────────────────────────────────
-  // Check for SSR data (Next.js __NEXT_DATA__, React initial state, etc.)
-  const pageInspection = await page.evaluate(() => {
-    const result = {};
-    // Next.js
-    if (window.__NEXT_DATA__) result.nextData = JSON.stringify(window.__NEXT_DATA__).slice(0, 1000);
-    // Redux / generic window state
-    if (window.__INITIAL_STATE__) result.initialState = JSON.stringify(window.__INITIAL_STATE__).slice(0, 500);
-    if (window.__REDUX_STATE__)   result.reduxState   = JSON.stringify(window.__REDUX_STATE__).slice(0, 500);
-    // Count visible load-card-like elements in the DOM
-    result.loadCardCount = document.querySelectorAll('[class*="load-card"], [class*="LoadCard"], [data-testid*="load"]').length;
-    result.listItemCount = document.querySelectorAll('[class*="list-item"], [class*="ListItem"], li[class*="load"]').length;
-    // Page title
-    result.title = document.title;
-    // Any text mentioning loads
-    const body = document.body.innerText.slice(0, 500);
-    result.bodyPreview = body;
-    return result;
-  });
-  console.log('Page inspection:', JSON.stringify(pageInspection, null, 2));
+  // ── Perform a UI search to capture the real API request/response ────────────
+  // The programmatic API calls return 0 results on a free account. We'll use
+  // the page's own search UI to trigger a search and intercept the response.
+  console.log('Performing UI search to capture real API response...');
+
+  // Listen for the next search API response
+  const searchResponsePromise = page.waitForResponse(
+    res => res.url().includes('/tl/search/filter') && res.request().method() === 'POST',
+    { timeout: 15000 }
+  ).catch(() => null);
+
+  // Fill the pickup DH field (deadhead) — use the search_pickupDH input
+  // The search_pickup field expects a city/state string
+  try {
+    await page.locator('#search_pickup').fill('Birmingham, AL');
+    await page.waitForTimeout(1000); // let autocomplete settle
+    // Press Escape to dismiss any autocomplete dropdown
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+    // Click the SEARCH button
+    await page.locator('button:has-text("SEARCH")').first().click();
+    console.log('Clicked SEARCH button');
+  } catch (err) {
+    console.log('UI search interaction failed:', err.message);
+  }
+
+  const searchRes = await searchResponsePromise;
+  if (searchRes) {
+    const reqBody  = searchRes.request().postData() || '';
+    const resBody  = await searchRes.text().catch(() => '');
+    console.log('UI search request:', reqBody.slice(0, 600));
+    console.log('UI search response (800 chars):', resBody.slice(0, 800));
+    // Use this payload as our template
+    if (!capturedPayload) {
+      try { capturedPayload = JSON.parse(reqBody); } catch { /* ignore */ }
+    }
+  } else {
+    console.log('No search response captured from UI search');
+  }
 
   console.log('Login successful.\n');
 
