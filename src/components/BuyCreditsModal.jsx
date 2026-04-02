@@ -6,16 +6,16 @@ const PACKAGES = [
     id: 'starter',
     name: 'Starter',
     credits: 10,
-    price: 50,
-    perCredit: '$5.00',
+    price: 20,
+    perCredit: '$2.00',
     description: 'Great for getting started'
   },
   {
     id: 'pro',
     name: 'Pro',
     credits: 30,
-    price: 75,
-    perCredit: '$2.50',
+    price: 50,
+    perCredit: '$1.67',
     highlight: true,
     badge: 'Best Value',
     description: 'Most popular for active fleets'
@@ -23,9 +23,9 @@ const PACKAGES = [
   {
     id: 'fleet',
     name: 'Fleet',
-    credits: 100,
-    price: 200,
-    perCredit: '$2.00',
+    credits: 75,
+    price: 100,
+    perCredit: '$1.33',
     description: 'High volume operations'
   }
 ];
