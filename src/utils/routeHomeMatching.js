@@ -271,25 +271,28 @@ export const findRouteHomeBackhauls = async (
   const maxCandidates = 25;
   let candidatesToProcess = corridorCandidates;
   if (corridorCandidates.length > maxCandidates) {
+    // Estimate additional miles per load using Haversine (coords or state centroid fallback).
+    // Loads with fewer estimated additional miles are more likely to pass the scoring-phase
+    // additionalMiles cap, so rank them first. Revenue is a tiebreaker — but $0 loads that
+    // are geographically ideal still rank above expensive loads that add 400+ miles of detour.
+    const firstLegOriginCap = isRelay ? fleetHome : datumPoint;
     corridorCandidates.sort((a, b) => {
-      // Haversine delivery→home estimate (lower = closer to home = better)
-      const delivLat = a.delivery_lat ?? STATE_CENTROIDS[a.delivery_state]?.lat ?? fleetHome.lat;
-      const delivLng = a.delivery_lng ?? STATE_CENTROIDS[a.delivery_state]?.lng ?? fleetHome.lng;
-      const aDelivToHome = calculateDistance(delivLat, delivLng, fleetHome.lat, fleetHome.lng);
-      const delivLatB = b.delivery_lat ?? STATE_CENTROIDS[b.delivery_state]?.lat ?? fleetHome.lat;
-      const delivLngB = b.delivery_lng ?? STATE_CENTROIDS[b.delivery_state]?.lng ?? fleetHome.lng;
-      const bDelivToHome = calculateDistance(delivLatB, delivLngB, fleetHome.lat, fleetHome.lng);
-      // Reject loads whose delivery is farther from home than datum — not worth a PC*MILER call.
-      // Use directReturnMiles as the threshold (same as the scoring-phase check).
-      const aValid = aDelivToHome <= directReturnMiles;
-      const bValid = bDelivToHome <= directReturnMiles;
-      if (aValid !== bValid) return aValid ? -1 : 1;
-      // Within the valid group: sort by revenue descending, with $0 loads ranked last.
-      const aRev = a.total_revenue || 0;
-      const bRev = b.total_revenue || 0;
-      if (aRev > 0 && bRev === 0) return -1;
-      if (bRev > 0 && aRev === 0) return 1;
-      return bRev - aRev;
+      const estimateAdditional = (load) => {
+        const pLat = load.pickup_lat   ?? STATE_CENTROIDS[load.pickup_state]?.lat   ?? datumPoint.lat;
+        const pLng = load.pickup_lng   ?? STATE_CENTROIDS[load.pickup_state]?.lng   ?? datumPoint.lng;
+        const dLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? fleetHome.lat;
+        const dLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? fleetHome.lng;
+        const dtp = calculateDistance(firstLegOriginCap.lat, firstLegOriginCap.lng, pLat, pLng);
+        const ptd = load.distance_miles ?? calculateDistance(pLat, pLng, dLat, dLng);
+        const dth = calculateDistance(dLat, dLng, fleetHome.lat, fleetHome.lng);
+        return Math.max(0, dtp + ptd + dth - directReturnMiles);
+      };
+      const aExtra = estimateAdditional(a);
+      const bExtra = estimateAdditional(b);
+      // Primary: fewest estimated additional miles first
+      if (Math.abs(aExtra - bExtra) > 10) return aExtra - bExtra;
+      // Tiebreaker: higher revenue
+      return (b.total_revenue || 0) - (a.total_revenue || 0);
     });
     candidatesToProcess = corridorCandidates.slice(0, maxCandidates);
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
