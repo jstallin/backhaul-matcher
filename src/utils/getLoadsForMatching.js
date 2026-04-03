@@ -24,6 +24,63 @@ function normalizeImportedLoad(load) {
 }
 
 /**
+ * Attempt to fetch live loads from Truckstop for the given request context.
+ *
+ * @param {string} userId
+ * @param {object} requestContext - { datumCity, datumState, homeCity, homeState, equipmentType, pickupDate }
+ * @returns {Array|null} Normalized loads, or null if not connected / failed
+ */
+async function getTruckstopLoads(userId, requestContext = {}) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+
+    const {
+      datumCity = '',
+      datumState = '',
+      homeCity = '',
+      homeState = '',
+      equipmentType = 'Dry Van',
+      pickupDate = ''
+    } = requestContext;
+
+    const params = new URLSearchParams({
+      action:         'loads',
+      origin_city:    datumCity,
+      origin_state:   datumState,
+      dest_city:      homeCity,
+      dest_state:     homeState,
+      equipment_type: equipmentType,
+      pickup_date:    pickupDate,
+      radius_miles:   '150'
+    });
+
+    const response = await fetch(`/api/integrations/truckstop?${params}`, {
+      headers: { 'Authorization': `Bearer ${session.access_token}` }
+    });
+
+    if (response.status === 400) return null; // NOT_CONNECTED
+
+    if (response.status === 401) {
+      console.warn('Truckstop credentials invalid or expired — falling back');
+      return null;
+    }
+
+    if (!response.ok) {
+      console.warn('Truckstop loads request failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.loads?.length > 0 ? data.loads : null;
+
+  } catch (err) {
+    console.warn('Truckstop fetch error, falling back:', err);
+    return null;
+  }
+}
+
+/**
  * Attempt to fetch live loads from Direct Freight for the given request context.
  *
  * @param {string} userId
@@ -87,9 +144,11 @@ async function getDirectFreightLoads(userId, requestContext = {}) {
  * Fetch loads for the matching algorithm.
  *
  * Priority:
- *  1. Direct Freight live loads (if connected and requestContext provided)
- *  2. User's imported loads from Supabase (imported via Chrome extension)
- *  3. Demo JSON as fallback
+ *  1. Truckstop live loads (if connected and requestContext provided)
+ *  2. Direct Freight live loads (if connected and requestContext provided)
+ *  3. User's imported loads from Supabase (imported via Chrome extension)
+ *  4. Scraped loads (df-loads.json / tp-loads.json)
+ *  5. Demo JSON as fallback
  *
  * @param {string} userId
  * @param {string|null} fleetId       - optional, filters imported loads by fleet
@@ -102,7 +161,16 @@ export async function getLoadsForMatching(userId, fleetId = null, requestContext
     return { loads: demoLoadsData, isLive: false, source: 'demo' };
   }
 
-  // 1. Try Direct Freight if request context is available
+  // 1. Try Truckstop if request context is available (highest priority — org-level token)
+  if (requestContext) {
+    const tsLoads = await getTruckstopLoads(userId, requestContext);
+    if (tsLoads && tsLoads.length > 0) {
+      console.log(`Using ${tsLoads.length} live Truckstop loads`);
+      return { loads: tsLoads, isLive: true, source: 'truckstop' };
+    }
+  }
+
+  // 2. Try Direct Freight if request context is available
   if (requestContext) {
     const dfLoads = await getDirectFreightLoads(userId, requestContext);
     if (dfLoads && dfLoads.length > 0) {
