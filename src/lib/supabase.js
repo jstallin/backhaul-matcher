@@ -384,6 +384,19 @@ export const db = {
     }
   },
 
+  // Org membership — client-side read (RLS: users see their own row)
+  orgs: {
+    async getMyMembership(userId) {
+      const { data, error } = await supabase
+        .from('org_memberships')
+        .select('role, orgs(*)')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data; // { role, orgs: { id, name, email_domain, ... } } or null
+    }
+  },
+
   // Org-level integrations (shared API tokens for enterprise email domains)
   orgIntegrations: {
     async getByDomain(emailDomain, provider) {

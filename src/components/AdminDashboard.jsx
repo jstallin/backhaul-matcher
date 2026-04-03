@@ -79,16 +79,18 @@ const Table = ({ headers, rows, colors }) => (
 
 export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [dfMeta, setDfMeta] = useState(null);
   const [tpMeta, setTpMeta] = useState(null);
   const [metaError, setMetaError] = useState(false);
   const [requestStats, setRequestStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [orgs, setOrgs] = useState([]);
+  const [roleChanging, setRoleChanging] = useState(null);
 
   useEffect(() => {
-    Promise.all([fetchMetas(), fetchRequestStats()]).finally(() => setLoading(false));
+    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs()]).finally(() => setLoading(false));
   }, []);
 
   const fetchMetas = async () => {
@@ -108,6 +110,40 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       if (data && Object.keys(data).length > 0) { setTpMeta(data); gotAny = true; }
     }
     if (!gotAny) setMetaError(true);
+  };
+
+  const fetchOrgs = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/orgs/all', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setOrgs(data.orgs || []);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const handleRoleChange = async (userId, orgId, newRole) => {
+    if (!session?.access_token) return;
+    setRoleChanging(userId);
+    try {
+      const res = await fetch('/api/orgs/role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ user_id: userId, org_id: orgId, role: newRole })
+      });
+      if (res.ok) await fetchOrgs();
+    } catch {
+      // Non-critical
+    } finally {
+      setRoleChanging(null);
+    }
   };
 
   const fetchRequestStats = async () => {
@@ -339,6 +375,63 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           </>
         ) : (
           <div style={{ color: colors.text.secondary, fontSize: '14px' }}>No request data available.</div>
+        )}
+
+        {/* ── ORGANIZATIONS ── */}
+        {orgs.length > 0 && (
+          <>
+            <SectionHeader title="Organizations" colors={colors} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {orgs.map(org => (
+                <div key={org.id} style={{ background: colors.background.secondary, border: `1px solid ${colors.border.secondary}`, borderRadius: '12px', padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#1B7A4A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '16px', flexShrink: 0 }}>
+                      {org.name?.charAt(0)?.toUpperCase() || 'O'}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>{org.name}</div>
+                      <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                        {org.email_domain} · {org.members?.length || 0} member{org.members?.length !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  </div>
+                  {org.members?.length > 0 && (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr>
+                          {['Member', 'Email', 'Role', ''].map((h, i) => (
+                            <th key={i} style={{ padding: '8px 12px', textAlign: i === 3 ? 'right' : 'left', fontWeight: 600, fontSize: '11px', color: colors.text.secondary, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${colors.border.secondary}` }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {org.members.map(member => (
+                          <tr key={member.user_id}>
+                            <td style={{ padding: '8px 12px', color: colors.text.primary }}>{member.full_name || '—'}</td>
+                            <td style={{ padding: '8px 12px', color: colors.text.secondary }}>{member.email || '—'}</td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <span style={{ padding: '2px 8px', background: member.role === 'admin' ? `${colors.accent.primary}20` : 'transparent', border: `1px solid ${member.role === 'admin' ? colors.accent.primary + '60' : colors.border.primary}`, borderRadius: '4px', fontSize: '11px', fontWeight: 700, color: member.role === 'admin' ? colors.accent.primary : colors.text.secondary, textTransform: 'uppercase' }}>
+                                {member.role}
+                              </span>
+                            </td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                              <button
+                                onClick={() => handleRoleChange(member.user_id, org.id, member.role === 'admin' ? 'member' : 'admin')}
+                                disabled={roleChanging === member.user_id}
+                                style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${colors.border.accent}`, borderRadius: '6px', color: colors.text.secondary, fontSize: '12px', cursor: roleChanging === member.user_id ? 'not-allowed' : 'pointer', opacity: roleChanging === member.user_id ? 0.5 : 1 }}
+                              >
+                                {roleChanging === member.user_id ? '...' : member.role === 'admin' ? 'Demote' : 'Make Admin'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

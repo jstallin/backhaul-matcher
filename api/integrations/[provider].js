@@ -26,21 +26,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Free email domains — users with these require individual tokens (not org-shared)
-const FREE_EMAIL_DOMAINS = new Set([
-  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
-  'icloud.com', 'me.com', 'aol.com', 'protonmail.com', 'pm.me',
-  'ymail.com', 'msn.com', 'googlemail.com'
-]);
-
-function getEmailDomain(email) {
-  return email?.split('@')[1]?.toLowerCase() || '';
-}
-
-function isOrgDomain(domain) {
-  return domain && !FREE_EMAIL_DOMAINS.has(domain);
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -179,16 +164,24 @@ async function handleDat(req, res, supabase, user) {
 // ─── TRUCKSTOP ────────────────────────────────────────────────────────────────
 
 async function handleTruckstop(req, res, supabase, user) {
-  const userDomain = getEmailDomain(user.email);
-  const orgLevel = isOrgDomain(userDomain);
+  // Look up user's org membership (org_id + role)
+  const { data: membership } = await supabase
+    .from('org_memberships')
+    .select('org_id, role')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const orgId = membership?.org_id || null;
+  const isOrgAdmin = membership?.role === 'admin';
 
   if (req.method === 'GET') {
     try {
-      if (orgLevel) {
+      // Check org-level token first
+      if (orgId) {
         const { data: orgToken, error: orgError } = await supabase
           .from('org_integrations')
           .select('*')
-          .eq('email_domain', userDomain)
+          .eq('org_id', orgId)
           .eq('provider', 'truckstop')
           .single();
 
@@ -201,7 +194,6 @@ async function handleTruckstop(req, res, supabase, user) {
             connected: true,
             provider: 'truckstop',
             is_org_token: true,
-            org_domain: userDomain,
             username: orgToken.username,
             connected_at: orgToken.created_at
           });
@@ -220,19 +212,13 @@ async function handleTruckstop(req, res, supabase, user) {
       }
 
       if (!userToken || !userToken.is_connected) {
-        return res.status(200).json({
-          connected: false,
-          provider: 'truckstop',
-          is_org_token: false,
-          org_domain: orgLevel ? userDomain : null
-        });
+        return res.status(200).json({ connected: false, provider: 'truckstop', is_org_token: false });
       }
 
       return res.status(200).json({
         connected: true,
         provider: 'truckstop',
         is_org_token: false,
-        org_domain: orgLevel ? userDomain : null,
         username: userToken.account_email,
         connected_at: userToken.connected_at
       });
@@ -253,32 +239,35 @@ async function handleTruckstop(req, res, supabase, user) {
     const uname = username.trim();
 
     try {
-      if (orgLevel) {
+      if (orgId && isOrgAdmin) {
+        // Org admin — save as org-level token
         const { error: orgError } = await supabase
           .from('org_integrations')
           .upsert({
-            email_domain: userDomain,
+            org_id: orgId,
             provider: 'truckstop',
             api_token: token,
             username: uname,
             password: password.trim(),
             connected_by: user.id
-          }, { onConflict: 'email_domain,provider', ignoreDuplicates: false });
+          }, { onConflict: 'org_id,provider', ignoreDuplicates: false });
 
         if (orgError) {
           console.error('Failed to save org Truckstop token:', orgError);
           return res.status(500).json({ error: 'Failed to save credentials', code: 'DB_ERROR' });
         }
 
-        console.log(`✅ Truckstop org credentials saved for domain: ${userDomain}`);
+        console.log(`✅ Truckstop org credentials saved for org: ${orgId}`);
         return res.status(200).json({
           success: true,
-          message: `Truckstop connected for all ${userDomain} users`,
+          message: 'Truckstop connected for your organization',
           is_org_token: true,
-          org_domain: userDomain,
           username: uname
         });
+      } else if (orgId && !isOrgAdmin) {
+        return res.status(403).json({ error: 'Only org admins can set the organization Truckstop token' });
       } else {
+        // No org — save as user-level token
         const { error: userError } = await supabase
           .from('user_integrations')
           .upsert({
@@ -307,16 +296,18 @@ async function handleTruckstop(req, res, supabase, user) {
 
   if (req.method === 'DELETE') {
     try {
-      if (orgLevel) {
+      if (orgId && isOrgAdmin) {
         const { error } = await supabase
           .from('org_integrations')
           .delete()
-          .eq('email_domain', userDomain)
+          .eq('org_id', orgId)
           .eq('provider', 'truckstop');
 
         if (error && error.code !== 'PGRST116') {
           return res.status(500).json({ error: 'Failed to disconnect' });
         }
+      } else if (orgId && !isOrgAdmin) {
+        return res.status(403).json({ error: 'Only org admins can disconnect the organization Truckstop token' });
       }
 
       await supabase
@@ -325,7 +316,7 @@ async function handleTruckstop(req, res, supabase, user) {
         .eq('user_id', user.id)
         .eq('provider', 'truckstop');
 
-      console.log(`🔌 Truckstop disconnected for user ${user.id} (domain: ${userDomain})`);
+      console.log(`🔌 Truckstop disconnected for user ${user.id} (org: ${orgId})`);
       return res.status(200).json({ success: true, message: 'Truckstop disconnected' });
     } catch (err) {
       console.error('Truckstop DELETE error:', err);
@@ -338,11 +329,11 @@ async function handleTruckstop(req, res, supabase, user) {
     // Retrieve stored credentials — org token takes priority over user token
     let apiToken, username, password;
 
-    if (orgLevel) {
+    if (orgId) {
       const { data: orgRow } = await supabase
         .from('org_integrations')
         .select('api_token, username, password')
-        .eq('email_domain', userDomain)
+        .eq('org_id', orgId)
         .eq('provider', 'truckstop')
         .single();
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, db } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
@@ -16,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [org, setOrg] = useState(null);         // { id, name, email_domain }
+  const [isOrgAdmin, setIsOrgAdmin] = useState(false);
 
   const checkAdmin = async (userId) => {
     if (!userId) { setIsAdmin(false); return; }
@@ -27,22 +29,38 @@ export const AuthProvider = ({ children }) => {
     setIsAdmin(!!data);
   };
 
+  const checkOrg = async (userId, accessToken) => {
+    if (!userId || !accessToken) { setOrg(null); setIsOrgAdmin(false); return; }
+    try {
+      const response = await fetch('/api/orgs/me', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrg(data.org || null);
+        setIsOrgAdmin(data.is_org_admin || false);
+      }
+    } catch {
+      // Non-critical — org context unavailable
+    }
+  };
+
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       checkAdmin(session?.user?.id);
+      checkOrg(session?.user?.id, session?.access_token);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       checkAdmin(session?.user?.id);
+      checkOrg(session?.user?.id, session?.access_token);
       setLoading(false);
     });
 
@@ -54,6 +72,8 @@ export const AuthProvider = ({ children }) => {
     session,
     loading,
     isAdmin,
+    org,
+    isOrgAdmin,
     signUp: async (email, password, fullName, role = 'fleet_manager') => {
       const { data, error } = await supabase.auth.signUp({
         email,

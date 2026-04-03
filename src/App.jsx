@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp, Search, Calendar } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { ResetPassword } from './components/ResetPassword';
+import { AcceptInvite } from './components/AcceptInvite';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import { FleetDashboard } from './components/FleetDashboard';
@@ -141,10 +142,8 @@ const findBackhaulOpportunities = (finalStop, fleetHome, fleetProfile, searchRad
 };
 
 function App() {
-  // Check if we're on the reset-password route
-  if (window.location.pathname === '/reset-password') {
-    return <ResetPassword />;
-  }
+  if (window.location.pathname === '/reset-password') return <ResetPassword />;
+  if (window.location.pathname === '/accept-invite') return <AcceptInvite />;
 
   const { user, signOut, isAdmin } = useAuth();
   const { colors } = useTheme();

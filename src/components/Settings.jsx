@@ -4,10 +4,19 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
+const Users2Icon = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
 export const Settings = ({ onBack }) => {
   const [activeSection, setActiveSection] = useState('accessibility');
   const { theme, toggleTheme, colors } = useTheme();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, org, isOrgAdmin } = useAuth();
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -318,6 +327,87 @@ export const Settings = ({ onBack }) => {
     }
   };
 
+  // Organization state
+  const [orgMembers, setOrgMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState('');
+
+  useEffect(() => {
+    if (activeSection === 'organization' && org && isOrgAdmin) {
+      fetchOrgMembers();
+    }
+  }, [activeSection, org, isOrgAdmin]);
+
+  const fetchOrgMembers = async () => {
+    try {
+      setLoadingMembers(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await fetch('/api/orgs/members', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrgMembers(data.members || []);
+      }
+    } catch (err) {
+      console.error('Error fetching org members:', err);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    setInviteError('');
+    setInviteSuccess('');
+    if (!inviteEmail.trim()) { setInviteError('Email is required'); return; }
+    setInviting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await fetch('/api/orgs/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email: inviteEmail.trim() })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setInviteError(data.error || 'Failed to send invite');
+      } else {
+        setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`);
+        setInviteEmail('');
+        setTimeout(() => { setShowInviteModal(false); setInviteSuccess(''); }, 2000);
+      }
+    } catch (err) {
+      setInviteError('An unexpected error occurred');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    if (!confirm('Remove this member from your organization?')) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await fetch('/api/orgs/members', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId: memberId })
+      });
+      if (response.ok) {
+        setOrgMembers(prev => prev.filter(m => m.user_id !== memberId));
+      }
+    } catch (err) {
+      console.error('Error removing member:', err);
+    }
+  };
+
   const handleDatDisconnect = async () => {
     if (!confirm('Are you sure you want to disconnect your DAT account?')) {
       return;
@@ -346,6 +436,7 @@ export const Settings = ({ onBack }) => {
     { id: 'general', label: 'General', icon: SettingsIcon, badge: null },
     { id: 'account', label: 'Account & Access', icon: User, badge: null },
     { id: 'integrations', label: 'Integrations', icon: Link2, badge: null },
+    { id: 'organization', label: 'Organization', icon: Users2Icon, badge: null },
     { id: 'accessibility', label: 'Accessibility', icon: Sun, badge: null },
     ...(isAdmin ? [{ id: 'developer', label: 'Developer', icon: SettingsIcon, badge: null }] : [])
   ];
@@ -874,18 +965,28 @@ export const Settings = ({ onBack }) => {
                   <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', gap: '12px' }}>
                     {tsConnection?.connected ? (
                       <>
-                        <button
-                          onClick={() => { setTsApiToken(''); setTsPassword(''); setTsError(''); setShowTsModal(true); }}
-                          style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          Edit Credentials
-                        </button>
-                        <button
-                          onClick={handleTsDisconnect}
-                          style={{ padding: '12px 24px', background: 'transparent', border: `1px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          Disconnect
-                        </button>
+                        {/* Org token: only org admin can edit/disconnect. Personal token: user can always edit. */}
+                        {(!tsConnection.is_org_token || isOrgAdmin) && (
+                          <>
+                            <button
+                              onClick={() => { setTsApiToken(''); setTsPassword(''); setTsError(''); setShowTsModal(true); }}
+                              style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Edit Credentials
+                            </button>
+                            <button
+                              onClick={handleTsDisconnect}
+                              style={{ padding: '12px 24px', background: 'transparent', border: `1px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Disconnect
+                            </button>
+                          </>
+                        )}
+                        {tsConnection.is_org_token && !isOrgAdmin && (
+                          <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary }}>
+                            Managed by your org admin.
+                          </p>
+                        )}
                       </>
                     ) : (
                       <button
@@ -1289,6 +1390,120 @@ export const Settings = ({ onBack }) => {
                       </p>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === 'organization' && (
+              <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
+                <h2 style={{ margin: '0 0 8px 0', fontSize: '24px', fontWeight: 900, color: colors.text.primary }}>Organization</h2>
+                <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '14px' }}>
+                  Manage your organization membership and team access
+                </p>
+
+                {org ? (
+                  <>
+                    {/* Org header */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px', padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.secondary}` }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#1B7A4A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '18px', flexShrink: 0 }}>
+                        {org.name?.charAt(0)?.toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>{org.name}</div>
+                        {org.email_domain && <div style={{ fontSize: '13px', color: colors.text.secondary }}>@{org.email_domain}</div>}
+                      </div>
+                      <div style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, background: isOrgAdmin ? `${colors.accent.primary}20` : colors.background.primary, color: isOrgAdmin ? colors.accent.primary : colors.text.secondary, border: `1px solid ${isOrgAdmin ? colors.accent.primary : colors.border.secondary}` }}>
+                        {isOrgAdmin ? 'Admin' : 'Member'}
+                      </div>
+                    </div>
+
+                    {/* Members section */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>Members</h3>
+                      {isOrgAdmin && (
+                        <button
+                          onClick={() => { setShowInviteModal(true); setInviteError(''); setInviteSuccess(''); setInviteEmail(''); }}
+                          style={{ padding: '8px 18px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#0d1117', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          + Invite Member
+                        </button>
+                      )}
+                    </div>
+
+                    {loadingMembers ? (
+                      <div style={{ color: colors.text.secondary, fontSize: '14px', padding: '20px 0' }}>Loading members...</div>
+                    ) : isOrgAdmin ? (
+                      <div style={{ border: `1px solid ${colors.border.secondary}`, borderRadius: '10px', overflow: 'hidden' }}>
+                        {orgMembers.length === 0 ? (
+                          <div style={{ padding: '20px', color: colors.text.secondary, fontSize: '14px', textAlign: 'center' }}>No members yet.</div>
+                        ) : orgMembers.map((m, i) => (
+                          <div key={m.user_id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px', borderBottom: i < orgMembers.length - 1 ? `1px solid ${colors.border.secondary}` : 'none' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `${colors.accent.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent.primary, fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
+                              {(m.full_name || m.email || '?').charAt(0).toUpperCase()}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              {m.full_name && <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>{m.full_name}</div>}
+                              <div style={{ fontSize: '13px', color: colors.text.secondary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+                            </div>
+                            <div style={{ padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 700, background: m.role === 'admin' ? `${colors.accent.primary}20` : colors.background.secondary, color: m.role === 'admin' ? colors.accent.primary : colors.text.secondary }}>
+                              {m.role}
+                            </div>
+                            {m.user_id !== user?.id && (
+                              <button
+                                onClick={() => handleRemoveMember(m.user_id)}
+                                style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${colors.border.secondary}`, borderRadius: '6px', color: colors.text.secondary, fontSize: '12px', cursor: 'pointer' }}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ color: colors.text.secondary, fontSize: '14px' }}>Contact your org admin to manage members.</p>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ padding: '32px', textAlign: 'center', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.secondary}` }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: colors.text.primary }}>No Organization</p>
+                    <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
+                      You're not part of an organization. If your company uses Haul Monitor, ask an admin to invite you.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Invite Member Modal */}
+            {showInviteModal && (
+              <div
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+                onClick={() => !inviting && setShowInviteModal(false)}
+              >
+                <div style={{ background: colors.background.card, borderRadius: '16px', maxWidth: '440px', width: '100%', border: `1px solid ${colors.border.primary}`, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}` }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>Invite Member</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: colors.text.secondary }}>Send an invite to join {org?.name}</p>
+                  </div>
+                  <form onSubmit={handleInvite} style={{ padding: '24px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Email Address</label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={e => setInviteEmail(e.target.value)}
+                      placeholder="colleague@company.com"
+                      disabled={inviting}
+                      style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginBottom: '16px' }}
+                    />
+                    {inviteError && <div style={{ padding: '10px', background: `${colors.accent.danger}20`, border: `1px solid ${colors.accent.danger}40`, borderRadius: '8px', color: colors.accent.danger, fontSize: '13px', marginBottom: '16px' }}>{inviteError}</div>}
+                    {inviteSuccess && <div style={{ padding: '10px', background: `${colors.accent.success}20`, border: `1px solid ${colors.accent.success}40`, borderRadius: '8px', color: colors.accent.success, fontSize: '13px', marginBottom: '16px' }}>{inviteSuccess}</div>}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button type="button" onClick={() => setShowInviteModal(false)} disabled={inviting} style={{ flex: 1, padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                      <button type="submit" disabled={inviting} style={{ flex: 1, padding: '12px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#0d1117', fontSize: '14px', fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: inviting ? 0.7 : 1 }}>
+                        {inviting ? 'Sending...' : 'Send Invite'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
