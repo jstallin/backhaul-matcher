@@ -12,5 +12,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
+      RESEND_API_KEY: 'test-resend-key',
+      DIRECTFREIGHT_API_TOKEN: 'df-test-key',
+      VITE_APP_URL: 'https://app.haulmonitor.cloud',
+    },
   }
 })
