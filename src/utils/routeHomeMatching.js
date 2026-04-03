@@ -268,7 +268,7 @@ export const findRouteHomeBackhauls = async (
   // (favorable direction) and with higher revenue. Loads that deliver far past home
   // (northbound/eastbound on a southbound route) rank lower so they don't crowd out
   // geographically good loads with no posted rate.
-  const maxCandidates = 25;
+  const maxCandidates = 50;
   let candidatesToProcess = corridorCandidates;
   if (corridorCandidates.length > maxCandidates) {
     // Estimate additional miles per load using Haversine (coords or state centroid fallback).

@@ -430,9 +430,13 @@ export const db = {
 
     async upsertBatch(entries) {
       if (!entries.length) return;
+      // Deduplicate by route_key — Postgres rejects an upsert batch that tries to
+      // update the same row twice (e.g. two loads sharing a common leg).
+      const seen = new Map();
+      for (const entry of entries) seen.set(entry.route_key, entry);
       const { error } = await supabase
         .from('route_distance_cache')
-        .upsert(entries, { onConflict: 'route_key' });
+        .upsert([...seen.values()], { onConflict: 'route_key' });
       if (error) throw error;
     }
   },
