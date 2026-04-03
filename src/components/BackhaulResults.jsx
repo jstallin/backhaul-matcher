@@ -560,6 +560,18 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           {m.distance_source === 'pcmiler' ? 'PC*Miler' : 'Estimated'}
                         </div>
                       </div>
+                      {m.posted_rate_per_mile > 0 && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Posted $/mi</div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary }}>${m.posted_rate_per_mile.toFixed(2)}</div>
+                        </div>
+                      )}
+                      {m.contactPhone && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Contact</div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary }}>{m.contactPhone}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

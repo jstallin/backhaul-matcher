@@ -530,6 +530,18 @@ export const findRouteHomeBackhauls = async (
       totalRevenue: totalRevenue,
       revenuePerMile: revenuePerMile,
 
+      // Field mappings for DF loads — ship_date → pickupDate, company_name → broker
+      pickupDate: load.ship_date || load.pickup_date || null,
+      deliveryDate: load.delivery_date || null,
+      broker: load.company_name || null,
+      shipper: load.shipper_name || null,
+      freightType: load.freight_type || load.commodity || null,
+      contactPhone: load.phone || null,
+      // Load-leg distance used by the card arrow display and detail panel fallback
+      distance: Math.round(pickupToDelivery),
+      // Shipper-posted rate/mile (from DF/DAT raw data) — distinct from our computed revenuePerMile
+      posted_rate_per_mile: load.rate_per_mile || null,
+
       // Value metrics
       revenue_per_mile: revenuePerMile,
       revenue_per_additional_mile: revenuePerAdditionalMile,
