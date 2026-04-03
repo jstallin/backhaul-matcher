@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS org_integrations (
   email_domain TEXT NOT NULL,         -- e.g. 'aimntls.com'
   provider TEXT NOT NULL,             -- 'truckstop', etc.
   api_token TEXT,                     -- The shared API token
+  username TEXT,                      -- Login username/email for the provider account
+  password TEXT,                      -- Login password for the provider account
   connected_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

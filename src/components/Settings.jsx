@@ -37,9 +37,11 @@ export const Settings = ({ onBack }) => {
   // Truckstop Integration state
   const [showTsModal, setShowTsModal] = useState(false);
   const [tsApiToken, setTsApiToken] = useState('');
+  const [tsUsername, setTsUsername] = useState('');
+  const [tsPassword, setTsPassword] = useState('');
   const [tsConnecting, setTsConnecting] = useState(false);
   const [tsError, setTsError] = useState('');
-  const [tsConnection, setTsConnection] = useState(null); // { connected, is_org_token, org_domain, connected_at }
+  const [tsConnection, setTsConnection] = useState(null); // { connected, is_org_token, org_domain, username, connected_at }
   const [loadingTsStatus, setLoadingTsStatus] = useState(true);
 
   // Check all connection statuses on mount
@@ -231,6 +233,8 @@ export const Settings = ({ onBack }) => {
       if (response.ok) {
         const data = await response.json();
         setTsConnection(data);
+        // Pre-populate username for edit form if already connected
+        if (data.connected && data.username) setTsUsername(data.username);
       }
     } catch (error) {
       console.error('Error checking Truckstop status:', error);
@@ -243,10 +247,9 @@ export const Settings = ({ onBack }) => {
     e.preventDefault();
     setTsError('');
 
-    if (!tsApiToken.trim()) {
-      setTsError('Please enter your Truckstop API token');
-      return;
-    }
+    if (!tsApiToken.trim()) { setTsError('API token is required'); return; }
+    if (!tsUsername.trim()) { setTsError('Username is required'); return; }
+    if (!tsPassword.trim()) { setTsError('Password is required'); return; }
 
     setTsConnecting(true);
     try {
@@ -262,13 +265,17 @@ export const Settings = ({ onBack }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ api_token: tsApiToken.trim() })
+        body: JSON.stringify({
+          api_token: tsApiToken.trim(),
+          username: tsUsername.trim(),
+          password: tsPassword.trim()
+        })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setTsError(data.error || 'Failed to save API token');
+        setTsError(data.error || 'Failed to save credentials');
         return;
       }
 
@@ -276,10 +283,13 @@ export const Settings = ({ onBack }) => {
         connected: true,
         is_org_token: data.is_org_token,
         org_domain: data.org_domain,
+        username: data.username,
         connected_at: new Date().toISOString()
       });
       setShowTsModal(false);
       setTsApiToken('');
+      setTsUsername('');
+      setTsPassword('');
     } catch (error) {
       console.error('Truckstop connect error:', error);
       setTsError('An unexpected error occurred. Please try again.');
@@ -837,14 +847,11 @@ export const Settings = ({ onBack }) => {
                         <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
                           Access live loads from Truckstop.com
                         </p>
-                        {tsConnection?.connected && tsConnection.is_org_token && tsConnection.org_domain && (
+                        {tsConnection?.connected && tsConnection.username && (
                           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
-                            Shared token for @{tsConnection.org_domain}
-                          </p>
-                        )}
-                        {tsConnection?.connected && !tsConnection.is_org_token && (
-                          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
-                            Personal API token connected
+                            {tsConnection.is_org_token
+                              ? `Org token · ${tsConnection.username}`
+                              : tsConnection.username}
                           </p>
                         )}
                       </div>
@@ -864,14 +871,22 @@ export const Settings = ({ onBack }) => {
                     )}
                   </div>
 
-                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', gap: '12px' }}>
                     {tsConnection?.connected ? (
-                      <button
-                        onClick={handleTsDisconnect}
-                        style={{ padding: '12px 24px', background: 'transparent', border: `1px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Disconnect Truckstop
-                      </button>
+                      <>
+                        <button
+                          onClick={() => { setTsApiToken(''); setTsPassword(''); setTsError(''); setShowTsModal(true); }}
+                          style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Edit Credentials
+                        </button>
+                        <button
+                          onClick={handleTsDisconnect}
+                          style={{ padding: '12px 24px', background: 'transparent', border: `1px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Disconnect
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => { setShowTsModal(true); setTsError(''); }}
@@ -1558,10 +1573,10 @@ export const Settings = ({ onBack }) => {
               </div>
               <div>
                 <h3 style={{ margin: '0 0 2px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
-                  Connect to Truckstop
+                  {tsConnection?.connected ? 'Edit Truckstop Credentials' : 'Connect to Truckstop'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
-                  Enter your Truckstop API token
+                  Enter your Truckstop API token, username, and password
                 </p>
               </div>
             </div>
@@ -1575,10 +1590,40 @@ export const Settings = ({ onBack }) => {
                   type="text"
                   value={tsApiToken}
                   onChange={(e) => setTsApiToken(e.target.value)}
-                  placeholder="Paste your Truckstop API token"
+                  placeholder={tsConnection?.connected ? 'Enter new API token' : 'Paste your Truckstop API token'}
                   disabled={tsConnecting}
                   autoComplete="off"
                   style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={tsUsername}
+                  onChange={(e) => setTsUsername(e.target.value)}
+                  placeholder="Truckstop username or email"
+                  disabled={tsConnecting}
+                  autoComplete="username"
+                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={tsPassword}
+                  onChange={(e) => setTsPassword(e.target.value)}
+                  placeholder={tsConnection?.connected ? 'Enter new password' : 'Truckstop password'}
+                  disabled={tsConnecting}
+                  autoComplete="current-password"
+                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -1589,13 +1634,13 @@ export const Settings = ({ onBack }) => {
               )}
 
               <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: colors.text.tertiary, lineHeight: '1.5' }}>
-                Users with the same company email domain will share this token — you only need to enter it once for your organization.
+                Users with the same company email domain will share these credentials — you only need to enter them once for your organization.
               </p>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   type="button"
-                  onClick={() => { setShowTsModal(false); setTsApiToken(''); setTsError(''); }}
+                  onClick={() => { setShowTsModal(false); setTsApiToken(''); setTsPassword(''); setTsError(''); }}
                   disabled={tsConnecting}
                   style={{ flex: 1, padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.5 : 1 }}
                 >
@@ -1606,7 +1651,7 @@ export const Settings = ({ onBack }) => {
                   disabled={tsConnecting}
                   style={{ flex: 1, padding: '12px', background: '#1B7A4A', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.7 : 1 }}
                 >
-                  {tsConnecting ? 'Saving...' : 'Save Token'}
+                  {tsConnecting ? 'Saving...' : tsConnection?.connected ? 'Update Credentials' : 'Save Credentials'}
                 </button>
               </div>
             </form>

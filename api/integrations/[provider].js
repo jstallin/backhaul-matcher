@@ -202,6 +202,7 @@ async function handleTruckstop(req, res, supabase, user) {
             provider: 'truckstop',
             is_org_token: true,
             org_domain: userDomain,
+            username: orgToken.username,
             connected_at: orgToken.created_at
           });
         }
@@ -232,6 +233,7 @@ async function handleTruckstop(req, res, supabase, user) {
         provider: 'truckstop',
         is_org_token: false,
         org_domain: orgLevel ? userDomain : null,
+        username: userToken.account_email,
         connected_at: userToken.connected_at
       });
     } catch (err) {
@@ -241,13 +243,14 @@ async function handleTruckstop(req, res, supabase, user) {
   }
 
   if (req.method === 'POST') {
-    const { api_token } = req.body || {};
+    const { api_token, username, password } = req.body || {};
 
-    if (!api_token?.trim()) {
-      return res.status(400).json({ error: 'API token is required' });
-    }
+    if (!api_token?.trim()) return res.status(400).json({ error: 'API token is required' });
+    if (!username?.trim()) return res.status(400).json({ error: 'Username is required' });
+    if (!password?.trim()) return res.status(400).json({ error: 'Password is required' });
 
     const token = api_token.trim();
+    const uname = username.trim();
 
     try {
       if (orgLevel) {
@@ -257,20 +260,23 @@ async function handleTruckstop(req, res, supabase, user) {
             email_domain: userDomain,
             provider: 'truckstop',
             api_token: token,
+            username: uname,
+            password: password.trim(),
             connected_by: user.id
           }, { onConflict: 'email_domain,provider', ignoreDuplicates: false });
 
         if (orgError) {
           console.error('Failed to save org Truckstop token:', orgError);
-          return res.status(500).json({ error: 'Failed to save API token', code: 'DB_ERROR' });
+          return res.status(500).json({ error: 'Failed to save credentials', code: 'DB_ERROR' });
         }
 
-        console.log(`✅ Truckstop org token saved for domain: ${userDomain}`);
+        console.log(`✅ Truckstop org credentials saved for domain: ${userDomain}`);
         return res.status(200).json({
           success: true,
           message: `Truckstop connected for all ${userDomain} users`,
           is_org_token: true,
-          org_domain: userDomain
+          org_domain: userDomain,
+          username: uname
         });
       } else {
         const { error: userError } = await supabase
@@ -279,18 +285,19 @@ async function handleTruckstop(req, res, supabase, user) {
             user_id: user.id,
             provider: 'truckstop',
             access_token: token,
+            account_email: uname,
             is_connected: true,
             connected_at: new Date().toISOString(),
-            metadata: { auth_type: 'api_token', linked_at: new Date().toISOString() }
+            metadata: { auth_type: 'api_token', password: password.trim(), linked_at: new Date().toISOString() }
           }, { onConflict: 'user_id,provider', ignoreDuplicates: false });
 
         if (userError) {
-          console.error('Failed to save user Truckstop token:', userError);
-          return res.status(500).json({ error: 'Failed to save API token', code: 'DB_ERROR' });
+          console.error('Failed to save user Truckstop credentials:', userError);
+          return res.status(500).json({ error: 'Failed to save credentials', code: 'DB_ERROR' });
         }
 
-        console.log(`✅ Truckstop user token saved for user: ${user.id}`);
-        return res.status(200).json({ success: true, message: 'Truckstop connected successfully', is_org_token: false });
+        console.log(`✅ Truckstop user credentials saved for user: ${user.id}`);
+        return res.status(200).json({ success: true, message: 'Truckstop connected successfully', is_org_token: false, username: uname });
       }
     } catch (err) {
       console.error('Truckstop POST error:', err);
