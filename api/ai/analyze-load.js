@@ -269,15 +269,18 @@ export default async function handler(req, res) {
   const hasRateConfig = match.has_rate_config;
 
   // Resolve field names — match object uses several aliases
-  const loadMiles   = match.pickup_to_delivery_miles ?? match.distance_miles ?? match.distance ?? 0;
-  const oorMiles    = match.additionalMiles ?? match.additional_miles ?? 0;
-  const toPickup    = match.datum_to_pickup_miles ?? match.finalToPickup ?? 0;
-  const toHome      = match.delivery_to_home_miles ?? 0;
-  const rpm         = match.revenuePerMile ?? match.revenue_per_mile ?? 0;
-  const revenue     = match.totalRevenue ?? match.total_revenue ?? 0;
-  const pickupDate  = match.ship_date ?? match.pickupDate ?? 'Not specified';
-  const equipment   = match.equipmentType ?? match.equipment_type ?? '';
-  const weight      = match.weight_lbs ?? match.weight;
+  const loadMiles        = match.pickup_to_delivery_miles ?? match.distance_miles ?? match.distance ?? 0;
+  const oorMiles         = match.additionalMiles ?? match.additional_miles ?? 0;
+  const toPickup         = match.datum_to_pickup_miles ?? match.finalToPickup ?? 0;
+  const toHome           = match.delivery_to_home_miles ?? 0;
+  const rpm              = match.revenuePerMile ?? match.revenue_per_mile ?? 0;
+  const revenue          = match.totalRevenue ?? match.total_revenue ?? 0;
+  const pickupDate       = match.pickupDate ?? match.ship_date ?? 'Not specified';
+  const equipment        = match.equipmentType ?? match.equipment_type ?? '';
+  const weight           = match.weight_lbs ?? match.weight;
+  const postedRpm        = match.posted_rate_per_mile ?? null;
+  const isFullLoad       = match.full_load ?? null;
+  const ageMinutes       = match.age_minutes ?? null;
 
   // Trailer type match context
   const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
@@ -299,11 +302,15 @@ export default async function handler(req, res) {
 - Fleet target RPM: $${(fleet.target_rpm ?? 0).toFixed(3)}/mi`
     : `RATE INFO:
 - Gross revenue: $${revenue.toFixed(2)}
-- Rate per mile (load miles only): $${rpm.toFixed(3)}/mi
+- Revenue per backhaul mile (total route): $${rpm.toFixed(3)}/mi${postedRpm ? `\n- Shipper posted rate (load miles only): $${Number(postedRpm).toFixed(2)}/mi` : ''}
 - No fleet cost config — evaluate against typical market rate for ${equipment || 'this equipment type'}`;
 
   const typeMismatchNote = isTypeMismatch
     ? `\nEQUIPMENT NOTE: This load requires ${equipment} but the fleet runs ${fleetTrailerType}. Factor in whether the driver can legally and practically haul this load type. If it's incompatible (e.g., reefer load on a dry van), that's a hard PASS. If it's adjacent (e.g., flatbed load on a step deck), note the constraint and let the dispatcher decide.`
+    : '';
+
+  const ageNote = ageMinutes != null
+    ? (ageMinutes > 240 ? ` (posted ${Math.round(ageMinutes / 60)}h ago — verify still available)` : ` (posted ${ageMinutes}min ago)`)
     : '';
 
   const prompt = `You are advising a freight dispatcher on a BACKHAUL opportunity — the truck is already out and needs to get home. The alternative to taking this load is deadheading home empty with zero revenue. Evaluate accordingly: a load that covers fuel + some profit is almost always better than nothing.
@@ -311,9 +318,9 @@ export default async function handler(req, res) {
 LOAD:
 - Route: ${match.origin?.address} → ${match.destination?.address}
 - Load miles: ${loadMiles} mi
-- Equipment: ${equipment}${weight ? `, ${Number(weight).toLocaleString()} lbs` : ''}
+- Equipment: ${equipment}${weight ? `, ${Number(weight).toLocaleString()} lbs` : ''}${isFullLoad != null ? ` | ${isFullLoad ? 'Full load' : 'Partial load'}` : ''}
 ${typeMatchLine}
-- Pickup date: ${pickupDate}
+- Pickup date: ${pickupDate}${ageNote}
 - Broker: ${match.broker || 'Unknown'}
 
 ${financialSection}
