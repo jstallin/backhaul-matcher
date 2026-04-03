@@ -34,10 +34,19 @@ export const Settings = ({ onBack }) => {
   const [dfConnection, setDfConnection] = useState(null); // { connected, username, connected_at }
   const [loadingDfStatus, setLoadingDfStatus] = useState(true);
 
+  // Truckstop Integration state
+  const [showTsModal, setShowTsModal] = useState(false);
+  const [tsApiToken, setTsApiToken] = useState('');
+  const [tsConnecting, setTsConnecting] = useState(false);
+  const [tsError, setTsError] = useState('');
+  const [tsConnection, setTsConnection] = useState(null); // { connected, is_org_token, org_domain, connected_at }
+  const [loadingTsStatus, setLoadingTsStatus] = useState(true);
+
   // Check all connection statuses on mount
   useEffect(() => {
     checkDatStatus();
     checkDfStatus();
+    checkTsStatus();
   }, []);
 
   const checkDatStatus = async () => {
@@ -206,6 +215,96 @@ export const Settings = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Error disconnecting Direct Freight:', error);
+    }
+  };
+
+  const checkTsStatus = async () => {
+    try {
+      setLoadingTsStatus(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/truckstop', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTsConnection(data);
+      }
+    } catch (error) {
+      console.error('Error checking Truckstop status:', error);
+    } finally {
+      setLoadingTsStatus(false);
+    }
+  };
+
+  const handleTsConnect = async (e) => {
+    e.preventDefault();
+    setTsError('');
+
+    if (!tsApiToken.trim()) {
+      setTsError('Please enter your Truckstop API token');
+      return;
+    }
+
+    setTsConnecting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setTsError('Please log in to connect your Truckstop account');
+        return;
+      }
+
+      const response = await fetch('/api/integrations/truckstop', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ api_token: tsApiToken.trim() })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setTsError(data.error || 'Failed to save API token');
+        return;
+      }
+
+      setTsConnection({
+        connected: true,
+        is_org_token: data.is_org_token,
+        org_domain: data.org_domain,
+        connected_at: new Date().toISOString()
+      });
+      setShowTsModal(false);
+      setTsApiToken('');
+    } catch (error) {
+      console.error('Truckstop connect error:', error);
+      setTsError('An unexpected error occurred. Please try again.');
+    } finally {
+      setTsConnecting(false);
+    }
+  };
+
+  const handleTsDisconnect = async () => {
+    if (!confirm('Are you sure you want to disconnect Truckstop?')) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/integrations/truckstop', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (response.ok) {
+        setTsConnection({ connected: false });
+      }
+    } catch (error) {
+      console.error('Error disconnecting Truckstop:', error);
     }
   };
 
@@ -707,8 +806,86 @@ export const Settings = ({ onBack }) => {
                   Connect your load board accounts to access real-time freight data
                 </p>
 
-                {/* DAT Integration */}
+                {/* Truckstop Integration */}
                 <div style={{
+                  border: `1px solid ${tsConnection?.connected ? colors.accent.success : colors.border.primary}`,
+                  borderRadius: '12px',
+                  padding: '24px',
+                  marginBottom: '16px',
+                  background: tsConnection?.connected ? `${colors.accent.success}08` : 'transparent'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: '#1B7A4A',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontWeight: 900,
+                        fontSize: '13px'
+                      }}>
+                        TS
+                      </div>
+                      <div>
+                        <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
+                          Truckstop
+                        </h3>
+                        <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
+                          Access live loads from Truckstop.com
+                        </p>
+                        {tsConnection?.connected && tsConnection.is_org_token && tsConnection.org_domain && (
+                          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
+                            Shared token for @{tsConnection.org_domain}
+                          </p>
+                        )}
+                        {tsConnection?.connected && !tsConnection.is_org_token && (
+                          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
+                            Personal API token connected
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {loadingTsStatus ? (
+                      <div style={{ padding: '6px 12px', background: colors.background.secondary, borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: colors.text.tertiary }}>
+                        Checking...
+                      </div>
+                    ) : tsConnection?.connected ? (
+                      <div style={{ padding: '6px 12px', background: `${colors.accent.success}20`, borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: colors.accent.success }}>
+                        Connected
+                      </div>
+                    ) : (
+                      <div style={{ padding: '6px 12px', background: colors.background.secondary, borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: colors.text.tertiary }}>
+                        Not Connected
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                    {tsConnection?.connected ? (
+                      <button
+                        onClick={handleTsDisconnect}
+                        style={{ padding: '12px 24px', background: 'transparent', border: `1px solid ${colors.accent.danger}`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Disconnect Truckstop
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => { setShowTsModal(true); setTsError(''); }}
+                        disabled={loadingTsStatus}
+                        style={{ padding: '12px 24px', background: '#1B7A4A', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: loadingTsStatus ? 'not-allowed' : 'pointer', opacity: loadingTsStatus ? 0.5 : 1 }}
+                      >
+                        Connect Truckstop
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* DAT Integration — coming soon */}
+                {/* <div style={{
                   border: `1px solid ${datConnection?.connected ? colors.accent.success : colors.border.primary}`,
                   borderRadius: '12px',
                   padding: '24px',
@@ -831,9 +1008,9 @@ export const Settings = ({ onBack }) => {
                       </button>
                     )}
                   </div>
-                </div>
+                </div> */}
 
-                {/* Direct Freight Integration */}
+                {false && (
                 <div style={{
                   border: `1px solid ${dfConnection?.connected ? colors.accent.success : colors.border.primary}`,
                   borderRadius: '12px',
@@ -958,8 +1135,10 @@ export const Settings = ({ onBack }) => {
                     )}
                   </div>
                 </div>
+                )}
 
-                {/* Chrome Extension */}
+                {false && (
+                /* Chrome Extension */
                 <div style={{
                   border: `1px solid ${colors.accent.primary}`,
                   borderRadius: '12px',
@@ -1056,6 +1235,7 @@ export const Settings = ({ onBack }) => {
                     </a>
                   </div>
                 </div>
+                )}
 
                 {/* Coming Soon Integrations */}
                 <div style={{
@@ -1090,7 +1270,7 @@ export const Settings = ({ onBack }) => {
                         fontSize: '14px',
                         color: colors.text.secondary
                       }}>
-                        Truckstop, 123Loadboard, and more will be available soon
+                        DAT, 123, and Direct Freight and other integrations coming soon
                       </p>
                     </div>
                   </div>
@@ -1361,6 +1541,78 @@ export const Settings = ({ onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Truckstop Connection Modal */}
+      {showTsModal && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          onClick={() => !tsConnecting && setShowTsModal(false)}
+        >
+          <div
+            style={{ background: colors.background.card, borderRadius: '16px', maxWidth: '480px', width: '100%', border: `1px solid ${colors.border.primary}`, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: '24px', borderBottom: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '10px', background: '#1B7A4A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '13px' }}>
+                TS
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 2px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
+                  Connect to Truckstop
+                </h3>
+                <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
+                  Enter your Truckstop API token
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleTsConnect} style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  API Token
+                </label>
+                <input
+                  type="text"
+                  value={tsApiToken}
+                  onChange={(e) => setTsApiToken(e.target.value)}
+                  placeholder="Paste your Truckstop API token"
+                  disabled={tsConnecting}
+                  autoComplete="off"
+                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
+                />
+              </div>
+
+              {tsError && (
+                <div style={{ padding: '12px', background: `${colors.accent.danger}20`, border: `1px solid ${colors.accent.danger}40`, borderRadius: '8px', color: colors.accent.danger, fontSize: '14px', marginBottom: '16px' }}>
+                  {tsError}
+                </div>
+              )}
+
+              <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: colors.text.tertiary, lineHeight: '1.5' }}>
+                Users with the same company email domain will share this token — you only need to enter it once for your organization.
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowTsModal(false); setTsApiToken(''); setTsError(''); }}
+                  disabled={tsConnecting}
+                  style={{ flex: 1, padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.5 : 1 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={tsConnecting}
+                  style={{ flex: 1, padding: '12px', background: '#1B7A4A', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.7 : 1 }}
+                >
+                  {tsConnecting ? 'Saving...' : 'Save Token'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* DAT Connection Modal */}
       {showDatModal && (

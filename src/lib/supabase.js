@@ -384,6 +384,25 @@ export const db = {
     }
   },
 
+  // Org-level integrations (shared API tokens for enterprise email domains)
+  orgIntegrations: {
+    async getByDomain(emailDomain, provider) {
+      const { data, error } = await supabase
+        .from('org_integrations')
+        .select('*')
+        .eq('email_domain', emailDomain)
+        .eq('provider', provider)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+
+    async isConnected(emailDomain, provider) {
+      const integration = await this.getByDomain(emailDomain, provider);
+      return !!integration?.api_token;
+    }
+  },
+
   // Route distance cache — shared across all users, keyed by lane (origin→dest)
   distanceCache: {
     async getBatch(routeKeys) {
