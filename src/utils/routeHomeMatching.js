@@ -263,11 +263,34 @@ export const findRouteHomeBackhauls = async (
 
   console.log(`Corridor filter: ${corridorCandidates.length} candidates from ${availableLoads.length} available loads`);
 
-  // Cap candidates to avoid excessive API calls (pre-sort by Haversine estimate)
+  // Cap candidates to avoid excessive API calls.
+  // Pre-sort by a combined score: prefer loads whose delivery is closer to home
+  // (favorable direction) and with higher revenue. Loads that deliver far past home
+  // (northbound/eastbound on a southbound route) rank lower so they don't crowd out
+  // geographically good loads with no posted rate.
   const maxCandidates = 25;
   let candidatesToProcess = corridorCandidates;
   if (corridorCandidates.length > maxCandidates) {
-    corridorCandidates.sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0));
+    corridorCandidates.sort((a, b) => {
+      // Haversine delivery→home estimate (lower = closer to home = better)
+      const delivLat = a.delivery_lat ?? STATE_CENTROIDS[a.delivery_state]?.lat ?? fleetHome.lat;
+      const delivLng = a.delivery_lng ?? STATE_CENTROIDS[a.delivery_state]?.lng ?? fleetHome.lng;
+      const aDelivToHome = calculateDistance(delivLat, delivLng, fleetHome.lat, fleetHome.lng);
+      const delivLatB = b.delivery_lat ?? STATE_CENTROIDS[b.delivery_state]?.lat ?? fleetHome.lat;
+      const delivLngB = b.delivery_lng ?? STATE_CENTROIDS[b.delivery_state]?.lng ?? fleetHome.lng;
+      const bDelivToHome = calculateDistance(delivLatB, delivLngB, fleetHome.lat, fleetHome.lng);
+      // Reject loads whose delivery is farther from home than datum — not worth a PC*MILER call.
+      // Use directReturnMiles as the threshold (same as the scoring-phase check).
+      const aValid = aDelivToHome <= directReturnMiles;
+      const bValid = bDelivToHome <= directReturnMiles;
+      if (aValid !== bValid) return aValid ? -1 : 1;
+      // Within the valid group: sort by revenue descending, with $0 loads ranked last.
+      const aRev = a.total_revenue || 0;
+      const bRev = b.total_revenue || 0;
+      if (aRev > 0 && bRev === 0) return -1;
+      if (bRev > 0 && aRev === 0) return 1;
+      return bRev - aRev;
+    });
     candidatesToProcess = corridorCandidates.slice(0, maxCandidates);
     console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
   }
@@ -401,7 +424,10 @@ export const findRouteHomeBackhauls = async (
     // Delivery must make forward progress toward home — it can't drop the driver
     // farther from home than the datum point (i.e. moving backward).
     // Exception: if delivery is within homeRadiusMiles it's always valid.
-    if (deliveryToHome > directReturnMiles && deliveryToHome > homeRadiusMiles) continue;
+    if (deliveryToHome > directReturnMiles && deliveryToHome > homeRadiusMiles) {
+      console.warn(`Skipping load ${load.load_id} (${load.pickup_city}, ${load.pickup_state} → ${load.delivery_city}, ${load.delivery_state}): delivery too far from home (dth=${deliveryToHome?.toFixed(0)}mi, direct=${directReturnMiles.toFixed(0)}mi)`);
+      continue;
+    }
 
     // Guard against NaN — skip load if any distance resolved to NaN (not null, which is unknown).
     // null is valid here — it means no distance data available, handled by fallbacks below.
@@ -445,7 +471,10 @@ export const findRouteHomeBackhauls = async (
     // Cap out-of-route miles — a point can be at most corridorWidthMiles off the route,
     // so additional miles beyond corridorWidthMiles×2 means the load is clearly off-corridor.
     // Skip loads without coordinates that slipped past the spatial filter.
-    if (!isRelay && additionalMiles > corridorWidthMiles * 2) continue;
+    if (!isRelay && additionalMiles > corridorWidthMiles * 2) {
+      console.warn(`Skipping load ${load.load_id} (${load.pickup_city}, ${load.pickup_state} → ${load.delivery_city}, ${load.delivery_state}): too many additional miles (${additionalMiles.toFixed(0)}mi, cap=${corridorWidthMiles * 2}mi)`);
+      continue;
+    }
 
     // Calculate value metrics.
     // Revenue/mile uses the relay driver's miles in relay mode (not the full datum→home leg).

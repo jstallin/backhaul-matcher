@@ -81,37 +81,56 @@ const equipMap = {
   AIR_RIDE:       'Dry Van',
 };
 
+// Default trailer length by equipment code family when the load doesn't specify one.
+// Flatbed-family trailers standard at 48ft; vans and reefers standard at 53ft.
+const defaultLengthForCode = (code) => {
+  const flatbedCodes = new Set(['F', 'FS', 'FT', 'F+T', 'F+S', 'MX', 'FINT', 'FLCS', 'FLATBED', '48FT', 'CONESTOGA', 'SD', 'DD', 'DD_DECK', 'LB', 'RGN']);
+  return flatbedCodes.has(String(code).trim()) ? 48 : 53;
+};
+
+// Returns an array of normalized records — one per equipment type.
+// When DF lists multiple types (e.g. trailer_type: ['F', 'V']), we expand into
+// separate records so each can be matched independently against fleet equipment.
+// Single-type loads produce one record with the original entry_id (no suffix).
 const normalize = (r) => {
-  const rawCode = Array.isArray(r.trailer_type)
-    ? r.trailer_type[0]
-    : r.trailer_type || 'V';
-  // Trim whitespace and look up — fall back to the raw code if still unknown
-  const trailerCode = String(rawCode).trim();
-  return {
-    load_id:        r.entry_id,
-    source:         'directfreight',
-    status:         'available',
-    equipment_type: equipMap[trailerCode] || trailerCode,
-    pickup_city:    r.origin_city || '',
-    pickup_state:   r.origin_state || '',
-    pickup_lat:     null,
-    pickup_lng:     null,
-    delivery_city:  r.destination_city || '',
-    delivery_state: r.destination_state || '',
-    delivery_lat:   null,
-    delivery_lng:   null,
-    distance_miles: r.trip_miles || null,
-    total_revenue:  r.pay_rate || 0,
-    pay_rate:       r.pay_rate || 0,
-    rate_per_mile:  r.rate_per_mile_est || 0,
-    weight_lbs:     r.weight || 0,
-    trailer_length: r.length || 53,
-    ship_date:      r.ship_date || null,
-    company_name:   r.company_name !== 'View Details' ? r.company_name : '',
-    phone:          r.phone_number !== 'View Details' ? r.phone_number : '',
-    full_load:      r.full_load,
-    age_minutes:    r.age || 0,
-  };
+  const rawTypes = Array.isArray(r.trailer_type)
+    ? r.trailer_type
+    : [r.trailer_type || 'V'];
+
+  const multi = rawTypes.length > 1;
+
+  return rawTypes.map((rawCode) => {
+    const trailerCode = String(rawCode).trim();
+    // Suffix load_id only when multiple types — keeps single-type IDs unchanged.
+    const loadId = multi ? `${r.entry_id}-${trailerCode.toLowerCase()}` : r.entry_id;
+    // Use the reported length when available; fall back to a type-specific default.
+    const trailerLength = r.length || defaultLengthForCode(trailerCode);
+    return {
+      load_id:        loadId,
+      source:         'directfreight',
+      status:         'available',
+      equipment_type: equipMap[trailerCode] || trailerCode,
+      pickup_city:    r.origin_city || '',
+      pickup_state:   r.origin_state || '',
+      pickup_lat:     null,
+      pickup_lng:     null,
+      delivery_city:  r.destination_city || '',
+      delivery_state: r.destination_state || '',
+      delivery_lat:   null,
+      delivery_lng:   null,
+      distance_miles: r.trip_miles || null,
+      total_revenue:  r.pay_rate || 0,
+      pay_rate:       r.pay_rate || 0,
+      rate_per_mile:  r.rate_per_mile_est || 0,
+      weight_lbs:     r.weight || 0,
+      trailer_length: trailerLength,
+      ship_date:      r.ship_date || null,
+      company_name:   r.company_name !== 'View Details' ? r.company_name : '',
+      phone:          r.phone_number !== 'View Details' ? r.phone_number : '',
+      full_load:      r.full_load,
+      age_minutes:    r.age || 0,
+    };
+  });
 };
 
 const browser = await chromium.launch({
@@ -193,7 +212,7 @@ try {
 
   // --- Collect page 1 loads ---
   const TOTAL_PAGES = page1Result.TOTAL_PAGES;
-  const allLoads = page1Result.RESULTS.map(normalize);
+  const allLoads = page1Result.RESULTS.flatMap(normalize);
   console.log(`[${STATES}] Page 1/${TOTAL_PAGES}: ${allLoads.length} loads`);
 
   // --- Paginate: use Playwright's request context (carries session cookies, no reCAPTCHA needed) ---
@@ -240,7 +259,7 @@ try {
           break;
         }
 
-        const pageLoads = (data.list || data.results || data.RESULTS || []).map(normalize);
+        const pageLoads = (data.list || data.results || data.RESULTS || []).flatMap(normalize);
         allLoads.push(...pageLoads);
 
         if (pageNum % 10 === 0 || pageNum === TOTAL_PAGES) {
