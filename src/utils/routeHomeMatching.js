@@ -276,17 +276,17 @@ export const findRouteHomeBackhauls = async (
     // additionalMiles cap, so rank them first. Revenue is a tiebreaker — but $0 loads that
     // are geographically ideal still rank above expensive loads that add 400+ miles of detour.
     const firstLegOriginCap = isRelay ? fleetHome : datumPoint;
+    const estimateAdditional = (load) => {
+      const pLat = load.pickup_lat   ?? STATE_CENTROIDS[load.pickup_state]?.lat   ?? datumPoint.lat;
+      const pLng = load.pickup_lng   ?? STATE_CENTROIDS[load.pickup_state]?.lng   ?? datumPoint.lng;
+      const dLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? fleetHome.lat;
+      const dLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? fleetHome.lng;
+      const dtp = calculateDistance(firstLegOriginCap.lat, firstLegOriginCap.lng, pLat, pLng);
+      const ptd = load.distance_miles ?? calculateDistance(pLat, pLng, dLat, dLng);
+      const dth = calculateDistance(dLat, dLng, fleetHome.lat, fleetHome.lng);
+      return Math.max(0, dtp + ptd + dth - directReturnMiles);
+    };
     corridorCandidates.sort((a, b) => {
-      const estimateAdditional = (load) => {
-        const pLat = load.pickup_lat   ?? STATE_CENTROIDS[load.pickup_state]?.lat   ?? datumPoint.lat;
-        const pLng = load.pickup_lng   ?? STATE_CENTROIDS[load.pickup_state]?.lng   ?? datumPoint.lng;
-        const dLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? fleetHome.lat;
-        const dLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? fleetHome.lng;
-        const dtp = calculateDistance(firstLegOriginCap.lat, firstLegOriginCap.lng, pLat, pLng);
-        const ptd = load.distance_miles ?? calculateDistance(pLat, pLng, dLat, dLng);
-        const dth = calculateDistance(dLat, dLng, fleetHome.lat, fleetHome.lng);
-        return Math.max(0, dtp + ptd + dth - directReturnMiles);
-      };
       const aExtra = estimateAdditional(a);
       const bExtra = estimateAdditional(b);
       // Primary: fewest estimated additional miles first
@@ -294,8 +294,18 @@ export const findRouteHomeBackhauls = async (
       // Tiebreaker: higher revenue
       return (b.total_revenue || 0) - (a.total_revenue || 0);
     });
-    candidatesToProcess = corridorCandidates.slice(0, maxCandidates);
-    console.log(`Capped to ${maxCandidates} candidates for PC Miler distance calls`);
+    // Select top unique routes, then include ALL loads sharing those routes.
+    // This ensures equipment-type variants (Flatbed + Dry Van) of the same
+    // origin/destination are never split — either both make the cut or neither does.
+    const routeKey = (load) =>
+      `${load.pickup_city}|${load.pickup_state}|${load.delivery_city}|${load.delivery_state}`;
+    const selectedRoutes = new Set();
+    for (const load of corridorCandidates) {
+      if (selectedRoutes.size >= maxCandidates) break;
+      selectedRoutes.add(routeKey(load));
+    }
+    candidatesToProcess = corridorCandidates.filter(l => selectedRoutes.has(routeKey(l)));
+    console.log(`Capped to ${selectedRoutes.size} unique routes (${candidatesToProcess.length} loads) for PC Miler distance calls`);
   }
 
   // ---- PRECISE DISTANCES: session cache → DB cache → PC*MILER ----
