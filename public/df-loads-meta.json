@@ -1,65 +1,101 @@
 {
-  "runDate": "2026-04-03",
-  "runAt": "2026-04-03T08:49:02.626Z",
-  "totalLoads": 17181,
-  "previousTotal": 17902,
-  "netChange": -721,
-  "added": 13060,
-  "removed": 13781,
-  "avgPay": 1149,
-  "loadsWithPay": 12302,
+  "runDate": "2026-04-04",
+  "runAt": "2026-04-04T08:36:13.839Z",
+  "totalLoads": 18529,
+  "previousTotal": 17184,
+  "netChange": 1345,
+  "added": 14228,
+  "removed": 12883,
+  "avgPay": 1146,
+  "loadsWithPay": 12711,
   "equipmentTypes": [
     [
       "Flatbed",
-      11421
+      8616
     ],
     [
       "Dry Van",
-      3058
-    ],
-    [
-      "Refrigerated",
-      1546
-    ],
-    [
-      "Power Only",
-      483
+      4141
     ],
     [
       "Step Deck",
-      441
+      3080
+    ],
+    [
+      "Refrigerated",
+      1813
+    ],
+    [
+      "Power Only",
+      447
     ],
     [
       "48 FT",
-      62
+      81
     ],
     [
-      "Box Truck",
-      51
+      "TARPS",
+      77
     ],
     [
       "Hotshot",
-      38
+      73
+    ],
+    [
+      "Box Truck",
+      55
     ],
     [
       "Lowboy",
-      31
+      35
     ],
     [
       "Curtain Van",
       17
     ],
     [
+      "PARTIAL",
+      16
+    ],
+    [
       "Other",
-      10
+      14
+    ],
+    [
+      "53 FT",
+      14
+    ],
+    [
+      "26 FT",
+      9
+    ],
+    [
+      "Tanker",
+      6
+    ],
+    [
+      "STEPDECK",
+      4
     ],
     [
       "Container",
-      9
+      4
     ],
     [
       "Dump Trailer",
       3
+    ],
+    [
+      "O",
+      3
+    ],
+    [
+      "20 FT",
+      2
+    ],
+    [
+      "Cargo Van",
+      2
     ],
     [
       "Hopper Bottom",
@@ -70,11 +106,19 @@
       2
     ],
     [
-      "53 FT",
+      "DUMP TRUCK",
       1
     ],
     [
-      "LB13",
+      "STRM",
+      1
+    ],
+    [
+      "ROLLER_BED",
+      1
+    ],
+    [
+      "HAZMAT",
       1
     ],
     [
@@ -86,98 +130,114 @@
       1
     ],
     [
-      "Auto Carrier",
+      "VANV",
       1
     ],
     [
-      "Tanker",
+      "PFF",
+      1
+    ],
+    [
+      "16 FT",
       1
     ],
     [
       "FRFR",
+      1
+    ],
+    [
+      "REFS",
+      1
+    ],
+    [
+      "B-RF",
+      1
+    ],
+    [
+      "24 FT",
       1
     ]
   ],
   "topPickupStates": [
     [
       "GA",
-      1954
+      1886
     ],
     [
       "AL",
-      1522
+      1612
     ],
     [
       "CA",
-      1017
-    ],
-    [
-      "AR",
-      823
+      1155
     ],
     [
       "NC",
-      806
-    ],
-    [
-      "SC",
-      776
-    ],
-    [
-      "IL",
-      768
-    ],
-    [
-      "MI",
-      652
-    ],
-    [
-      "MS",
-      630
-    ],
-    [
-      "LA",
-      594
+      983
     ],
     [
       "IN",
-      582
+      813
+    ],
+    [
+      "AR",
+      788
+    ],
+    [
+      "SC",
+      783
+    ],
+    [
+      "IL",
+      771
+    ],
+    [
+      "MI",
+      695
     ],
     [
       "MN",
-      524
+      640
+    ],
+    [
+      "MS",
+      593
+    ],
+    [
+      "LA",
+      573
     ],
     [
       "WI",
-      519
+      552
     ],
     [
       "VA",
-      507
+      551
     ],
     [
       "MA",
-      453
+      547
     ],
     [
       "TN",
-      445
+      531
     ],
     [
-      "NJ",
-      381
+      "AZ",
+      504
     ],
     [
       "KY",
-      381
+      444
     ],
     [
       "NY",
-      346
+      409
     ],
     [
-      "OK",
-      333
+      "NJ",
+      387
     ]
   ]
 }
