@@ -214,6 +214,7 @@ export const SignUp = ({ onToggleMode }) => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              placeholder="you@example.com"
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -228,6 +229,9 @@ export const SignUp = ({ onToggleMode }) => {
               onFocus={(e) => e.target.style.borderColor = '#008b00'}
               onBlur={(e) => e.target.style.borderColor = '#d0d0d0'}
             />
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#888888' }}>
+              Your email address will be your login username. Must be a valid email.
+            </p>
           </div>
 
           {/* Role selector hidden for now
