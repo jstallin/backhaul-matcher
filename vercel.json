@@ -18,6 +18,10 @@
     {
       "source": "/reset-password",
       "destination": "/app.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
     }
   ],
   "crons": [

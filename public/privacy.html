@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Haul Monitor</title>
+  <meta name="description" content="Haul Monitor Privacy Policy — how we collect, use, and protect your data." />
+  <link rel="icon" type="image/png" href="/haul-monitor-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d1117;
+      --bg2:         #161b22;
+      --bg3:         #1c2230;
+      --border:      rgba(255,255,255,0.08);
+      --border2:     rgba(255,255,255,0.14);
+      --text:        #f0f6fc;
+      --text2:       #8b949e;
+      --text3:       #6e7681;
+      --accent:      #7DC520;
+      --accent-dim:  rgba(125,197,32,0.12);
+      --accent-bdr:  rgba(125,197,32,0.3);
+      --radius:      12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Darker Grotesque', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 64px;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav a.logo img {
+      height: 32px;
+      border-radius: 5px;
+      background: #fff;
+      padding: 3px 8px;
+    }
+
+    nav a.cta {
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 8px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 64px 24px 96px;
+    }
+
+    .content h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .content .meta {
+      font-size: 14px;
+      color: var(--text3);
+      margin-bottom: 48px;
+    }
+
+    .content h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 40px 0 12px;
+    }
+
+    .content p {
+      color: var(--text2);
+      margin-bottom: 16px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .content ul {
+      color: var(--text2);
+      padding-left: 24px;
+      margin-bottom: 16px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .content li {
+      margin-bottom: 6px;
+    }
+
+    .content strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .content a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .content a:hover {
+      text-decoration: underline;
+    }
+
+    .content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── TABLE ── */
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+
+    .content th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg2);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .content td {
+      padding: 10px 14px;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .content tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    footer img {
+      height: 30px;
+      border-radius: 5px;
+      background: #fff;
+      padding: 3px 8px;
+      display: block;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    footer a {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      padding: 4px 0;
+    }
+
+    footer a:hover { color: var(--text2); }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      .content { padding: 40px 20px 64px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="logo" href="/"><img src="/haul-monitor-full.png" alt="Haul Monitor" /></a>
+  <a class="cta" href="/app">Open App</a>
+</nav>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+  <h1>Privacy Policy</h1>
+  <p class="meta">Effective date: April 5, 2026 &nbsp;·&nbsp; Last updated: April 5, 2026</p>
+
+  <h2>Overview</h2>
+  <p>Haul Monitor ("we," "us," or "our") operates the Haul Monitor backhaul matching platform at haulmonitor.cloud. This Privacy Policy explains what information we collect, how we use it, who we share it with, and your rights regarding your data.</p>
+  <p><strong>We don't sell your data.</strong> We collect only what we need to run the service.</p>
+
+  <hr />
+
+  <h2>1. Information We Collect</h2>
+
+  <p><strong>Information you provide directly</strong></p>
+  <ul>
+    <li><strong>Account information:</strong> Your name and email address when you create an account</li>
+    <li><strong>Fleet profile:</strong> Equipment types, trailer lengths, driver home bases, and rate preferences you enter to configure your fleet</li>
+    <li><strong>Driver information:</strong> Driver names and home cities you add to your fleet profile</li>
+    <li><strong>Search inputs:</strong> Origin and destination information you enter when running a backhaul search</li>
+  </ul>
+
+  <p><strong>Information generated by your use of the service</strong></p>
+  <ul>
+    <li><strong>Backhaul search results:</strong> The matched loads returned for each search you run, including the financial calculations we compute (out-of-route miles, estimated net revenue)</li>
+    <li><strong>Haul This Load records:</strong> When you confirm a load through our workflow, we record the selection, the load details, and the financial outcome</li>
+    <li><strong>Open requests:</strong> The recurring search parameters you save for ongoing monitoring</li>
+    <li><strong>Credit balance and transaction history:</strong> Records of credit bundle purchases and usage</li>
+  </ul>
+
+  <p><strong>Information collected automatically</strong></p>
+  <ul>
+    <li><strong>Authentication events:</strong> Login timestamps and session activity, maintained by our authentication provider (Supabase)</li>
+    <li><strong>Usage logs:</strong> Serverless function request logs maintained by our hosting provider (Vercel). These logs may include your IP address, browser type, and the API endpoints called.</li>
+  </ul>
+
+  <p><strong>Information we do NOT collect</strong></p>
+  <ul>
+    <li>Payment card numbers (handled entirely by Stripe — we never receive or store card data)</li>
+    <li>Social Security numbers or government-issued ID numbers</li>
+    <li>Health information</li>
+    <li>Precise GPS location (we use the city and state you enter, not device location)</li>
+  </ul>
+
+  <hr />
+
+  <h2>2. How We Use Your Information</h2>
+  <p>We use the information we collect to:</p>
+  <ul>
+    <li><strong>Provide the service</strong> — Run backhaul searches, calculate out-of-route miles and financial returns, display matched loads, and manage your open requests</li>
+    <li><strong>Process payments</strong> — Manage your credit balance and facilitate purchases through Stripe</li>
+    <li><strong>Communicate with you</strong> — Send account verification emails, respond to support requests, and notify you of incidents that affect your data</li>
+    <li><strong>Maintain and improve the service</strong> — Monitor uptime and performance, diagnose errors, and improve matching accuracy</li>
+    <li><strong>Meet legal obligations</strong> — Retain records as required by applicable law</li>
+  </ul>
+  <p>We do not use your information for advertising, behavioral profiling, or any purpose unrelated to delivering the service.</p>
+
+  <hr />
+
+  <h2>3. How We Share Your Information</h2>
+  <p>We share your information only with the vendors necessary to operate the service. We do not sell your data or share it with advertisers.</p>
+
+  <table>
+    <thead>
+      <tr><th>Vendor</th><th>What is shared</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Supabase</strong></td>
+        <td>All application data (fleet profiles, requests, load results)</td>
+        <td>Database hosting and user authentication</td>
+      </tr>
+      <tr>
+        <td><strong>Vercel</strong></td>
+        <td>API request data in transit; server logs</td>
+        <td>Application hosting and serverless compute</td>
+      </tr>
+      <tr>
+        <td><strong>Trimble (PC*MILER)</strong></td>
+        <td>Origin and destination city/state pairs for routing queries only — no account or fleet identifiers</td>
+        <td>Driving distance calculations for load matching</td>
+      </tr>
+      <tr>
+        <td><strong>Stripe</strong></td>
+        <td>Name and email address for billing; payment processing</td>
+        <td>Credit bundle purchases</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>When required by law:</strong> We may disclose your information if required by a valid legal process. We will notify you of such a request when legally permitted to do so.</p>
+  <p><strong>Business transfers:</strong> If Haul Monitor is acquired or merged, your information may transfer to the acquiring entity. We will notify you before your data becomes subject to a different privacy policy.</p>
+
+  <hr />
+
+  <h2>4. Data Retention</h2>
+  <p>We retain your information for as long as your account is active. When you close your account or request deletion:</p>
+  <ul>
+    <li>Your user account is deactivated</li>
+    <li>Your fleet profile, driver information, requests, and saved opportunities are deleted from our database</li>
+    <li>Your Stripe billing records are deleted from our system (Stripe may retain transaction records per their own retention policy)</li>
+    <li>Your integration tokens are cleared</li>
+  </ul>
+  <p>Route distance cache entries are retained after account closure — these contain only city and state names, no personal information, and are shared infrastructure used to improve performance for all users.</p>
+  <p>We will complete account deletion requests within <strong>30 days</strong> of a verified request submitted to <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a>.</p>
+
+  <hr />
+
+  <h2>5. Data Security</h2>
+  <p>We protect your data through the following measures:</p>
+  <ul>
+    <li><strong>Encryption in transit:</strong> All data transmitted between your browser and our service is encrypted using TLS</li>
+    <li><strong>Encryption at rest:</strong> All data stored in our database is encrypted at rest by Supabase</li>
+    <li><strong>Tenant isolation:</strong> Row-Level Security on our database ensures your data is accessible only to your authenticated account — not other users</li>
+    <li><strong>Credential management:</strong> API keys and service credentials are stored in encrypted server-side environment variables and are never exposed to the browser</li>
+    <li><strong>Access controls:</strong> Administrative access to our systems is protected by multi-factor authentication</li>
+  </ul>
+  <p>In the event of a breach affecting your personal data, we will notify you within 72 hours of confirming the incident.</p>
+
+  <hr />
+
+  <h2>6. Your Rights</h2>
+
+  <p><strong>All users</strong></p>
+  <ul>
+    <li><strong>Access:</strong> You may request a copy of the personal information we hold about you</li>
+    <li><strong>Correction:</strong> You may update your name, email, fleet profile, and driver information directly within the application at any time</li>
+    <li><strong>Deletion:</strong> You may request deletion of your account and associated data by emailing <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a></li>
+    <li><strong>Portability:</strong> You may request an export of your data in a machine-readable format</li>
+  </ul>
+
+  <p><strong>California residents (CCPA / CPRA)</strong></p>
+  <p>If you are a California resident, you have additional rights under the California Consumer Privacy Act:</p>
+  <ul>
+    <li><strong>Right to know:</strong> You may request disclosure of the categories and specific pieces of personal information we have collected about you, the sources, the purposes, and the third parties with whom it is shared</li>
+    <li><strong>Right to delete:</strong> You may request deletion of personal information we have collected, subject to certain exceptions</li>
+    <li><strong>Right to correct:</strong> You may request correction of inaccurate personal information</li>
+    <li><strong>Right to opt out of sale or sharing:</strong> We do not sell or share personal information for cross-context behavioral advertising. No opt-out mechanism is required because this activity does not occur.</li>
+    <li><strong>Right to non-discrimination:</strong> We will not discriminate against you for exercising any of these rights</li>
+  </ul>
+  <p>To exercise your California rights, contact us at <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a>. We will respond within 45 days.</p>
+
+  <hr />
+
+  <h2>7. Cookies and Tracking</h2>
+  <p>Haul Monitor uses session cookies to maintain your authenticated session. These are necessary for the service to function and cannot be disabled while using the application.</p>
+  <p>We do not use third-party advertising cookies or behavioral tracking technologies.</p>
+
+  <hr />
+
+  <h2>8. Children's Privacy</h2>
+  <p>Haul Monitor is a professional tool intended for use by adults in a commercial trucking context. We do not knowingly collect personal information from anyone under 18 years of age. If you believe a minor has provided us with personal information, please contact us at <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a> and we will delete it.</p>
+
+  <hr />
+
+  <h2>9. Changes to This Policy</h2>
+  <p>We may update this policy from time to time. When we make material changes, we will update the "Last updated" date at the top of this page and notify active users by email at least 14 days before the changes take effect.</p>
+
+  <hr />
+
+  <h2>10. Contact Us</h2>
+  <p>For questions about this policy, to exercise your data rights, or to report a privacy concern:</p>
+  <p><strong>Email:</strong> <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a><br />
+  <strong>Service:</strong> haulmonitor.cloud</p>
+  <p>We aim to respond to all privacy-related inquiries within 5 business days.</p>
+
+  <hr />
+
+  <p style="font-size:14px;color:var(--text3);font-style:italic;">Haul Monitor is not a licensed attorney and this policy is not legal advice. If you have specific legal compliance requirements, consult qualified legal counsel.</p>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <a href="/"><img src="/haul-monitor-full.png" alt="Haul Monitor" /></a>
+  <p>© 2026 Haul Monitor. All rights reserved.</p>
+  <div style="display:flex;gap:20px;">
+    <a href="/app">App</a>
+    <a href="/user-guide.html" target="_blank">User Guide</a>
+    <a href="mailto:info@haulmonitor.cloud">Contact</a>
+    <a href="/privacy">Privacy Policy</a>
+  </div>
+</footer>
+
+</body>
+</html>
