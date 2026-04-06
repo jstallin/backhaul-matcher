@@ -117,9 +117,10 @@
   <div class="cover-subtitle">Getting started with fleet setup, backhaul requests, and estimate requests</div>
   <div class="cover-divider"></div>
   <ul class="cover-toc">
-    <li><span class="toc-num">1</span>Setting Up Your Fleet</li>
-    <li><span class="toc-num">2</span>Creating a Backhaul Request</li>
-    <li><span class="toc-num">3</span>Creating an Estimate Request</li>
+    <li><span class="toc-num">1</span>Getting Started: Registration &amp; Setup</li>
+    <li><span class="toc-num">2</span>Setting Up Your Fleet</li>
+    <li><span class="toc-num">3</span>Creating a Backhaul Request</li>
+    <li><span class="toc-num">4</span>Creating an Estimate Request</li>
   </ul>
 </div>
 
@@ -128,6 +129,94 @@
 <!-- ══════════════ SECTION 1 ══════════════ -->
 <div class="section">
   <div class="section-label">Section 1</div>
+  <div class="section-title">Getting Started: Registration &amp; Setup</div>
+  <p class="section-intro">
+    Before using Haul Monitor, your organization needs one person to register and set up your account. This first user becomes the Organization Owner and can invite colleagues once setup is complete. You'll also connect your load board API key once as part of this process — every user in your organization will share that connection automatically.
+  </p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Go to the Registration Page</div>
+        <p class="step-desc">Navigate to <strong>haulmonitor.cloud/app</strong> and click <strong>Create Account</strong> on the login screen.</p>
+        <img class="shot" src="/guide/s0-login.png" alt="Haul Monitor login screen with Create Account link" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">2</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Register with Your Company Email</div>
+        <p class="step-desc">Enter your full name and your <strong>company email address</strong>. Your email address becomes your login username, so use the address you check regularly. Choose a strong password — at least 8 characters.</p>
+        <img class="shot" src="/guide/s0-register.png" alt="Registration form with name, email, and password fields" />
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span><strong>Use your company email.</strong> Haul Monitor uses your email domain to group your organization. When colleagues register with the same email domain (e.g., <em>@yourcompany.com</em>), they'll be linked to your organization automatically and share your load board connection.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Verify Your Email</div>
+        <p class="step-desc">After submitting the form, check your inbox for a verification email from Haul Monitor. Click the confirmation link to activate your account. The link expires after 24 hours.</p>
+        <img class="shot" src="/guide/s0-verify.png" alt="Check your email confirmation screen" />
+        <div class="note">
+          <span class="note-icon">⚠️</span>
+          <span>If you don't see the email within a few minutes, check your spam or junk folder. The sender address is <strong>no-reply@haulmonitor.cloud</strong>.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Sign In and Access Your Dashboard</div>
+        <p class="step-desc">Once your email is verified, sign in at <strong>haulmonitor.cloud/app</strong> with your email and password. You'll land on your Dashboard, which is your home base for all activity.</p>
+        <img class="shot" src="/guide/s0-dashboard.png" alt="Haul Monitor dashboard after first login" />
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Connect Your Load Board</div>
+        <p class="step-desc">Open the navigation menu (<strong>☰ Menu</strong>) and go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to your load board (DAT or Truckstop) and enter your credentials in the dialog that appears. This is a one-time step — once connected, every user in your organization will share this integration automatically.</p>
+        <img class="shot" src="/guide/s0-integrations.png" alt="Connect to Truckstop dialog showing API token, username, and password fields" />
+        <div class="fields">
+          <div class="field-row"><div class="field-name">API Token</div><div class="field-desc">Your load board API token. Log in to your load board account and navigate to API or developer settings to find this.</div></div>
+          <div class="field-row"><div class="field-name">Username</div><div class="field-desc">Your load board login username or email address.</div></div>
+          <div class="field-row"><div class="field-name">Password</div><div class="field-desc">Your load board login password.</div></div>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span><strong>Organization-wide connection.</strong> These credentials are stored at the organization level. Colleagues you invite will automatically have access to the same load data — no additional configuration needed on their end.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">6</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Invite Your Team</div>
+        <p class="step-desc">To add colleagues, go to <strong>Settings → Organization</strong>. You'll see your organization name, your email domain, and the current member list. Click <strong>+ Invite Member</strong> to send an invitation. Each invited user will receive an email with a link to create their account and will be joined to your organization automatically.</p>
+        <img class="shot" src="/guide/s0-invite.png" alt="Settings — Organization panel showing org name, members list, and Invite Member button" />
+        <div class="note">
+          <span class="note-icon">⚠️</span>
+          <span>Invited colleagues should use the link in their invitation email to register — not the standard Create Account flow. The invite link ties their account to your organization.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 2 ══════════════ -->
+<div class="section">
+  <div class="section-label">Section 2</div>
   <div class="section-title">Setting Up Your Fleet</div>
   <p class="section-intro">
     Your fleet profile is the foundation of HaulMonitor. It stores your equipment details, home base location, and the rate structure used to calculate net revenue on every backhaul opportunity. Complete your fleet profile before creating any requests.
@@ -241,9 +330,9 @@
 </div>
 
 
-<!-- ══════════════ SECTION 2 ══════════════ -->
+<!-- ══════════════ SECTION 3 ══════════════ -->
 <div class="section">
-  <div class="section-label">Section 2</div>
+  <div class="section-label">Section 3</div>
   <div class="section-title">Creating a Backhaul Request</div>
   <p class="section-intro">
     A Backhaul Request tells HaulMonitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
@@ -336,9 +425,9 @@
 </div>
 
 
-<!-- ══════════════ SECTION 3 ══════════════ -->
+<!-- ══════════════ SECTION 4 ══════════════ -->
 <div class="section">
-  <div class="section-label">Section 3</div>
+  <div class="section-label">Section 4</div>
   <div class="section-title">Creating an Estimate Request</div>
   <p class="section-intro">
     An Estimate Request is a planning and proposal tool. Instead of searching for a specific live load, it projects the annual financial value of backhaul opportunities along a given route — useful for customer proposals, pricing negotiations, and fleet planning. The output is a formatted report you can print or save as a PDF.
