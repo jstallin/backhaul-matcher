@@ -16,6 +16,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [completing, setCompleting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState({}); // keyed by load_id
   const [aiLoading, setAiLoading] = useState({});   // keyed by load_id
+  const [aiFeedback, setAiFeedback] = useState({}); // keyed by load_id: { rating, comment, showInput, submitted }
 
   const handleAiAnalyze = async (match) => {
     const id = match.load_id || match.id;
@@ -33,6 +34,48 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
       setAiAnalysis(prev => ({ ...prev, [id]: 'Unable to generate analysis.' }));
     } finally {
       setAiLoading(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleAiFeedback = async (match, rating) => {
+    const id = match.load_id || match.id;
+    setAiFeedback(prev => ({
+      ...prev,
+      [id]: { rating, comment: prev[id]?.comment || '', showInput: rating === 'down', submitted: false }
+    }));
+    if (rating === 'up') {
+      await submitAiFeedback(match, rating, '');
+    }
+  };
+
+  const submitAiFeedback = async (match, rating, comment) => {
+    const id = match.load_id || match.id;
+    try {
+      await fetch('/api/ai/analyze-load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feedback: true,
+          fleet_id: fleet?.id,
+          user_id: fleet?.user_id,
+          load_id: id,
+          rating,
+          comment: comment?.trim() || null,
+          analysis: aiAnalysis[id] || null,
+          load_data: {
+            origin: match.origin?.address,
+            destination: match.destination?.address,
+            equipment_type: match.equipmentType,
+            additional_miles: match.additionalMiles,
+            net_revenue: match.netRevenue,
+            revenue_per_mile: match.revenuePerMile,
+          }
+        })
+      });
+    } catch {
+      // Fail silently — feedback is non-critical
+    } finally {
+      setAiFeedback(prev => ({ ...prev, [id]: { ...prev[id], submitted: true } }));
     }
   };
 
@@ -337,18 +380,58 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                         Analyzing load...
                       </div>
                     )}
-                    {analysis && (
-                      <div style={{ padding: '14px', background: `${verdictColor}0d`, border: `1px solid ${verdictColor}40`, borderRadius: '8px' }}>
-                        {verdict && (
-                          <div style={{ fontSize: '12px', fontWeight: 800, color: verdictColor, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            ✦ {verdict}
+                    {analysis && (() => {
+                      const fb = aiFeedback[id] || {};
+                      return (
+                        <div style={{ padding: '14px', background: `${verdictColor}0d`, border: `1px solid ${verdictColor}40`, borderRadius: '8px' }}>
+                          {verdict && (
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: verdictColor, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              ✦ {verdict}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: '1.6' }}>
+                            {analysis.replace(/^(TAKE IT|PASS|NEGOTIATE)[.:—\s]*/i, '')}
                           </div>
-                        )}
-                        <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: '1.6' }}>
-                          {analysis.replace(/^(TAKE IT|PASS|NEGOTIATE)[.:—\s]*/i, '')}
+
+                          {/* Feedback row */}
+                          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${verdictColor}30` }}>
+                            {fb.submitted ? (
+                              <div style={{ fontSize: '12px', color: colors.text.tertiary }}>Thanks for the feedback.</div>
+                            ) : (
+                              <>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '12px', color: colors.text.tertiary }}>Was this helpful?</span>
+                                  <button
+                                    onClick={() => handleAiFeedback(match, 'up')}
+                                    style={{ background: fb.rating === 'up' ? `${colors.accent.success}20` : 'transparent', border: `1px solid ${fb.rating === 'up' ? colors.accent.success : colors.border.secondary}`, borderRadius: '6px', padding: '3px 8px', cursor: 'pointer', fontSize: '14px', lineHeight: 1 }}
+                                    title="Yes, helpful"
+                                  >👍</button>
+                                  <button
+                                    onClick={() => handleAiFeedback(match, 'down')}
+                                    style={{ background: fb.rating === 'down' ? `${colors.accent.danger}20` : 'transparent', border: `1px solid ${fb.rating === 'down' ? colors.accent.danger : colors.border.secondary}`, borderRadius: '6px', padding: '3px 8px', cursor: 'pointer', fontSize: '14px', lineHeight: 1 }}
+                                    title="Not helpful"
+                                  >👎</button>
+                                </div>
+                                {fb.showInput && (
+                                  <div style={{ marginTop: '8px' }}>
+                                    <textarea
+                                      placeholder="What would have been more helpful? (optional)"
+                                      value={fb.comment || ''}
+                                      onChange={(e) => setAiFeedback(prev => ({ ...prev, [id]: { ...prev[id], comment: e.target.value } }))}
+                                      style={{ width: '100%', padding: '8px 10px', background: colors.background.primary, border: `1px solid ${colors.border.secondary}`, borderRadius: '6px', color: colors.text.primary, fontSize: '12px', lineHeight: '1.5', resize: 'vertical', minHeight: '60px', outline: 'none', fontFamily: 'inherit' }}
+                                    />
+                                    <button
+                                      onClick={() => submitAiFeedback(match, 'down', fb.comment)}
+                                      style={{ marginTop: '6px', padding: '6px 14px', background: colors.accent.primary, border: 'none', borderRadius: '6px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                                    >Submit</button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })()}

@@ -217,12 +217,43 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const body = req.body || {};
+
+  // ── AI feedback mode ──────────────────────────────────────────────────────
+  if (body.feedback === true) {
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ error: 'Database not configured' });
+    }
+    const { fleet_id, user_id, load_id, rating, comment, analysis, load_data } = body;
+    if (!load_id || !rating || !['up', 'down'].includes(rating)) {
+      return res.status(400).json({ error: 'Missing required fields: load_id, rating' });
+    }
+    try {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const { error } = await supabase.from('org_ai_feedback').insert({
+        fleet_id: fleet_id || null,
+        user_id: user_id || null,
+        load_id,
+        rating,
+        comment: comment?.trim() || null,
+        analysis: analysis || null,
+        load_data: load_data || null,
+      });
+      if (error) {
+        console.error('ai feedback insert error:', error);
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('ai feedback error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   if (!ANTHROPIC_API_KEY) {
     console.error('ANTHROPIC_API_KEY is not set');
     return res.status(500).json({ error: 'AI service not configured' });
   }
-
-  const body = req.body || {};
 
   // ── Co-driver chat mode ───────────────────────────────────────────────────
   if (body.messages) {
