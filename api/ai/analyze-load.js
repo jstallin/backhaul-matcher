@@ -148,6 +148,68 @@ async function executeTool(name, input, supabase, userId) {
   }
 }
 
+// ── Org history fetcher ───────────────────────────────────────────────────────
+
+async function fetchOrgHistory(fleetId) {
+  if (!fleetId || !supabaseUrl || !supabaseServiceKey) return null;
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const [hauledRes, feedbackRes] = await Promise.all([
+      supabase
+        .from('backhaul_requests')
+        .select('datum_point, equipment_type, out_of_route_miles, net_revenue, revenue_amount, completed_at')
+        .eq('fleet_id', fleetId)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(15),
+      supabase
+        .from('org_ai_feedback')
+        .select('rating, comment, load_data, created_at')
+        .eq('fleet_id', fleetId)
+        .order('created_at', { ascending: false })
+        .limit(15),
+    ]);
+
+    const hauls = hauledRes.data || [];
+    const feedback = feedbackRes.data || [];
+    if (!hauls.length && !feedback.length) return null;
+
+    const lines = [];
+
+    if (hauls.length) {
+      lines.push('COMPLETED HAULS (most recent first):');
+      hauls.forEach(h => {
+        const net = h.net_revenue != null ? ` | net $${Number(h.net_revenue).toFixed(0)}` : '';
+        const rev = h.revenue_amount != null ? ` | gross $${Number(h.revenue_amount).toFixed(0)}` : '';
+        const oor = h.out_of_route_miles != null ? ` | ${h.out_of_route_miles} OOR mi` : '';
+        const equip = h.equipment_type ? ` | ${h.equipment_type}` : '';
+        const when = h.completed_at ? new Date(h.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        lines.push(`  - ${h.datum_point || 'unknown datum'}${equip}${oor}${rev}${net}${when ? ` (${when})` : ''}`);
+      });
+    }
+
+    if (feedback.length) {
+      lines.push('');
+      lines.push('AI RECOMMENDATION FEEDBACK (most recent first):');
+      feedback.forEach(f => {
+        const ld = f.load_data || {};
+        const route = (ld.origin && ld.destination) ? `${ld.origin} → ${ld.destination}` : null;
+        const rpm = ld.revenue_per_mile != null ? ` | $${Number(ld.revenue_per_mile).toFixed(2)}/mi` : '';
+        const oor = ld.additional_miles != null ? ` | ${ld.additional_miles} OOR mi` : '';
+        const comment = f.comment ? ` — "${f.comment}"` : '';
+        const verdict = f.rating === 'up' ? '👍 agreed' : '👎 disagreed';
+        lines.push(`  - ${verdict}${route ? `: ${route}` : ''}${rpm}${oor}${comment}`);
+      });
+    }
+
+    return lines.join('\n');
+  } catch (err) {
+    console.error('fetchOrgHistory error:', err.message);
+    return null;
+  }
+}
+
 // ── Claude API helper ─────────────────────────────────────────────────────────
 
 async function callClaude({ messages, system, tools, maxTokens = 500 }) {
@@ -297,6 +359,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields: match, fleet, request' });
   }
 
+  // Fetch org history in parallel with prompt construction (non-blocking)
+  const orgHistory = await fetchOrgHistory(fleet.id);
+
   const hasRateConfig = match.has_rate_config;
 
   // Resolve field names — match object uses several aliases
@@ -367,10 +432,15 @@ ROUTE CONTEXT:
 ${typeMismatchNote}
 Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Only say PASS if the OOR miles are excessive, the rate is genuinely below cost, there's a clear red flag, or the equipment type is incompatible.`;
 
+  const systemPrompt = [
+    'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? If there is an equipment type mismatch, flag it clearly — a reefer load on a dry van is a hard no, but adjacent types (flatbed/step deck, dry van/power only) are judgment calls worth flagging. Be direct. Never use bullet points. 2–3 sentences after your verdict.',
+    orgHistory ? `\nORG HISTORY — use this to calibrate your recommendation to what this fleet has actually accepted and what they\'ve pushed back on:\n${orgHistory}` : null,
+  ].filter(Boolean).join('\n');
+
   try {
     const result = await callClaude({
       messages: [{ role: 'user', content: prompt }],
-      system: 'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? If there is an equipment type mismatch, flag it clearly — a reefer load on a dry van is a hard no, but adjacent types (flatbed/step deck, dry van/power only) are judgment calls worth flagging. Be direct. Never use bullet points. 2–3 sentences after your verdict.',
+      system: systemPrompt,
       maxTokens: 300
     });
     return res.status(200).json({ analysis: result.content?.find(b => b.type === 'text')?.text || '' });
