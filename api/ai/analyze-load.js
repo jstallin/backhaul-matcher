@@ -155,6 +155,47 @@ async function fetchOrgHistory(fleetId) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check for a stored preference profile first (Phase 3)
+    const { data: profileRow } = await supabase
+      .from('fleet_profiles')
+      .select('ai_preference_profile, ai_profile_updated_at')
+      .eq('fleet_id', fleetId)
+      .maybeSingle();
+
+    const storedProfile = profileRow?.ai_preference_profile || null;
+    const profileUpdatedAt = profileRow?.ai_profile_updated_at || null;
+
+    if (storedProfile) {
+      // Profile exists — fetch only feedback since the last summarization to catch new signals
+      const recentFeedbackRes = await supabase
+        .from('org_ai_feedback')
+        .select('rating, comment, load_data, created_at')
+        .eq('fleet_id', fleetId)
+        .gt('created_at', profileUpdatedAt)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const recent = recentFeedbackRes.data || [];
+      const lines = [`FLEET PREFERENCE PROFILE:\n${storedProfile}`];
+
+      if (recent.length) {
+        lines.push('');
+        lines.push('RECENT FEEDBACK (since last profile update):');
+        recent.forEach(f => {
+          const ld = f.load_data || {};
+          const route = (ld.origin && ld.destination) ? `${ld.origin} → ${ld.destination}` : null;
+          const rpm = ld.revenue_per_mile != null ? ` | $${Number(ld.revenue_per_mile).toFixed(2)}/mi` : '';
+          const oor = ld.additional_miles != null ? ` | ${ld.additional_miles} OOR mi` : '';
+          const comment = f.comment ? ` — "${f.comment}"` : '';
+          const verdict = f.rating === 'up' ? '👍 agreed' : '👎 disagreed';
+          lines.push(`  - ${verdict}${route ? `: ${route}` : ''}${rpm}${oor}${comment}`);
+        });
+      }
+
+      return lines.join('\n');
+    }
+
+    // No profile yet — fall back to raw rows (Phase 2 behavior)
     const [hauledRes, feedbackRes] = await Promise.all([
       supabase
         .from('backhaul_requests')
