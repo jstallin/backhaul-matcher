@@ -185,7 +185,7 @@ async function fetchFmcsaCarriers(colMap) {
   // carrier_operation='A' = interstate (these are the load-board users)
   // carship='C' = carrier (not pure shippers)
   const whereParts = [
-    `${powerCol} between ${MIN_UNITS} and ${MAX_UNITS}`,
+    `${powerCol}::number between ${MIN_UNITS} and ${MAX_UNITS}`,
   ];
   if (statusCol)  whereParts.push(`${statusCol} = 'A'`);
   if (carshipCol) whereParts.push(`${carshipCol} = 'C'`);
