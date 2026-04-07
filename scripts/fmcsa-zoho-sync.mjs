@@ -286,12 +286,16 @@ async function pushToZoho(carriers, token) {
 
   for (let i = 0; i < batches; i++) {
     const batch = carriers.slice(i * ZOHO_BATCH_SIZE, (i + 1) * ZOHO_BATCH_SIZE);
-    const res = await post('https://www.zohoapis.com/crm/v2/Leads/upsert', token, {
+    const res = await post('https://www.zohoapis.com/crm/v2/Leads', token, {
       data: batch.map(toZohoLead),
-      duplicate_check_fields: ['DOT_Number'],
     });
 
     if (res.status === 200 || res.status === 201 || res.status === 202) {
+      // Log first batch response in full for debugging
+      if (i === 0) {
+        log(`DEBUG first batch response (HTTP ${res.status}):`);
+        log(JSON.stringify(res.body).slice(0, 800));
+      }
       (res.body?.data || []).forEach(r => {
         if (r.status === 'success' && r.action === 'insert') created++;
         else if (r.status === 'success' && r.action === 'update') updated++;
@@ -300,6 +304,7 @@ async function pushToZoho(carriers, token) {
       });
     } else {
       log(`Batch ${i + 1}/${batches} failed: HTTP ${res.status}`);
+      if (i === 0) log(`DEBUG error body: ${JSON.stringify(res.body).slice(0, 800)}`);
       errors += batch.length;
     }
 
