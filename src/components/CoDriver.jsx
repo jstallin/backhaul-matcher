@@ -17,12 +17,13 @@ const GREETINGS = {
   requests: (data) => {
     const count = data.requests?.length ?? 0;
     return `${count} open request${count !== 1 ? 's' : ''}. Ask me about status, patterns, or what to prioritize next.`;
-  }
+  },
+  support: () => `I'm here to help. Ask me how anything works, what a number means, or how to set something up. If I can't resolve it, I'll connect you with the support team.`
 };
 
-export const CoDriver = ({ context, contextData }) => {
+export const CoDriver = ({ context, contextData, initialOpen = false, onClose }) => {
   const { colors } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -94,7 +95,8 @@ export const CoDriver = ({ context, contextData }) => {
   const placeholder = {
     dashboard: 'Create a fleet, add a truck, estimate a lane...',
     results: 'Which load is closest to home? Is #2 worth negotiating?',
-    requests: 'Ask about your requests...'
+    requests: 'Ask about your requests...',
+    support: 'How do I set up relay mode? Why are my distances off?...'
   }[context] || 'Ask anything...';
 
   return (
@@ -115,8 +117,8 @@ export const CoDriver = ({ context, contextData }) => {
         .cd-msgs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
       `}</style>
 
-      {/* Minimized button */}
-      {!open && (
+      {/* Minimized button — not shown for support context (it starts open and closes fully) */}
+      {!open && context !== 'support' && (
         <button
           className="codriver-btn"
           onClick={() => setOpen(true)}
@@ -174,12 +176,12 @@ export const CoDriver = ({ context, contextData }) => {
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Co-driver</div>
                 <div style={{ fontSize: '11px', color: 'rgba(0,200,0,0.7)', lineHeight: 1.2 }}>
-                  {{ dashboard: 'Fleet Overview', results: 'Load Results', requests: 'Open Requests' }[context] || 'Dispatch Assistant'}
+                  {{ dashboard: 'Fleet Overview', results: 'Load Results', requests: 'Open Requests', support: 'Help & Support' }[context] || 'Dispatch Assistant'}
                 </div>
               </div>
             </div>
             <button
-              onClick={() => setOpen(false)}
+              onClick={() => { setOpen(false); onClose?.(); }}
               style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', fontSize: '20px', lineHeight: 1, padding: '2px 6px' }}
             >
               ×

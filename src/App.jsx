@@ -20,6 +20,7 @@ import { OpenEstimateRequests } from './components/OpenEstimateRequests';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
 import { Dashboard } from './components/Dashboard';
+import { CoDriver } from './components/CoDriver';
 import { ImportedLoads } from './components/ImportedLoads';
 import { AdminDashboard } from './components/AdminDashboard';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
@@ -163,6 +164,7 @@ function App() {
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
+  const [supportChatOpen, setSupportChatOpen] = useState(false);
 
   // Load user's fleet data
   useEffect(() => {
@@ -287,6 +289,10 @@ function App() {
   };
 
   const handleMenuNavigation = (view) => {
+    if (view === 'support') {
+      setSupportChatOpen(true);
+      return;
+    }
     setCurrentView(view);
     // Reset other state when navigating
     if (view !== 'fleet-management') {
@@ -1104,6 +1110,14 @@ function App() {
       
       <InstallPrompt />
       <Analytics />
+      {supportChatOpen && (
+        <CoDriver
+          context="support"
+          contextData={{}}
+          initialOpen={true}
+          onClose={() => setSupportChatOpen(false)}
+        />
+      )}
     </AuthWrapper>
   );
 }

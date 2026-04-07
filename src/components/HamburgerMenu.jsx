@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield } from '../icons';
+import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield, HelpCircle } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -92,7 +92,15 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
     }
   ] : [];
 
-  const allItems = [...menuItems, ...adminItems];
+  const supportItem = {
+    id: 'support',
+    label: 'Help & Support',
+    icon: HelpCircle,
+    description: 'Get answers or contact support',
+    isSupport: true,
+  };
+
+  const allItems = [...menuItems, ...adminItems, supportItem];
 
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
@@ -153,7 +161,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
           {allItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = item.id === currentView;
-            const itemColor = item.isAdmin ? '#a855f7' : colors.accent.primary;
+            const itemColor = item.isAdmin ? '#a855f7' : item.isSupport ? '#3b82f6' : colors.accent.primary;
 
             return (
               <button
@@ -162,10 +170,10 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
                 style={{
                   width: '100%',
                   padding: '16px 20px',
-                  background: isActive ? `${itemColor}20` : item.isAdmin ? `#a855f710` : 'transparent',
+                  background: isActive ? `${itemColor}20` : item.isAdmin ? `#a855f710` : item.isSupport ? `#3b82f610` : 'transparent',
                   border: 'none',
-                  borderTop: item.isAdmin ? `1px solid ${colors.border.secondary}` : 'none',
-                  borderBottom: index < allItems.length - 1 && !allItems[index + 1]?.isAdmin ? `1px solid ${colors.border.secondary}` : 'none',
+                  borderTop: (item.isAdmin || item.isSupport) ? `1px solid ${colors.border.secondary}` : 'none',
+                  borderBottom: index < allItems.length - 1 && !allItems[index + 1]?.isAdmin && !allItems[index + 1]?.isSupport ? `1px solid ${colors.border.secondary}` : 'none',
                   textAlign: 'left',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -183,14 +191,14 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
               >
                 <Icon
                   size={20}
-                  color={isActive ? itemColor : item.isAdmin ? '#a855f7' : colors.text.secondary}
+                  color={isActive ? itemColor : item.isAdmin ? '#a855f7' : item.isSupport ? '#3b82f6' : colors.text.secondary}
                   style={{ flexShrink: 0, marginTop: '2px' }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: isActive ? itemColor : item.isAdmin ? '#a855f7' : colors.text.primary,
+                    color: isActive ? itemColor : item.isAdmin ? '#a855f7' : item.isSupport ? '#3b82f6' : colors.text.primary,
                     marginBottom: '4px',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',

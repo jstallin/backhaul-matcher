@@ -12,6 +12,68 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// ── Knowledge Base ────────────────────────────────────────────────────────────
+
+const KNOWLEDGE_BASE = `
+HAUL MONITOR KNOWLEDGE BASE
+
+## What is Haul Monitor?
+Haul Monitor is a backhaul matching platform for trucking fleets. When a truck completes a primary delivery and needs to return home, Haul Monitor finds available loads along the route home so the truck earns revenue instead of deadheading (running empty).
+
+## Core Concepts
+- **Backhaul**: A load that gets the truck home (or closer to home) after a primary delivery. The baseline alternative is always deadheading — running empty with zero revenue.
+- **Datum Point**: City, State where the truck currently is. This is the search origin.
+- **Out-of-Route (OOR) Miles**: Extra miles added vs. going straight home. Lower = better. 0 OOR = perfectly on the way home.
+- **Revenue Per Mile (RPM)**: Gross revenue ÷ total backhaul route miles. Typical dry van RPMs run $1.80–$2.50/mi depending on lane.
+- **Relay Mode**: For fleets whose drivers always return to a home terminal between loads. OOR is calculated as the full loop: home → pickup → delivery → home (vs. standard: datum → pickup → delivery → home).
+
+## Fleet Setup
+1. Menu → Fleets → select or create a fleet
+2. Set fleet name, home city/state, trailer type
+3. Add trucks (unit number, year, make/model) and drivers (name, phone, CDL)
+4. In Fleet Setup (gear icon), configure rate settings: cost per mile, target RPM, fuel surcharge rate
+
+Rate config is optional but unlocks the full financial breakdown on results (net revenue, carrier revenue, mileage expense).
+
+## Starting a Backhaul Request
+1. Menu → Start Backhaul Request
+2. Select fleet, enter datum point (City, State), equipment type, pickup date
+3. Submit — matching runs automatically, results sorted best first
+
+## Understanding Results
+Each result shows:
+- Route (pickup → delivery), load miles, equipment type
+- OOR miles (extra miles vs. going home direct)
+- Miles to pickup from datum, miles from delivery to home
+- RPM and gross revenue; full financial breakdown if rate config is set
+- "Ask AI" button for a TAKE IT / PASS / NEGOTIATE recommendation
+
+## Financial Breakdown (requires rate config)
+Gross revenue → subtract fuel surcharge (OOR mi × FSC rate) → subtract mileage expense (OOR mi × cost/mi) = net to carrier. Customer net credit is revenue minus mileage expense (what the load is worth net of route cost).
+
+## Estimate Requests
+Menu → Create Estimate Request. Enter a lane (origin/destination) to get an estimated RPM and load outlook before dispatching a truck. Useful for trip budgeting and lane comparison.
+
+## Fleet Reports
+Menu → Fleet Reports: revenue by fleet over time, OOR summary, load count, net revenue trends.
+
+## Completing a Load ("Haul This Load")
+Click "Haul This Load" on any result to record the load as completed. This captures revenue, net revenue, OOR miles, and completion date. Completed hauls feed into Fleet Reports and improve AI recommendations over time.
+
+## AI Features
+- **Ask AI**: Per-load recommendation (TAKE IT / PASS / NEGOTIATE) with reasoning. Calibrates to fleet history and rate preferences.
+- **Co-driver (this chat)**: Conversational assistant available on Dashboard, Results, and Open Requests. Handles questions, helps create records, and can walk through any feature.
+- **Feedback (thumbs up/down)**: Rates Ask AI responses. Signals train the AI preference profile for your fleet.
+
+## Common Issues
+- **No results showing**: Check that the fleet has a home location set, datum is in "City, State" format, and equipment type is correct. If loads are sparse on a lane, try an adjacent datum point.
+- **Distances look wrong**: Distances use PC*MILER (Trimble), the trucking industry standard. If a specific distance is clearly off, contact support with the route details.
+- **Financial breakdown not showing**: Rate config must be set in Fleet Setup (gear icon on the fleet). Set cost per mile and FSC rate at minimum.
+- **Relay mode**: Toggle it on the request form. Use when drivers always return to a home base between loads.
+- **Adding org users**: Settings → Team/Organization → invite by email.
+- **Credits and billing**: Managed in Settings → Billing. Contact support@haulmonitor.cloud for billing questions or disputes.
+`.trim();
+
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
 const TOOLS = [
@@ -375,7 +437,13 @@ export default async function handler(req, res) {
       userId = user?.id || null;
     }
 
-    const systemPrompt = buildSystemPrompt(context, contextData, !!userId);
+    // Fetch org history for results context (same signal Ask AI uses)
+    let coDriverOrgHistory = null;
+    if (context === 'results' && contextData?.fleet?.id) {
+      coDriverOrgHistory = await fetchOrgHistory(contextData.fleet.id);
+    }
+
+    const systemPrompt = buildSystemPrompt(context, contextData, !!userId, coDriverOrgHistory);
     const canUseTool = !!(userId && supabase);
 
     try {
@@ -493,7 +561,7 @@ Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. 
 
 // ── System prompt builders ────────────────────────────────────────────────────
 
-function buildSystemPrompt(context, contextData, canAct) {
+function buildSystemPrompt(context, contextData, canAct, orgHistory = null) {
   const actionInstructions = canAct ? `
 You can take real actions in the system using your tools:
 - list_fleets — see the user's fleets and their IDs (call this first when you need a fleet_id)
@@ -552,7 +620,7 @@ Fleet trailer type: ${fleetTrailerType || 'not specified'}
 
 LOAD RESULTS (${matches.length} matches, best first):
 ${matchSummary || '  No matches.'}
-
+${orgHistory ? `\nORG HISTORY — calibrate your answers to what this fleet has actually accepted and what they've pushed back on:\n${orgHistory}` : ''}
 Answer questions about these loads directly. Reference specific loads by number. No disclaimers.`;
   }
 
@@ -569,6 +637,20 @@ OPEN REQUESTS (${requests.length} total):
 ${summary || '  No open requests.'}
 
 Answer questions about these requests concisely. Help prioritize, spot patterns, or think through next moves.`;
+  }
+
+  if (context === 'support') {
+    return `You are the Haul Monitor support assistant — a knowledgeable, friendly tier-1 support agent built into the app. Help users with functional questions ("how do I..."), troubleshooting ("why isn't X working"), and product understanding.
+
+You have access to a comprehensive knowledge base about Haul Monitor. Use it to answer questions accurately and concisely. If the user is authenticated, you can call list_fleets to look up their specific fleet data when it would help answer their question.
+
+${KNOWLEDGE_BASE}
+
+ESCALATION RULE: If you cannot resolve the issue after a genuine attempt — or if the user explicitly asks to talk to a person — offer to escalate. When escalating, say something like: "I wasn't able to fully resolve this one. You can email our support team at support@haulmonitor.cloud — include [brief summary of the issue] and we'll get back to you shortly." Do not offer escalation prematurely; try to answer first.
+
+${canAct ? `You can call list_fleets to look up the user's fleet details if relevant to their question. Do not call any creation tools in support mode.` : 'You are in read-only mode.'}
+
+Keep responses clear and direct. When walking through steps, use numbered lists. No unnecessary caveats.`;
   }
 
   return `You are Co-driver, an AI dispatch assistant built into Haul Monitor. Help the dispatcher with backhaul decisions.${actionInstructions}`;
