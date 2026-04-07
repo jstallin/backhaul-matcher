@@ -126,17 +126,19 @@ function httpPost(url, params) {
 
 // Aliases for each logical field — tries each name in order, uses first match
 const COLUMN_ALIASES = {
-  dotNumber:  ['usdot_number', 'dot_number', 'dot_nbr', 'usdot'],
-  mcNumber:   ['mc_mx_ff_number', 'mc_number', 'mc_nbr', 'docket_number'],
-  legalName:  ['legal_name', 'legal_nm', 'name'],
-  dbaName:    ['dba_name', 'dba_nm', 'dba'],
-  phone:      ['telephone', 'phone', 'phone_number', 'ph_number'],
-  email:      ['email_address', 'email', 'email_addr'],
-  street:     ['phy_street', 'physical_street', 'street'],
-  city:       ['phy_city', 'physical_city', 'city'],
-  state:      ['phy_state', 'physical_state', 'state'],
-  zip:        ['phy_zip', 'physical_zip', 'zip'],
-  powerUnits: ['power_units', 'power_unit', 'nbr_power_unit', 'tot_pwr'],
+  dotNumber:         ['dot_number', 'usdot_number', 'dot_nbr', 'usdot'],
+  legalName:         ['legal_name', 'legal_nm', 'name'],
+  dbaName:           ['dba_name', 'dba_nm', 'dba'],
+  phone:             ['phone', 'telephone', 'phone_number', 'ph_number'],
+  email:             ['email_address', 'email', 'email_addr'],
+  street:            ['phy_street', 'physical_street', 'street'],
+  city:              ['phy_city', 'physical_city', 'city'],
+  state:             ['phy_state', 'physical_state', 'state'],
+  zip:               ['phy_zip', 'physical_zip', 'zip'],
+  powerUnits:        ['power_units', 'power_unit', 'nbr_power_unit', 'tot_pwr'],
+  statusCode:        ['status_code', 'record_status', 'status'],
+  carrierOperation:  ['carrier_operation', 'carrier_op', 'operation_type'],
+  carship:           ['carship', 'car_ship', 'carrier_type'],
 };
 
 async function discoverColumns() {
@@ -171,19 +173,23 @@ async function discoverColumns() {
 async function fetchFmcsaCarriers(colMap) {
   const headers = SOCRATA_APP_TOKEN ? { 'X-App-Token': SOCRATA_APP_TOKEN } : {};
 
-  const powerCol = colMap.powerUnits;
-  const mcCol    = colMap.mcNumber;
+  const powerCol  = colMap.powerUnits;
+  const statusCol = colMap.statusCode;
+  const carshipCol = colMap.carship;
 
-  if (!powerCol || !mcCol) {
-    fail(`Cannot filter without power_units (got: ${powerCol}) and mc_number (got: ${mcCol}) columns. Check column mapping above.`);
+  if (!powerCol) {
+    fail(`Cannot filter: power_units column not found. Check column mapping above.`);
   }
 
-  // SoQL filter using discovered column names
-  const where = [
+  // SoQL filter: fleet size + active status + for-hire carrier type
+  // carrier_operation='A' = interstate (these are the load-board users)
+  // carship='C' = carrier (not pure shippers)
+  const whereParts = [
     `${powerCol} between ${MIN_UNITS} and ${MAX_UNITS}`,
-    `${mcCol} IS NOT NULL`,
-    `${mcCol} != '0'`,
-  ].join(' AND ');
+  ];
+  if (statusCol)  whereParts.push(`${statusCol} = 'A'`);
+  if (carshipCol) whereParts.push(`${carshipCol} = 'C'`);
+  const where = whereParts.join(' AND ');
 
   // Select only columns we have mappings for
   const select = Object.values(colMap).join(',');
@@ -245,7 +251,6 @@ function toZohoLead(c) {
     Lead_Source: 'FMCSA Census',
     Description: `Fleet size: ${c.powerUnits} power units`,
     DOT_Number:  c.dotNumber  || undefined,
-    MC_Number:   c.mcNumber   || undefined,
     Power_Units: c.powerUnits ? parseInt(c.powerUnits, 10) : undefined,
   };
 }
@@ -320,7 +325,7 @@ async function main() {
   if (DRY_RUN) {
     log('Sample (first 5 records):');
     carriers.slice(0, 5).forEach((c, i) =>
-      log(`  ${i + 1}. ${c.legalName || c.dbaName} | DOT: ${c.dotNumber} | MC: ${c.mcNumber} | ${c.powerUnits} units | ${c.city}, ${c.state}`)
+      log(`  ${i + 1}. ${c.legalName || c.dbaName} | DOT: ${c.dotNumber} | ${c.powerUnits} units | status: ${c.statusCode} | op: ${c.carrierOperation} | carship: ${c.carship} | ${c.city}, ${c.state}`)
     );
     log(`DRY RUN complete — ${carriers.length.toLocaleString()} records would be pushed to Zoho.`);
     return;
