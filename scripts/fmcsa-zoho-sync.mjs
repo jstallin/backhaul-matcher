@@ -35,10 +35,13 @@ import https from 'https';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const DRY_RUN         = process.env.DRY_RUN === 'true';
-const MIN_UNITS       = parseInt(process.env.MIN_UNITS || '3',  10);
-const MAX_UNITS       = parseInt(process.env.MAX_UNITS || '75', 10);
+const DRY_RUN           = process.env.DRY_RUN === 'true';
+const MIN_UNITS         = parseInt(process.env.MIN_UNITS || '3',  10);
+const MAX_UNITS         = parseInt(process.env.MAX_UNITS || '75', 10);
 const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null;
+// Optional: comma-separated state abbreviations, e.g. "TX,TN,GA,AL,FL"
+// Leave blank for nationwide
+const STATES = process.env.STATES ? process.env.STATES.split(',').map(s => s.trim().toUpperCase()) : [];
 
 const DATASET_ID      = 'az4n-8mr2';
 const SOCRATA_BASE    = `https://data.transportation.gov/resource/${DATASET_ID}.json`;
@@ -184,11 +187,17 @@ async function fetchFmcsaCarriers(colMap) {
   // SoQL filter: fleet size + active status + for-hire carrier type
   // carrier_operation='A' = interstate (these are the load-board users)
   // carship='C' = carrier (not pure shippers)
+  const carrierOpCol = colMap.carrierOperation;
+
   const whereParts = [
     `${powerCol}::number between ${MIN_UNITS} and ${MAX_UNITS}`,
   ];
-  if (statusCol)  whereParts.push(`${statusCol} = 'A'`);
-  if (carshipCol) whereParts.push(`${carshipCol} = 'C'`);
+  if (statusCol)     whereParts.push(`${statusCol} = 'A'`);
+  if (carrierOpCol)  whereParts.push(`${carrierOpCol} = 'A'`); // interstate commercial only
+  if (STATES.length && colMap.state) {
+    const stateList = STATES.map(s => `'${s}'`).join(',');
+    whereParts.push(`${colMap.state} in(${stateList})`);
+  }
   const where = whereParts.join(' AND ');
 
   // Select only columns we have mappings for
@@ -307,7 +316,8 @@ async function pushToZoho(carriers, token) {
 
 async function main() {
   log(`FMCSA → Zoho CRM sync${DRY_RUN ? ' (DRY RUN)' : ''}`);
-  log(`ICP: ${MIN_UNITS}–${MAX_UNITS} power units | for-hire (MC# required) | nationwide`);
+  const geoScope = STATES.length ? STATES.join(', ') : 'nationwide';
+  log(`ICP: ${MIN_UNITS}–${MAX_UNITS} power units | interstate for-hire (op=A) | ${geoScope}`);
 
   if (!DRY_RUN && (!ZOHO_CLIENT_ID || !ZOHO_CLIENT_SECRET || !ZOHO_REFRESH_TOKEN)) {
     fail('Missing Zoho credentials. Set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN.\nRun with DRY_RUN=true to test without Zoho.');

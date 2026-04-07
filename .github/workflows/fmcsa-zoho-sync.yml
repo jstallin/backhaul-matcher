@@ -36,4 +36,7 @@ jobs:
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MIN_UNITS: '3'
           MAX_UNITS: '75'
+          # Optional: comma-separated states to limit initial push (e.g. TX,TN,GA,AL,FL)
+          # Leave blank for nationwide once on a paid Zoho plan
+          STATES: ${{ vars.FMCSA_TARGET_STATES }}
         run: node scripts/fmcsa-zoho-sync.mjs
