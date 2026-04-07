@@ -291,10 +291,11 @@ async function pushToZoho(carriers, token) {
       duplicate_check_fields: ['DOT_Number'],
     });
 
-    if (res.status === 200 || res.status === 201) {
+    if (res.status === 200 || res.status === 201 || res.status === 202) {
       (res.body?.data || []).forEach(r => {
         if (r.status === 'success' && r.action === 'insert') created++;
         else if (r.status === 'success' && r.action === 'update') updated++;
+        else if (r.status === 'success') created++; // 202 may omit action field
         else errors++;
       });
     } else {
