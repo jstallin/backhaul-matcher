@@ -597,7 +597,12 @@ REQUESTS:
 RECENT ACTIVITY:
 ${recentSummary}
 
-For backhaul estimates, reason through typical lane rates and market conditions. Ask for datum point, home location, and equipment type — then give a realistic RPM estimate and load outlook for that lane. Be conversational, practical, and direct. No bullet-point lists in responses unless specifically helpful.`;
+For backhaul estimates, reason through typical lane rates and market conditions. Ask for datum point, home location, and equipment type — then give a realistic RPM estimate and load outlook for that lane. Be conversational, practical, and direct. No bullet-point lists in responses unless specifically helpful.
+
+PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
+${KNOWLEDGE_BASE}
+
+If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
   }
 
   if (context === 'results') {
@@ -621,7 +626,12 @@ Fleet trailer type: ${fleetTrailerType || 'not specified'}
 LOAD RESULTS (${matches.length} matches, best first):
 ${matchSummary || '  No matches.'}
 ${orgHistory ? `\nORG HISTORY — calibrate your answers to what this fleet has actually accepted and what they've pushed back on:\n${orgHistory}` : ''}
-Answer questions about these loads directly. Reference specific loads by number. No disclaimers.`;
+Answer questions about these loads directly. Reference specific loads by number. No disclaimers.
+
+PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
+${KNOWLEDGE_BASE}
+
+If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
   }
 
   if (context === 'requests') {
@@ -636,7 +646,12 @@ ${actionInstructions}
 OPEN REQUESTS (${requests.length} total):
 ${summary || '  No open requests.'}
 
-Answer questions about these requests concisely. Help prioritize, spot patterns, or think through next moves.`;
+Answer questions about these requests concisely. Help prioritize, spot patterns, or think through next moves.
+
+PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
+${KNOWLEDGE_BASE}
+
+If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
   }
 
   if (context === 'support') {
