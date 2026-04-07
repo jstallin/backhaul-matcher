@@ -36,7 +36,7 @@ import https from 'https';
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const DRY_RUN           = process.env.DRY_RUN === 'true';
-const MIN_UNITS         = parseInt(process.env.MIN_UNITS || '3',  10);
+const MIN_UNITS         = parseInt(process.env.MIN_UNITS || '10', 10);
 const MAX_UNITS         = parseInt(process.env.MAX_UNITS || '75', 10);
 const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null;
 // Optional: comma-separated state abbreviations, e.g. "TX,TN,GA,AL,FL"
