@@ -257,10 +257,11 @@ function toZohoLead(c) {
     City:        c.city      || undefined,
     State:       c.state     || undefined,
     Zip_Code:    c.zip       || undefined,
-    Lead_Source: 'FMCSA Census',
-    Description: `Fleet size: ${c.powerUnits} power units`,
-    DOT_Number:  c.dotNumber  || undefined,
-    Power_Units: c.powerUnits ? parseInt(c.powerUnits, 10) : undefined,
+    Lead_Source:     'FMCSA Census',
+    Description:     `Fleet size: ${c.powerUnits} power units`,
+    No_of_Employees: c.powerUnits ? parseInt(c.powerUnits, 10) : undefined,
+    DOT_Number:      c.dotNumber  || undefined,
+    Power_Units:     c.powerUnits ? parseInt(c.powerUnits, 10) : undefined,
   };
 }
 
