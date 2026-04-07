@@ -122,24 +122,71 @@ function httpPost(url, params) {
   });
 }
 
+// ── Column discovery ──────────────────────────────────────────────────────────
+
+// Aliases for each logical field — tries each name in order, uses first match
+const COLUMN_ALIASES = {
+  dotNumber:  ['usdot_number', 'dot_number', 'dot_nbr', 'usdot'],
+  mcNumber:   ['mc_mx_ff_number', 'mc_number', 'mc_nbr', 'docket_number'],
+  legalName:  ['legal_name', 'legal_nm', 'name'],
+  dbaName:    ['dba_name', 'dba_nm', 'dba'],
+  phone:      ['telephone', 'phone', 'phone_number', 'ph_number'],
+  email:      ['email_address', 'email', 'email_addr'],
+  street:     ['phy_street', 'physical_street', 'street'],
+  city:       ['phy_city', 'physical_city', 'city'],
+  state:      ['phy_state', 'physical_state', 'state'],
+  zip:        ['phy_zip', 'physical_zip', 'zip'],
+  powerUnits: ['power_units', 'power_unit', 'nbr_power_unit', 'tot_pwr'],
+};
+
+async function discoverColumns() {
+  const headers = SOCRATA_APP_TOKEN ? { 'X-App-Token': SOCRATA_APP_TOKEN } : {};
+  const url = `${SOCRATA_BASE}?$limit=1`;
+  const res = await get(url, headers);
+  if (res.status !== 200 || !Array.isArray(res.body) || res.body.length === 0) {
+    fail(`Could not fetch sample row for column discovery: ${JSON.stringify(res.body).slice(0, 200)}`);
+  }
+
+  const available = Object.keys(res.body[0]);
+  log(`Dataset columns: ${available.join(', ')}`);
+
+  const colMap = {};
+  const missing = [];
+  for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+    const match = aliases.find(a => available.includes(a));
+    if (match) colMap[field] = match;
+    else missing.push(field);
+  }
+
+  if (missing.length) {
+    log(`WARNING: Could not map fields: ${missing.join(', ')} — those fields will be blank`);
+  }
+
+  log(`Column mapping: ${Object.entries(colMap).map(([k, v]) => `${k}→${v}`).join(', ')}`);
+  return colMap;
+}
+
 // ── FMCSA fetch ───────────────────────────────────────────────────────────────
 
-async function fetchFmcsaCarriers() {
+async function fetchFmcsaCarriers(colMap) {
   const headers = SOCRATA_APP_TOKEN ? { 'X-App-Token': SOCRATA_APP_TOKEN } : {};
 
-  // SoQL filter: for-hire (has MC number) + fleet size range + active status
+  const powerCol = colMap.powerUnits;
+  const mcCol    = colMap.mcNumber;
+
+  if (!powerCol || !mcCol) {
+    fail(`Cannot filter without power_units (got: ${powerCol}) and mc_number (got: ${mcCol}) columns. Check column mapping above.`);
+  }
+
+  // SoQL filter using discovered column names
   const where = [
-    `power_units between ${MIN_UNITS} and ${MAX_UNITS}`,
-    `mc_mx_ff_number IS NOT NULL`,
-    `mc_mx_ff_number != '0'`,
+    `${powerCol} between ${MIN_UNITS} and ${MAX_UNITS}`,
+    `${mcCol} IS NOT NULL`,
+    `${mcCol} != '0'`,
   ].join(' AND ');
 
-  // Only fetch columns we actually use
-  const select = [
-    'usdot_number', 'legal_name', 'dba_name', 'mc_mx_ff_number',
-    'power_units', 'phy_street', 'phy_city', 'phy_state', 'phy_zip',
-    'telephone', 'email_address',
-  ].join(',');
+  // Select only columns we have mappings for
+  const select = Object.values(colMap).join(',');
 
   const carriers = [];
   let offset = 0;
@@ -155,58 +202,51 @@ async function fetchFmcsaCarriers() {
     const res = await get(url, headers);
 
     if (res.status !== 200) {
+      process.stdout.write('\n');
       fail(`Socrata API error ${res.status}: ${JSON.stringify(res.body).slice(0, 300)}`);
     }
 
     const rows = res.body;
     if (!Array.isArray(rows) || rows.length === 0) break;
 
-    carriers.push(...rows);
-    if (rows.length < PAGE_SIZE) break; // last page
+    // Normalize: remap actual column names back to logical names for consistent downstream use
+    carriers.push(...rows.map(row => {
+      const out = {};
+      for (const [field, col] of Object.entries(colMap)) out[field] = row[col] || '';
+      return out;
+    }));
 
+    if (rows.length < PAGE_SIZE) break; // last page
     offset += PAGE_SIZE;
     page++;
-    await sleep(200); // polite delay between pages
+    await sleep(200);
   }
 
   process.stdout.write('\n');
   return carriers;
 }
 
-// ── Validate column names ─────────────────────────────────────────────────────
-
-function validateColumns(sample) {
-  const required = ['usdot_number', 'legal_name', 'mc_mx_ff_number', 'power_units'];
-  const keys = Object.keys(sample);
-  const missing = required.filter(c => !keys.includes(c));
-  if (missing.length) {
-    log(`WARNING: Expected columns not found: ${missing.join(', ')}`);
-    log(`Actual columns in dataset: ${keys.join(', ')}`);
-    log('Update the $select list in fetchFmcsaCarriers() to match the actual column names.');
-  }
-}
-
 // ── Map to Zoho Lead ──────────────────────────────────────────────────────────
+// Carrier records are normalized to logical field names by fetchFmcsaCarriers()
 
 function toZohoLead(c) {
-  const company = c.dba_name || c.legal_name || 'Unknown';
-  const phone   = (c.telephone || '').replace(/\D/g, '').replace(/^1?(\d{10})$/, '$1');
+  const company = c.dbaName || c.legalName || 'Unknown';
+  const phone   = (c.phone || '').replace(/\D/g, '').replace(/^1?(\d{10})$/, '$1');
 
   return {
-    Last_Name:   company,     // Zoho requires Last_Name; company name fills it
-    Company:     c.legal_name || company,
-    Phone:       phone        || undefined,
-    Email:       c.email_address?.toLowerCase() || undefined,
-    Street:      c.phy_street || undefined,
-    City:        c.phy_city   || undefined,
-    State:       c.phy_state  || undefined,
-    Zip_Code:    c.phy_zip    || undefined,
+    Last_Name:   company,
+    Company:     c.legalName || company,
+    Phone:       phone       || undefined,
+    Email:       c.email?.toLowerCase() || undefined,
+    Street:      c.street    || undefined,
+    City:        c.city      || undefined,
+    State:       c.state     || undefined,
+    Zip_Code:    c.zip       || undefined,
     Lead_Source: 'FMCSA Census',
-    Description: `Fleet size: ${c.power_units} power units`,
-    // Custom fields — requires manual setup in Zoho CRM (see setup notes at top)
-    DOT_Number:  c.usdot_number    || undefined,
-    MC_Number:   c.mc_mx_ff_number || undefined,
-    Power_Units: c.power_units ? parseInt(c.power_units, 10) : undefined,
+    Description: `Fleet size: ${c.powerUnits} power units`,
+    DOT_Number:  c.dotNumber  || undefined,
+    MC_Number:   c.mcNumber   || undefined,
+    Power_Units: c.powerUnits ? parseInt(c.powerUnits, 10) : undefined,
   };
 }
 
@@ -268,19 +308,19 @@ async function main() {
     fail('Missing Zoho credentials. Set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN.\nRun with DRY_RUN=true to test without Zoho.');
   }
 
-  // 1. Fetch from FMCSA
-  const carriers = await fetchFmcsaCarriers();
+  // 1. Discover actual column names from dataset
+  const colMap = await discoverColumns();
+
+  // 2. Fetch from FMCSA with discovered column names
+  const carriers = await fetchFmcsaCarriers(colMap);
   log(`Fetched ${carriers.length.toLocaleString()} matching carriers from FMCSA`);
 
   if (carriers.length === 0) fail('No carriers returned. Check filter or dataset column names.');
 
-  // Validate column names on first record
-  validateColumns(carriers[0]);
-
   if (DRY_RUN) {
     log('Sample (first 5 records):');
     carriers.slice(0, 5).forEach((c, i) =>
-      log(`  ${i + 1}. ${c.legal_name || c.dba_name} | DOT: ${c.usdot_number} | MC: ${c.mc_mx_ff_number} | ${c.power_units} units | ${c.phy_city}, ${c.phy_state}`)
+      log(`  ${i + 1}. ${c.legalName || c.dbaName} | DOT: ${c.dotNumber} | MC: ${c.mcNumber} | ${c.powerUnits} units | ${c.city}, ${c.state}`)
     );
     log(`DRY RUN complete — ${carriers.length.toLocaleString()} records would be pushed to Zoho.`);
     return;
