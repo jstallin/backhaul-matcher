@@ -214,6 +214,27 @@ export const CoDriver = ({ context, contextData, initialOpen = false, onClose })
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Email support link — shown once conversation has started */}
+          {messages.length > 1 && (
+            <div style={{ padding: '6px 14px', display: 'flex', justifyContent: 'flex-end' }}>
+              <a
+                href={(() => {
+                  const subject = encodeURIComponent('Haul Monitor Support Request');
+                  const transcript = messages
+                    .map(m => `${m.role === 'user' ? 'Me' : 'Co-driver'}: ${m.content}`)
+                    .join('\n\n');
+                  const body = encodeURIComponent(
+                    `Hi Haul Monitor team,\n\nI need help with the following:\n\n---\n${transcript}\n---\n\n[Please add any additional details here]`
+                  );
+                  return `mailto:support@haulmonitor.cloud?subject=${subject}&body=${body}`;
+                })()}
+                style={{ fontSize: '11px', color: 'rgba(100,160,255,0.7)', textDecoration: 'none' }}
+              >
+                Email Support with this chat
+              </a>
+            </div>
+          )}
+
           {/* Input */}
           <div style={{ padding: '11px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '8px', flexShrink: 0 }}>
             <textarea

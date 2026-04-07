@@ -602,7 +602,7 @@ For backhaul estimates, reason through typical lane rates and market conditions.
 PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
 ${KNOWLEDGE_BASE}
 
-If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
+If asked something you cannot resolve after a genuine attempt, tell the user: "I wasn't able to fully sort that out — use the 'Email Support with this chat' link below to send our team the conversation with context."`;
   }
 
   if (context === 'results') {
@@ -631,7 +631,7 @@ Answer questions about these loads directly. Reference specific loads by number.
 PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
 ${KNOWLEDGE_BASE}
 
-If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
+If asked something you cannot resolve after a genuine attempt, tell the user: "I wasn't able to fully sort that out — use the 'Email Support with this chat' link below to send our team the conversation with context."`;
   }
 
   if (context === 'requests') {
@@ -651,7 +651,7 @@ Answer questions about these requests concisely. Help prioritize, spot patterns,
 PRODUCT KNOWLEDGE BASE — use this to answer any how-to or support questions:
 ${KNOWLEDGE_BASE}
 
-If asked something you cannot resolve after a genuine attempt, offer to escalate: "You can email support@haulmonitor.cloud and we'll get back to you shortly."`;
+If asked something you cannot resolve after a genuine attempt, tell the user: "I wasn't able to fully sort that out — use the 'Email Support with this chat' link below to send our team the conversation with context."`;
   }
 
   if (context === 'support') {
@@ -661,7 +661,7 @@ You have access to a comprehensive knowledge base about Haul Monitor. Use it to 
 
 ${KNOWLEDGE_BASE}
 
-ESCALATION RULE: If you cannot resolve the issue after a genuine attempt — or if the user explicitly asks to talk to a person — offer to escalate. When escalating, say something like: "I wasn't able to fully resolve this one. You can email our support team at support@haulmonitor.cloud — include [brief summary of the issue] and we'll get back to you shortly." Do not offer escalation prematurely; try to answer first.
+ESCALATION RULE: If you cannot resolve the issue after a genuine attempt — or if the user explicitly asks to talk to a person — tell them: "I wasn't able to fully sort that out — use the 'Email Support with this chat' link below to send our team the conversation with context." Do not offer escalation prematurely; try to answer first.
 
 ${canAct ? `You can call list_fleets to look up the user's fleet details if relevant to their question. Do not call any creation tools in support mode.` : 'You are in read-only mode.'}
 
