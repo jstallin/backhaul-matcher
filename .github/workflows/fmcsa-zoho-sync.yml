@@ -27,21 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download + extract FMCSA census file
-        run: |
-          echo "Downloading FMCSA carrier census..."
-          curl -L -o /tmp/FMCSA_CENSUS1.zip "https://ai.fmcsa.dot.gov/SMS/files/FMCSA_CENSUS1.zip"
-          echo "Extracting..."
-          unzip -o /tmp/FMCSA_CENSUS1.zip -d /tmp/fmcsa/
-          echo "Extracted files:"
-          ls -lh /tmp/fmcsa/
-
       - name: Run sync
         env:
-          CENSUS_FILE: /tmp/fmcsa/CENSUS1.txt
           ZOHO_CLIENT_ID: ${{ secrets.ZOHO_CLIENT_ID }}
           ZOHO_CLIENT_SECRET: ${{ secrets.ZOHO_CLIENT_SECRET }}
           ZOHO_REFRESH_TOKEN: ${{ secrets.ZOHO_REFRESH_TOKEN }}
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MIN_UNITS: '3'
           MAX_UNITS: '75'

@@ -1,19 +1,18 @@
 /**
  * FMCSA → Zoho CRM Lead Sync
  *
- * Downloads the FMCSA carrier census file, filters for Haul Monitor's ICP
- * (for-hire carriers, 3–75 power units, active status), and upserts matching
- * carriers as Leads in Zoho CRM.
+ * Queries the FMCSA Company Census via the Socrata API (data.transportation.gov),
+ * filters for Haul Monitor's ICP (for-hire carriers, 3–75 power units), and
+ * upserts matching carriers as Leads in Zoho CRM.
  *
  * ── One-time Zoho setup ───────────────────────────────────────────────────────
  *  1. Go to https://api-console.zoho.com/ → Add Client → Self Client
  *  2. Copy your Client ID and Client Secret
  *  3. Click "Generate Code", scope: ZohoCRM.modules.leads.ALL  (10-min window)
- *  4. Exchange the code for tokens:
- *       curl -X POST "https://accounts.zoho.com/oauth/v2/token" \
- *         -d "client_id=ID&client_secret=SECRET&code=CODE&grant_type=authorization_code"
- *  5. Save the refresh_token — it's long-lived and goes in ZOHO_REFRESH_TOKEN
- *  6. In Zoho CRM → Settings → Modules → Leads → Fields, add three custom fields:
+ *  4. Exchange code for tokens (run once in terminal):
+ *       curl -X POST "https://accounts.zoho.com/oauth/v2/token?client_id=ID&client_secret=SECRET&code=CODE&grant_type=authorization_code"
+ *  5. Save the refresh_token → ZOHO_REFRESH_TOKEN secret
+ *  6. In Zoho CRM → Settings → Modules → Leads → Fields, add custom fields:
  *       DOT_Number   (Single Line, unique) ← used for deduplication
  *       MC_Number    (Single Line)
  *       Power_Units  (Number)
@@ -26,68 +25,80 @@
  *
  * Optional env vars:
  *   DRY_RUN=true        Filter and print records without pushing to Zoho
- *   CENSUS_FILE=path    Use a pre-downloaded, already-extracted census file
  *   MIN_UNITS=3         Min power units (default: 3)
  *   MAX_UNITS=75        Max power units (default: 75)
+ *   SOCRATA_APP_TOKEN   Free token from data.transportation.gov — increases
+ *                       rate limits (register at data.transportation.gov/signup)
  */
 
 import https from 'https';
-import http from 'http';
-import fs from 'fs';
-import readline from 'readline';
-import { execSync } from 'child_process';
-import os from 'os';
-import path from 'path';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const DRY_RUN       = process.env.DRY_RUN === 'true';
-const CENSUS_FILE   = process.env.CENSUS_FILE || null;
-const MIN_UNITS     = parseInt(process.env.MIN_UNITS  || '3',  10);
-const MAX_UNITS     = parseInt(process.env.MAX_UNITS  || '75', 10);
-const CENSUS_URL    = 'https://ai.fmcsa.dot.gov/SMS/files/FMCSA_CENSUS1.zip';
-const BATCH_SIZE    = 100;
-const RATE_LIMIT_MS = 400; // ~150 req/min — safely under Zoho's 200/min limit
+const DRY_RUN         = process.env.DRY_RUN === 'true';
+const MIN_UNITS       = parseInt(process.env.MIN_UNITS || '3',  10);
+const MAX_UNITS       = parseInt(process.env.MAX_UNITS || '75', 10);
+const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN || null;
 
-// Column name aliases — FMCSA occasionally changes names between releases.
-// The script tries each alias in order and uses the first one found in the header.
-const COL = {
-  dotNumber:    ['USDOT_NUMBER', 'DOT_NUMBER'],
-  mcNumber:     ['MC_MX_FF_NUMBER', 'MC_NUMBER'],
-  legalName:    ['LEGAL_NAME'],
-  dbaName:      ['DBA_NAME'],
-  phone:        ['TELEPHONE', 'PHONE'],
-  email:        ['EMAIL_ADDRESS', 'EMAIL'],
-  street:       ['PHY_STREET'],
-  city:         ['PHY_CITY'],
-  state:        ['PHY_STATE'],
-  zip:          ['PHY_ZIP'],
-  powerUnits:   ['POWER_UNITS', 'NBR_POWER_UNIT'],
-};
+const DATASET_ID      = 'az4n-8mr2';
+const SOCRATA_BASE    = `https://data.transportation.gov/resource/${DATASET_ID}.json`;
+const PAGE_SIZE       = 50000;
 
 const ZOHO_CLIENT_ID     = process.env.ZOHO_CLIENT_ID;
 const ZOHO_CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 const ZOHO_REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
 
+const ZOHO_BATCH_SIZE  = 100;
+const ZOHO_RATE_MS     = 400; // ~150 req/min, safely under Zoho's 200/min limit
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function log(msg) { console.log(`[fmcsa-zoho] ${msg}`); }
-function err(msg) { console.error(`[fmcsa-zoho] ERROR: ${msg}`); }
-
+function log(msg)  { console.log(`[fmcsa-zoho] ${msg}`); }
+function fail(msg) { console.error(`[fmcsa-zoho] ERROR: ${msg}`); process.exit(1); }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function httpGet(url) {
+function get(url, headers = {}) {
   return new Promise((resolve, reject) => {
-    const mod = url.startsWith('https') ? https : http;
-    mod.get(url, res => {
+    const options = { headers: { 'Accept': 'application/json', ...headers } };
+    https.get(url, options, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return httpGet(res.headers.location).then(resolve).catch(reject);
+        return get(res.headers.location, headers).then(resolve).catch(reject);
       }
       const chunks = [];
       res.on('data', c => chunks.push(c));
-      res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString() }));
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(chunks).toString()) }); }
+        catch (e) { reject(new Error(`JSON parse failed: ${e.message}`)); }
+      });
       res.on('error', reject);
     }).on('error', reject);
+  });
+}
+
+function post(url, token, payload) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload);
+    const parsed = new URL(url);
+    const req = https.request({
+      hostname: parsed.hostname,
+      path: parsed.pathname,
+      method: 'POST',
+      headers: {
+        'Authorization': `Zoho-oauthtoken ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      }
+    }, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(chunks).toString()) }); }
+        catch (e) { reject(new Error(`JSON parse failed: ${e.message}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
   });
 }
 
@@ -95,16 +106,15 @@ function httpPost(url, params) {
   return new Promise((resolve, reject) => {
     const body = new URLSearchParams(params).toString();
     const parsed = new URL(url);
-    const options = {
+    const req = https.request({
       hostname: parsed.hostname,
       path: parsed.pathname,
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }
-    };
-    const req = https.request(options, res => {
+    }, res => {
       const chunks = [];
       res.on('data', c => chunks.push(c));
-      res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString() }));
+      res.on('end', () => resolve(JSON.parse(Buffer.concat(chunks).toString())));
     });
     req.on('error', reject);
     req.write(body);
@@ -112,217 +122,136 @@ function httpPost(url, params) {
   });
 }
 
-function apiPost(url, token, payload) {
-  return new Promise((resolve, reject) => {
-    const body = JSON.stringify(payload);
-    const parsed = new URL(url);
-    const options = {
-      hostname: parsed.hostname,
-      path: parsed.pathname + (parsed.search || ''),
-      method: 'POST',
-      headers: {
-        'Authorization': `Zoho-oauthtoken ${token}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      }
-    };
-    const req = https.request(options, res => {
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(chunks).toString()) }));
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
+// ── FMCSA fetch ───────────────────────────────────────────────────────────────
 
-// ── Download + extract ────────────────────────────────────────────────────────
+async function fetchFmcsaCarriers() {
+  const headers = SOCRATA_APP_TOKEN ? { 'X-App-Token': SOCRATA_APP_TOKEN } : {};
 
-async function downloadCensusFile() {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fmcsa-'));
-  const zipPath = path.join(tmpDir, 'FMCSA_CENSUS1.zip');
+  // SoQL filter: for-hire (has MC number) + fleet size range + active status
+  const where = [
+    `power_units between ${MIN_UNITS} and ${MAX_UNITS}`,
+    `mc_mx_ff_number IS NOT NULL`,
+    `mc_mx_ff_number != '0'`,
+  ].join(' AND ');
 
-  log(`Downloading FMCSA census file → ${zipPath}`);
-  log(`Source: ${CENSUS_URL}`);
+  // Only fetch columns we actually use
+  const select = [
+    'usdot_number', 'legal_name', 'dba_name', 'mc_mx_ff_number',
+    'power_units', 'phy_street', 'phy_city', 'phy_state', 'phy_zip',
+    'telephone', 'email_address',
+  ].join(',');
 
-  await new Promise((resolve, reject) => {
-    const mod = CENSUS_URL.startsWith('https') ? https : http;
-    const file = fs.createWriteStream(zipPath);
-    const follow = (url) => {
-      mod.get(url, res => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return follow(res.headers.location);
-        }
-        res.pipe(file);
-        file.on('finish', () => { file.close(); resolve(); });
-      }).on('error', reject);
-    };
-    follow(CENSUS_URL);
-  });
+  const carriers = [];
+  let offset = 0;
+  let page = 1;
 
-  log('Extracting...');
-  execSync(`unzip -o "${zipPath}" -d "${tmpDir}"`, { stdio: 'pipe' });
+  log(`Querying FMCSA dataset (ICP filter: ${MIN_UNITS}–${MAX_UNITS} power units, for-hire)...`);
 
-  // Find the extracted .txt file (name may vary)
-  const txtFile = fs.readdirSync(tmpDir).find(f => f.endsWith('.txt') || f.endsWith('.csv'));
-  if (!txtFile) throw new Error(`No .txt/.csv file found after extracting ${zipPath}`);
+  while (true) {
+    const params = new URLSearchParams({ '$where': where, '$select': select, '$limit': PAGE_SIZE, '$offset': offset });
+    const url = `${SOCRATA_BASE}?${params}`;
 
-  const extractedPath = path.join(tmpDir, txtFile);
-  log(`Extracted: ${txtFile}`);
-  return extractedPath;
-}
+    process.stdout.write(`\r  Fetching page ${page} (offset ${offset.toLocaleString()})...`);
+    const res = await get(url, headers);
 
-// ── Parse + filter ────────────────────────────────────────────────────────────
-
-async function parseAndFilter(filePath) {
-  log(`Parsing ${filePath}...`);
-
-  const rl = readline.createInterface({ input: fs.createReadStream(filePath), crlfDelay: Infinity });
-  const lines = rl[Symbol.asyncIterator]();
-
-  // Read header row and detect delimiter
-  const { value: headerLine } = await lines.next();
-  const delimiter = headerLine.includes('\t') ? '\t' : '|';
-  const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
-
-  // Resolve column indices from aliases
-  const idx = {};
-  for (const [field, aliases] of Object.entries(COL)) {
-    const found = aliases.find(a => headers.includes(a));
-    if (found) {
-      idx[field] = headers.indexOf(found);
-    } else {
-      log(`Warning: column "${field}" not found (tried: ${aliases.join(', ')})`);
+    if (res.status !== 200) {
+      fail(`Socrata API error ${res.status}: ${JSON.stringify(res.body).slice(0, 300)}`);
     }
+
+    const rows = res.body;
+    if (!Array.isArray(rows) || rows.length === 0) break;
+
+    carriers.push(...rows);
+    if (rows.length < PAGE_SIZE) break; // last page
+
+    offset += PAGE_SIZE;
+    page++;
+    await sleep(200); // polite delay between pages
   }
 
-  if (idx.dotNumber === undefined || idx.legalName === undefined) {
-    throw new Error('Required columns DOT_NUMBER and LEGAL_NAME not found. Check the census file format.');
-  }
+  process.stdout.write('\n');
+  return carriers;
+}
 
-  const get = (fields, row) => {
-    const i = idx[fields];
-    return i !== undefined ? (row[i] || '').trim().replace(/^"|"$/g, '') : '';
+// ── Validate column names ─────────────────────────────────────────────────────
+
+function validateColumns(sample) {
+  const required = ['usdot_number', 'legal_name', 'mc_mx_ff_number', 'power_units'];
+  const keys = Object.keys(sample);
+  const missing = required.filter(c => !keys.includes(c));
+  if (missing.length) {
+    log(`WARNING: Expected columns not found: ${missing.join(', ')}`);
+    log(`Actual columns in dataset: ${keys.join(', ')}`);
+    log('Update the $select list in fetchFmcsaCarriers() to match the actual column names.');
+  }
+}
+
+// ── Map to Zoho Lead ──────────────────────────────────────────────────────────
+
+function toZohoLead(c) {
+  const company = c.dba_name || c.legal_name || 'Unknown';
+  const phone   = (c.telephone || '').replace(/\D/g, '').replace(/^1?(\d{10})$/, '$1');
+
+  return {
+    Last_Name:   company,     // Zoho requires Last_Name; company name fills it
+    Company:     c.legal_name || company,
+    Phone:       phone        || undefined,
+    Email:       c.email_address?.toLowerCase() || undefined,
+    Street:      c.phy_street || undefined,
+    City:        c.phy_city   || undefined,
+    State:       c.phy_state  || undefined,
+    Zip_Code:    c.phy_zip    || undefined,
+    Lead_Source: 'FMCSA Census',
+    Description: `Fleet size: ${c.power_units} power units`,
+    // Custom fields — requires manual setup in Zoho CRM (see setup notes at top)
+    DOT_Number:  c.usdot_number    || undefined,
+    MC_Number:   c.mc_mx_ff_number || undefined,
+    Power_Units: c.power_units ? parseInt(c.power_units, 10) : undefined,
   };
-
-  const leads = [];
-  let total = 0;
-  let skipped = { noMC: 0, unitRange: 0, inactive: 0 };
-
-  for await (const line of lines) {
-    if (!line.trim()) continue;
-    total++;
-    const row = line.split(delimiter);
-
-    // Must have MC number (for-hire carrier — uses load boards)
-    const mcNumber = get('mcNumber', row);
-    if (!mcNumber) { skipped.noMC++; continue; }
-
-    // Active carriers only (status column may not exist — skip check if missing)
-    // FMCSA uses various status codes; we skip obvious inactive markers
-    // If the column isn't present, we include the record
-
-    // Fleet size filter
-    const units = parseInt(get('powerUnits', row) || '0', 10);
-    if (units < MIN_UNITS || units > MAX_UNITS) { skipped.unitRange++; continue; }
-
-    const legalName = get('legalName', row);
-    const dbaName   = get('dbaName', row);
-    const company   = dbaName || legalName;
-    if (!company) continue;
-
-    leads.push({
-      company,
-      dotNumber:  get('dotNumber', row),
-      mcNumber,
-      phone:      get('phone', row).replace(/\D/g, '').replace(/^1?(\d{10})$/, '$1'),
-      email:      get('email', row).toLowerCase(),
-      street:     get('street', row),
-      city:       get('city', row),
-      state:      get('state', row),
-      zip:        get('zip', row),
-      powerUnits: units,
-    });
-  }
-
-  log(`Total records: ${total.toLocaleString()}`);
-  log(`Filtered out — no MC number: ${skipped.noMC.toLocaleString()}, out of unit range: ${skipped.unitRange.toLocaleString()}`);
-  log(`Matched ICP: ${leads.length.toLocaleString()} carriers`);
-
-  return leads;
 }
 
 // ── Zoho auth ─────────────────────────────────────────────────────────────────
 
-async function getAccessToken() {
-  const res = await httpPost('https://accounts.zoho.com/oauth/v2/token', {
+async function getZohoToken() {
+  const data = await httpPost('https://accounts.zoho.com/oauth/v2/token', {
     client_id:     ZOHO_CLIENT_ID,
     client_secret: ZOHO_CLIENT_SECRET,
     refresh_token: ZOHO_REFRESH_TOKEN,
     grant_type:    'refresh_token',
   });
-
-  const data = JSON.parse(res.body);
-  if (!data.access_token) throw new Error(`Zoho token error: ${res.body}`);
-  log('Zoho access token obtained');
+  if (!data.access_token) fail(`Zoho token error: ${JSON.stringify(data)}`);
+  log('Zoho authenticated');
   return data.access_token;
 }
 
 // ── Zoho push ─────────────────────────────────────────────────────────────────
 
-function toZohoLead(c) {
-  return {
-    Last_Name:   c.company,   // Zoho requires Last_Name; company name fills it
-    Company:     c.company,
-    Phone:       c.phone      || undefined,
-    Email:       c.email      || undefined,
-    Street:      c.street     || undefined,
-    City:        c.city       || undefined,
-    State:       c.state      || undefined,
-    Zip_Code:    c.zip        || undefined,
-    Lead_Source: 'FMCSA Census',
-    Description: `Fleet size: ${c.powerUnits} power units`,
-    // Custom fields — requires manual setup in Zoho (see setup notes at top)
-    DOT_Number:  c.dotNumber  || undefined,
-    MC_Number:   c.mcNumber   || undefined,
-    Power_Units: c.powerUnits || undefined,
-  };
-}
-
-async function pushToZoho(leads, accessToken) {
+async function pushToZoho(carriers, token) {
   let created = 0, updated = 0, errors = 0;
-  const batches = Math.ceil(leads.length / BATCH_SIZE);
+  const batches = Math.ceil(carriers.length / ZOHO_BATCH_SIZE);
 
   for (let i = 0; i < batches; i++) {
-    const batch = leads.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-    const payload = {
+    const batch = carriers.slice(i * ZOHO_BATCH_SIZE, (i + 1) * ZOHO_BATCH_SIZE);
+    const res = await post('https://www.zohoapis.com/crm/v2/Leads/upsert', token, {
       data: batch.map(toZohoLead),
-      duplicate_check_fields: ['DOT_Number'],  // upsert on DOT number
-    };
-
-    const res = await apiPost(
-      'https://www.zohoapis.com/crm/v2/Leads/upsert',
-      accessToken,
-      payload
-    );
+      duplicate_check_fields: ['DOT_Number'],
+    });
 
     if (res.status === 200 || res.status === 201) {
-      const results = res.body?.data || [];
-      results.forEach(r => {
+      (res.body?.data || []).forEach(r => {
         if (r.status === 'success' && r.action === 'insert') created++;
         else if (r.status === 'success' && r.action === 'update') updated++;
-        else if (r.code !== 'SUCCESS') errors++;
+        else errors++;
       });
     } else {
-      err(`Batch ${i + 1}/${batches} failed: HTTP ${res.status} — ${JSON.stringify(res.body).slice(0, 200)}`);
+      log(`Batch ${i + 1}/${batches} failed: HTTP ${res.status}`);
       errors += batch.length;
     }
 
     const pct = Math.round(((i + 1) / batches) * 100);
-    process.stdout.write(`\r  Progress: ${i + 1}/${batches} batches (${pct}%) — ${created} new, ${updated} updated, ${errors} errors`);
+    process.stdout.write(`\r  Zoho: ${i + 1}/${batches} batches (${pct}%) — ${created} new, ${updated} updated, ${errors} errors`);
 
-    if (i < batches - 1) await sleep(RATE_LIMIT_MS);
+    if (i < batches - 1) await sleep(ZOHO_RATE_MS);
   }
 
   process.stdout.write('\n');
@@ -332,53 +261,44 @@ async function pushToZoho(leads, accessToken) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  log(`Starting FMCSA → Zoho sync${DRY_RUN ? ' (DRY RUN)' : ''}`);
-  log(`ICP filter: ${MIN_UNITS}–${MAX_UNITS} power units, for-hire (MC number required)`);
+  log(`FMCSA → Zoho CRM sync${DRY_RUN ? ' (DRY RUN)' : ''}`);
+  log(`ICP: ${MIN_UNITS}–${MAX_UNITS} power units | for-hire (MC# required) | nationwide`);
 
   if (!DRY_RUN && (!ZOHO_CLIENT_ID || !ZOHO_CLIENT_SECRET || !ZOHO_REFRESH_TOKEN)) {
-    err('Missing Zoho credentials. Set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN.');
-    err('Run with DRY_RUN=true to test filtering without Zoho credentials.');
-    process.exit(1);
+    fail('Missing Zoho credentials. Set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET, ZOHO_REFRESH_TOKEN.\nRun with DRY_RUN=true to test without Zoho.');
   }
 
-  // 1. Get census file
-  let censusPath = CENSUS_FILE;
-  if (!censusPath) {
-    censusPath = await downloadCensusFile();
-  } else {
-    log(`Using local file: ${censusPath}`);
-  }
+  // 1. Fetch from FMCSA
+  const carriers = await fetchFmcsaCarriers();
+  log(`Fetched ${carriers.length.toLocaleString()} matching carriers from FMCSA`);
 
-  // 2. Parse and filter
-  const leads = await parseAndFilter(censusPath);
+  if (carriers.length === 0) fail('No carriers returned. Check filter or dataset column names.');
 
-  if (leads.length === 0) {
-    log('No matching carriers found. Check filters or census file format.');
-    process.exit(0);
-  }
+  // Validate column names on first record
+  validateColumns(carriers[0]);
 
   if (DRY_RUN) {
-    log('DRY RUN — first 5 matched records:');
-    leads.slice(0, 5).forEach((l, i) =>
-      log(`  ${i + 1}. ${l.company} | DOT: ${l.dotNumber} | MC: ${l.mcNumber} | ${l.powerUnits} units | ${l.city}, ${l.state}`)
+    log('Sample (first 5 records):');
+    carriers.slice(0, 5).forEach((c, i) =>
+      log(`  ${i + 1}. ${c.legal_name || c.dba_name} | DOT: ${c.usdot_number} | MC: ${c.mc_mx_ff_number} | ${c.power_units} units | ${c.phy_city}, ${c.phy_state}`)
     );
-    log(`DRY RUN complete — ${leads.length.toLocaleString()} records would be pushed to Zoho.`);
+    log(`DRY RUN complete — ${carriers.length.toLocaleString()} records would be pushed to Zoho.`);
     return;
   }
 
-  // 3. Authenticate with Zoho
-  const accessToken = await getAccessToken();
+  // 2. Authenticate Zoho
+  const token = await getZohoToken();
 
-  // 4. Push leads
-  log(`Pushing ${leads.length.toLocaleString()} leads to Zoho in batches of ${BATCH_SIZE}...`);
-  const { created, updated, errors } = await pushToZoho(leads, accessToken);
+  // 3. Push
+  log(`Pushing ${carriers.length.toLocaleString()} leads to Zoho (${ZOHO_BATCH_SIZE}/batch)...`);
+  const { created, updated, errors } = await pushToZoho(carriers, token);
 
-  log('── Summary ───────────────────────────────');
-  log(`  Matched ICP:   ${leads.length.toLocaleString()}`);
-  log(`  Created:       ${created.toLocaleString()}`);
-  log(`  Updated:       ${updated.toLocaleString()}`);
-  log(`  Errors:        ${errors.toLocaleString()}`);
-  log('──────────────────────────────────────────');
+  log('── Summary ───────────────────────────────────────');
+  log(`  FMCSA matches:  ${carriers.length.toLocaleString()}`);
+  log(`  Created:        ${created.toLocaleString()}`);
+  log(`  Updated:        ${updated.toLocaleString()}`);
+  log(`  Errors:         ${errors.toLocaleString()}`);
+  log('──────────────────────────────────────────────────');
 }
 
-main().catch(e => { err(e.message); process.exit(1); });
+main().catch(e => fail(e.message));
