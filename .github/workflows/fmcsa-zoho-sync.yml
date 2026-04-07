@@ -1,0 +1,48 @@
+name: FMCSA → Zoho Prospect Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (filter only, no Zoho push)'
+        type: boolean
+        default: false
+  schedule:
+    # 1st of every month at 6:00 AM UTC
+    - cron: '0 6 1 * *'
+
+jobs:
+  sync:
+    name: Sync FMCSA carriers to Zoho CRM
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download + extract FMCSA census file
+        run: |
+          echo "Downloading FMCSA carrier census..."
+          curl -L -o /tmp/FMCSA_CENSUS1.zip "https://ai.fmcsa.dot.gov/SMS/files/FMCSA_CENSUS1.zip"
+          echo "Extracting..."
+          unzip -o /tmp/FMCSA_CENSUS1.zip -d /tmp/fmcsa/
+          echo "Extracted files:"
+          ls -lh /tmp/fmcsa/
+
+      - name: Run sync
+        env:
+          CENSUS_FILE: /tmp/fmcsa/CENSUS1.txt
+          ZOHO_CLIENT_ID: ${{ secrets.ZOHO_CLIENT_ID }}
+          ZOHO_CLIENT_SECRET: ${{ secrets.ZOHO_CLIENT_SECRET }}
+          ZOHO_REFRESH_TOKEN: ${{ secrets.ZOHO_REFRESH_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          MIN_UNITS: '3'
+          MAX_UNITS: '75'
+        run: node scripts/fmcsa-zoho-sync.mjs
