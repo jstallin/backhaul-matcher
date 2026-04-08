@@ -1,85 +1,93 @@
 {
-  "runDate": "2026-04-07",
-  "runAt": "2026-04-07T08:52:50.198Z",
-  "totalLoads": 24275,
-  "previousTotal": 18570,
-  "netChange": 5705,
-  "added": 20027,
-  "removed": 14322,
-  "avgPay": 1101,
-  "loadsWithPay": 17680,
+  "runDate": "2026-04-08",
+  "runAt": "2026-04-08T08:55:13.148Z",
+  "totalLoads": 25110,
+  "previousTotal": 24275,
+  "netChange": 835,
+  "added": 20101,
+  "removed": 19266,
+  "avgPay": 1134,
+  "loadsWithPay": 18487,
   "equipmentTypes": [
     [
       "Flatbed",
-      12328
+      12968
     ],
     [
       "Step Deck",
-      5610
+      5983
     ],
     [
       "Dry Van",
-      3933
+      3792
     ],
     [
       "Refrigerated",
-      1536
+      1501
     ],
     [
       "Power Only",
-      480
+      478
     ],
     [
       "Hotshot",
-      83
-    ],
-    [
-      "Box Truck",
-      53
+      74
     ],
     [
       "48 FT",
-      44
+      62
     ],
     [
       "TARPS",
-      44
+      60
+    ],
+    [
+      "Box Truck",
+      45
+    ],
+    [
+      "Curtain Van",
+      29
     ],
     [
       "Lowboy",
-      35
+      28
     ],
     [
       "Other",
       23
     ],
     [
-      "Curtain Van",
-      22
-    ],
-    [
       "Container",
-      12
+      13
     ],
     [
       "PARTIAL",
-      12
-    ],
-    [
-      "53 FT",
-      10
+      7
     ],
     [
       "26 FT",
-      9
+      6
     ],
     [
-      "REEFER",
+      "STEPDECK",
       5
     ],
     [
       "O",
       5
+    ],
+    [
+      "REEFER",
+      4
+    ],
+    [
+      "20 FT",
+      3
+    ],
+    [
+      "Cargo Van",
+      3
     ],
     [
       "Dump Trailer",
@@ -90,59 +98,51 @@
       2
     ],
     [
-      "REF1",
+      "Tanker",
       2
     ],
     [
-      "53VN",
-      2
+      "HOTSHOT",
+      1
+    ],
+    [
+      "S",
+      1
+    ],
+    [
+      "CURTAIN_SIDE",
+      1
+    ],
+    [
+      "53 FT",
+      1
+    ],
+    [
+      "L/T/L",
+      1
     ],
     [
       "LIFT-GATE",
-      2
-    ],
-    [
-      "OVERDIMENSIONAL",
-      2
-    ],
-    [
-      "STEPDECK",
-      2
-    ],
-    [
-      "Hopper Bottom",
-      2
-    ],
-    [
-      "DD3E",
       1
     ],
     [
-      "SDE",
+      "24 FT",
       1
     ],
     [
-      "53SD",
+      "12 FT",
       1
     ],
     [
-      "FBLS",
+      "DD3C",
       1
     ],
     [
-      "Cargo Van",
+      "FBCS",
       1
     ],
     [
-      "PFL",
-      1
-    ],
-    [
-      "FCON",
-      1
-    ],
-    [
-      "Tanker",
+      "53FL",
       1
     ],
     [
@@ -158,102 +158,90 @@
       1
     ],
     [
-      "16 FT",
-      1
-    ],
-    [
-      "FRFR",
-      1
-    ],
-    [
-      "REFS",
-      1
-    ],
-    [
-      "B-RF",
+      "OVERDIMENSIONAL",
       1
     ]
   ],
   "topPickupStates": [
     [
-      "GA",
-      2460
+      "AL",
+      2705
     ],
     [
-      "AL",
-      2404
+      "GA",
+      2479
     ],
     [
       "NC",
-      1519
-    ],
-    [
-      "CA",
-      1248
-    ],
-    [
-      "IL",
-      1206
+      1389
     ],
     [
       "SC",
-      1180
+      1290
     ],
     [
-      "IN",
-      1090
+      "CA",
+      1187
+    ],
+    [
+      "IL",
+      1183
     ],
     [
       "AR",
-      960
+      1093
+    ],
+    [
+      "IN",
+      965
     ],
     [
       "MS",
-      840
+      962
     ],
     [
       "LA",
-      818
-    ],
-    [
-      "MI",
-      769
-    ],
-    [
-      "MA",
-      748
-    ],
-    [
-      "VA",
-      676
+      876
     ],
     [
       "MN",
-      672
+      775
     ],
     [
-      "NY",
-      672
+      "MI",
+      750
     ],
     [
       "WI",
-      645
+      718
     ],
     [
-      "TN",
-      632
+      "VA",
+      716
     ],
     [
       "OK",
-      559
+      656
+    ],
+    [
+      "TN",
+      639
+    ],
+    [
+      "MA",
+      635
     ],
     [
       "KY",
-      541
+      580
     ],
     [
-      "MD",
-      423
+      "NY",
+      579
+    ],
+    [
+      "AZ",
+      456
     ]
   ]
 }
