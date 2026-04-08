@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Data — Haul Monitor</title>
+  <meta name="description" content="How Haul Monitor handles your data — what we collect, what we never store, and how we protect it." />
+  <link rel="icon" type="image/png" href="/haul-monitor-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d1117;
+      --bg2:         #161b22;
+      --bg3:         #1c2230;
+      --border:      rgba(255,255,255,0.08);
+      --border2:     rgba(255,255,255,0.14);
+      --text:        #f0f6fc;
+      --text2:       #8b949e;
+      --text3:       #6e7681;
+      --accent:      #7DC520;
+      --accent-dim:  rgba(125,197,32,0.12);
+      --accent-bdr:  rgba(125,197,32,0.3);
+      --radius:      12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Darker Grotesque', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 17px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 64px;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav a.logo img {
+      height: 32px;
+      border-radius: 5px;
+      background: #fff;
+      padding: 3px 8px;
+    }
+
+    nav a.cta {
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 8px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 64px 24px 96px;
+    }
+
+    .content h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .content .meta {
+      font-size: 14px;
+      color: var(--text3);
+      margin-bottom: 48px;
+    }
+
+    .content h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 40px 0 12px;
+    }
+
+    .content p {
+      color: var(--text2);
+      margin-bottom: 16px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .content ul {
+      color: var(--text2);
+      padding-left: 24px;
+      margin-bottom: 16px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .content li {
+      margin-bottom: 6px;
+    }
+
+    .content strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .content a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .content a:hover {
+      text-decoration: underline;
+    }
+
+    .content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── CALLOUT ── */
+    .callout {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-bdr);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .callout p {
+      color: var(--text);
+      margin-bottom: 0;
+      font-size: 16px;
+    }
+
+    .callout p + p {
+      margin-top: 10px;
+    }
+
+    /* ── TABLE ── */
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+
+    .content th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg2);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .content td {
+      padding: 10px 14px;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .content tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    footer img {
+      height: 30px;
+      border-radius: 5px;
+      background: #fff;
+      padding: 3px 8px;
+      display: block;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    footer a {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      padding: 4px 0;
+    }
+
+    footer a:hover { color: var(--text2); }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      .content { padding: 40px 20px 64px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="logo" href="/"><img src="/haul-monitor-full.png" alt="Haul Monitor" /></a>
+  <a class="cta" href="/app">Open App</a>
+</nav>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+  <h1>Your Data</h1>
+  <p class="meta">Last updated: April 8, 2026</p>
+
+  <p>This page explains in plain language how Haul Monitor handles customer data — what we collect, what we intentionally do <em>not</em> store, and how we protect what we do hold. It's a summary of our internal security policy, written for customers.</p>
+
+  <hr />
+
+  <h2>What we store</h2>
+  <p>Haul Monitor stores only the data that you create or provide directly:</p>
+  <ul>
+    <li><strong>Your account</strong> — email address and authentication credentials</li>
+    <li><strong>Fleet profiles</strong> — equipment type, home base location, driver records, and rate configuration</li>
+    <li><strong>Open requests</strong> — your saved search parameters for ongoing backhaul monitoring</li>
+    <li><strong>Completed haul records</strong> — loads you've confirmed through the "Haul This Load" workflow, including revenue outcomes</li>
+    <li><strong>AI preference signals</strong> — anonymized feedback on load recommendations used to improve your matching results over time</li>
+    <li><strong>Billing records</strong> — credit bundle purchases (payment card data is handled entirely by Stripe — we never see or store it)</li>
+  </ul>
+
+  <hr />
+
+  <h2>What we do not store</h2>
+
+  <div class="callout">
+    <p><strong>Haul Monitor is a real-time intelligence layer, not a data aggregator.</strong></p>
+    <p>Load board data from DAT, Truckstop, and similar sources is queried live through authorized API partnerships when you run a search. It exists only in memory for the duration of your session — roughly 15 to 30 minutes — and is never written to our database.</p>
+  </div>
+
+  <p>This means:</p>
+  <ul>
+    <li><strong>No load listings are persisted.</strong> The loads you see in search results live on the load board's platform, not ours. We're providing the matching intelligence applied to that data.</li>
+    <li><strong>No route geometry is permanently stored.</strong> Driving directions from our routing provider (PC*MILER) are returned to your browser in real-time. We maintain a shared distance cache — origin/destination city pairs only, no personal information — to reduce redundant API calls.</li>
+  </ul>
+
+  <p><strong>Why?</strong> Load data lives authoritatively on load board platforms. Copying it doesn't make the matching better — it just increases our data footprint and your risk exposure. We keep only what's ours to keep.</p>
+
+  <hr />
+
+  <h2>How we protect your data</h2>
+  <ul>
+    <li><strong>Encryption in transit:</strong> All data between your browser and Haul Monitor is encrypted via TLS 1.2 or higher</li>
+    <li><strong>Encryption at rest:</strong> All data stored in our database is encrypted at rest (AES-256) by our database provider, Supabase</li>
+    <li><strong>Tenant isolation:</strong> Row-Level Security on every database table ensures your data is accessible only to your authenticated account — not to other customers</li>
+    <li><strong>Credential management:</strong> API keys and service credentials are stored as server-side environment variables and are never exposed to the browser or included in client-side code</li>
+    <li><strong>Administrative access:</strong> All production system access is restricted to a single named administrator, protected by strong passwords and multi-factor authentication</li>
+  </ul>
+
+  <hr />
+
+  <h2>Third-party service providers</h2>
+  <p>We share your data only with the vendors necessary to deliver the service:</p>
+
+  <table>
+    <thead>
+      <tr><th>Provider</th><th>Purpose</th><th>What is shared</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Supabase</strong></td>
+        <td>Database and authentication</td>
+        <td>All application data (fleet profiles, requests, completed hauls)</td>
+      </tr>
+      <tr>
+        <td><strong>Vercel</strong></td>
+        <td>Application hosting and serverless compute</td>
+        <td>API request data in transit; server logs</td>
+      </tr>
+      <tr>
+        <td><strong>Trimble (PC*MILER)</strong></td>
+        <td>Driving distance calculations for load matching</td>
+        <td>Origin and destination city/state pairs only — no account or fleet identifiers</td>
+      </tr>
+      <tr>
+        <td><strong>Stripe</strong></td>
+        <td>Payment processing</td>
+        <td>Name and email for billing; payment card data never touches our servers</td>
+      </tr>
+      <tr>
+        <td><strong>Anthropic (Claude)</strong></td>
+        <td>AI-powered load analysis and Co-driver assistant</td>
+        <td>Load and fleet context for the current session; Anthropic does not train on customer inputs</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Supabase and Vercel are SOC 2 Type 2 certified. Stripe is SOC 2 Type 2 certified and PCI DSS Level 1 compliant.</p>
+
+  <p><strong>We do not sell your data.</strong> We do not share it with advertisers or use it for behavioral profiling.</p>
+
+  <hr />
+
+  <h2>Service availability</h2>
+  <p>Haul Monitor is monitored continuously. You can check current service status and incident history at our public status page: <a href="https://haul-monitor.betteruptime.com/" target="_blank">haul-monitor.betteruptime.com</a>.</p>
+  <p>In the event of a security incident that affects your personal data, we will notify you within 72 hours of confirming the breach.</p>
+
+  <hr />
+
+  <h2>Your rights</h2>
+  <ul>
+    <li><strong>Access:</strong> You can request a copy of the data we hold about you</li>
+    <li><strong>Correction:</strong> You can update your fleet profile, driver records, and account details directly within the application</li>
+    <li><strong>Deletion:</strong> You can request full deletion of your account and all associated data</li>
+    <li><strong>Portability:</strong> You can request an export of your data in a machine-readable format</li>
+  </ul>
+  <p>To exercise any of these rights, email <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a>. We'll respond within 5 business days.</p>
+
+  <hr />
+
+  <h2>Questions</h2>
+  <p>For any questions about how your data is handled, contact us at <a href="mailto:support@haulmonitor.cloud">support@haulmonitor.cloud</a>.</p>
+  <p>The full Privacy Policy is available at <a href="/privacy">haulmonitor.cloud/privacy</a>.</p>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <a href="/"><img src="/haul-monitor-full.png" alt="Haul Monitor" /></a>
+  <p>© 2026 Haul Monitor. All rights reserved.</p>
+  <div style="display:flex;gap:20px;">
+    <a href="/app">App</a>
+    <a href="/user-guide.html" target="_blank">User Guide</a>
+    <a href="mailto:info@haulmonitor.cloud">Contact</a>
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/your-data">Your Data</a>
+    <a href="https://haul-monitor.betteruptime.com/" target="_blank">Status</a>
+  </div>
+</footer>
+
+</body>
+</html>
