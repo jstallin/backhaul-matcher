@@ -22,6 +22,10 @@
     {
       "source": "/privacy",
       "destination": "/privacy.html"
+    },
+    {
+      "source": "/your-data",
+      "destination": "/your-data.html"
     }
   ],
   "crons": [
