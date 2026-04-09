@@ -1,77 +1,77 @@
 {
-  "runDate": "2026-04-08",
-  "runAt": "2026-04-08T08:55:13.148Z",
-  "totalLoads": 25110,
-  "previousTotal": 24275,
-  "netChange": 835,
-  "added": 20101,
-  "removed": 19266,
-  "avgPay": 1134,
-  "loadsWithPay": 18487,
+  "runDate": "2026-04-09",
+  "runAt": "2026-04-09T09:02:36.037Z",
+  "totalLoads": 24574,
+  "previousTotal": 25110,
+  "netChange": -536,
+  "added": 19231,
+  "removed": 19767,
+  "avgPay": 1171,
+  "loadsWithPay": 17804,
   "equipmentTypes": [
     [
       "Flatbed",
-      12968
+      13239
     ],
     [
       "Step Deck",
-      5983
+      5653
     ],
     [
       "Dry Van",
-      3792
+      3558
     ],
     [
       "Refrigerated",
-      1501
+      1357
     ],
     [
       "Power Only",
-      478
+      407
     ],
     [
       "Hotshot",
-      74
+      83
     ],
     [
       "48 FT",
-      62
+      50
     ],
     [
       "TARPS",
-      60
+      50
     ],
     [
       "Box Truck",
-      45
-    ],
-    [
-      "Curtain Van",
-      29
-    ],
-    [
-      "Lowboy",
-      28
+      44
     ],
     [
       "Other",
-      23
+      26
+    ],
+    [
+      "Curtain Van",
+      25
+    ],
+    [
+      "Lowboy",
+      20
     ],
     [
       "Container",
-      13
+      12
     ],
     [
       "PARTIAL",
-      7
+      8
+    ],
+    [
+      "53 FT",
+      8
     ],
     [
       "26 FT",
-      6
-    ],
-    [
-      "STEPDECK",
-      5
+      8
     ],
     [
       "O",
@@ -86,162 +86,134 @@
       3
     ],
     [
+      "STEPDECK",
+      2
+    ],
+    [
+      "CURTAIN_SIDE",
+      2
+    ],
+    [
+      "BLK",
+      1
+    ],
+    [
       "Cargo Van",
-      3
+      1
     ],
     [
       "Dump Trailer",
-      2
-    ],
-    [
-      "DUMP TRUCK",
-      2
+      1
     ],
     [
       "Tanker",
-      2
+      1
     ],
     [
       "HOTSHOT",
       1
     ],
     [
-      "S",
+      "32 FT",
       1
     ],
     [
-      "CURTAIN_SIDE",
+      "HOTS",
       1
     ],
     [
-      "53 FT",
+      "FCON",
       1
     ],
     [
-      "L/T/L",
+      "REFR",
       1
     ],
     [
-      "LIFT-GATE",
-      1
-    ],
-    [
-      "24 FT",
-      1
-    ],
-    [
-      "12 FT",
-      1
-    ],
-    [
-      "DD3C",
-      1
-    ],
-    [
-      "FBCS",
-      1
-    ],
-    [
-      "53FL",
-      1
-    ],
-    [
-      "VANS",
-      1
-    ],
-    [
-      "VANV",
-      1
-    ],
-    [
-      "PFF",
-      1
-    ],
-    [
-      "OVERDIMENSIONAL",
+      "48VN",
       1
     ]
   ],
   "topPickupStates": [
     [
       "AL",
-      2705
+      2896
     ],
     [
       "GA",
-      2479
+      2236
     ],
     [
       "NC",
-      1389
+      1285
     ],
     [
       "SC",
-      1290
+      1284
     ],
     [
       "CA",
-      1187
+      1224
     ],
     [
       "IL",
-      1183
-    ],
-    [
-      "AR",
-      1093
-    ],
-    [
-      "IN",
-      965
+      1133
     ],
     [
       "MS",
-      962
+      1108
+    ],
+    [
+      "AR",
+      1055
     ],
     [
       "LA",
-      876
-    ],
-    [
-      "MN",
-      775
-    ],
-    [
-      "MI",
-      750
-    ],
-    [
-      "WI",
-      718
+      829
     ],
     [
       "VA",
-      716
+      772
     ],
     [
-      "OK",
-      656
-    ],
-    [
-      "TN",
-      639
+      "MI",
+      771
     ],
     [
       "MA",
-      635
+      754
     ],
     [
-      "KY",
-      580
+      "IN",
+      745
+    ],
+    [
+      "WI",
+      743
+    ],
+    [
+      "TN",
+      650
+    ],
+    [
+      "MN",
+      621
+    ],
+    [
+      "OK",
+      585
     ],
     [
       "NY",
-      579
+      570
     ],
     [
       "AZ",
-      456
+      459
+    ],
+    [
+      "KY",
+      453
     ]
   ]
 }
