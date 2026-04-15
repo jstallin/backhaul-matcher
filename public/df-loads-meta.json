@@ -1,100 +1,100 @@
 {
-  "runDate": "2026-04-13",
-  "runAt": "2026-04-13T09:13:16.330Z",
-  "totalLoads": 24932,
-  "previousTotal": 24344,
-  "netChange": 588,
-  "added": 4107,
-  "removed": 3519,
-  "avgPay": 1177,
-  "loadsWithPay": 19022,
+  "runDate": "2026-04-15",
+  "runAt": "2026-04-15T08:59:04.621Z",
+  "totalLoads": 22900,
+  "previousTotal": 24932,
+  "netChange": -2032,
+  "added": 21188,
+  "removed": 23220,
+  "avgPay": 1164,
+  "loadsWithPay": 16085,
   "equipmentTypes": [
     [
       "Flatbed",
-      13590
+      11446
     ],
     [
       "Step Deck",
-      5288
+      5336
     ],
     [
       "Dry Van",
-      3802
+      3830
     ],
     [
       "Refrigerated",
-      1491
+      1404
     ],
     [
       "Power Only",
-      390
-    ],
-    [
-      "Hotshot",
-      75
-    ],
-    [
-      "48 FT",
-      52
-    ],
-    [
-      "TARPS",
-      52
-    ],
-    [
-      "Box Truck",
-      35
-    ],
-    [
-      "Lowboy",
-      33
+      394
     ],
     [
       "Other",
-      29
+      128
+    ],
+    [
+      "Hotshot",
+      82
+    ],
+    [
+      "Box Truck",
+      45
+    ],
+    [
+      "48 FT",
+      39
+    ],
+    [
+      "TARPS",
+      39
+    ],
+    [
+      "Lowboy",
+      34
     ],
     [
       "Curtain Van",
-      20
-    ],
-    [
-      "Container",
-      15
+      27
     ],
     [
       "53 FT",
-      10
+      17
     ],
     [
       "PARTIAL",
-      8
+      15
     ],
     [
-      "26 FT",
-      8
+      "Container",
+      14
     ],
     [
       "O",
+      5
+    ],
+    [
+      "Tanker",
+      4
+    ],
+    [
+      "Cargo Van",
       4
     ],
     [
       "Dump Trailer",
+      4
+    ],
+    [
+      "Hopper Bottom",
       3
     ],
     [
-      "Cargo Van",
+      "FLAT OR DROP",
       3
     ],
     [
-      "STEPDECK",
-      3
-    ],
-    [
-      "Tanker",
-      3
-    ],
-    [
-      "30 FT",
+      "26 FT",
       3
     ],
     [
@@ -102,35 +102,55 @@
       2
     ],
     [
-      "REEFER",
+      "30 FT",
       2
     ],
     [
-      "LIFT-GATE",
+      "HTRM",
       1
     ],
     [
-      "DD3E",
+      "S",
       1
     ],
     [
-      "BSTR",
+      "FCON",
       1
     ],
     [
-      "HOTS",
+      "PFL",
       1
     ],
     [
-      "Hopper Bottom",
+      "HOTSHOT",
       1
     ],
     [
-      "FLAT OR DROP",
+      "32 FT",
       1
     ],
     [
-      "12 FT",
+      "SDCT",
+      1
+    ],
+    [
+      "STEP",
+      1
+    ],
+    [
+      "FLAT",
+      1
+    ],
+    [
+      "STEPDECK",
+      1
+    ],
+    [
+      "40 FT",
+      1
+    ],
+    [
+      "OVERDIMENSIONAL",
       1
     ],
     [
@@ -138,98 +158,114 @@
       1
     ],
     [
-      "FRFR",
+      "REF2",
       1
     ],
     [
-      "REFS",
+      "REFR",
       1
     ],
     [
-      "B-RF",
+      "REF1",
+      1
+    ],
+    [
+      "LO4E",
+      1
+    ],
+    [
+      "LO5E",
+      1
+    ],
+    [
+      "DOLY",
+      1
+    ],
+    [
+      "HOTS",
       1
     ]
   ],
   "topPickupStates": [
     [
-      "AL",
-      2635
-    ],
-    [
       "GA",
-      2359
+      2568
     ],
     [
-      "CA",
-      1242
+      "AL",
+      2294
     ],
     [
       "SC",
-      1198
+      1222
     ],
     [
-      "IN",
-      1192
-    ],
-    [
-      "NC",
-      1155
-    ],
-    [
-      "MA",
-      1125
-    ],
-    [
-      "IL",
-      1119
+      "CA",
+      1182
     ],
     [
       "AR",
-      1086
+      1176
+    ],
+    [
+      "IL",
+      1127
+    ],
+    [
+      "NC",
+      1114
     ],
     [
       "MS",
-      1078
+      1071
     ],
     [
       "MI",
-      1023
-    ],
-    [
-      "LA",
-      793
+      926
     ],
     [
       "VA",
-      773
+      848
     ],
     [
-      "WI",
-      626
+      "IN",
+      764
     ],
     [
-      "MN",
-      571
+      "MA",
+      734
     ],
     [
-      "TN",
-      570
+      "LA",
+      618
     ],
     [
       "NY",
-      567
+      556
     ],
     [
-      "OK",
-      559
-    ],
-    [
-      "KY",
-      545
+      "WI",
+      550
     ],
     [
       "NJ",
-      529
+      541
+    ],
+    [
+      "KY",
+      512
+    ],
+    [
+      "OK",
+      482
+    ],
+    [
+      "TN",
+      469
+    ],
+    [
+      "MN",
+      444
     ]
   ]
 }
