@@ -1,108 +1,100 @@
 {
-  "runDate": "2026-04-15",
-  "runAt": "2026-04-15T08:59:04.621Z",
-  "totalLoads": 22900,
-  "previousTotal": 24932,
-  "netChange": -2032,
-  "added": 21188,
-  "removed": 23220,
-  "avgPay": 1164,
-  "loadsWithPay": 16085,
+  "runDate": "2026-04-16",
+  "runAt": "2026-04-16T09:32:19.129Z",
+  "totalLoads": 21654,
+  "previousTotal": 22900,
+  "netChange": -1246,
+  "added": 16684,
+  "removed": 17930,
+  "avgPay": 1159,
+  "loadsWithPay": 15177,
   "equipmentTypes": [
     [
       "Flatbed",
-      11446
+      11108
     ],
     [
       "Step Deck",
-      5336
+      4992
     ],
     [
       "Dry Van",
-      3830
+      3481
     ],
     [
       "Refrigerated",
-      1404
+      1325
     ],
     [
       "Power Only",
-      394
-    ],
-    [
-      "Other",
-      128
+      366
     ],
     [
       "Hotshot",
-      82
-    ],
-    [
-      "Box Truck",
-      45
+      80
     ],
     [
       "48 FT",
-      39
+      46
     ],
     [
       "TARPS",
+      45
+    ],
+    [
+      "Box Truck",
       39
     ],
     [
       "Lowboy",
-      34
+      36
     ],
     [
       "Curtain Van",
-      27
+      35
     ],
     [
-      "53 FT",
-      17
+      "Other",
+      22
     ],
     [
       "PARTIAL",
       15
     ],
     [
-      "Container",
+      "53 FT",
       14
     ],
     [
-      "O",
-      5
+      "Container",
+      7
+    ],
+    [
+      "26 FT",
+      6
     ],
     [
       "Tanker",
       4
     ],
     [
-      "Cargo Van",
-      4
-    ],
-    [
       "Dump Trailer",
-      4
-    ],
-    [
-      "Hopper Bottom",
       3
     ],
     [
-      "FLAT OR DROP",
+      "Cargo Van",
       3
     ],
     [
-      "26 FT",
+      "O",
       3
     ],
     [
-      "CURTAIN_SIDE",
+      "STEPDECK",
       2
     ],
     [
-      "30 FT",
+      "20 FT",
       2
     ],
     [
@@ -110,39 +102,31 @@
       1
     ],
     [
-      "S",
+      "LOW9",
       1
     ],
     [
-      "FCON",
+      "LP9E",
       1
     ],
     [
-      "PFL",
+      "LO8E",
       1
     ],
     [
-      "HOTSHOT",
+      "FHS",
       1
     ],
     [
-      "32 FT",
+      "HOTS",
       1
     ],
     [
-      "SDCT",
+      "DD6",
       1
     ],
     [
-      "STEP",
-      1
-    ],
-    [
-      "FLAT",
-      1
-    ],
-    [
-      "STEPDECK",
+      "LOWE",
       1
     ],
     [
@@ -150,11 +134,23 @@
       1
     ],
     [
-      "OVERDIMENSIONAL",
+      "CURTAIN_SIDE",
       1
     ],
     [
-      "20 FT",
+      "Hopper Bottom",
+      1
+    ],
+    [
+      "FLAT OR DROP",
+      1
+    ],
+    [
+      "FCON",
+      1
+    ],
+    [
+      "OVERDIMENSIONAL",
       1
     ],
     [
@@ -180,92 +176,88 @@
     [
       "DOLY",
       1
-    ],
-    [
-      "HOTS",
-      1
     ]
   ],
   "topPickupStates": [
     [
-      "GA",
-      2568
-    ],
-    [
       "AL",
-      2294
+      2248
     ],
     [
-      "SC",
-      1222
+      "GA",
+      2207
     ],
     [
       "CA",
-      1182
+      1115
+    ],
+    [
+      "SC",
+      1053
     ],
     [
       "AR",
-      1176
-    ],
-    [
-      "IL",
-      1127
-    ],
-    [
-      "NC",
-      1114
-    ],
-    [
-      "MS",
-      1071
+      971
     ],
     [
       "MI",
-      926
+      969
     ],
     [
-      "VA",
-      848
+      "NC",
+      955
+    ],
+    [
+      "IL",
+      953
+    ],
+    [
+      "MS",
+      896
     ],
     [
       "IN",
-      764
+      893
     ],
     [
       "MA",
-      734
+      839
+    ],
+    [
+      "VA",
+      687
     ],
     [
       "LA",
-      618
-    ],
-    [
-      "NY",
-      556
-    ],
-    [
-      "WI",
-      550
+      565
     ],
     [
       "NJ",
       541
     ],
     [
-      "KY",
-      512
+      "MN",
+      534
     ],
     [
-      "OK",
-      482
+      "KY",
+      519
+    ],
+    [
+      "NY",
+      502
     ],
     [
       "TN",
-      469
+      490
     ],
     [
-      "MN",
-      444
+      "WI",
+      484
+    ],
+    [
+      "MD",
+      419
     ]
   ]
 }
