@@ -62,6 +62,11 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const openEstimates = estimateRequests.filter(r => r.status === 'active' || r.status === 'open' || r.status === 'pending');
   const totalRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.revenue_amount) || 0), 0);
   const totalNetRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.net_revenue) || 0), 0);
+  const totalGallonsSaved = completedRequests.reduce((sum, r) => {
+    const miles = parseFloat(r.load_distance_miles) || parseFloat(r.out_of_route_miles) || 0;
+    const mpg = parseFloat(r.fleets?.fuel_mpg) || 6;
+    return sum + (miles > 0 ? miles / mpg : 0);
+  }, 0);
 
   // Recent activity — last 8 requests combined, sorted by created_at
   const recentActivity = [...requests, ...estimateRequests]
@@ -180,20 +185,39 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
           </p>
         </div>
 
-        {/* Net Revenue Hero Banner */}
-        {!loading && totalNetRevenue > 0 && (
-          <div style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `${colors.accent.success}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <DollarSign size={26} color={colors.accent.success} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: colors.accent.success, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Net Revenue Earned</div>
-              <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>${totalNetRevenue.toLocaleString()}</div>
-              <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>across {completedRequests.length} completed haul{completedRequests.length !== 1 ? 's' : ''}</div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <TrendingUp size={32} color={`${colors.accent.success}60`} />
-            </div>
+        {/* Hero Banners */}
+        {!loading && (totalNetRevenue > 0 || totalGallonsSaved > 0) && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+            {totalNetRevenue > 0 && (
+              <div style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `${colors.accent.success}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <DollarSign size={26} color={colors.accent.success} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: colors.accent.success, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Net Revenue Earned</div>
+                  <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>${totalNetRevenue.toLocaleString()}</div>
+                  <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>across {completedRequests.length} completed haul{completedRequests.length !== 1 ? 's' : ''}</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <TrendingUp size={32} color={`${colors.accent.success}60`} />
+                </div>
+              </div>
+            )}
+            {totalGallonsSaved > 0 && (
+              <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '26px' }}>
+                  ⛽
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Gallons Saved</div>
+                  <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>{Math.round(totalGallonsSaved).toLocaleString()}</div>
+                  <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>vs. dedicated empty trucks</div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <TrendingUp size={32} color="rgba(34,197,94,0.4)" />
+                </div>
+              </div>
+            )}
           </div>
         )}
 

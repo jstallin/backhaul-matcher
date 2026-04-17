@@ -471,6 +471,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         revenue_amount: match.totalRevenue,
         net_revenue: match.customer_net_credit ?? match.netRevenue ?? null,
         out_of_route_miles: match.additionalMiles,
+        load_distance_miles: match.distance ?? null,
         completed_at: new Date().toISOString()
       });
       setSelectedRequest(null);

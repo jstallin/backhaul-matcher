@@ -51,6 +51,13 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
   const totalOutOfRoute = completedRequests.reduce((sum, r) => sum + (parseFloat(r.out_of_route_miles) || 0), 0);
   const avgOutOfRoute = completedRequests.length > 0 ? totalOutOfRoute / completedRequests.length : 0;
 
+  const getGallonsSaved = (r) => {
+    const miles = parseFloat(r.load_distance_miles) || parseFloat(r.out_of_route_miles) || 0;
+    const mpg = parseFloat(r.fleets?.fuel_mpg) || 6;
+    return miles > 0 ? miles / mpg : 0;
+  };
+  const totalGallonsSaved = completedRequests.reduce((sum, r) => sum + getGallonsSaved(r), 0);
+
   // Requests by fleet
   const requestsByFleet = fleets.map(fleet => ({
     fleet,
@@ -172,6 +179,15 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       icon: X,
       color: colors.text.tertiary,
       gradient: `linear-gradient(135deg, ${colors.text.tertiary} 0%, #666 100%)`
+    },
+    {
+      id: 'gallons-saved',
+      title: 'Gallons Saved',
+      value: formatNumber(totalGallonsSaved),
+      subtitle: 'vs. dedicated empty trucks',
+      icon: TrendingUp,
+      color: '#22c55e',
+      gradient: `linear-gradient(135deg, #22c55e 0%, #16a34a 100%)`
     }
   ];
 
@@ -294,7 +310,12 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       case 'completed-requests':
         return (
           <div>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 800 }}>Completed Requests</h3>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800 }}>Completed Requests</h3>
+            <div style={{ marginBottom: '24px', padding: '14px 20px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Gallons Saved</span>
+              <span style={{ fontSize: '26px', fontWeight: 900, color: colors.text.primary }}>{formatNumber(totalGallonsSaved)}</span>
+              <span style={{ fontSize: '12px', color: colors.text.secondary }}>vs. dedicated trucks</span>
+            </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -303,6 +324,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Revenue</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Out of Route</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Saved</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Completed</th>
                   </tr>
                 </thead>
@@ -313,6 +335,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <td style={{ padding: '12px' }}>{request.fleets?.name || 'Unknown'}</td>
                       <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.success }}>{formatCurrency(parseFloat(request.revenue_amount) || 0)}</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>{formatNumber(parseFloat(request.out_of_route_miles) || 0)} mi</td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#22c55e' }}>{formatNumber(getGallonsSaved(request))} gal</td>
                       <td style={{ padding: '12px', textAlign: 'right' }}>{request.completed_at ? new Date(request.completed_at).toLocaleDateString() : 'N/A'}</td>
                     </tr>
                   ))}
@@ -545,6 +568,58 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        );
+
+      case 'gallons-saved':
+        return (
+          <div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800 }}>Gallons Saved</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: colors.text.secondary }}>
+              Diesel not burned by dedicated empty trucks — because your driver carried the load instead.
+            </p>
+            <div style={{ marginBottom: '28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: '1px solid rgba(34,197,94,0.3)' }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Total Gallons Saved</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: '#22c55e' }}>{formatNumber(totalGallonsSaved)}</div>
+              </div>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Avg per Haul</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.text.primary }}>{formatNumber(completedRequests.length > 0 ? totalGallonsSaved / completedRequests.length : 0)}</div>
+              </div>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Completed Hauls</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.text.primary }}>{completedRequests.length}</div>
+              </div>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: `2px solid ${colors.border.secondary}` }}>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Request</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Load Miles</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>MPG</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Saved</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {completedRequests.map(request => {
+                    const miles = parseFloat(request.load_distance_miles) || parseFloat(request.out_of_route_miles) || 0;
+                    const mpg = parseFloat(request.fleets?.fuel_mpg) || 6;
+                    return (
+                      <tr key={request.id} style={{ borderBottom: `1px solid ${colors.border.primary}` }}>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>{request.request_name}</td>
+                        <td style={{ padding: '12px' }}>{request.fleets?.name || 'Unknown'}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>{formatNumber(miles)} mi</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>{mpg.toFixed(1)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#22c55e' }}>{formatNumber(getGallonsSaved(request))} gal</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         );
