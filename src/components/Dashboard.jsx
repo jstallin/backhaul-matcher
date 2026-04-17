@@ -212,7 +212,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                   ⛽
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Gallons Saved</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Gallons Conserved</div>
                   <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>{Math.round(totalGallonsSaved).toLocaleString()}</div>
                   <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>vs. dedicated empty trucks</div>
                 </div>

@@ -182,7 +182,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
     },
     {
       id: 'gallons-saved',
-      title: 'Gallons Saved',
+      title: 'Gallons Conserved',
       value: formatNumber(totalGallonsSaved),
       subtitle: 'vs. dedicated empty trucks',
       icon: Leaf,
@@ -315,7 +315,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
               <div style={{ position: 'absolute', top: '10px', right: '12px', opacity: 0.75 }}>
                 <Leaf size={20} />
               </div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Gallons Saved</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Gallons Conserved</span>
               <span style={{ fontSize: '26px', fontWeight: 900, color: colors.text.primary }}>{formatNumber(totalGallonsSaved)}</span>
               <span style={{ fontSize: '12px', color: colors.text.secondary }}>vs. dedicated trucks</span>
             </div>
@@ -327,7 +327,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Revenue</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Out of Route</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Saved</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Conserved</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Completed</th>
                   </tr>
                 </thead>
@@ -578,13 +578,13 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       case 'gallons-saved':
         return (
           <div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800 }}>Gallons Saved</h3>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800 }}>Gallons Conserved</h3>
             <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: colors.text.secondary }}>
               Diesel not burned by dedicated empty trucks — because your driver carried the load instead.
             </p>
             <div style={{ marginBottom: '28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: '1px solid rgba(34,197,94,0.3)' }}>
-                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Total Gallons Saved</div>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Total Gallons Conserved</div>
                 <div style={{ fontSize: '28px', fontWeight: 900, color: '#22c55e' }}>{formatNumber(totalGallonsSaved)}</div>
               </div>
               <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.border.accent}` }}>
@@ -604,7 +604,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Load Miles</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>MPG</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Saved</th>
+                    <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gallons Conserved</th>
                   </tr>
                 </thead>
                 <tbody>
