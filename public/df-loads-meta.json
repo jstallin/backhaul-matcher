@@ -1,80 +1,80 @@
 {
-  "runDate": "2026-04-16",
-  "runAt": "2026-04-16T09:32:19.129Z",
-  "totalLoads": 21654,
-  "previousTotal": 22900,
-  "netChange": -1246,
-  "added": 16684,
-  "removed": 17930,
-  "avgPay": 1159,
-  "loadsWithPay": 15177,
+  "runDate": "2026-04-17",
+  "runAt": "2026-04-17T08:55:13.691Z",
+  "totalLoads": 19715,
+  "previousTotal": 21654,
+  "netChange": -1939,
+  "added": 14647,
+  "removed": 16586,
+  "avgPay": 1207,
+  "loadsWithPay": 12694,
   "equipmentTypes": [
     [
       "Flatbed",
-      11108
+      9852
     ],
     [
       "Step Deck",
-      4992
+      4117
     ],
     [
       "Dry Van",
-      3481
+      3599
     ],
     [
       "Refrigerated",
-      1325
+      1373
     ],
     [
       "Power Only",
-      366
+      395
     ],
     [
       "Hotshot",
-      80
+      65
     ],
     [
       "48 FT",
-      46
+      53
     ],
     [
       "TARPS",
-      45
-    ],
-    [
-      "Box Truck",
-      39
+      52
     ],
     [
       "Lowboy",
       36
     ],
     [
-      "Curtain Van",
-      35
-    ],
-    [
-      "Other",
-      22
+      "Box Truck",
+      34
     ],
     [
       "PARTIAL",
-      15
+      29
+    ],
+    [
+      "Curtain Van",
+      24
     ],
     [
       "53 FT",
-      14
+      24
+    ],
+    [
+      "Other",
+      15
     ],
     [
       "Container",
-      7
+      8
     ],
     [
       "26 FT",
-      6
+      7
     ],
     [
-      "Tanker",
+      "Cargo Van",
       4
     ],
     [
@@ -82,23 +82,55 @@
       3
     ],
     [
-      "Cargo Van",
+      "Tanker",
       3
     ],
     [
-      "O",
-      3
-    ],
-    [
-      "STEPDECK",
+      "30 FT",
       2
     ],
     [
-      "20 FT",
+      "HOTS",
       2
     ],
     [
       "HTRM",
+      1
+    ],
+    [
+      "Auto Carrier",
+      1
+    ],
+    [
+      "Hopper Bottom",
+      1
+    ],
+    [
+      "FLAT OR DROP",
+      1
+    ],
+    [
+      "PFL",
+      1
+    ],
+    [
+      "HOTSHOT",
+      1
+    ],
+    [
+      "20 FT",
+      1
+    ],
+    [
+      "DD6",
+      1
+    ],
+    [
+      "LOWE",
+      1
+    ],
+    [
+      "FCON",
       1
     ],
     [
@@ -114,43 +146,7 @@
       1
     ],
     [
-      "FHS",
-      1
-    ],
-    [
-      "HOTS",
-      1
-    ],
-    [
-      "DD6",
-      1
-    ],
-    [
-      "LOWE",
-      1
-    ],
-    [
-      "40 FT",
-      1
-    ],
-    [
-      "CURTAIN_SIDE",
-      1
-    ],
-    [
-      "Hopper Bottom",
-      1
-    ],
-    [
-      "FLAT OR DROP",
-      1
-    ],
-    [
-      "FCON",
-      1
-    ],
-    [
-      "OVERDIMENSIONAL",
+      "STEPDECK",
       1
     ],
     [
@@ -166,98 +162,90 @@
       1
     ],
     [
-      "LO4E",
-      1
-    ],
-    [
-      "LO5E",
-      1
-    ],
-    [
-      "DOLY",
+      "O",
       1
     ]
   ],
   "topPickupStates": [
     [
-      "AL",
-      2248
-    ],
-    [
       "GA",
-      2207
+      2135
     ],
     [
-      "CA",
-      1115
-    ],
-    [
-      "SC",
-      1053
-    ],
-    [
-      "AR",
-      971
+      "AL",
+      2031
     ],
     [
       "MI",
-      969
+      1119
     ],
     [
-      "NC",
-      955
-    ],
-    [
-      "IL",
-      953
+      "CA",
+      1089
     ],
     [
       "MS",
-      896
+      1053
+    ],
+    [
+      "SC",
+      959
+    ],
+    [
+      "AR",
+      912
+    ],
+    [
+      "NC",
+      873
+    ],
+    [
+      "IL",
+      834
     ],
     [
       "IN",
-      893
-    ],
-    [
-      "MA",
-      839
+      736
     ],
     [
       "VA",
-      687
-    ],
-    [
-      "LA",
-      565
-    ],
-    [
-      "NJ",
-      541
-    ],
-    [
-      "MN",
-      534
+      685
     ],
     [
       "KY",
-      519
-    ],
-    [
-      "NY",
-      502
-    ],
-    [
-      "TN",
-      490
+      482
     ],
     [
       "WI",
-      484
+      473
     ],
     [
-      "MD",
-      419
+      "NY",
+      473
+    ],
+    [
+      "TN",
+      466
+    ],
+    [
+      "NJ",
+      432
+    ],
+    [
+      "MN",
+      428
+    ],
+    [
+      "LA",
+      371
+    ],
+    [
+      "MO",
+      352
+    ],
+    [
+      "ME",
+      341
     ]
   ]
 }
