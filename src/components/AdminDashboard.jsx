@@ -88,9 +88,11 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
   const [roleChanging, setRoleChanging] = useState(null);
+  const [debugSettings, setDebugSettings] = useState({ dat_debug_email: false });
+  const [debugSaving, setDebugSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs()]).finally(() => setLoading(false));
+    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchDebugSettings()]).finally(() => setLoading(false));
   }, []);
 
   const fetchMetas = async () => {
@@ -159,6 +161,46 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       setRequestStats({ total: requests.length, open, thisMonth, recent: requests.slice(0, 5) });
     } catch {
       // Non-critical
+    }
+  };
+
+  const fetchDebugSettings = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/admin/settings', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const map = {};
+      (data.settings || []).forEach(s => { map[s.key] = s.value; });
+      setDebugSettings({
+        dat_debug_email: map.dat_debug_email?.enabled ?? false,
+      });
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const toggleDebugSetting = async (key, currentValue) => {
+    if (!session?.access_token) return;
+    setDebugSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ key, value: { enabled: !currentValue } })
+      });
+      if (res.ok) {
+        setDebugSettings(prev => ({ ...prev, [key]: !currentValue }));
+      }
+    } catch {
+      // Non-critical
+    } finally {
+      setDebugSaving(false);
     }
   };
 
@@ -433,6 +475,54 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             </div>
           </>
         )}
+        {/* ── DEBUG SETTINGS ── */}
+        <SectionHeader title="Debug Settings" colors={colors} />
+        <div style={{ background: colors.background.secondary, border: `1px solid ${colors.border.secondary}`, borderRadius: '12px', overflow: 'hidden' }}>
+          {/* DAT Debug Email */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', gap: '24px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text.primary }}>DAT API Debug Email</div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '3px' }}>
+                When on, every DAT API call sends a full trace to{' '}
+                <span style={{ fontFamily: 'monospace', color: colors.text.primary }}>jason@haulmonitor.cloud</span>.
+                Turn off once the integration is stable.
+              </div>
+            </div>
+            <button
+              onClick={() => toggleDebugSetting('dat_debug_email', debugSettings.dat_debug_email)}
+              disabled={debugSaving}
+              style={{
+                position: 'relative',
+                width: '48px',
+                height: '26px',
+                borderRadius: '13px',
+                border: 'none',
+                background: debugSettings.dat_debug_email ? '#22c55e' : colors.border.secondary,
+                cursor: debugSaving ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+                opacity: debugSaving ? 0.6 : 1,
+              }}
+              aria-label={debugSettings.dat_debug_email ? 'Disable DAT debug email' : 'Enable DAT debug email'}
+            >
+              <span style={{
+                position: 'absolute',
+                top: '3px',
+                left: debugSettings.dat_debug_email ? '25px' : '3px',
+                width: '20px',
+                height: '20px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.2s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              }} />
+            </button>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: debugSettings.dat_debug_email ? '#22c55e' : colors.text.muted || colors.text.secondary, minWidth: '24px', textAlign: 'right' }}>
+              {debugSettings.dat_debug_email ? 'ON' : 'OFF'}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

@@ -22,9 +22,102 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const DAT_DEBUG_EMAIL = 'jason@haulmonitor.cloud';
+
+// ─── DAT TRACE LOGGER ─────────────────────────────────────────────────────────
+// Collects structured trace events during a DAT API interaction and emails them
+// to DAT_DEBUG_EMAIL when the dat_debug_email admin setting is enabled.
+
+function createDatTracer(requestId) {
+  const events = [];
+  const startTime = Date.now();
+
+  const trace = (event, data = {}) => {
+    const entry = {
+      t: `+${Date.now() - startTime}ms`,
+      event,
+      ...data,
+    };
+    events.push(entry);
+    console.log(`[DAT TRACE ${requestId}]`, event, data);
+  };
+
+  const sanitizeToken = (token) => {
+    if (!token) return '(none)';
+    if (token.length <= 8) return '***';
+    return token.slice(0, 4) + '***' + token.slice(-4);
+  };
+
+  const sendEmail = async (supabase, context) => {
+    try {
+      // Check admin setting
+      const { data: setting } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'dat_debug_email')
+        .maybeSingle();
+
+      if (!setting?.value?.enabled) return;
+
+      const resendKey = process.env.RESEND_API_KEY;
+      if (!resendKey) {
+        console.warn('[DAT TRACE] Resend key not configured — skipping debug email');
+        return;
+      }
+
+      const totalMs = Date.now() - startTime;
+      const lines = events.map(e => {
+        const data = { ...e };
+        delete data.t;
+        delete data.event;
+        const dataStr = Object.keys(data).length
+          ? '\n    ' + JSON.stringify(data, null, 2).replace(/\n/g, '\n    ')
+          : '';
+        return `  [${e.t}] ${e.event}${dataStr}`;
+      });
+
+      const subject = `[DAT Debug] ${context.method} ${context.action || ''} — ${context.userEmail} — ${new Date().toISOString()}`;
+
+      const text = [
+        '━━━ DAT API Debug Trace ━━━',
+        `Request ID : ${requestId}`,
+        `Timestamp  : ${new Date().toISOString()}`,
+        `User       : ${context.userEmail} (${context.userId})`,
+        `Method     : ${context.method}`,
+        `Action     : ${context.action || '(none)'}`,
+        `Duration   : ${totalMs}ms`,
+        '',
+        '── Trace Events ──',
+        ...lines,
+        '',
+        '── Raw Context ──',
+        JSON.stringify(context, null, 2),
+      ].join('\n');
+
+      const html = `<pre style="font-family:monospace;font-size:13px;line-height:1.6;white-space:pre-wrap">${text.replace(/</g, '&lt;')}</pre>`;
+
+      const resend = new Resend(resendKey);
+      await resend.emails.send({
+        from: 'Haul Monitor <notifications@haulmonitor.cloud>',
+        to: [DAT_DEBUG_EMAIL],
+        subject,
+        text,
+        html,
+      });
+
+      console.log(`[DAT TRACE ${requestId}] Debug email sent to ${DAT_DEBUG_EMAIL}`);
+    } catch (err) {
+      console.error(`[DAT TRACE ${requestId}] Failed to send debug email:`, err.message);
+    }
+  };
+
+  return { trace, sanitizeToken, sendEmail };
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -65,8 +158,24 @@ export default async function handler(req, res) {
 // ─── DAT ──────────────────────────────────────────────────────────────────────
 
 async function handleDat(req, res, supabase, user) {
+  const requestId = `dat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const { trace, sanitizeToken, sendEmail } = createDatTracer(requestId);
+
+  const context = {
+    requestId,
+    method: req.method,
+    action: req.query.action || null,
+    userId: user.id,
+    userEmail: user.email,
+    queryParams: { ...req.query },
+    bodyKeys: req.body ? Object.keys(req.body) : [],
+  };
+
+  trace('DAT handler entered', { method: req.method, action: req.query.action });
+
   if (req.method === 'GET') {
     try {
+      trace('Querying user_integrations for DAT record');
       const { data: integration, error } = await supabase
         .from('user_integrations')
         .select('*')
@@ -75,16 +184,34 @@ async function handleDat(req, res, supabase, user) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
+        trace('DB error fetching integration', { code: error.code, message: error.message });
+        await sendEmail(supabase, { ...context, outcome: 'db_error', error: error.message });
         return res.status(500).json({ error: 'Failed to check connection status' });
       }
 
       if (!integration) {
+        trace('No DAT integration record found — reporting not connected');
+        await sendEmail(supabase, { ...context, outcome: 'not_connected' });
         return res.status(200).json({ connected: false, provider: 'dat' });
       }
 
       const isExpired = integration.token_expires_at
         ? new Date(integration.token_expires_at) < new Date()
         : false;
+
+      trace('Integration record found', {
+        is_connected: integration.is_connected,
+        is_expired: isExpired,
+        has_access_token: !!integration.access_token,
+        access_token_preview: sanitizeToken(integration.access_token),
+        token_expires_at: integration.token_expires_at,
+        connected_at: integration.connected_at,
+        last_sync_at: integration.last_sync_at,
+        account_email: integration.account_email,
+        metadata_keys: integration.metadata ? Object.keys(integration.metadata) : [],
+      });
+
+      await sendEmail(supabase, { ...context, outcome: 'status_returned', is_connected: integration.is_connected, is_expired: isExpired });
 
       return res.status(200).json({
         connected: integration.is_connected && !isExpired,
@@ -96,38 +223,74 @@ async function handleDat(req, res, supabase, user) {
         last_sync_at: integration.last_sync_at
       });
     } catch (err) {
+      trace('Unexpected error in GET', { message: err.message, stack: err.stack });
+      await sendEmail(supabase, { ...context, outcome: 'exception', error: err.message, stack: err.stack });
       return res.status(500).json({ error: 'Failed to check connection status' });
     }
   }
 
   if (req.method === 'POST') {
-    const { email } = req.body || {};
+    const { email, api_token } = req.body || {};
+    trace('POST body received', {
+      has_email: !!email,
+      email_value: email || '(none)',
+      has_api_token: !!api_token,
+      api_token_preview: sanitizeToken(api_token),
+      all_body_keys: Object.keys(req.body || {}),
+    });
 
-    if (!email) return res.status(400).json({ error: 'DAT email address is required' });
+    if (!email) {
+      trace('Validation failed — missing email');
+      await sendEmail(supabase, { ...context, outcome: 'validation_error', reason: 'missing_email' });
+      return res.status(400).json({ error: 'DAT email address is required' });
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return res.status(400).json({ error: 'Please enter a valid email address' });
+    if (!emailRegex.test(email)) {
+      trace('Validation failed — invalid email format', { email });
+      await sendEmail(supabase, { ...context, outcome: 'validation_error', reason: 'invalid_email_format', email });
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    trace('Upserting DAT integration record', { email: email.toLowerCase().trim(), has_token: !!api_token });
 
     try {
+      const upsertPayload = {
+        user_id: user.id,
+        provider: 'dat',
+        account_email: email.toLowerCase().trim(),
+        is_connected: true,
+        connected_at: new Date().toISOString(),
+        metadata: { auth_type: 'service_account', linked_at: new Date().toISOString() },
+        ...(api_token ? { access_token: api_token.trim() } : {}),
+      };
+
+      trace('Upsert payload built', {
+        ...upsertPayload,
+        access_token: sanitizeToken(upsertPayload.access_token),
+      });
+
       const { data: integration, error: dbError } = await supabase
         .from('user_integrations')
-        .upsert({
-          user_id: user.id,
-          provider: 'dat',
-          account_email: email.toLowerCase().trim(),
-          is_connected: true,
-          connected_at: new Date().toISOString(),
-          metadata: { auth_type: 'service_account', linked_at: new Date().toISOString() }
-        }, { onConflict: 'user_id,provider', ignoreDuplicates: false })
+        .upsert(upsertPayload, { onConflict: 'user_id,provider', ignoreDuplicates: false })
         .select()
         .single();
 
       if (dbError) {
-        console.error('Failed to save DAT integration:', dbError);
+        trace('DB upsert failed', { code: dbError.code, message: dbError.message, details: dbError.details });
+        await sendEmail(supabase, { ...context, outcome: 'db_error', error: dbError.message, code: dbError.code });
         return res.status(500).json({ error: 'Failed to link DAT account', code: 'DB_ERROR' });
       }
 
+      trace('DAT integration saved successfully', {
+        account_email: integration.account_email,
+        connected_at: integration.connected_at,
+        has_stored_token: !!integration.access_token,
+      });
+
       console.log(`✅ DAT account linked: ${email}`);
+      await sendEmail(supabase, { ...context, outcome: 'linked_successfully', account_email: integration.account_email });
+
       return res.status(200).json({
         success: true,
         message: 'DAT account linked successfully',
@@ -135,11 +298,14 @@ async function handleDat(req, res, supabase, user) {
         connected_at: integration.connected_at
       });
     } catch (err) {
+      trace('Unexpected error in POST', { message: err.message, stack: err.stack });
+      await sendEmail(supabase, { ...context, outcome: 'exception', error: err.message, stack: err.stack });
       return res.status(500).json({ error: 'An unexpected error occurred', code: 'INTERNAL_ERROR' });
     }
   }
 
   if (req.method === 'DELETE') {
+    trace('Disconnecting DAT integration');
     try {
       const { error } = await supabase
         .from('user_integrations')
@@ -148,16 +314,24 @@ async function handleDat(req, res, supabase, user) {
         .eq('provider', 'dat');
 
       if (error && error.code !== 'PGRST116') {
+        trace('DB error on disconnect', { code: error.code, message: error.message });
+        await sendEmail(supabase, { ...context, outcome: 'db_error', error: error.message });
         return res.status(500).json({ error: 'Failed to disconnect' });
       }
 
+      trace('DAT integration disconnected');
       console.log(`🔌 DAT disconnected for user ${user.id}`);
+      await sendEmail(supabase, { ...context, outcome: 'disconnected' });
       return res.status(200).json({ success: true, message: 'DAT account disconnected successfully' });
     } catch (err) {
+      trace('Unexpected error in DELETE', { message: err.message, stack: err.stack });
+      await sendEmail(supabase, { ...context, outcome: 'exception', error: err.message, stack: err.stack });
       return res.status(500).json({ error: 'Failed to disconnect' });
     }
   }
 
+  trace('Method not allowed', { method: req.method });
+  await sendEmail(supabase, { ...context, outcome: 'method_not_allowed' });
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
