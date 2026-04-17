@@ -208,8 +208,8 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <div style={{ position: 'absolute', top: '10px', right: '14px', opacity: 0.7 }}>
                   <Leaf size={22} />
                 </div>
-                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Leaf size={28} />
+                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '26px' }}>
+                  ⛽
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Gallons Saved</div>

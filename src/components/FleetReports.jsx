@@ -311,7 +311,10 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
         return (
           <div>
             <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 800 }}>Completed Requests</h3>
-            <div style={{ marginBottom: '24px', padding: '14px 20px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ marginBottom: '24px', padding: '14px 20px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: '10px', right: '12px', opacity: 0.75 }}>
+                <Leaf size={20} />
+              </div>
               <span style={{ fontSize: '13px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Gallons Saved</span>
               <span style={{ fontSize: '26px', fontWeight: 900, color: colors.text.primary }}>{formatNumber(totalGallonsSaved)}</span>
               <span style={{ fontSize: '12px', color: colors.text.secondary }}>vs. dedicated trucks</span>
