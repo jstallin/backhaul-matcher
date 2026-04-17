@@ -284,3 +284,12 @@ export const Users = ({ size = 24, color = 'currentColor', style = {} }) => (
     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
   </svg>
 );
+
+export const Leaf = ({ size = 24, color = '#4caf50', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
+    <path d="M21 3C21 3 13 3 8 8C3.6 12.4 4 19 4 19C4 19 10.6 19.4 15 15C17.3 12.7 18.6 9.8 19.4 7.2" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M21 3C18.4 3.8 15.5 5.1 13.2 7.4" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M4 19C4 19 6 14 9 11" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+    <circle cx="21" cy="3" r="1.5" fill="#7dc520"/>
+  </svg>
+);

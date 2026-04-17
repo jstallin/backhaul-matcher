@@ -1,6 +1,6 @@
 import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { useState, useEffect } from 'react';
-import { TrendingUp, Truck, FileText, CheckCircle, X, DollarSign, MapPin, Navigation } from '../icons';
+import { TrendingUp, Truck, FileText, CheckCircle, X, DollarSign, MapPin, Navigation, Leaf } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
@@ -185,7 +185,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       title: 'Gallons Saved',
       value: formatNumber(totalGallonsSaved),
       subtitle: 'vs. dedicated empty trucks',
-      icon: TrendingUp,
+      icon: Leaf,
       color: '#22c55e',
       gradient: `linear-gradient(135deg, #22c55e 0%, #16a34a 100%)`
     }
@@ -671,6 +671,11 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
               return (
                 <div key={tile.id} onClick={() => setSelectedView(tile.id)} style={{ background: colors.background.card, border: `2px solid ${colors.border.primary}`, borderRadius: '16px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = tile.color; e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${tile.color}30`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border.primary; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                   <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', background: tile.gradient, opacity: 0.1, borderRadius: '50%', transform: 'translate(40%, -40%)' }} />
+                  {tile.id === 'gallons-saved' && (
+                    <div style={{ position: 'absolute', top: '12px', right: '14px', opacity: 0.75, zIndex: 2 }}>
+                      <Leaf size={20} />
+                    </div>
+                  )}
                   <div style={{ position: 'relative', zIndex: 1 }}>
                     <div style={{ marginBottom: '16px' }}>
                       <Icon size={40} color={tile.color} strokeWidth={2} />

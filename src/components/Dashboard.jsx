@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Truck, FileText, CheckCircle, Plus, DollarSign, MapPin } from '../icons';
+import { TrendingUp, Truck, FileText, CheckCircle, Plus, DollarSign, MapPin, Leaf } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -204,17 +204,17 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
             )}
             {totalGallonsSaved > 0 && (
-              <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '26px' }}>
-                  ⛽
+              <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: '10px', right: '14px', opacity: 0.7 }}>
+                  <Leaf size={22} />
+                </div>
+                <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Leaf size={28} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Gallons Saved</div>
                   <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>{Math.round(totalGallonsSaved).toLocaleString()}</div>
                   <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>vs. dedicated empty trucks</div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <TrendingUp size={32} color="rgba(34,197,94,0.4)" />
                 </div>
               </div>
             )}
