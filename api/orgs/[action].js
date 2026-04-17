@@ -11,6 +11,8 @@
  *   DELETE /api/orgs/members     — remove a member (org admin only)
  *   POST /api/orgs/role          — promote/demote member role (app admin only)
  *   GET  /api/orgs/all           — list all orgs with member counts (app admin only)
+ *   GET  /api/orgs/admin-settings — get admin key/value settings (app admin only)
+ *   POST /api/orgs/admin-settings — upsert a setting { key, value } (app admin only)
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -80,8 +82,9 @@ export default async function handler(req, res) {
     case 'invite':  return handleInvite(req, res, supabase, user);
     case 'respond': return handleRespond(req, res, supabase, user);
     case 'members': return handleMembers(req, res, supabase, user);
-    case 'role':    return handleRole(req, res, supabase, user);
-    case 'all':     return handleAll(req, res, supabase, user);
+    case 'role':            return handleRole(req, res, supabase, user);
+    case 'all':             return handleAll(req, res, supabase, user);
+    case 'admin-settings':  return handleAdminSettings(req, res, supabase, user);
     default:
       return res.status(404).json({ error: `Unknown action: ${action}` });
   }
@@ -523,6 +526,48 @@ async function handleAll(req, res, supabase, user) {
     console.error('Error fetching all orgs:', err);
     return res.status(500).json({ error: 'Failed to fetch orgs' });
   }
+}
+
+// ── GET/POST /api/orgs/admin-settings ────────────────────────────────────────
+// App admin only: read or upsert key/value admin settings
+
+async function handleAdminSettings(req, res, supabase, user) {
+  const { data: adminRow } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('key, value, updated_at')
+      .order('key');
+
+    if (error) return res.status(500).json({ error: 'Failed to load settings' });
+    return res.status(200).json({ settings: data || [] });
+  }
+
+  if (req.method === 'POST') {
+    const { key, value } = req.body || {};
+    if (!key || value === undefined) {
+      return res.status(400).json({ error: 'key and value are required' });
+    }
+
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: 'Failed to save setting' });
+    console.log(`[admin] setting updated: ${key} =`, JSON.stringify(value), `by ${user.email}`);
+    return res.status(200).json({ setting: data });
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
 }
 
 // ── Email template ────────────────────────────────────────────────────────────

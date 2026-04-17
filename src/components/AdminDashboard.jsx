@@ -167,7 +167,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const fetchDebugSettings = async () => {
     if (!session?.access_token) return;
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch('/api/orgs/admin-settings', {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       if (!res.ok) return;
@@ -186,7 +186,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
     if (!session?.access_token) return;
     setDebugSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch('/api/orgs/admin-settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
