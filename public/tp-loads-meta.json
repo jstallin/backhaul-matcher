@@ -1,9 +1,111 @@
 {
-  "runDate": "2026-04-20",
-  "runAt": "2026-04-20T09:38:23.492Z",
-  "totalLoads": 0,
-  "loadsWithPay": 0,
-  "avgPay": 0,
-  "equipmentTypes": [],
-  "topPickupStates": []
+  "runDate": "2026-04-21",
+  "runAt": "2026-04-21T09:38:25.574Z",
+  "totalLoads": 522,
+  "loadsWithPay": 461,
+  "avgPay": 1883,
+  "equipmentTypes": [
+    [
+      "Dry Van",
+      408
+    ],
+    [
+      "Flatbed",
+      92
+    ],
+    [
+      "Refrigerated",
+      19
+    ],
+    [
+      "Step Deck",
+      2
+    ],
+    [
+      "Lowboy",
+      1
+    ]
+  ],
+  "topPickupStates": [
+    [
+      "ON",
+      63
+    ],
+    [
+      "QC",
+      39
+    ],
+    [
+      "CA",
+      34
+    ],
+    [
+      "OH",
+      33
+    ],
+    [
+      "VA",
+      33
+    ],
+    [
+      "PA",
+      30
+    ],
+    [
+      "MO",
+      25
+    ],
+    [
+      "TX",
+      21
+    ],
+    [
+      "NY",
+      17
+    ],
+    [
+      "NC",
+      17
+    ],
+    [
+      "IN",
+      17
+    ],
+    [
+      "NH",
+      15
+    ],
+    [
+      "MI",
+      15
+    ],
+    [
+      "WI",
+      13
+    ],
+    [
+      "AB",
+      13
+    ],
+    [
+      "OK",
+      12
+    ],
+    [
+      "NJ",
+      12
+    ],
+    [
+      "IL",
+      10
+    ],
+    [
+      "SC",
+      10
+    ],
+    [
+      "MN",
+      9
+    ]
+  ]
 }
