@@ -1,13 +1,13 @@
 {
-  "runDate": "2026-04-22",
-  "runAt": "2026-04-22T09:38:09.769Z",
-  "totalLoads": 522,
-  "loadsWithPay": 461,
-  "avgPay": 1883,
+  "runDate": "2026-04-23",
+  "runAt": "2026-04-23T09:39:55.019Z",
+  "totalLoads": 523,
+  "loadsWithPay": 462,
+  "avgPay": 1881,
   "equipmentTypes": [
     [
       "Dry Van",
-      408
+      409
     ],
     [
       "Flatbed",
@@ -57,7 +57,7 @@
     ],
     [
       "TX",
-      21
+      22
     ],
     [
       "NY",
