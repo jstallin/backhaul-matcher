@@ -168,6 +168,27 @@
 
     .hero h1 span { color: var(--accent); }
 
+    .hero-map-wrap {
+      margin: 0 auto 32px;
+      max-width: 860px;
+      width: 100%;
+    }
+
+    .hero-map-img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+      display: block;
+    }
+
+    .hero-map-caption {
+      margin: 14px 0 0;
+      font-size: 15px;
+      color: var(--text-muted, #8b949e);
+      letter-spacing: 0.01em;
+    }
+
     .hero p {
       font-size: clamp(17px, 2vw, 21px);
       color: var(--text2);
@@ -850,6 +871,10 @@
     Backhaul Revenue Recovery
   </div>
   <h1>Stop paying to drive empty.<br><span>Start recovering backhaul revenue.</span></h1>
+  <div class="hero-map-wrap">
+    <img src="/haul-monitor-route-map.png" alt="Route Home Map showing backhaul load opportunities along a truck's return corridor" class="hero-map-img" />
+    <p class="hero-map-caption">Potential Backhaul Loads <strong>ALL ALONG</strong> Your Truck's Return.</p>
+  </div>
   <p>Haul Monitor finds potential backhaul loads along your trucks' return routes — giving your dispatchers ranked, potentially profitable options in minutes, not hours.</p>
   <div class="hero-cta">
     <a href="/app" class="btn btn-primary btn-lg">Get Started →</a>
