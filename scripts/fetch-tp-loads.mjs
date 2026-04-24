@@ -24,9 +24,8 @@ const OUTPUT      = process.env.OUTPUT || 'tp-loads.json';
 
 const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
 const LOGIN_URL  = 'https://loadboard.truckerpath.com/login';
-const PAGE_LIMIT  = 100;
-const DELAY_MS    = 3000; // between state queries — avoid 451 rate limits
-const BACKOFF_MS  = 15000; // longer pause after a 451
+const PAGE_LIMIT = 100;
+const DELAY_MS   = 1000; // between paginated requests
 const MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
 
 const US_STATES = new Set([
@@ -41,61 +40,6 @@ if (!TP_EMAIL || !TP_PASSWORD) {
   process.exit(1);
 }
 
-// ─── Major city per state for autocomplete lookup ─────────────────────────────
-// The TruckerPath search API needs a resolved city object from their autocomplete,
-// not just raw lat/lng. We use the largest trucking hub city per state.
-const STATE_CITIES = [
-  { state: 'AL', city: 'Birmingham, AL' },
-  { state: 'AK', city: 'Anchorage, AK' },
-  { state: 'AZ', city: 'Phoenix, AZ' },
-  { state: 'AR', city: 'Little Rock, AR' },
-  { state: 'CA', city: 'Los Angeles, CA' },
-  { state: 'CO', city: 'Denver, CO' },
-  { state: 'CT', city: 'Hartford, CT' },
-  { state: 'DE', city: 'Wilmington, DE' },
-  { state: 'FL', city: 'Jacksonville, FL' },
-  { state: 'GA', city: 'Atlanta, GA' },
-  { state: 'HI', city: 'Honolulu, HI' },
-  { state: 'ID', city: 'Boise, ID' },
-  { state: 'IL', city: 'Chicago, IL' },
-  { state: 'IN', city: 'Indianapolis, IN' },
-  { state: 'IA', city: 'Des Moines, IA' },
-  { state: 'KS', city: 'Wichita, KS' },
-  { state: 'KY', city: 'Louisville, KY' },
-  { state: 'LA', city: 'New Orleans, LA' },
-  { state: 'ME', city: 'Portland, ME' },
-  { state: 'MD', city: 'Baltimore, MD' },
-  { state: 'MA', city: 'Boston, MA' },
-  { state: 'MI', city: 'Detroit, MI' },
-  { state: 'MN', city: 'Minneapolis, MN' },
-  { state: 'MS', city: 'Jackson, MS' },
-  { state: 'MO', city: 'St. Louis, MO' },
-  { state: 'MT', city: 'Billings, MT' },
-  { state: 'NE', city: 'Omaha, NE' },
-  { state: 'NV', city: 'Las Vegas, NV' },
-  { state: 'NH', city: 'Manchester, NH' },
-  { state: 'NJ', city: 'Newark, NJ' },
-  { state: 'NM', city: 'Albuquerque, NM' },
-  { state: 'NY', city: 'New York, NY' },
-  { state: 'NC', city: 'Charlotte, NC' },
-  { state: 'ND', city: 'Fargo, ND' },
-  { state: 'OH', city: 'Columbus, OH' },
-  { state: 'OK', city: 'Oklahoma City, OK' },
-  { state: 'OR', city: 'Portland, OR' },
-  { state: 'PA', city: 'Philadelphia, PA' },
-  { state: 'RI', city: 'Providence, RI' },
-  { state: 'SC', city: 'Columbia, SC' },
-  { state: 'SD', city: 'Sioux Falls, SD' },
-  { state: 'TN', city: 'Nashville, TN' },
-  { state: 'TX', city: 'Dallas, TX' },
-  { state: 'UT', city: 'Salt Lake City, UT' },
-  { state: 'VT', city: 'Burlington, VT' },
-  { state: 'VA', city: 'Richmond, VA' },
-  { state: 'WA', city: 'Seattle, WA' },
-  { state: 'WV', city: 'Charleston, WV' },
-  { state: 'WI', city: 'Milwaukee, WI' },
-  { state: 'WY', city: 'Cheyenne, WY' },
-];
 
 // ─── Equipment type normalization ─────────────────────────────────────────────
 const EQUIP_MAP = {
@@ -182,8 +126,10 @@ function normalize(item) {
   }
 }
 
-// ─── Build search payload for one state ───────────────────────────────────────
-function buildPayload(location, offset = 0) {
+// ─── Build search payload ─────────────────────────────────────────────────────
+// No location filter — the TP API ignores it (returns the same global set
+// regardless of placeId/deadhead). Fetch all loads and filter post-hoc.
+function buildPayload(offset = 0) {
   return {
     sort:          [{ smart_sort: 'desc' }],
     offset,
@@ -193,15 +139,7 @@ function buildPayload(location, offset = 0) {
     road_miles:    true,
     include_auth_required: false,
     paging_enable: true,
-    query: {
-      pickup: {
-        geo: {
-          location,          // full resolved object from city autocomplete
-          deadhead: { max: 300 },
-        },
-      },
-      age: { max: MAX_AGE_MS },
-    },
+    query: {},
   };
 }
 
@@ -209,54 +147,13 @@ function buildPayload(location, offset = 0) {
 // Running fetch() inside page.evaluate() uses the browser's full cookie jar
 // and session state — no need to manually reconstruct auth headers.
 
-const AUTOCOMPLETE_URL = 'https://api.truckerpath.com/tl/city/city-auto-complete';
 
-async function resolveCity(cityStr, page, token) {
-  const result = await page.evaluate(async ([url, city, tok, instId]) => {
-    try {
-      const headers = { 'Content-Type': 'application/json', 'x-auth-token': tok, 'client': 'web' };
-      if (instId) headers['Installation-ID'] = instId;
-      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ city }) });
-      return { status: res.status, text: await res.text() };
-    } catch (err) {
-      return { status: 0, text: err.message };
-    }
-  }, [AUTOCOMPLETE_URL, cityStr, token, installationId]);
-
-  if (result.status !== 200) return null;
-  try {
-    const data = JSON.parse(result.text);
-    const hits = Array.isArray(data) ? data : (data.content || data.cities || data.results || data.data || []);
-    if (!hits[0]) return null;
-    // Return the full hit object — search API needs lat/lng for deadhead filtering
-    return hits[0];
-  } catch {
-    console.log('Autocomplete JSON parse failed:', result.text.slice(0, 200));
-    return null;
-  }
-}
-
-async function fetchStateLoads(stateEntry, page, token) {
+async function fetchAllLoads(page, token) {
   const loads = [];
   let   offset = 0;
 
-  // Step 1: resolve the city to get TruckerPath's own location object
-  const resolved = await resolveCity(stateEntry.city, page, token);
-  let location;
-  if (resolved) {
-    // Log full object on first state so we can verify lat/lng fields are present
-    const preview = stateEntry.state === 'AL'
-      ? JSON.stringify(resolved)
-      : JSON.stringify(resolved).slice(0, 150);
-    console.log(`  [${stateEntry.state}] Resolved city: ${preview}`);
-    location = resolved;
-  } else {
-    console.warn(`  [${stateEntry.state}] City autocomplete failed — skipping`);
-    return [];
-  }
-
   while (true) {
-    const body = buildPayload(location, offset);
+    const body = buildPayload(offset);
 
     const result = await page.evaluate(async ([url, payload, tok, instId]) => {
       try {
@@ -269,21 +166,17 @@ async function fetchStateLoads(stateEntry, page, token) {
       }
     }, [API_URL, body, token, installationId]);
 
-    if (result.status === 451) {
-      console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP 451 (rate limited) — backing off ${BACKOFF_MS}ms`);
-      await new Promise(r => setTimeout(r, BACKOFF_MS));
-      continue; // retry same offset after backoff
-    }
     if (result.status === 0 || result.status >= 400) {
-      console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
+      console.warn(`offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
       break;
     }
 
     let data;
-    try { data = JSON.parse(result.text); } catch { console.warn(`[${stateEntry.state}] Non-JSON response`); break; }
+    try { data = JSON.parse(result.text); } catch { console.warn('Non-JSON response'); break; }
 
     const items = data.content || data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
+    console.log(`offset=${offset}: ${items.length} items (running total: ${loads.length})`);
 
     if (items.length < PAGE_LIMIT) break;
     offset += PAGE_LIMIT;
@@ -486,28 +379,8 @@ try {
 
   console.log('Login successful.\n');
 
-  // ── Fetch loads for each state (browser stays open — uses its full session) ──
-  const seen     = new Set();
-  const allLoads = [];
-
-  for (const stateEntry of STATE_CITIES) {
-    try {
-      const loads = await fetchStateLoads(stateEntry, page, authToken);
-      let added = 0;
-      for (const load of loads) {
-        if (load.load_id && !seen.has(load.load_id)) {
-          seen.add(load.load_id);
-          allLoads.push(load);
-          added++;
-        }
-      }
-      console.log(`[${stateEntry.state}] ${loads.length} fetched, ${added} new after dedup (total: ${allLoads.length})`);
-    } catch (err) {
-      console.warn(`[${stateEntry.state}] Error: ${err.message}`);
-    }
-
-    await new Promise(r => setTimeout(r, DELAY_MS));
-  }
+  // ── Fetch all loads in a single paginated pass ────────────────────────────────
+  const allLoads = await fetchAllLoads(page, authToken);
 
   // Post-fetch safety filters: drop stale loads and non-US pickups
   const MAX_AGE_MINUTES = MAX_AGE_MS / 60000;
