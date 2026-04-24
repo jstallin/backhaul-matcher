@@ -26,6 +26,14 @@ const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
 const LOGIN_URL  = 'https://loadboard.truckerpath.com/login';
 const PAGE_LIMIT = 100;
 const DELAY_MS   = 1000; // between state queries — be polite
+const MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+
+const US_STATES = new Set([
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY',
+]);
 
 if (!TP_EMAIL || !TP_PASSWORD) {
   console.error('Missing required env vars: TP_EMAIL, TP_PASSWORD');
@@ -191,6 +199,7 @@ function buildPayload(location, offset = 0) {
           deadhead: { max: 300 },
         },
       },
+      age: { max: MAX_AGE_MS },
     },
   };
 }
@@ -489,6 +498,18 @@ try {
 
     await new Promise(r => setTimeout(r, DELAY_MS));
   }
+
+  // Post-fetch safety filters: drop stale loads and non-US pickups
+  const MAX_AGE_MINUTES = MAX_AGE_MS / 60000;
+  const beforeFilter = allLoads.length;
+  const filtered = allLoads.filter(l => {
+    if (l.age_minutes > MAX_AGE_MINUTES) return false;
+    if (!US_STATES.has(l.pickup_state))  return false;
+    return true;
+  });
+  console.log(`\nFiltered ${beforeFilter - filtered.length} loads (stale or non-US). Keeping ${filtered.length}.`);
+  allLoads.length = 0;
+  allLoads.push(...filtered);
 
   // Sort freshest first (smallest age_minutes)
   allLoads.sort((a, b) => (a.age_minutes || 0) - (b.age_minutes || 0));
