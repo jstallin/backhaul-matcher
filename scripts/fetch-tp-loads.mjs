@@ -24,8 +24,9 @@ const OUTPUT      = process.env.OUTPUT || 'tp-loads.json';
 
 const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
 const LOGIN_URL  = 'https://loadboard.truckerpath.com/login';
-const PAGE_LIMIT = 100;
-const DELAY_MS   = 1000; // between state queries — be polite
+const PAGE_LIMIT  = 100;
+const DELAY_MS    = 3000; // between state queries — avoid 451 rate limits
+const BACKOFF_MS  = 15000; // longer pause after a 451
 const MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
 
 const US_STATES = new Set([
@@ -227,8 +228,8 @@ async function resolveCity(cityStr, page, token) {
     const data = JSON.parse(result.text);
     const hits = Array.isArray(data) ? data : (data.content || data.cities || data.results || data.data || []);
     if (!hits[0]) return null;
-    // Return just the placeId — the search API location field uses placeId
-    return { placeId: hits[0].placeId, title: hits[0].title };
+    // Return the full hit object — search API needs lat/lng for deadhead filtering
+    return hits[0];
   } catch {
     console.log('Autocomplete JSON parse failed:', result.text.slice(0, 200));
     return null;
@@ -243,7 +244,11 @@ async function fetchStateLoads(stateEntry, page, token) {
   const resolved = await resolveCity(stateEntry.city, page, token);
   let location;
   if (resolved) {
-    console.log(`  [${stateEntry.state}] Resolved city: ${JSON.stringify(resolved).slice(0, 150)}`);
+    // Log full object on first state so we can verify lat/lng fields are present
+    const preview = stateEntry.state === 'AL'
+      ? JSON.stringify(resolved)
+      : JSON.stringify(resolved).slice(0, 150);
+    console.log(`  [${stateEntry.state}] Resolved city: ${preview}`);
     location = resolved;
   } else {
     console.warn(`  [${stateEntry.state}] City autocomplete failed — skipping`);
@@ -264,6 +269,11 @@ async function fetchStateLoads(stateEntry, page, token) {
       }
     }, [API_URL, body, token, installationId]);
 
+    if (result.status === 451) {
+      console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP 451 (rate limited) — backing off ${BACKOFF_MS}ms`);
+      await new Promise(r => setTimeout(r, BACKOFF_MS));
+      continue; // retry same offset after backoff
+    }
     if (result.status === 0 || result.status >= 400) {
       console.warn(`  [${stateEntry.state}] offset=${offset} → HTTP ${result.status}: ${result.text.slice(0, 200)}`);
       break;
