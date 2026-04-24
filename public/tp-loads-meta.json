@@ -1,19 +1,9 @@
 {
   "runDate": "2026-04-24",
-  "runAt": "2026-04-24T16:58:38.081Z",
-  "totalLoads": 1,
-  "loadsWithPay": 1,
-  "avgPay": 872,
-  "equipmentTypes": [
-    [
-      "Dry Van",
-      1
-    ]
-  ],
-  "topPickupStates": [
-    [
-      "TX",
-      1
-    ]
-  ]
+  "runAt": "2026-04-24T17:05:12.396Z",
+  "totalLoads": 0,
+  "loadsWithPay": 0,
+  "avgPay": 0,
+  "equipmentTypes": [],
+  "topPickupStates": []
 }
