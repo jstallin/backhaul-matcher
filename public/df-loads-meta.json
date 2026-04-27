@@ -1,57 +1,57 @@
 {
-  "runDate": "2026-04-26",
-  "runAt": "2026-04-26T20:36:01.549Z",
-  "totalLoads": 25831,
-  "previousTotal": 24889,
-  "netChange": 942,
-  "added": 2288,
-  "removed": 1346,
-  "avgPay": 1133,
-  "loadsWithPay": 17856,
+  "runDate": "2026-04-27",
+  "runAt": "2026-04-27T09:14:19.080Z",
+  "totalLoads": 25558,
+  "previousTotal": 25831,
+  "netChange": -273,
+  "added": 2860,
+  "removed": 3133,
+  "avgPay": 1128,
+  "loadsWithPay": 18109,
   "equipmentTypes": [
     [
       "Flatbed",
-      12417
+      12393
     ],
     [
       "Step Deck",
-      5533
+      5431
     ],
     [
       "Dry Van",
-      5187
+      5125
     ],
     [
       "Refrigerated",
-      1900
+      1804
     ],
     [
       "Power Only",
-      475
+      490
     ],
     [
       "Hotshot",
-      101
+      100
     ],
     [
       "Other",
-      76
+      77
     ],
     [
       "Lowboy",
-      51
+      49
     ],
     [
       "Box Truck",
-      43
+      40
     ],
     [
       "Curtain Van",
-      24
+      26
     ],
     [
       "Container",
-      13
+      12
     ],
     [
       "Dump Trailer",
@@ -85,51 +85,51 @@
   "topPickupStates": [
     [
       "TX",
-      2748
+      2686
     ],
     [
       "AL",
-      1847
+      1840
     ],
     [
       "GA",
-      1844
+      1812
     ],
     [
       "FL",
-      1476
+      1434
     ],
     [
       "IL",
-      1185
+      1197
     ],
     [
       "OH",
-      1107
+      1139
     ],
     [
       "CA",
-      1016
-    ],
-    [
-      "SC",
-      981
+      1021
     ],
     [
       "NC",
-      978
+      943
     ],
     [
       "PA",
-      902
+      880
     ],
     [
       "IN",
-      831
+      833
     ],
     [
       "MI",
-      795
+      811
+    ],
+    [
+      "SC",
+      804
     ],
     [
       "MS",
@@ -137,31 +137,31 @@
     ],
     [
       "MA",
-      744
+      742
     ],
     [
       "AR",
-      684
+      706
     ],
     [
       "VA",
-      613
+      685
     ],
     [
       "NY",
-      596
-    ],
-    [
-      "NJ",
-      566
+      593
     ],
     [
       "MN",
       562
     ],
     [
+      "NJ",
+      552
+    ],
+    [
       "WI",
-      535
+      530
     ]
   ]
 }
