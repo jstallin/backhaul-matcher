@@ -107,6 +107,7 @@ const normalize = (r) => {
     const trailerLength = r.length || defaultLengthForCode(trailerCode);
     return {
       load_id:        loadId,
+      source_load_id: String(r.entry_id), // original DF entry_id, unsuffixed — for user lookup
       source:         'directfreight',
       status:         'available',
       equipment_type: equipMap[trailerCode] || trailerCode,

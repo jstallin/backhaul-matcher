@@ -617,6 +617,24 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                   <div style={{ padding: '16px', background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '12px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', fontSize: '13px' }}>
+                      {m.source && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Load Source</div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary }}>
+                            {{ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT', truckstop: 'Truckstop' }[m.source] || m.source}
+                          </div>
+                        </div>
+                      )}
+                      {(m.source_load_id || m.load_id) && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>
+                            Load ID
+                          </div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary, fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>
+                            {m.source_load_id || m.load_id}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Pickup Date</div>
                         <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.pickupDate)}</div>

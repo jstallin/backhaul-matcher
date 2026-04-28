@@ -530,6 +530,11 @@ export const findRouteHomeBackhauls = async (
       totalRevenue: totalRevenue,
       revenuePerMile: revenuePerMile,
 
+      // Load identity
+      load_id: load.load_id || null,
+      source_load_id: load.source_load_id || load.load_id || null,
+      source: load.source || null,
+
       // Field mappings for DF loads — ship_date → pickupDate, company_name → broker
       pickupDate: load.ship_date || load.pickup_date || null,
       deliveryDate: load.delivery_date || null,
