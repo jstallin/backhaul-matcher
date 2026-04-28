@@ -124,29 +124,31 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     setSelectedRequest(request);
 
     try {
-      // Load fleet data
-      let fleet = await db.fleets.getById(request.fleet_id);
-      
+      // Parallel: fleet fetch + datum geocode have no dependency on each other
+      const [fleetInitial, geocoded] = await Promise.all([
+        db.fleets.getById(request.fleet_id),
+        parseDatumPoint(request.datum_point),
+      ]);
+      let fleet = fleetInitial;
+
       console.log('🚛 Fleet loaded:', fleet.name);
       console.log('📦 Fleet profiles:', fleet.fleet_profiles);
       console.log('🚚 Fleet trucks:', fleet.trucks);
-      
+
       // FIX: If fleet home coordinates are missing, geocode them now
       if (!fleet.home_lat || !fleet.home_lng) {
         console.warn('⚠️ Fleet home coordinates missing! Attempting to geocode...');
         const success = await updateFleetCoordinates(db, fleet.id, fleet.home_address);
         if (success) {
-          // Reload fleet with updated coordinates
           fleet = await db.fleets.getById(request.fleet_id);
           console.log('✅ Fleet coordinates updated:', fleet.home_lat, fleet.home_lng);
         } else {
           console.error('❌ Failed to geocode fleet address. Cannot find matches.');
           setBackhaulMatches([]);
-          setLoadingMatches(false);
           return;
         }
       }
-      
+
       setSelectedFleet(fleet);
 
       // Get fleet profile for equipment specs
@@ -179,9 +181,6 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       console.log('⚙️ Fleet profile used for matching:', fleetProfile);
       console.log('💰 Rate config:', rateConfig || 'Not configured — fleet profile has no rate fields');
 
-      // Geocode the datum point using Mapbox API (with fallback to local lookup)
-      const geocoded = await parseDatumPoint(request.datum_point);
-      
       console.log('📍 Geocoding input:', request.datum_point);
       console.log('📍 Geocoding result:', geocoded);
 
@@ -241,20 +240,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         pickupDate:    request.equipment_available_date || ''
       };
 
-      // Deduct 1 credit before running the search
-      const creditResult = await deductCredit('Backhaul search');
+      // Parallel: credit deduction + load fetching are independent of each other
+      const [creditResult, { loads: loadsForMatching, isLive, source }] = await Promise.all([
+        deductCredit('Backhaul search'),
+        getLoadsForMatching(user.id, request.fleet_id, requestContext),
+      ]);
       if (!creditResult.success) {
-        setLoadingMatches(false);
         setShowBuyCredits(true);
         return;
       }
-
-      const { loads: loadsForMatching, isLive, source } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
-      if (isLive) {
-        console.log(`Using ${loadsForMatching.length} live loads from: ${source}`);
-      } else {
-        console.log(`Using ${loadsForMatching.length} loads from: ${source}`);
-      }
+      console.log(`Using ${loadsForMatching.length} ${isLive ? 'live ' : ''}loads from: ${source}`);
 
       const result = await findRouteHomeBackhauls(
         datumPoint,
@@ -267,47 +262,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         request.is_relay || false
       );
 
-      let matches = result.opportunities;
-
-      // Geocode pickup/delivery cities for matched loads missing coordinates (e.g. DF scraped loads)
-      const top10 = matches.slice(0, 10);
-      const needsGeocode = top10.some(m => m.pickup_lat == null || m.delivery_lat == null);
-      if (needsGeocode) {
-        // Collect unique city+state pairs missing coords
-        const cityMap = new Map();
-        top10.forEach(m => {
-          if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
-            cityMap.set(`${m.pickup_city},${m.pickup_state}`, null);
-          }
-          if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
-            cityMap.set(`${m.delivery_city},${m.delivery_state}`, null);
-          }
-        });
-        // Geocode each unique city
-        await Promise.all([...cityMap.keys()].map(async (key) => {
-          const [city, state] = key.split(',');
-          try {
-            const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(`${city}, ${state}`)}`);
-            if (res.ok) {
-              const geo = await res.json();
-              if (geo.lat && geo.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
-            }
-          } catch (e) { /* ignore */ }
-        }));
-        // Patch matches with geocoded coords
-        matches = matches.map(m => {
-          const updated = { ...m };
-          if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
-            const coords = cityMap.get(`${m.pickup_city},${m.pickup_state}`);
-            if (coords) { updated.pickup_lat = coords.lat; updated.pickup_lng = coords.lng; }
-          }
-          if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
-            const coords = cityMap.get(`${m.delivery_city},${m.delivery_state}`);
-            if (coords) { updated.delivery_lat = coords.lat; updated.delivery_lng = coords.lng; }
-          }
-          return updated;
-        });
-      }
+      const matches = result.opportunities;
 
       // Store route data for map visualization
       setRouteData(result.routeData);
@@ -366,7 +321,44 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         setPreviousMatches(matches);
       }
 
+      // Show results immediately — don't block on coordinate geocoding
       setBackhaulMatches(matches);
+      setLoadingMatches(false);
+
+      // Background: geocode missing pickup/delivery coords for map view (DF loads have null lat/lng)
+      const top10 = matches.slice(0, 10);
+      if (top10.some(m => m.pickup_lat == null || m.delivery_lat == null)) {
+        const cityMap = new Map();
+        top10.forEach(m => {
+          if (m.pickup_lat == null && m.pickup_city && m.pickup_state)
+            cityMap.set(`${m.pickup_city},${m.pickup_state}`, null);
+          if (m.delivery_lat == null && m.delivery_city && m.delivery_state)
+            cityMap.set(`${m.delivery_city},${m.delivery_state}`, null);
+        });
+        Promise.all([...cityMap.keys()].map(async (key) => {
+          const [city, state] = key.split(',');
+          try {
+            const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(`${city}, ${state}`)}`);
+            if (res.ok) {
+              const geo = await res.json();
+              if (geo.lat && geo.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
+            }
+          } catch (e) { /* ignore */ }
+        })).then(() => {
+          setBackhaulMatches(prev => prev.map(m => {
+            const updated = { ...m };
+            if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
+              const coords = cityMap.get(`${m.pickup_city},${m.pickup_state}`);
+              if (coords) { updated.pickup_lat = coords.lat; updated.pickup_lng = coords.lng; }
+            }
+            if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
+              const coords = cityMap.get(`${m.delivery_city},${m.delivery_state}`);
+              if (coords) { updated.delivery_lat = coords.lat; updated.delivery_lng = coords.lng; }
+            }
+            return updated;
+          }));
+        });
+      }
     } catch (error) {
       console.error('Error loading matches:', error);
       setBackhaulMatches([]);

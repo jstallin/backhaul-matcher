@@ -376,7 +376,7 @@ export const findRouteHomeBackhauls = async (
   console.log(`DB hits: ${dbHitResults.length}, PC*MILER needed: ${pcMilerNeeded.length}`);
 
   // Call PC*MILER only for legs not already in DB cache
-  const batchSize = 4;
+  const batchSize = 8;
   const newCacheEntries = [];
   const freshResults = [];
 
