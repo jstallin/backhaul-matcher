@@ -1,9 +1,14 @@
 {
   "runDate": "2026-04-29",
-  "runAt": "2026-04-29T09:43:45.413Z",
+  "runAt": "2026-04-29T16:01:16.612Z",
   "totalLoads": 0,
   "loadsWithPay": 0,
   "avgPay": 0,
+  "ageStats": {
+    "medianMinutes": 0,
+    "under48h": 0,
+    "medianDays": 0
+  },
   "equipmentTypes": [],
   "topPickupStates": []
 }
