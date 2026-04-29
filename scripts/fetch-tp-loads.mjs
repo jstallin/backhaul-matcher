@@ -384,6 +384,32 @@ try {
 
   console.log('Login successful.\n');
 
+  // ── Intercept real TP API calls to discover current endpoint + payload ────────
+  let capturedRequest = null;
+  page.on('request', (req) => {
+    const url = req.url();
+    if (url.includes('api.truckerpath.com') || url.includes('/tl/') || url.includes('/search/')) {
+      const postData = req.postData();
+      console.log(`[TP intercept] ${req.method()} ${url}`);
+      if (postData) console.log(`[TP intercept payload] ${postData.slice(0, 500)}`);
+      if (!capturedRequest) capturedRequest = { url, method: req.method(), payload: postData };
+    }
+  });
+  page.on('response', async (res) => {
+    const url = res.url();
+    if (url.includes('api.truckerpath.com') || url.includes('/tl/') || url.includes('/search/')) {
+      let body = '';
+      try { body = await res.text(); } catch {}
+      console.log(`[TP intercept response] ${res.status()} ${url} → ${body.slice(0, 300)}`);
+    }
+  });
+
+  // Navigate to the load board to trigger the real search call
+  console.log('Navigating to TP load board to observe API calls...');
+  await page.goto('https://loadboard.truckerpath.com/', { waitUntil: 'networkidle', timeout: 60000 });
+  await page.waitForTimeout(3000);
+  console.log(`Load board URL: ${page.url()}`);
+
   // ── Fetch all loads in a single paginated pass ────────────────────────────────
   const allLoads = await fetchAllLoads(page, authToken);
 
