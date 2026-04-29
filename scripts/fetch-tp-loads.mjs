@@ -173,6 +173,12 @@ async function fetchAllLoads(page, token) {
     let data;
     try { data = JSON.parse(result.text); } catch { console.warn('Non-JSON response'); break; }
 
+    // One-time dump so we can see the actual response shape
+    if (offset === 0) {
+      console.log('[TP raw response keys]', Object.keys(data).join(', '));
+      console.log('[TP raw response sample]', JSON.stringify(data).slice(0, 500));
+    }
+
     const items = data.content || data.items || data.loads || data.results || data.data || [];
     loads.push(...items.map(normalize).filter(Boolean));
     console.log(`offset=${offset}: ${items.length} items (running total: ${loads.length})`);
