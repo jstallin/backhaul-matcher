@@ -5,12 +5,50 @@ import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { generateTop10Report } from '../utils/generateReport';
 
+// Equipment type → DirectFreight path segment
+const DF_EQUIP_PATH = {
+  'Dry Van':    'van',
+  'Van':        'van',
+  'Flatbed':    'flatbed',
+  'Refrigerated': 'reefer',
+  'Reefer':     'reefer',
+  'Step Deck':  'stepdeck',
+  'Power Only': 'poweronly',
+  'Hot Shot':   'hotshot',
+};
+
 const LOAD_BOARD_CONFIG = {
   directfreight: {
     name: 'Direct Freight',
-    // DF uses a Vue SPA — load detail opens in an overlay without a URL change.
-    // Update this URL if a deep-link pattern is confirmed (e.g. /home/boards/load/{id}).
-    url: () => 'https://www.directfreight.com/home/boards/find/loads/all/',
+    // DF uses a Vue SPA — no per-load deep link. Build the most targeted search URL
+    // possible using confirmed URL path params (equipment, origin state) and query
+    // params from the DF API (origin_state, destination_state, radii, ship_date).
+    url: (id, match) => {
+      const equip   = DF_EQUIP_PATH[match?.equipmentType] || 'all';
+      const oState  = match?.pickup_state   || '';
+      const dState  = match?.delivery_state || '';
+      const oCity   = match?.pickup_city    || '';
+      const dCity   = match?.delivery_city  || '';
+      const date    = match?.pickupDate
+        ? String(match.pickupDate).split('T')[0]
+        : '';
+
+      // Path: /find/loads/{equipment}/{origin_state}
+      let url = `https://www.directfreight.com/home/boards/find/loads/${equip}`;
+      if (oState) url += `/${oState}`;
+
+      const params = new URLSearchParams();
+      if (oState)  params.set('origin_state',        oState);
+      if (dState)  params.set('destination_state',   dState);
+      if (oCity)   params.set('origin_city',          oCity);
+      if (dCity)   params.set('destination_city',     dCity);
+      if (date)    params.set('ship_date',             date);
+      params.set('origin_radius',      '100');
+      params.set('destination_radius', '100');
+      params.set('sort_parameter',     'age');
+
+      return `${url}?${params.toString()}`;
+    },
   },
   truckerpath: {
     name: 'TruckerPath',
@@ -232,7 +270,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                   {match.source && match.source !== 'demo' && LOAD_BOARD_CONFIG[match.source] && (() => {
                     const board = LOAD_BOARD_CONFIG[match.source];
-                    const href = board.url(match.source_load_id || match.load_id);
+                    const href = board.url(match.source_load_id || match.load_id, match);
                     return (
                       <a
                         href={href}
