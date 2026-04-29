@@ -385,30 +385,52 @@ try {
   console.log('Login successful.\n');
 
   // ── Intercept real TP API calls to discover current endpoint + payload ────────
-  let capturedRequest = null;
+  // Only log POST calls to search-like endpoints — ignore polling/housekeeping GETs
   page.on('request', (req) => {
     const url = req.url();
-    if (url.includes('api.truckerpath.com') || url.includes('/tl/') || url.includes('/search/')) {
-      const postData = req.postData();
-      console.log(`[TP intercept] ${req.method()} ${url}`);
-      if (postData) console.log(`[TP intercept payload] ${postData.slice(0, 500)}`);
-      if (!capturedRequest) capturedRequest = { url, method: req.method(), payload: postData };
-    }
+    const isSearchCandidate = url.includes('search') || url.includes('filter') || url.includes('shipment') || url.includes('loads');
+    if (!isSearchCandidate) return;
+    const postData = req.postData();
+    console.log(`[TP intercept] ${req.method()} ${url}`);
+    if (postData) console.log(`[TP intercept payload] ${postData.slice(0, 800)}`);
   });
   page.on('response', async (res) => {
     const url = res.url();
-    if (url.includes('api.truckerpath.com') || url.includes('/tl/') || url.includes('/search/')) {
-      let body = '';
-      try { body = await res.text(); } catch {}
-      console.log(`[TP intercept response] ${res.status()} ${url} → ${body.slice(0, 300)}`);
-    }
+    const isSearchCandidate = url.includes('search') || url.includes('filter') || url.includes('shipment') || url.includes('loads');
+    if (!isSearchCandidate) return;
+    let body = '';
+    try { body = await res.text(); } catch {}
+    console.log(`[TP intercept response] ${res.status()} ${url} → ${body.slice(0, 500)}`);
   });
 
-  // Navigate to the load board to trigger the real search call
+  // Navigate to the load board (use 'load' not 'networkidle' — TP polls continuously)
   console.log('Navigating to TP load board to observe API calls...');
-  await page.goto('https://loadboard.truckerpath.com/', { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(3000);
+  await page.goto('https://loadboard.truckerpath.com/', { waitUntil: 'load', timeout: 60000 });
+  await page.waitForTimeout(2000);
   console.log(`Load board URL: ${page.url()}`);
+
+  // Dump current page HTML structure (first 2000 chars) so we can see nav/links
+  const pageStructure = await page.evaluate(() => document.body.innerHTML.slice(0, 2000));
+  console.log('[TP page HTML snippet]', pageStructure);
+
+  // Look for a "Find Loads" or "Search" link and click it
+  const findLoadsLink = page.locator('a[href*="find"], a[href*="search"], a[href*="loads"], button:has-text("Find"), button:has-text("Search")').first();
+  const linkVisible = await findLoadsLink.isVisible({ timeout: 5000 }).catch(() => false);
+  if (linkVisible) {
+    const href = await findLoadsLink.getAttribute('href').catch(() => null);
+    console.log(`Clicking find-loads link: ${href}`);
+    await findLoadsLink.click();
+    await page.waitForTimeout(4000);
+    console.log(`URL after click: ${page.url()}`);
+  } else {
+    // Try navigating directly to common search paths
+    for (const path of ['/loads', '/find-loads', '/search', '/loads/search']) {
+      console.log(`Trying direct nav to ${path}...`);
+      await page.goto(`https://loadboard.truckerpath.com${path}`, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
+      await page.waitForTimeout(3000);
+      console.log(`  landed: ${page.url()}`);
+    }
+  }
 
   // ── Fetch all loads in a single paginated pass ────────────────────────────────
   const allLoads = await fetchAllLoads(page, authToken);
