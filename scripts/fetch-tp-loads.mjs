@@ -26,7 +26,6 @@ const API_URL    = 'https://api.truckerpath.com/tl/search/filter/web/v2';
 const LOGIN_URL  = 'https://loadboard.truckerpath.com/login';
 const PAGE_LIMIT = 100;
 const DELAY_MS   = 1000; // between paginated requests
-const MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
 
 const US_STATES = new Set([
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -382,15 +381,10 @@ try {
   // ── Fetch all loads in a single paginated pass ────────────────────────────────
   const allLoads = await fetchAllLoads(page, authToken);
 
-  // Post-fetch safety filters: drop stale loads and non-US pickups
-  const MAX_AGE_MINUTES = MAX_AGE_MS / 60000;
+  // Post-fetch filter: US pickups only (age not filtered — TP inventory is inherently stale)
   const beforeFilter = allLoads.length;
-  const filtered = allLoads.filter(l => {
-    if (l.age_minutes > MAX_AGE_MINUTES) return false;
-    if (!US_STATES.has(l.pickup_state))  return false;
-    return true;
-  });
-  console.log(`\nFiltered ${beforeFilter - filtered.length} loads (stale or non-US). Keeping ${filtered.length}.`);
+  const filtered = allLoads.filter(l => US_STATES.has(l.pickup_state));
+  console.log(`\nFiltered ${beforeFilter - filtered.length} non-US loads. Keeping ${filtered.length} US loads.`);
   allLoads.length = 0;
   allLoads.push(...filtered);
 
@@ -413,6 +407,10 @@ try {
   const paidLoads  = allLoads.filter(l => l.pay_rate > 0);
   const metaOutput = OUTPUT.replace(/\.json$/, '-meta.json');
 
+  const ages = allLoads.map(l => l.age_minutes).sort((a, b) => a - b);
+  const medianAge = ages.length ? ages[Math.floor(ages.length / 2)] : 0;
+  const freshCount = ages.filter(a => a <= 2880).length; // under 48h
+
   writeFileSync(metaOutput, JSON.stringify({
     runDate:        new Date().toISOString().slice(0, 10),
     runAt:          new Date().toISOString(),
@@ -421,6 +419,7 @@ try {
     avgPay:         paidLoads.length
       ? Math.round(paidLoads.reduce((s, l) => s + l.pay_rate, 0) / paidLoads.length)
       : 0,
+    ageStats: { medianMinutes: medianAge, under48h: freshCount, medianDays: Math.round(medianAge / 1440) },
     equipmentTypes:  countBy(allLoads, 'equipment_type'),
     topPickupStates: countBy(allLoads, 'pickup_state').slice(0, 20),
   }, null, 2));

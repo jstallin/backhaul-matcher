@@ -86,6 +86,9 @@ export const SignUp = ({ onToggleMode }) => {
           <p style={{ margin: 0, color: '#666666', fontSize: '15px', lineHeight: '1.6' }}>
             We've sent you a confirmation email. Please check your inbox and click the link to verify your account.
           </p>
+          <p style={{ margin: '12px 0 0 0', color: '#999999', fontSize: '13px', lineHeight: '1.6' }}>
+            Don't see it after a few minutes? Check your spam or junk folder for an email from Haul Monitor.
+          </p>
           <button
             onClick={onToggleMode}
             style={{

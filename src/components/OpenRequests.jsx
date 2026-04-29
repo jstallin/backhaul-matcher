@@ -806,7 +806,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     </div>
                   )}
 
-                  {/* DAT Import button */}
+                  {/* DAT Import button — hidden until DAT integration is live
                   <button
                     onClick={(e) => { e.stopPropagation(); setDatImportRequest(request); }}
                     style={{
@@ -823,6 +823,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                   >
                     <span style={{ fontSize: '14px' }}>⬆</span> Import from DAT
                   </button>
+                  */}
                 </div>
               ))}
             </div>
