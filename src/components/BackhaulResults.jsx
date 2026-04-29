@@ -664,13 +664,13 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           </div>
                         </div>
                       )}
-                      {(m.source_load_id || m.load_id) && (
+                      {(m.df_load_number || (m.source !== 'directfreight' && (m.source_load_id || m.load_id))) && (
                         <div>
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>
-                            Load ID
+                            Load Number
                           </div>
                           <div style={{ fontWeight: 600, color: colors.text.primary, fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>
-                            {m.source_load_id || m.load_id}
+                            {m.df_load_number || m.source_load_id || m.load_id}
                           </div>
                         </div>
                       )}

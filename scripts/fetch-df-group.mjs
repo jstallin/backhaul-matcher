@@ -92,7 +92,16 @@ const defaultLengthForCode = (code) => {
 // When DF lists multiple types (e.g. trailer_type: ['F', 'V']), we expand into
 // separate records so each can be matched independently against fleet equipment.
 // Single-type loads produce one record with the original entry_id (no suffix).
+let _dfFieldsLogged = false;
+
 const normalize = (r) => {
+  // One-time dump of all raw DF API fields so we can confirm load_number field name
+  if (!_dfFieldsLogged) {
+    console.log('[DF raw fields]', Object.keys(r).sort().join(', '));
+    console.log('[DF sample record]', JSON.stringify(r, null, 2));
+    _dfFieldsLogged = true;
+  }
+
   const rawTypes = Array.isArray(r.trailer_type)
     ? r.trailer_type
     : [r.trailer_type || 'V'];
@@ -105,9 +114,12 @@ const normalize = (r) => {
     const loadId = multi ? `${r.entry_id}-${trailerCode.toLowerCase()}` : r.entry_id;
     // Use the reported length when available; fall back to a type-specific default.
     const trailerLength = r.length || defaultLengthForCode(trailerCode);
+    // DF human-readable load number — try common field name variants
+    const dfLoadNumber = r.load_number || r.load_num || r.load_no || r.loadNumber || r.load_id_display || null;
     return {
       load_id:        loadId,
-      source_load_id: String(r.entry_id), // original DF entry_id, unsuffixed — for user lookup
+      source_load_id: String(r.entry_id), // original DF entry_id, unsuffixed
+      df_load_number: dfLoadNumber ? String(dfLoadNumber) : null,
       source:         'directfreight',
       status:         'available',
       equipment_type: equipMap[trailerCode] || trailerCode,
