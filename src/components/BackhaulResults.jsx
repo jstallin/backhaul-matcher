@@ -5,6 +5,33 @@ import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { generateTop10Report } from '../utils/generateReport';
 
+const LOAD_BOARD_CONFIG = {
+  directfreight: {
+    name: 'Direct Freight',
+    // DF uses a Vue SPA — load detail opens in an overlay without a URL change.
+    // Update this URL if a deep-link pattern is confirmed (e.g. /home/boards/load/{id}).
+    url: () => 'https://www.directfreight.com/home/boards/find/loads/all/',
+  },
+  truckerpath: {
+    name: 'TruckerPath',
+    // TP numeric IDs are stored as "TP:251862330" — strip the prefix for the URL.
+    url: (id) => {
+      const numeric = id ? String(id).replace(/^TP:/i, '') : null;
+      return numeric
+        ? `https://loadboard.truckerpath.com/loads/${numeric}`
+        : 'https://loadboard.truckerpath.com/';
+    },
+  },
+  dat: {
+    name: 'DAT',
+    url: (id) => id ? `https://www.dat.com/load/${id}` : 'https://www.dat.com/',
+  },
+  truckstop: {
+    name: 'Truckstop',
+    url: (id) => id ? `https://truckstop.com/load-board/load-details/${id}` : 'https://truckstop.com/',
+  },
+};
+
 export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel, onComplete }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -203,11 +230,23 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
                     {getRankLabel(index)}
                   </div>
-                  {match.source && match.source !== 'demo' && (
-                    <div style={{ padding: '4px 8px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: colors.text.tertiary, letterSpacing: '0.05em' }}>
-                      {match.source === 'truckerpath' ? 'TP' : match.source === 'directfreight' ? 'DF' : match.source.toUpperCase()}
-                    </div>
-                  )}
+                  {match.source && match.source !== 'demo' && LOAD_BOARD_CONFIG[match.source] && (() => {
+                    const board = LOAD_BOARD_CONFIG[match.source];
+                    const href = board.url(match.source_load_id || match.load_id);
+                    return (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ padding: '4px 10px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: colors.accent.primary, letterSpacing: '0.03em', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}15`; e.currentTarget.style.borderColor = colors.accent.primary; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; e.currentTarget.style.borderColor = colors.border.primary; }}
+                      >
+                        {board.name} ↗
+                      </a>
+                    );
+                  })()}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {match.has_rate_config ? (
