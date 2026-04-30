@@ -217,7 +217,6 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       console.log('🏠 Fleet home coordinates:', fleetHome);
 
       console.log('🔍 Route-home matching with:', {
-        datumPoint: request.datum_point,
         geocoded: geocoded || '⚠️ FAILED - using fleet home',
         datumPoint,
         fleetHome,
