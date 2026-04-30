@@ -1,69 +1,69 @@
 {
   "runDate": "2026-04-30",
-  "runAt": "2026-04-30T15:24:09.053Z",
-  "totalLoads": 33889,
-  "previousTotal": 29813,
-  "netChange": 4076,
-  "added": 14523,
-  "removed": 10447,
-  "avgPay": 1232,
-  "loadsWithPay": 23708,
+  "runAt": "2026-04-30T20:59:01.904Z",
+  "totalLoads": 32086,
+  "previousTotal": 33889,
+  "netChange": -1803,
+  "added": 16070,
+  "removed": 17873,
+  "avgPay": 1260,
+  "loadsWithPay": 21778,
   "equipmentTypes": [
     [
       "Flatbed",
-      16959
+      15713
     ],
     [
       "Step Deck",
-      7301
+      6637
     ],
     [
       "Dry Van",
-      4970
-    ],
-    [
-      "Other",
-      1796
+      5162
     ],
     [
       "Refrigerated",
-      1784
+      1908
+    ],
+    [
+      "Other",
+      1707
     ],
     [
       "Power Only",
-      712
+      639
     ],
     [
       "Hotshot",
-      182
+      146
     ],
     [
       "Box Truck",
-      49
-    ],
-    [
-      "Lowboy",
-      47
-    ],
-    [
-      "Curtain Van",
-      40
+      50
     ],
     [
       "Container",
-      38
+      42
     ],
     [
-      "Cargo Van",
-      4
+      "Lowboy",
+      40
+    ],
+    [
+      "Curtain Van",
+      30
     ],
     [
       "Dump Trailer",
       4
     ],
     [
+      "Cargo Van",
+      3
+    ],
+    [
       "Tanker",
-      1
+      3
     ],
     [
       "Auto Carrier",
@@ -77,83 +77,83 @@
   "topPickupStates": [
     [
       "TX",
-      3622
+      3429
     ],
     [
       "GA",
-      3092
+      2772
     ],
     [
       "AL",
-      2762
+      2409
     ],
     [
       "IL",
-      1786
+      1620
     ],
     [
       "FL",
-      1702
-    ],
-    [
-      "NC",
-      1394
+      1609
     ],
     [
       "SC",
-      1345
-    ],
-    [
-      "MS",
-      1335
-    ],
-    [
-      "OH",
-      1266
+      1367
     ],
     [
       "CA",
-      1218
+      1305
     ],
     [
-      "PA",
-      1070
+      "OH",
+      1240
     ],
     [
-      "MA",
-      1043
+      "NC",
+      1114
+    ],
+    [
+      "MS",
+      1007
     ],
     [
       "IN",
-      979
+      1005
+    ],
+    [
+      "PA",
+      988
+    ],
+    [
+      "MA",
+      908
     ],
     [
       "AR",
-      964
-    ],
-    [
-      "VA",
-      806
+      904
     ],
     [
       "TN",
-      710
+      734
     ],
     [
       "MI",
-      664
-    ],
-    [
-      "WI",
-      656
+      716
     ],
     [
       "NY",
-      633
+      696
+    ],
+    [
+      "WI",
+      695
+    ],
+    [
+      "MO",
+      579
     ],
     [
       "NJ",
-      594
+      568
     ]
   ]
 }
