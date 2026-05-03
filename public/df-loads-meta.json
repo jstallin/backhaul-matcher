@@ -1,53 +1,53 @@
 {
   "runDate": "2026-05-03",
-  "runAt": "2026-05-03T09:15:04.473Z",
-  "totalLoads": 4879,
-  "previousTotal": 5250,
-  "netChange": -371,
-  "added": 2831,
-  "removed": 3202,
-  "avgPay": 1724,
-  "loadsWithPay": 3200,
+  "runAt": "2026-05-03T11:55:09.193Z",
+  "totalLoads": 5476,
+  "previousTotal": 4879,
+  "netChange": 597,
+  "added": 2373,
+  "removed": 1776,
+  "avgPay": 1687,
+  "loadsWithPay": 3574,
   "equipmentTypes": [
     [
       "Flatbed",
-      2762
-    ],
-    [
-      "Dry Van",
-      819
+      3072
     ],
     [
       "Step Deck",
-      661
+      940
+    ],
+    [
+      "Dry Van",
+      821
     ],
     [
       "Refrigerated",
-      411
+      390
     ],
     [
       "Power Only",
-      150
+      170
     ],
     [
       "Hotshot",
-      22
+      26
     ],
     [
       "Lowboy",
-      21
-    ],
-    [
-      "Curtain Van",
-      9
+      23
     ],
     [
       "Other",
+      10
+    ],
+    [
+      "Curtain Van",
       8
     ],
     [
       "Box Truck",
-      7
+      6
     ],
     [
       "Container",
@@ -62,6 +62,10 @@
       2
     ],
     [
+      "Landall",
+      1
+    ],
+    [
       "Hopper Bottom",
       1
     ]
@@ -69,83 +73,83 @@
   "topPickupStates": [
     [
       "TX",
-      487
-    ],
-    [
-      "AL",
-      288
-    ],
-    [
-      "FL",
-      258
+      537
     ],
     [
       "PA",
-      235
+      324
     ],
     [
-      "CA",
-      230
-    ],
-    [
-      "IL",
-      213
-    ],
-    [
-      "OH",
-      201
-    ],
-    [
-      "NY",
-      183
+      "FL",
+      268
     ],
     [
       "GA",
-      177
+      257
     ],
     [
-      "WA",
-      148
+      "OH",
+      248
+    ],
+    [
+      "AL",
+      234
+    ],
+    [
+      "IL",
+      216
+    ],
+    [
+      "CA",
+      199
+    ],
+    [
+      "IN",
+      186
+    ],
+    [
+      "NY",
+      185
+    ],
+    [
+      "AR",
+      183
+    ],
+    [
+      "MA",
+      183
+    ],
+    [
+      "NJ",
+      172
+    ],
+    [
+      "MD",
+      144
     ],
     [
       "OR",
       139
     ],
     [
-      "MA",
-      138
+      "SC",
+      133
     ],
     [
-      "IN",
-      137
+      "WA",
+      133
     ],
     [
-      "NJ",
-      116
+      "CT",
+      118
     ],
     [
-      "NC",
+      "MI",
       115
     ],
     [
       "WI",
-      113
-    ],
-    [
-      "CT",
       106
-    ],
-    [
-      "MO",
-      106
-    ],
-    [
-      "AR",
-      105
-    ],
-    [
-      "MI",
-      103
     ]
   ]
 }
