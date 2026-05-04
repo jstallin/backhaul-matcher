@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from "@vercel/speed-insights/react"
+//import { SpeedInsights } from "@vercel/speed-insights/react"
+import { SpeedInsights } from "@vercel/speed-insights/vue"
 import { MapPin, Truck, DollarSign, Navigation, Settings as SettingsIcon, TrendingUp, Search, Calendar } from './icons';
 import { AuthWrapper } from './components/AuthWrapper';
 import { ResetPassword } from './components/ResetPassword';
