@@ -215,12 +215,22 @@ try {
     const arr = v.list || v.results || v.RESULTS || v.loads;
     const arrKey = v.list ? 'list' : v.results ? 'results' : v.RESULTS ? 'RESULTS' : 'loads';
     const totalPages = v.total_pages || v.TOTAL_PAGES || v.totalPages || 1;
+
+    // Dump all vueapp keys that look pagination-related so we can catch renames
+    const paginationKeys = Object.keys(v).filter(k =>
+      /page|total|count|num|result/i.test(k)
+    );
+    const paginationValues = {};
+    for (const k of paginationKeys) paginationValues[k] = v[k];
+
     return {
       _arrKey: arrKey,
       RESULTS: arr,
       TOTAL_PAGES: totalPages,
+      _paginationDebug: paginationValues,
     };
   });
+  console.log(`[${STATES}] vueapp pagination fields:`, JSON.stringify(page1Result._paginationDebug));
   console.log(`[${STATES}] vueapp.${page1Result._arrKey}: ${page1Result.RESULTS.length} loads, ${page1Result.TOTAL_PAGES} pages`);
 
   // --- Collect page 1 loads ---
