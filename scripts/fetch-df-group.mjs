@@ -275,6 +275,14 @@ try {
 
         const data = await response.json();
 
+        // One-time dump of the page-2 API response shape
+        if (pageNum === 2) {
+          const topKeys = Object.keys(data);
+          const listKey = topKeys.find(k => Array.isArray(data[k]));
+          console.log(`[${STATES}] Page 2 API keys: ${topKeys.join(', ')}`);
+          console.log(`[${STATES}] Page 2 page_number field: ${data.page_number ?? '(missing)'}, list key: ${listKey ?? '(none)'}, list length: ${listKey ? data[listKey].length : 'n/a'}`);
+        }
+
         // API clamps page_number to its max — detect and stop
         const returnedPage = data.page_number ?? pageNum;
         if (returnedPage < pageNum) {
