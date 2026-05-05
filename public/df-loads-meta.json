@@ -1,131 +1,131 @@
 {
   "runDate": "2026-05-05",
-  "runAt": "2026-05-05T08:49:16.816Z",
-  "totalLoads": 999,
-  "previousTotal": 1172,
-  "netChange": -173,
-  "added": 959,
-  "removed": 1132,
-  "avgPay": 1196,
-  "loadsWithPay": 757,
+  "runAt": "2026-05-05T11:31:21.661Z",
+  "totalLoads": 1098,
+  "previousTotal": 999,
+  "netChange": 99,
+  "added": 892,
+  "removed": 793,
+  "avgPay": 1362,
+  "loadsWithPay": 778,
   "equipmentTypes": [
     [
       "Flatbed",
-      732
+      835
     ],
     [
       "Step Deck",
-      114
-    ],
-    [
-      "Power Only",
-      89
+      115
     ],
     [
       "Dry Van",
-      33
+      85
     ],
     [
       "Refrigerated",
-      21
+      40
     ],
     [
       "Hotshot",
-      5
+      7
     ],
     [
-      "Lowboy",
-      2
+      "Power Only",
+      7
     ],
     [
       "Box Truck",
-      2
+      5
     ],
     [
       "Curtain Van",
+      3
+    ],
+    [
+      "Lowboy",
       1
     ]
   ],
   "topPickupStates": [
     [
-      "TX",
-      95
+      "OR",
+      100
     ],
     [
-      "OR",
-      75
+      "TX",
+      77
     ],
     [
       "IL",
-      74
+      65
     ],
     [
       "WA",
-      58
+      63
     ],
     [
-      "PA",
-      50
+      "AR",
+      62
     ],
     [
-      "IN",
+      "AL",
+      62
+    ],
+    [
+      "MD",
       49
     ],
     [
-      "NJ",
-      40
+      "MO",
+      42
+    ],
+    [
+      "PA",
+      39
     ],
     [
       "MA",
       37
     ],
     [
-      "GA",
+      "NJ",
+      37
+    ],
+    [
+      "CA",
       35
     ],
     [
-      "AR",
-      33
+      "SD",
+      35
     ],
     [
-      "TN",
-      30
+      "ME",
+      34
     ],
     [
-      "AL",
-      29
+      "GA",
+      32
+    ],
+    [
+      "FL",
+      31
+    ],
+    [
+      "IN",
+      31
     ],
     [
       "MT",
       28
     ],
     [
-      "MO",
-      27
-    ],
-    [
-      "WV",
-      23
-    ],
-    [
-      "FL",
-      23
-    ],
-    [
-      "MD",
-      22
-    ],
-    [
-      "OK",
-      19
-    ],
-    [
-      "MI",
-      19
-    ],
-    [
       "ID",
-      19
+      25
+    ],
+    [
+      "LA",
+      22
     ]
   ]
 }
