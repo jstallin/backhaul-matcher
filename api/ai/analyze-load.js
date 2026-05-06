@@ -473,19 +473,31 @@ export default async function handler(req, res) {
 
   const hasRateConfig = match.has_rate_config;
 
-  // Resolve field names — match object uses several aliases
-  const loadMiles        = match.pickup_to_delivery_miles ?? match.distance_miles ?? match.distance ?? 0;
-  const oorMiles         = match.additionalMiles ?? match.additional_miles ?? 0;
-  const toPickup         = match.datum_to_pickup_miles ?? match.finalToPickup ?? 0;
-  const toHome           = match.delivery_to_home_miles ?? 0;
-  const rpm              = match.revenuePerMile ?? match.revenue_per_mile ?? 0;
-  const revenue          = match.totalRevenue ?? match.total_revenue ?? 0;
-  const pickupDate       = match.pickupDate ?? match.ship_date ?? 'Not specified';
-  const equipment        = match.equipmentType ?? match.equipment_type ?? '';
-  const weight           = match.weight_lbs ?? match.weight;
-  const postedRpm        = match.posted_rate_per_mile ?? null;
-  const isFullLoad       = match.full_load ?? null;
-  const ageMinutes       = match.age_minutes ?? null;
+  // Resolve field names — match object uses several aliases (force Number to guard against string values)
+  const loadMiles  = Number(match.pickup_to_delivery_miles ?? match.distance_miles ?? match.distance ?? 0);
+  const oorMiles   = Number(match.additionalMiles ?? match.additional_miles ?? 0);
+  const toPickup   = Number(match.datum_to_pickup_miles ?? match.finalToPickup ?? match.final_to_pickup ?? 0);
+  const toHome     = Number(match.delivery_to_home_miles ?? 0);
+  const rpm        = Number(match.revenuePerMile ?? match.revenue_per_mile ?? 0);
+  const revenue    = Number(match.totalRevenue ?? match.total_revenue ?? 0);
+  const netCredit  = Number(match.customer_net_credit ?? 0);
+  const carrierRev = Number(match.carrier_revenue ?? 0);
+  const mileageExp = Number(match.mileage_expense ?? 0);
+  const fuelSurch  = Number(match.fuel_surcharge ?? 0);
+  const pickupDate = match.pickupDate ?? match.pickup_date ?? match.ship_date ?? 'Not specified';
+  const equipment  = match.equipmentType ?? match.equipment_type ?? '';
+  const weight     = match.weight_lbs ?? match.weight;
+  const postedRpm  = match.posted_rate_per_mile ?? null;
+  const isFullLoad = match.full_load ?? null;
+  const ageMinutes = match.age_minutes ?? null;
+
+  // Resolve origin/destination — handle both nested (origin.address) and flat (pickup_city) shapes
+  const originAddr = match.origin?.address
+    || (match.pickup_city ? `${match.pickup_city}, ${match.pickup_state || ''}`.trim() : null)
+    || 'Unknown';
+  const destAddr = match.destination?.address
+    || (match.delivery_city ? `${match.delivery_city}, ${match.delivery_state || ''}`.trim() : null)
+    || 'Unknown';
 
   // Trailer type match context
   const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
@@ -499,12 +511,12 @@ export default async function handler(req, res) {
   const financialSection = hasRateConfig
     ? `FINANCIAL BREAKDOWN (fleet rate config applied):
 - Gross revenue: $${revenue.toFixed(2)}
-- Customer net credit: $${match.customer_net_credit?.toFixed(2)} (positive = profitable for customer)
-- Carrier revenue: $${match.carrier_revenue?.toFixed(2)}
-- Mileage expense: $${match.mileage_expense?.toFixed(2)} (${oorMiles} OOR mi × fleet rate)
-- Fuel surcharge: $${match.fuel_surcharge?.toFixed(2)}
-- Fleet cost/mile: $${(fleet.cost_per_mile ?? 0).toFixed(3)}/mi
-- Fleet target RPM: $${(fleet.target_rpm ?? 0).toFixed(3)}/mi`
+- Customer net credit: $${netCredit.toFixed(2)} (positive = profitable for customer)
+- Carrier revenue: $${carrierRev.toFixed(2)}
+- Mileage expense: $${mileageExp.toFixed(2)} (${oorMiles} OOR mi × fleet rate)
+- Fuel surcharge: $${fuelSurch.toFixed(2)}
+- Fleet cost/mile: $${Number(fleet.cost_per_mile ?? 0).toFixed(3)}/mi
+- Fleet target RPM: $${Number(fleet.target_rpm ?? 0).toFixed(3)}/mi`
     : `RATE INFO:
 - Gross revenue: $${revenue.toFixed(2)}
 - Revenue per backhaul mile (total route): $${rpm.toFixed(3)}/mi${postedRpm ? `\n- Shipper posted rate (load miles only): $${Number(postedRpm).toFixed(2)}/mi` : ''}
@@ -521,7 +533,7 @@ export default async function handler(req, res) {
   const prompt = `You are advising a freight dispatcher on a BACKHAUL opportunity — the truck is already out and needs to get home. The alternative to taking this load is deadheading home empty with zero revenue. Evaluate accordingly: a load that covers fuel + some profit is almost always better than nothing.
 
 LOAD:
-- Route: ${match.origin?.address} → ${match.destination?.address}
+- Route: ${originAddr} → ${destAddr}
 - Load miles: ${loadMiles} mi
 - Equipment: ${equipment}${weight ? `, ${Number(weight).toLocaleString()} lbs` : ''}${isFullLoad != null ? ` | ${isFullLoad ? 'Full load' : 'Partial load'}` : ''}
 ${typeMatchLine}

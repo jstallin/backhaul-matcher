@@ -444,6 +444,9 @@ export const Settings = ({ onBack }) => {
   const [creditsBypass, setCreditsBypass] = useState(
     localStorage.getItem('hm_credits_bypass') === 'true'
   );
+  const [useNewUI, setUseNewUI] = useState(
+    localStorage.getItem('hm_ui') === 'v2'
+  );
 
   const toggleCreditsBypass = () => {
     const next = !creditsBypass;
@@ -453,6 +456,17 @@ export const Settings = ({ onBack }) => {
     } else {
       localStorage.removeItem('hm_credits_bypass');
     }
+  };
+
+  const toggleNewUI = () => {
+    const next = !useNewUI;
+    setUseNewUI(next);
+    if (next) {
+      localStorage.setItem('hm_ui', 'v2');
+    } else {
+      localStorage.removeItem('hm_ui');
+    }
+    setTimeout(() => window.location.reload(), 150);
   };
 
   const handlePasswordChange = async (e) => {
@@ -1765,6 +1779,44 @@ export const Settings = ({ onBack }) => {
                       Credit gate is bypassed — searches will not deduct credits
                     </div>
                   )}
+                </div>
+
+                <div style={{
+                  marginTop: '16px',
+                  padding: '20px 24px',
+                  background: colors.background.secondary,
+                  border: `1px solid ${colors.border.primary}`,
+                  borderRadius: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>
+                        Use New UI (v2)
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary }}>
+                        Switch to the redesigned interface. Reloads the page immediately.
+                      </p>
+                    </div>
+                    <div
+                      onClick={toggleNewUI}
+                      role="switch"
+                      aria-checked={useNewUI}
+                      style={{
+                        width: '44px', height: '24px', borderRadius: '12px',
+                        background: useNewUI ? colors.accent.primary : colors.border.secondary,
+                        cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                        flexShrink: 0, marginLeft: '16px'
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: '3px',
+                        left: useNewUI ? '23px' : '3px',
+                        width: '18px', height: '18px', borderRadius: '50%',
+                        background: '#fff', transition: 'left 0.2s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                      }} />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

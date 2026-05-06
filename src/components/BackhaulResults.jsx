@@ -93,10 +93,17 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ match: { ...match, rank: matches.indexOf(match) }, fleet, request })
       });
-      const data = await response.json();
-      setAiAnalysis(prev => ({ ...prev, [id]: data.analysis || 'Unable to generate analysis.' }));
-    } catch {
-      setAiAnalysis(prev => ({ ...prev, [id]: 'Unable to generate analysis.' }));
+      let data;
+      try { data = await response.json(); } catch { data = {}; }
+      if (!response.ok || data.error) {
+        console.error('AI analyze-load error:', data.error || response.status);
+        setAiAnalysis(prev => ({ ...prev, [id]: data.error || `Service unavailable (${response.status})` }));
+        return;
+      }
+      setAiAnalysis(prev => ({ ...prev, [id]: data.analysis || 'No analysis returned.' }));
+    } catch (err) {
+      console.error('AI analyze-load fetch error:', err);
+      setAiAnalysis(prev => ({ ...prev, [id]: 'Unable to reach AI service.' }));
     } finally {
       setAiLoading(prev => ({ ...prev, [id]: false }));
     }
