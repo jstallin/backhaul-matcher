@@ -806,16 +806,16 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px', marginBottom: '10px' }}>
             {[
-              { label: 'Customer Share', value: fmtMoney(match.customer_share), color: '#dc2626' },
-              { label: 'Mileage Exp', value: `-${fmtMoney(match.mileage_expense)}`, color: '#dc2626' },
-              { label: `Stop Exp (${match.stop_count ?? 0})`, value: `-${fmtMoney(match.stop_expense)}`, color: '#dc2626' },
-              { label: 'Fuel Surcharge', value: `-${fmtMoney(match.fuel_surcharge)}`, color: '#dc2626' },
-              ...(match.other_charges > 0 ? [{ label: 'Other Charges', value: `-${fmtMoney(match.other_charges)}`, color: '#dc2626' }] : []),
-              { label: 'Carrier Revenue', value: fmtMoney(match.carrier_revenue), color: t.colors.accent.blue },
-            ].map(({ label, value, color }) => (
+              { label: 'Customer Share', value: fmtMoney(match.customer_share) },
+              { label: 'Mileage Exp', value: `-${fmtMoney(match.mileage_expense)}` },
+              { label: `Stop Exp (${match.stop_count ?? 0})`, value: `-${fmtMoney(match.stop_expense)}` },
+              { label: 'Fuel Surcharge', value: `-${fmtMoney(match.fuel_surcharge)}` },
+              ...(match.other_charges > 0 ? [{ label: 'Other Charges', value: `-${fmtMoney(match.other_charges)}` }] : []),
+              { label: 'Carrier Revenue', value: fmtMoney(match.carrier_revenue) },
+            ].map(({ label, value }) => (
               <div key={label}>
                 <div style={{ fontSize: '10px', color: t.colors.text.muted, marginBottom: '2px' }}>{label}</div>
-                <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color }}>{value}</div>
+                <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.secondary }}>{value}</div>
               </div>
             ))}
           </div>
@@ -1215,7 +1215,7 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
             </div>
             <div>
               <div style={{ fontSize: '10px', color: t.colors.text.muted, marginBottom: '2px' }}>Net Revenue</div>
-              <div style={{ fontWeight: t.font.weight.bold, color: t.colors.accent.blue }}>{fmtMoney(match.customer_net_credit ?? match.netRevenue ?? 0)}</div>
+              <div style={{ fontWeight: t.font.weight.bold, color: (match.customer_net_credit ?? match.netRevenue ?? 0) >= 0 ? '#16a34a' : '#dc2626' }}>{fmtMoney(match.customer_net_credit ?? match.netRevenue ?? 0)}</div>
             </div>
           </div>
         </div>
