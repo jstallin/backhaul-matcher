@@ -417,21 +417,28 @@ export const findRouteHomeBackhauls = async (
 
   // ---- SCORE with real driving distances ----
   for (const { load, dtp, dtm, dth } of distanceResults) {
+    // Resolve coordinates with state-centroid fallback so map markers render
+    // even when individual city coords are absent (common for DF scraped loads).
+    const resolvedPickupLat = load.pickup_lat ?? STATE_CENTROIDS[load.pickup_state]?.lat ?? null;
+    const resolvedPickupLng = load.pickup_lng ?? STATE_CENTROIDS[load.pickup_state]?.lng ?? null;
+    const resolvedDeliveryLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? null;
+    const resolvedDeliveryLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? null;
+
     // Fall back to Haversine if PC*MILER failed for any leg.
     // In relay mode, dtp = homeToPickup; in non-relay, dtp = datumToPickup.
     const firstLegOrigin = isRelay ? fleetHome : datumPoint;
-    const firstLeg = dtp ?? (load.pickup_lat !== null
-      ? calculateDistance(firstLegOrigin.lat, firstLegOrigin.lng, load.pickup_lat, load.pickup_lng)
+    const firstLeg = dtp ?? (resolvedPickupLat !== null
+      ? calculateDistance(firstLegOrigin.lat, firstLegOrigin.lng, resolvedPickupLat, resolvedPickupLng)
       : null);
     // Middle leg: prefer PC*MILER result, then load.distance_miles (live DAT/DF data),
     // last resort haversine×1.35 (only if coords available).
     const pickupToDelivery = dtm
       ?? load.distance_miles
-      ?? (load.pickup_lat !== null
-        ? calculateDistance(load.pickup_lat, load.pickup_lng, load.delivery_lat, load.delivery_lng)
+      ?? (resolvedPickupLat !== null
+        ? calculateDistance(resolvedPickupLat, resolvedPickupLng, resolvedDeliveryLat, resolvedDeliveryLng)
         : null);
-    const deliveryToHome = dth ?? (load.delivery_lat !== null
-      ? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng)
+    const deliveryToHome = dth ?? (resolvedDeliveryLat !== null
+      ? calculateDistance(resolvedDeliveryLat, resolvedDeliveryLng, fleetHome.lat, fleetHome.lng)
       : null);
 
     // Delivery must make forward progress toward home — it can't drop the driver
@@ -563,20 +570,27 @@ export const findRouteHomeBackhauls = async (
       formatted_revenue: `$${totalRevenue.toFixed(2)}`,
       formatted_rpm: `$${revenuePerMile.toFixed(2)}`,
 
+      // Resolved coordinates — centroid fallback ensures map markers render
+      // even when individual city coords are absent (common for DF scraped loads)
+      pickup_lat: resolvedPickupLat,
+      pickup_lng: resolvedPickupLng,
+      delivery_lat: resolvedDeliveryLat,
+      delivery_lng: resolvedDeliveryLng,
+
       // For BackhaulResults component compatibility
       origin: {
         address: `${load.pickup_city}, ${load.pickup_state}`,
         city: load.pickup_city,
         state: load.pickup_state,
-        lat: load.pickup_lat,
-        lng: load.pickup_lng
+        lat: resolvedPickupLat,
+        lng: resolvedPickupLng
       },
       destination: {
         address: `${load.delivery_city}, ${load.delivery_state}`,
         city: load.delivery_city,
         state: load.delivery_state,
-        lat: load.delivery_lat,
-        lng: load.delivery_lng
+        lat: resolvedDeliveryLat,
+        lng: resolvedDeliveryLng
       },
 
       // Trailer type ranking
