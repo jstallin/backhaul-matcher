@@ -184,7 +184,7 @@
       <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Connect Your Load Board</div>
-        <p class="step-desc">From the navigation menu sidebar go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to your load board (DAT, Direct Freight or Truckstop) and enter your credentials in the dialog that appears. This is a one-time step — once connected, every user in your organization will share this integration automatically.</p>
+        <p class="step-desc">From the navigation menu go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to your load board (DAT, Direct Freight or Truckstop) and enter your credentials in the dialog that appears. This is a one-time step — once connected, every user in your organization will share this integration automatically.</p>
         <img class="shot" src="/guide/s0-integrations.png" alt="Connect to Truckstop dialog showing API token, username, and password fields" />
         <div class="fields">
           <div class="field-row"><div class="field-name">API Token</div><div class="field-desc">Your load board API token. Log in to your load board account and navigate to API or developer settings to find this.</div></div>
@@ -202,7 +202,7 @@
       <div class="step-num-col"><div class="step-num">6</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Invite Your Team</div>
-        <p class="step-desc">To add colleagues, go to <strong>Settings → Organization</strong>. You'll see your organization name, your email domain, and the current member list. Click <strong>+ Invite Member</strong> to send an invitation. Each invited user will receive an email with a link to create their account and will be joined to your organization automatically.</p>
+        <p class="step-desc">To add colleagues, go to <strong>Settings</strong> and select <strong>Organization</strong>. You'll see your organization name, your email domain, and the current member list. Click <strong>+ Invite Member</strong> to send an invitation. Each invited user will receive an email with a link to create their account and will be joined to your organization automatically.</p>
         <img class="shot" src="/guide/s0-invite.png" alt="Settings — Organization panel showing org name, members list, and Invite Member button" />
         <div class="note">
           <span class="note-icon">⚠️</span>
@@ -228,7 +228,7 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Navigate to Fleet Setup</div>
-        <p class="step-desc">From the navigation menu sidebar select <strong>Fleets</strong>. On the Fleets page, click <strong>+ New Fleet</strong> to open the setup form.</p>
+        <p class="step-desc">From the navigation menu select <strong>Fleets</strong>. On the Fleets page, click <strong>New Fleet</strong> to open the setup form.</p>
         <img class="shot" src="/guide/s1-fleets.png" alt="Fleets page showing existing fleets and Add Fleet button" />
       </div>
     </div>
@@ -242,10 +242,10 @@
           <div class="field-row"><div class="field-name">Fleet Name <span class="req">*</span></div><div class="field-desc">Your company or fleet name (e.g., Carolina Transport Fleet)</div></div>
           <div class="field-row"><div class="field-name">MC Number</div><div class="field-desc">Your FMCSA Motor Carrier number (e.g., MC-123456)</div></div>
           <div class="field-row"><div class="field-name">DOT Number</div><div class="field-desc">Your USDOT number (e.g., DOT-123456)</div></div>
-          <div class="field-row"><div class="field-name">Fleet Manager Phone <span class="req">*</span></div><div class="field-desc">Used for text notifications when opportunities change</div></div>
-          <div class="field-row"><div class="field-name">Fleet Manager Email <span class="req">*</span></div><div class="field-desc">Used for email notifications</div></div>
+          <div class="field-row"><div class="field-name">Phone <span class="req">*</span></div><div class="field-desc">Used for text notifications when opportunities change</div></div>
+          <div class="field-row"><div class="field-name">Email <span class="req">*</span></div><div class="field-desc">Used for email notifications</div></div>
         </div>
-        <img class="shot" src="/guide/s1-fleet-form.png" alt="Create Fleet Profile form showing all fields" />
+        <img class="shot" src="/guide/s1-fleet-form.png" alt="Fleet profile form showing Fleet Info fields including Fleet Name, MC Number, DOT Number, Phone, and Email" />
       </div>
     </div>
 
@@ -259,7 +259,7 @@
         </div>
         <div class="tip">
           <span class="tip-icon">💡</span>
-          <span>After you type the address and tab away, Haul Monitor automatically verifies it using PC*MILER and shows a <strong>✓ Verified</strong> confirmation with the exact coordinates. No manual lookup needed.</span>
+          <span>After entering the address, click the <strong>Verify</strong> button. Haul Monitor confirms the location via PC*MILER and shows a <strong>✓ Verified</strong> badge with the exact coordinates.</span>
         </div>
       </div>
     </div>
@@ -274,7 +274,7 @@
           <div class="subsection-title">Revenue Split</div>
           <div class="subsection-desc">How gross load revenue is divided between your fleet (carrier) and the shipper (customer).</div>
           <div class="fields">
-            <div class="field-row"><div class="field-name">Carrier %</div><div class="field-desc">Percentage of load revenue paid to your fleet. The Customer % is auto-calculated as the complement (e.g., Carrier 20% → Customer 80%).</div></div>
+            <div class="field-row"><div class="field-name">Carrier Revenue Split</div><div class="field-desc">Percentage of load revenue paid to your fleet. The Customer % is auto-calculated as the complement (e.g., Carrier 20% → Customer 80%).</div></div>
           </div>
         </div>
 
@@ -282,7 +282,7 @@
           <div class="subsection-title">Mileage &amp; Stop Rates</div>
           <div class="subsection-desc">Rates charged for out-of-route miles and extra stops created by taking the backhaul.</div>
           <div class="fields">
-            <div class="field-row"><div class="field-name">Mileage Rate ($/mi)</div><div class="field-desc">Your cost per out-of-route mile, loaded and empty (e.g., 2.00)</div></div>
+            <div class="field-row"><div class="field-name">Mileage Rate ($/mile)</div><div class="field-desc">Your cost per out-of-route mile, loaded and empty (e.g., 2.00)</div></div>
             <div class="field-row"><div class="field-name">Stop Rate ($/stop)</div><div class="field-desc">Cost per additional stop on the backhaul route (e.g., 50.00)</div></div>
           </div>
         </div>
@@ -293,7 +293,7 @@
           <div class="fields">
             <div class="field-row"><div class="field-name">Charge Name</div><div class="field-desc">Short label shown on reports (e.g., Detention fee)</div></div>
             <div class="field-row"><div class="field-name">Description</div><div class="field-desc">Brief explanation, max 25 characters (e.g., 2+ hr wait time)</div></div>
-            <div class="field-row"><div class="field-name">Amount ($/load)</div><div class="field-desc">Fixed cost applied per load</div></div>
+            <div class="field-row"><div class="field-name">Amount ($)</div><div class="field-desc">Fixed cost applied per load</div></div>
           </div>
         </div>
 
@@ -303,10 +303,10 @@
           <div class="subsection-title">Fuel Surcharge (FSC)</div>
           <div class="subsection-desc">Haul Monitor calculates FSC automatically using live DOE diesel prices, or you can enter a rate manually.</div>
           <div class="fields">
-            <div class="field-row"><div class="field-name">PEG ($/gal)</div><div class="field-desc">Your baseline fuel cost per gallon already included in your mileage rate (e.g., 1.200)</div></div>
-            <div class="field-row"><div class="field-name">MPG</div><div class="field-desc">Average fuel economy of your fleet — typically 6–8 mpg (default: 6.0)</div></div>
-            <div class="field-row"><div class="field-name">PADD Region</div><div class="field-desc">Select your region for live DOE diesel price feeds. The current price auto-fills from EIA.gov.</div></div>
-            <div class="field-row"><div class="field-name">DOE PADD Rate ($/gal)</div><div class="field-desc">Current diesel price. Auto-populated when a PADD Region is selected, or enter manually.</div></div>
+            <div class="field-row"><div class="field-name">Fuel Peg ($/gal)</div><div class="field-desc">Your baseline fuel cost per gallon already included in your mileage rate (e.g., 1.200)</div></div>
+            <div class="field-row"><div class="field-name">Fuel Economy (MPG)</div><div class="field-desc">Average fuel economy of your fleet — typically 6–8 mpg (default: 6.0)</div></div>
+            <div class="field-row"><div class="field-name">DOE PADD Region</div><div class="field-desc">Select your region for live DOE diesel price feeds. The current price auto-fills from EIA.gov.</div></div>
+            <div class="field-row"><div class="field-name">DOE PADD Rate ($/gal)</div><div class="field-desc">Current diesel price. Auto-populated when a DOE PADD Region is selected, or enter manually.</div></div>
           </div>
           <div class="tip">
             <span class="tip-icon">💡</span>
@@ -322,7 +322,7 @@
       <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Save the Fleet Profile</div>
-        <p class="step-desc">Click <strong>Create Fleet Profile</strong> at the bottom of the form. You'll see a success confirmation and be returned to the Fleets list. You can edit your fleet profile at any time — changes take effect on the next request run.</p>
+        <p class="step-desc">Click <strong>Save Profile</strong> at the bottom of the form. You can edit your fleet profile at any time — changes take effect on the next request run.</p>
       </div>
     </div>
 
@@ -344,7 +344,7 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Open the Request Form</div>
-        <p class="step-desc">From the navigation menu sidebar select <strong>Search</strong> and click New.</p>
+        <p class="step-desc">From the navigation menu select <strong>Search</strong> and click <strong>New</strong>.</p>
       </div>
     </div>
 
@@ -354,10 +354,10 @@
         <div class="step-title">Fill in the Request Details</div>
         <div class="fields">
           <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive name for this request (e.g., Backhaul Request 12/30/2025)</div></div>
-          <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
-          <div class="field-row"><div class="field-name">Select Fleet <span class="req">*</span></div><div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div></div>
-          <div class="field-row"><div class="field-name">Equipment Available <span class="req">*</span></div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
-          <div class="field-row"><div class="field-name">Equipment Needed Back <span class="req">*</span></div><div class="field-desc">The date the equipment must be returned home by</div></div>
+          <div class="field-row"><div class="field-name">Datum Point (Return Location) <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
+          <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div></div>
+          <div class="field-row"><div class="field-name">Equipment Available Date <span class="req">*</span></div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
+          <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">The date the equipment must be returned home by</div></div>
         </div>
       </div>
     </div>
@@ -368,21 +368,21 @@
         <div class="step-title">Set Options — Relay, Auto-Refresh, Notifications</div>
 
         <div class="subsection">
-          <div class="subsection-title">Relay Request <span class="badge">Optional</span></div>
-          <div class="subsection-desc">Enable if the load will be handled by a relay driver rather than your outbound truck running the full route home. Mileage is calculated as the relay driver's complete loop.</div>
+          <div class="subsection-title">Relay mode <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Toggle <strong>Relay mode — driver picks up en route home</strong> if the load will be handled by a relay driver rather than your outbound truck running the full route home. Mileage is calculated as the relay driver's complete loop.</div>
         </div>
 
         <div class="subsection">
-          <div class="subsection-title">Auto Refresh <span class="badge">Optional</span></div>
-          <div class="subsection-desc">Haul Monitor can automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
+          <div class="subsection-title">Auto-refresh results <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Toggle <strong>Auto-refresh results</strong> and Haul Monitor will automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
         </div>
 
         <div class="subsection">
-          <div class="subsection-title">Notifications <span class="badge">Optional</span></div>
-          <div class="subsection-desc">Get alerted by email, text, or both when auto-refresh detects a change in the top result. Sent to the phone and email on your fleet profile.</div>
+          <div class="subsection-title">Notify me when top loads change <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Toggle <strong>Notify me when top loads change</strong> to get alerted by email, text, or both when auto-refresh detects a change in the top result. Sent to the phone and email on your fleet profile.</div>
         </div>
 
-        <img class="shot" src="/guide/s2-backhaul-form.png" alt="Start Backhaul Request form showing all fields, Relay, Auto Refresh, Notifications, and Create button" />
+        <img class="shot" src="/guide/s2-backhaul-form.png" alt="Backhaul request form showing all fields with Relay mode, Auto-refresh results, and Notify me toggles, and Save Request button" />
       </div>
     </div>
 
@@ -416,7 +416,7 @@
         </div>
         <div class="tip">
           <span class="tip-icon">💡</span>
-          <span>Use <strong>Refresh Now</strong> in the top bar at any time to re-run the search against current load data. If auto-refresh is enabled, the countdown shows when the next automatic refresh will run.</span>
+          <span>Use <strong>Run Search</strong> in the header bar at any time to re-run the search against current load data. If auto-refresh is enabled, it will also run automatically on your chosen schedule.</span>
         </div>
       </div>
     </div>
@@ -439,7 +439,7 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Open the Estimate Request Form</div>
-        <p class="step-desc">From the navigation select <strong>Estimates</strong>.</p>
+        <p class="step-desc">From the navigation menu select <strong>Estimates</strong> and click <strong>New</strong>.</p>
       </div>
     </div>
 
@@ -450,13 +450,13 @@
         <div class="fields">
           <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive label for this estimate (e.g., Estimate Request 03/05/2026)</div></div>
           <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">The starting location for the return route. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
-          <div class="field-row"><div class="field-name">Select Fleet <span class="req">*</span></div><div class="field-desc">The fleet whose rate config will be used for all financial calculations</div></div>
-          <div class="field-row"><div class="field-name">Equipment Available <span class="req">*</span></div><div class="field-desc">Start of the date window to search for available loads</div></div>
-          <div class="field-row"><div class="field-name">Equipment Needed Back <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date</div></div>
-          <div class="field-row"><div class="field-name">Annual Volume</div><div class="field-desc">Expected loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly, 120 for roughly weekly with some weeks doubled).</div></div>
-          <div class="field-row"><div class="field-name">Minimum Net Credit</div><div class="field-desc">Only opportunities at or above this net credit per load are included in the report averages. Prevents low-value or negative loads from skewing results (e.g., $50 or $100).</div></div>
+          <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">The fleet whose rate config will be used for all financial calculations</div></div>
+          <div class="field-row"><div class="field-name">Equipment Available Date <span class="req">*</span></div><div class="field-desc">Start of the date window to search for available loads</div></div>
+          <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date</div></div>
+          <div class="field-row"><div class="field-name">Est. Loads Per Year</div><div class="field-desc">Expected loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly, 120 for roughly weekly with some weeks doubled).</div></div>
+          <div class="field-row"><div class="field-name">Min Net Credit Per Load $</div><div class="field-desc">Only opportunities at or above this net credit per load are included in the report averages. Prevents low-value or negative loads from skewing results (e.g., $50 or $100).</div></div>
         </div>
-        <img class="shot" src="/guide/s3-estimate-form.png" alt="Create Estimate Request form showing all fields including Annual Volume, Min Net Credit, Relay, and Create button" />
+        <img class="shot" src="/guide/s3-estimate-form.png" alt="Estimate form showing Request Name, Datum Point, Fleet, date fields, Est. Loads Per Year, Min Net Credit Per Load, and Save Estimate button" />
       </div>
     </div>
 
@@ -464,7 +464,7 @@
       <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Relay Mode <span style="font-weight:400; font-size:13px; color:#718096;">(Optional)</span></div>
-        <p class="step-desc">Enable <strong>Relay Request</strong> if the backhaul will be run by a relay driver. In relay mode, mileage is calculated as the relay driver's full round trip (home → pickup → delivery → home minus the deadhead), giving a more accurate cost picture for relay operations.</p>
+        <p class="step-desc">Enable <strong>Relay mode</strong> if the backhaul will be run by a relay driver. In relay mode, mileage is calculated as the relay driver's full round trip (home → pickup → delivery → home minus the deadhead), giving a more accurate cost picture for relay operations.</p>
       </div>
     </div>
 
@@ -472,8 +472,8 @@
       <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Submit and View the Report</div>
-        <p class="step-desc">Click <strong>+ Create Estimate Request</strong>. Haul Monitor finds matching opportunities and generates the report. It's saved under <strong>Open Estimate Requests</strong> — click any card to open it.</p>
-        <img class="shot" src="/guide/s3-estimates-list.png" alt="Open Estimate Requests page showing saved estimate request cards with datum point, dates, annual volume, and min net credit" />
+        <p class="step-desc">Click <strong>Save Estimate</strong>. Haul Monitor finds matching opportunities and generates the report. It's saved in your <strong>Estimates</strong> list under <strong>Active</strong> — click any card to open it.</p>
+        <img class="shot" src="/guide/s3-estimates-list.png" alt="Estimates list showing Active estimate cards with datum point, dates, loads per year, and min net credit" />
       </div>
     </div>
 
@@ -510,7 +510,7 @@
 
         <div class="tip">
           <span class="tip-icon">💡</span>
-          <span>Click <strong>Print / Save as PDF</strong> in the top bar to export the report. Use <strong>Edit Estimate Request</strong> to adjust dates, annual volume, or minimum net credit and regenerate at any time.</span>
+          <span>Click <strong>Print / Save PDF</strong> to export the report. Use <strong>Edit</strong> to adjust dates, annual volume, or minimum net credit and regenerate at any time.</span>
         </div>
       </div>
     </div>
