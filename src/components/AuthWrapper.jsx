@@ -32,14 +32,14 @@ export const AuthWrapper = ({ children }) => {
         fontWeight: 600
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ 
-            width: '48px', 
-            height: '48px', 
-            border: `4px solid ${colors.accent.primary}40`, 
-            borderTop: `4px solid ${colors.accent.primary}`, 
-            borderRadius: '50%', 
-            animation: 'spin 1s linear infinite', 
-            margin: '0 auto 16px' 
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #2563eb40',
+            borderTop: '4px solid #2563eb',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
           }} />
           <div>Loading...</div>
         </div>

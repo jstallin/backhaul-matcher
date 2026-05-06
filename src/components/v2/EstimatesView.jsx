@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
@@ -509,17 +510,17 @@ function EstimateCard({ estimate, active, onSelect, onEdit, onDelete }) {
 
 // ─── Estimate list panel (left) ───────────────────────────────────────────────
 
-function EstimateListPanel({ estimates, selectedId, onSelect, onEdit, onDelete, onNew }) {
+function EstimateListPanel({ estimates, selectedId, onSelect, onEdit, onDelete, onNew, isMobile }) {
   const active = estimates.filter(e => ['active', 'pending'].includes(e.status));
   const archived = estimates.filter(e => !['active', 'pending'].includes(e.status));
 
   return (
     <div className="est-left-panel" style={{
-      width: '280px',
-      minWidth: '280px',
+      width: isMobile ? '100%' : '280px',
+      minWidth: isMobile ? '100%' : '280px',
       height: '100%',
       background: t.colors.page.cardBg,
-      borderRight: `1px solid ${t.colors.page.cardBorder}`,
+      borderRight: isMobile ? 'none' : `1px solid ${t.colors.page.cardBorder}`,
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
@@ -1216,6 +1217,7 @@ function EmptyRight() {
 
 export function EstimatesView() {
   const { user } = useAuth();
+  const isMobile = useMobile();
 
   const [estimates, setEstimates] = useState([]);
   const [fleets, setFleets] = useState([]);
@@ -1376,14 +1378,18 @@ export function EstimatesView() {
     await loadData();
   };
 
+  const showingDetail = isMobile && (mode === 'form' || mode === 'results');
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100%', background: t.colors.page.bg }}>
-        <div style={{ width: '280px', background: t.colors.page.cardBg, borderRight: `1px solid ${t.colors.page.cardBorder}`, padding: '20px 16px' }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} style={{ height: '70px', borderRadius: t.radius.xl, background: '#f1f5f9', marginBottom: '8px', animation: 'shimmer 1.5s infinite' }} />
-          ))}
-        </div>
+        {!isMobile && (
+          <div style={{ width: '280px', background: t.colors.page.cardBg, borderRight: `1px solid ${t.colors.page.cardBorder}`, padding: '20px 16px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ height: '70px', borderRadius: t.radius.xl, background: '#f1f5f9', marginBottom: '8px', animation: 'shimmer 1.5s infinite' }} />
+            ))}
+          </div>
+        )}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm }}>Loading…</div>
         </div>
@@ -1394,42 +1400,58 @@ export function EstimatesView() {
 
   return (
     <div style={{ display: 'flex', height: '100%', background: t.colors.page.bg, overflow: 'hidden' }}>
-      <EstimateListPanel
-        estimates={estimates}
-        selectedId={selectedEstimate?.id}
-        onSelect={handleSelectEstimate}
-        onEdit={handleEdit}
-        onDelete={est => setDeleteTarget(est)}
-        onNew={handleNew}
-      />
+      {(!isMobile || !showingDetail) && (
+        <EstimateListPanel
+          estimates={estimates}
+          selectedId={selectedEstimate?.id}
+          onSelect={handleSelectEstimate}
+          onEdit={handleEdit}
+          onDelete={est => setDeleteTarget(est)}
+          onNew={handleNew}
+          isMobile={isMobile}
+        />
+      )}
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {mode === 'empty' && <EmptyRight />}
+      {(!isMobile || showingDetail) && (
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {isMobile && showingDetail && (
+            <div style={{ padding: '10px 14px', background: t.colors.page.cardBg, borderBottom: `1px solid ${t.colors.page.cardBorder}`, flexShrink: 0 }}>
+              <button
+                onClick={() => { setMode('empty'); setSelectedEstimate(null); setEditingEstimate(null); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.accent.blue, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, padding: '4px 0' }}
+              >
+                ‹ Estimates
+              </button>
+            </div>
+          )}
 
-        {mode === 'form' && (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-            <EstimateForm
-              fleets={fleets}
-              initialValues={editingEstimate}
-              onSave={handleFormSave}
-              onCancel={handleFormCancel}
+          {mode === 'empty' && <EmptyRight />}
+
+          {mode === 'form' && (
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px' }}>
+              <EstimateForm
+                fleets={fleets}
+                initialValues={editingEstimate}
+                onSave={handleFormSave}
+                onCancel={handleFormCancel}
+              />
+            </div>
+          )}
+
+          {mode === 'results' && selectedEstimate && (
+            <EstimateReport
+              estimate={selectedEstimate}
+              fleet={selectedFleet}
+              matches={matches}
+              isLoading={isMatching}
+              error={matchError}
+              hasRun={hasRun}
+              onRun={() => runEstimate(selectedEstimate)}
+              onEdit={handleEdit}
             />
-          </div>
-        )}
-
-        {mode === 'results' && selectedEstimate && (
-          <EstimateReport
-            estimate={selectedEstimate}
-            fleet={selectedFleet}
-            matches={matches}
-            isLoading={isMatching}
-            error={matchError}
-            hasRun={hasRun}
-            onRun={() => runEstimate(selectedEstimate)}
-            onEdit={handleEdit}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {deleteTarget && (
         <div

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useMobile } from '../../hooks/useMobile';
 
 const BRAND_GREEN = '#4ade80';
 const PANEL_BG    = '#0d1f35';
@@ -54,6 +55,7 @@ function HaulMonitorIcon({ size = 20 }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function CoDriverV2({ context, contextData = {}, initialOpen = false, onClose }) {
+  const isMobile = useMobile();
   const [open, setOpen] = useState(initialOpen);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -162,7 +164,7 @@ export function CoDriverV2({ context, contextData = {}, initialOpen = false, onC
           className="cdv2-btn"
           onClick={() => setOpen(true)}
           style={{
-            position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000,
+            position: 'fixed', bottom: isMobile ? '84px' : '24px', right: '24px', zIndex: 1000,
             display: 'flex', alignItems: 'center', gap: '8px',
             padding: '10px 18px',
             background: '#0d2d4f',
@@ -184,9 +186,9 @@ export function CoDriverV2({ context, contextData = {}, initialOpen = false, onC
         <div
           className="cdv2-panel"
           style={{
-            position: 'fixed', bottom: '24px', right: '24px', zIndex: 1100,
+            position: 'fixed', bottom: isMobile ? '84px' : '24px', right: '24px', zIndex: 1100,
             width: 'min(390px, calc(100vw - 32px))',
-            height: 'min(520px, calc(100vh - 80px))',
+            height: isMobile ? 'min(520px, calc(100vh - 160px))' : 'min(520px, calc(100vh - 80px))',
             background: PANEL_BG,
             border: `1px solid ${BORDER}`,
             borderRadius: '16px',

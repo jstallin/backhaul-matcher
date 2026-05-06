@@ -1005,9 +1005,9 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
               </div>
 
               {/* With backhaul */}
-              <div style={{ padding: '16px', background: '#f0fdf4', border: `2px solid #16a34a`, borderRadius: t.radius.xl }}>
-                <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: '#16a34a', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <TrendingUp size={13} color="#16a34a" /> WITH BACKHAUL
+              <div style={{ padding: '16px', background: t.colors.accent.blueLight, border: `2px solid ${t.colors.accent.blue}`, borderRadius: t.radius.xl }}>
+                <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: t.colors.accent.blue, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <TrendingUp size={13} color={t.colors.accent.blue} /> WITH BACKHAUL
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1022,22 +1022,22 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                     <span>Delivery → Home</span>
                     <span style={{ fontWeight: t.font.weight.semibold }}>{fmtNum(deliveryToHome, 0)} mi</span>
                   </div>
-                  <div style={{ borderTop: `1px solid #bbf7d0`, paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ borderTop: `1px solid ${t.colors.accent.blue}40`, paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{fmtNum(totalWithBackhaul, 0)} mi</span>
-                    <span style={{ fontWeight: t.font.weight.bold, color: '#16a34a' }}>+{fmtMoney(mTotalRev(match))}</span>
+                    <span style={{ fontWeight: t.font.weight.bold, color: t.colors.accent.blue }}>+{fmtMoney(mTotalRev(match))}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Net impact bar */}
-            <div style={{ marginTop: '10px', padding: '12px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: t.radius.xl, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
+            <div style={{ marginTop: '10px', padding: '12px 16px', background: t.colors.accent.blueLight, border: `1px solid ${t.colors.accent.blue}40`, borderRadius: t.radius.xl, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
               <div>
-                <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: '#16a34a' }}>+{fmtMoney(mTotalRev(match))}</div>
+                <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: t.colors.accent.blue }}>+{fmtMoney(mTotalRev(match))}</div>
                 <div style={{ fontSize: '10px', color: t.colors.text.muted }}>Extra Revenue</div>
               </div>
               <div>
-                <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: extraMiles > 0 ? '#f59e0b' : '#16a34a' }}>
+                <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: extraMiles > 0 ? '#f59e0b' : t.colors.accent.blue }}>
                   {extraMiles > 0 ? '+' : ''}{fmtNum(extraMiles, 0)} mi
                 </div>
                 <div style={{ fontSize: '10px', color: t.colors.text.muted }}>Extra Miles</div>
@@ -1122,7 +1122,7 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={onHaulThis}
-              style={{ flex: 1, padding: '12px 20px', background: '#16a34a', border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              style={{ flex: 1, padding: '12px 20px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
               <TrendingUp size={16} /> Haul This Load
             </button>
@@ -1215,7 +1215,7 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
             </div>
             <div>
               <div style={{ fontSize: '10px', color: t.colors.text.muted, marginBottom: '2px' }}>Net Revenue</div>
-              <div style={{ fontWeight: t.font.weight.bold, color: '#16a34a' }}>{fmtMoney(match.customer_net_credit ?? match.netRevenue ?? 0)}</div>
+              <div style={{ fontWeight: t.font.weight.bold, color: t.colors.accent.blue }}>{fmtMoney(match.customer_net_credit ?? match.netRevenue ?? 0)}</div>
             </div>
           </div>
         </div>
@@ -1223,7 +1223,7 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
           <button
             onClick={onConfirm}
             disabled={completing}
-            style={{ flex: 1, padding: '11px 20px', background: '#16a34a', border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
+            style={{ flex: 1, padding: '11px 20px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
           >
             {completing ? 'Recording…' : 'Confirm Haul'}
           </button>

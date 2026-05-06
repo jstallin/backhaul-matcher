@@ -3,6 +3,7 @@ import { tokens } from '../../styles/tokens.v2';
 import { supabase } from '../../lib/supabase';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMobile } from '../../hooks/useMobile';
 
 const t = tokens;
 
@@ -740,41 +741,65 @@ function SectionNav({ activeId, onSelect, showDeveloper }) {
 
 export function SettingsView() {
   const { user, isAdmin } = useAuth();
+  const isMobile = useMobile();
   const [activeSection, setActiveSection] = useState('account');
+  const [mobileShowContent, setMobileShowContent] = useState(false);
 
   const showDeveloper = !!isAdmin;
+
+  const handleMobileSelect = (id) => {
+    setActiveSection(id);
+    if (isMobile) setMobileShowContent(true);
+  };
+
+  const sectionLabel = SECTIONS.find(s => s.id === activeSection)?.label
+    || (activeSection === 'developer' ? 'Developer' : 'Settings');
 
   return (
     <div style={{
       display: 'flex',
-      gap: '32px',
+      gap: isMobile ? '0' : '32px',
       alignItems: 'flex-start',
       fontFamily: t.font.family,
+      height: isMobile ? '100%' : 'auto',
     }}>
-      <SectionNav
-        activeId={activeSection}
-        onSelect={setActiveSection}
-        showDeveloper={showDeveloper}
-      />
+      {/* Nav — hidden on mobile when content is showing */}
+      {(!isMobile || !mobileShowContent) && (
+        <SectionNav
+          activeId={activeSection}
+          onSelect={handleMobileSelect}
+          showDeveloper={showDeveloper}
+        />
+      )}
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: t.font.size['2xl'],
-          fontWeight: t.font.weight.bold,
-          color: t.colors.text.primary,
-          marginBottom: '24px',
-          letterSpacing: '-0.01em',
-        }}>
-          {SECTIONS.find(s => s.id === activeSection)?.label
-            || (activeSection === 'developer' ? 'Developer' : 'Settings')}
+      {/* Content — full width on mobile */}
+      {(!isMobile || mobileShowContent) && (
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {isMobile && mobileShowContent && (
+            <button
+              onClick={() => setMobileShowContent(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.accent.blue, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, padding: '4px 0', marginBottom: '16px', display: 'block' }}
+            >
+              ‹ Settings
+            </button>
+          )}
+          <div style={{
+            fontSize: t.font.size['2xl'],
+            fontWeight: t.font.weight.bold,
+            color: t.colors.text.primary,
+            marginBottom: '24px',
+            letterSpacing: '-0.01em',
+          }}>
+            {sectionLabel}
+          </div>
+
+          {activeSection === 'account' && <AccountSection user={user} />}
+          {activeSection === 'integrations' && <IntegrationsSection />}
+          {activeSection === 'organization' && <OrganizationSection user={user} />}
+          {activeSection === 'accessibility' && <AccessibilitySection />}
+          {activeSection === 'developer' && showDeveloper && <DeveloperSection />}
         </div>
-
-        {activeSection === 'account' && <AccountSection user={user} />}
-        {activeSection === 'integrations' && <IntegrationsSection />}
-        {activeSection === 'organization' && <OrganizationSection user={user} />}
-        {activeSection === 'accessibility' && <AccessibilitySection />}
-        {activeSection === 'developer' && showDeveloper && <DeveloperSection />}
-      </div>
+      )}
     </div>
   );
 }

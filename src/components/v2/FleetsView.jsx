@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { tokens } from '../../styles/tokens.v2';
+import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle } from '../../icons';
 
@@ -678,7 +679,7 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
     <div style={{ flex: 1, minWidth: 0 }}>
       {/* Fleet name header */}
       <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, fontSize: t.font.size['3xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.01em' }}>
+        <h2 style={{ margin: 0, fontSize: t.font.size['2xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.01em' }}>
           {isNew ? 'New Fleet' : fleet.name}
         </h2>
         {!isNew && fleet.home_address && (
@@ -715,15 +716,17 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
 
 // ─── Fleet List Panel ─────────────────────────────────────────────────────────
 
-function FleetListPanel({ fleets, selectedId, onSelect, onNew }) {
+function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn }) {
   return (
     <div style={{ width: '260px', flexShrink: 0 }}>
-      <button
-        onClick={onNew}
-        style={{ width: '100%', padding: '10px 14px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px', fontFamily: t.font.family }}
-      >
-        <Plus size={15} /> New Fleet
-      </button>
+      {!hiddenNewBtn && (
+        <button
+          onClick={onNew}
+          style={{ width: '100%', padding: '10px 14px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px', fontFamily: t.font.family }}
+        >
+          <Plus size={15} /> New Fleet
+        </button>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {fleets.map((fleet) => {
@@ -769,6 +772,7 @@ function FleetListPanel({ fleets, selectedId, onSelect, onNew }) {
 
 export function FleetsView() {
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [fleets, setFleets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -799,34 +803,67 @@ export function FleetsView() {
   const handleChanged = () => { loadFleets(); };
 
   const selectedFleet = fleets.find((f) => f.id === selectedId) ?? null;
+  const showingDetail = isMobile && (selectedId || isNew);
 
   if (loading) {
     return (
       <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-        <div style={{ width: '260px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {[1,2,3].map((i) => <div key={i} style={{ height: '76px', borderRadius: t.radius.xl, background: t.colors.border.default, opacity: 0.5 }} />)}
-        </div>
+        {!isMobile && (
+          <div style={{ width: '260px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {[1,2,3].map((i) => <div key={i} style={{ height: '76px', borderRadius: t.radius.xl, background: t.colors.border.default, opacity: 0.5 }} />)}
+          </div>
+        )}
         <div style={{ flex: 1, height: '400px', borderRadius: t.radius.xl, background: t.colors.border.default, opacity: 0.3 }} />
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-      <FleetListPanel
-        fleets={fleets}
-        selectedId={selectedId}
-        onSelect={handleSelect}
-        onNew={handleNew}
-      />
-      <FleetDetailPanel
-        fleet={selectedFleet}
-        isNew={isNew}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onSaved={handleSaved}
-        onChanged={handleChanged}
-      />
+    <div style={{ display: 'flex', gap: isMobile ? '0' : '24px', alignItems: 'flex-start', height: isMobile ? '100%' : 'auto' }}>
+      {/* Fleet list — hidden on mobile when detail is open */}
+      {(!isMobile || !showingDetail) && (
+        <div style={isMobile ? { width: '100%' } : {}}>
+          {isMobile && (
+            <button
+              onClick={handleNew}
+              style={{ width: '100%', padding: '10px 14px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px', fontFamily: t.font.family }}
+            >
+              <Plus size={15} /> New Fleet
+            </button>
+          )}
+          <FleetListPanel
+            fleets={fleets}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            onNew={handleNew}
+            hiddenNewBtn={isMobile}
+          />
+        </div>
+      )}
+
+      {/* Detail panel — full screen on mobile when open */}
+      {(!isMobile || showingDetail) && (
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {isMobile && showingDetail && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <button
+                onClick={() => { setSelectedId(null); setIsNew(false); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.accent.blue, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, padding: '4px 0', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                ‹ Fleets
+              </button>
+            </div>
+          )}
+          <FleetDetailPanel
+            fleet={selectedFleet}
+            isNew={isNew}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onSaved={handleSaved}
+            onChanged={handleChanged}
+          />
+        </div>
+      )}
     </div>
   );
 }
