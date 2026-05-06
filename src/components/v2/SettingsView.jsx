@@ -634,7 +634,7 @@ function AccessibilitySection() {
 
 function DeveloperSection() {
   const [bypass, setBypass] = useState(() => localStorage.getItem('hm_credits_bypass') === 'true');
-  const [useNewUI, setUseNewUI] = useState(() => localStorage.getItem('hm_ui') === 'v2');
+  const [useLegacyUI, setUseLegacyUI] = useState(() => localStorage.getItem('hm_ui') === 'v1');
 
   const handleBypassToggle = (val) => {
     setBypass(val);
@@ -646,13 +646,12 @@ function DeveloperSection() {
   };
 
   const handleUIToggle = (val) => {
-    setUseNewUI(val);
+    setUseLegacyUI(val);
     if (val) {
-      localStorage.setItem('hm_ui', 'v2');
+      localStorage.setItem('hm_ui', 'v1');
     } else {
       localStorage.removeItem('hm_ui');
     }
-    // Short delay so the toggle visually updates before reload
     setTimeout(() => window.location.reload(), 150);
   };
 
@@ -666,12 +665,12 @@ function DeveloperSection() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div>
             <Toggle
-              checked={useNewUI}
+              checked={useLegacyUI}
               onChange={handleUIToggle}
-              label="Use new UI (v2)"
+              label="Use legacy UI (v1)"
             />
             <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginTop: '4px', marginLeft: '46px' }}>
-              Switches between the current and redesigned interface. Reloads the page immediately.
+              Reverts to the original interface. Reloads the page immediately.
             </div>
           </div>
           <div style={{ borderTop: `1px solid ${t.colors.accent.amber}30`, paddingTop: '16px' }}>

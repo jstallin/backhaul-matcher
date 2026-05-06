@@ -444,8 +444,8 @@ export const Settings = ({ onBack }) => {
   const [creditsBypass, setCreditsBypass] = useState(
     localStorage.getItem('hm_credits_bypass') === 'true'
   );
-  const [useNewUI, setUseNewUI] = useState(
-    localStorage.getItem('hm_ui') === 'v2'
+  const [useLegacyUI, setUseLegacyUI] = useState(
+    localStorage.getItem('hm_ui') === 'v1'
   );
 
   const toggleCreditsBypass = () => {
@@ -459,10 +459,10 @@ export const Settings = ({ onBack }) => {
   };
 
   const toggleNewUI = () => {
-    const next = !useNewUI;
-    setUseNewUI(next);
+    const next = !useLegacyUI;
+    setUseLegacyUI(next);
     if (next) {
-      localStorage.setItem('hm_ui', 'v2');
+      localStorage.setItem('hm_ui', 'v1');
     } else {
       localStorage.removeItem('hm_ui');
     }
@@ -1791,26 +1791,26 @@ export const Settings = ({ onBack }) => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 700, color: colors.text.primary }}>
-                        Use New UI (v2)
+                        Use Legacy UI (v1)
                       </h3>
                       <p style={{ margin: 0, fontSize: '13px', color: colors.text.secondary }}>
-                        Switch to the redesigned interface. Reloads the page immediately.
+                        Reverts to the original interface. Reloads the page immediately.
                       </p>
                     </div>
                     <div
                       onClick={toggleNewUI}
                       role="switch"
-                      aria-checked={useNewUI}
+                      aria-checked={useLegacyUI}
                       style={{
                         width: '44px', height: '24px', borderRadius: '12px',
-                        background: useNewUI ? colors.accent.primary : colors.border.secondary,
+                        background: useLegacyUI ? colors.accent.primary : colors.border.secondary,
                         cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
                         flexShrink: 0, marginLeft: '16px'
                       }}
                     >
                       <span style={{
                         position: 'absolute', top: '3px',
-                        left: useNewUI ? '23px' : '3px',
+                        left: useLegacyUI ? '23px' : '3px',
                         width: '18px', height: '18px', borderRadius: '50%',
                         background: '#fff', transition: 'left 0.2s',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
