@@ -1243,6 +1243,7 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
 // ─── Results panel (right side when request selected) ────────────────────────
 
 function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoading, error, onRun, onEdit, onComplete }) {
+  const isMobile = useMobile();
   const [mapVisible, setMapVisible] = useState(true);
   const [mapFocusLoad, setMapFocusLoad] = useState(null);
 
@@ -1277,18 +1278,16 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       {/* Header */}
-      <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${t.colors.page.cardBorder}`, background: t.colors.page.cardBg, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: t.font.size.xl, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '2px' }}>
-            {request.request_name}
-          </div>
-          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} />{request.datum_point}</span>
-            {fleet && <span>· {fleet.name}</span>}
-            {!isLoading && matches.length > 0 && <span>· {matches.length} match{matches.length !== 1 ? 'es' : ''}</span>}
-          </div>
+      <div style={{ padding: '16px 20px', borderBottom: `1px solid ${t.colors.page.cardBorder}`, background: t.colors.page.cardBg }}>
+        <div style={{ fontSize: isMobile ? t.font.size.base : t.font.size.xl, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '2px' }}>
+          {request.request_name}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} />{request.datum_point}</span>
+          {fleet && <span>· {fleet.name}</span>}
+          {!isLoading && matches.length > 0 && <span>· {matches.length} match{matches.length !== 1 ? 'es' : ''}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <GhostBtn onClick={() => setMapVisible(v => !v)} style={{ padding: '6px 12px', fontSize: t.font.size.xs }}>
             {mapVisible ? 'Hide Map' : 'Show Map'}
           </GhostBtn>
