@@ -29,7 +29,7 @@ function AvatarMenu({ onNavigate }) {
   }, [open]);
 
   return (
-    <div ref={menuRef} style={{ position: 'absolute', top: '16px', right: '20px', zIndex: 200 }}>
+    <div ref={menuRef} style={{ position: 'absolute', top: '16px', right: '20px', zIndex: 1100 }}>
       {/* Avatar button */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -67,7 +67,7 @@ function AvatarMenu({ onNavigate }) {
             border: `1px solid ${t.colors.border.default}`,
             borderRadius: t.radius['2xl'],
             boxShadow: t.shadow.lg,
-            zIndex: 300,
+            zIndex: 1200,
             overflow: 'hidden',
           }}
         >
