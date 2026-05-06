@@ -3,6 +3,7 @@ import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
+import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
@@ -519,17 +520,17 @@ function RequestCard({ request, active, onSelect, onEdit, onDelete }) {
   );
 }
 
-function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, onNew }) {
+function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, onNew, isMobile }) {
   const active = requests.filter(r => ['active', 'open', 'pending'].includes(r.status));
   const archived = requests.filter(r => !['active', 'open', 'pending'].includes(r.status));
 
   return (
     <div style={{
-      width: '280px',
-      minWidth: '280px',
+      width: isMobile ? '100%' : '280px',
+      minWidth: isMobile ? '100%' : '280px',
       height: '100%',
       background: t.colors.page.cardBg,
-      borderRight: `1px solid ${t.colors.page.cardBorder}`,
+      borderRight: isMobile ? 'none' : `1px solid ${t.colors.page.cardBorder}`,
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
@@ -1656,12 +1657,26 @@ export function SearchView() {
     await loadData();
   };
 
+  const isMobile = useMobile();
+
+  // On mobile, track which panel is showing: 'list' or 'detail'
+  const showingDetail = isMobile && (mode === 'form' || mode === 'results');
+  const showingList   = !isMobile || !showingDetail;
+
+  const handleMobileBack = () => {
+    setMode('empty');
+    setSelectedRequest(null);
+    setEditingRequest(null);
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100%', background: t.colors.page.bg }}>
-        <div style={{ width: '280px', background: t.colors.page.cardBg, borderRight: `1px solid ${t.colors.page.cardBorder}`, padding: '20px 16px' }}>
-          {[1, 2, 3].map(i => <div key={i} style={{ height: '70px', borderRadius: t.radius.xl, background: '#f1f5f9', marginBottom: '8px', animation: 'shimmer 1.5s infinite' }} />)}
-        </div>
+        {!isMobile && (
+          <div style={{ width: '280px', background: t.colors.page.cardBg, borderRight: `1px solid ${t.colors.page.cardBorder}`, padding: '20px 16px' }}>
+            {[1, 2, 3].map(i => <div key={i} style={{ height: '70px', borderRadius: t.radius.xl, background: '#f1f5f9', marginBottom: '8px', animation: 'shimmer 1.5s infinite' }} />)}
+          </div>
+        )}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm }}>Loading…</div>
         </div>
@@ -1672,48 +1687,81 @@ export function SearchView() {
 
   return (
     <div style={{ display: 'flex', height: '100%', background: t.colors.page.bg, overflow: 'hidden' }}>
-      {/* Left panel */}
-      <RequestListPanel
-        requests={requests}
-        selectedId={selectedRequest?.id}
-        onSelect={handleSelectRequest}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onNew={handleNew}
-      />
+      {/* Left panel — hidden on mobile when detail is showing */}
+      {showingList && (
+        <RequestListPanel
+          requests={requests}
+          selectedId={selectedRequest?.id}
+          onSelect={handleSelectRequest}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onNew={handleNew}
+          isMobile={isMobile}
+        />
+      )}
 
-      {/* Right panel */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {noCredits && <NoCreditsBanner onDismiss={() => setNoCredits(false)} />}
+      {/* Right panel — full-screen on mobile when a request is selected */}
+      {(!isMobile || showingDetail) && (
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Mobile back header */}
+          {isMobile && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 14px',
+              background: t.colors.page.cardBg,
+              borderBottom: `1px solid ${t.colors.page.cardBorder}`,
+              flexShrink: 0,
+            }}>
+              <button
+                onClick={handleMobileBack}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: t.colors.accent.blue, fontSize: t.font.size.sm,
+                  fontWeight: t.font.weight.semibold, padding: '4px 0',
+                }}
+              >
+                ‹ Requests
+              </button>
+              {selectedRequest && (
+                <span style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {selectedRequest.request_name}
+                </span>
+              )}
+            </div>
+          )}
 
-        {mode === 'empty' && <EmptyRight />}
+          {noCredits && <NoCreditsBanner onDismiss={() => setNoCredits(false)} />}
 
-        {mode === 'form' && (
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-            <RequestForm
-              fleets={fleets}
-              initialValues={editingRequest}
-              onSave={handleFormSave}
-              onCancel={handleFormCancel}
+          {mode === 'empty' && <EmptyRight />}
+
+          {mode === 'form' && (
+            <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : '24px' }}>
+              <RequestForm
+                fleets={fleets}
+                initialValues={editingRequest}
+                onSave={handleFormSave}
+                onCancel={handleFormCancel}
+              />
+            </div>
+          )}
+
+          {mode === 'results' && selectedRequest && (
+            <ResultsPanel
+              request={selectedRequest}
+              fleet={selectedFleet}
+              matches={matches}
+              routeData={routeData}
+              datumCoords={datumCoords}
+              isLoading={isMatching}
+              error={matchError}
+              onRun={() => runMatching(selectedRequest)}
+              onEdit={handleEdit}
+              onComplete={loadData}
             />
-          </div>
-        )}
-
-        {mode === 'results' && selectedRequest && (
-          <ResultsPanel
-            request={selectedRequest}
-            fleet={selectedFleet}
-            matches={matches}
-            routeData={routeData}
-            datumCoords={datumCoords}
-            isLoading={isMatching}
-            error={matchError}
-            onRun={() => runMatching(selectedRequest)}
-            onEdit={handleEdit}
-            onComplete={loadData}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Delete confirm dialog */}
       {deleteTarget && (

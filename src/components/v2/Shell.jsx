@@ -3,8 +3,29 @@ import { tokens } from '../../styles/tokens.v2';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
+import { useMobile } from '../../hooks/useMobile';
+import { Search, Truck, Package, BarChart2, FileText, Settings } from '../../icons';
 
 const t = tokens;
+
+const LayoutGrid = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+const MOBILE_NAV = [
+  { id: 'dashboard', label: 'Home',      Icon: LayoutGrid },
+  { id: 'search',    label: 'Search',    Icon: Search },
+  { id: 'loads',     label: 'Loads',     Icon: Package },
+  { id: 'fleets',    label: 'Fleets',    Icon: Truck },
+  { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
+  { id: 'estimates', label: 'Estimates', Icon: FileText },
+  { id: 'settings',  label: 'Settings',  Icon: Settings },
+];
 
 // ─── Avatar menu (top-right of content area) ─────────────────────────────────
 
@@ -18,7 +39,6 @@ function AvatarMenu({ onNavigate }) {
   const displayEmail = user?.email ?? '—';
   const role = isAdmin ? 'Admin' : 'Member';
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -183,9 +203,75 @@ function AvatarMenu({ onNavigate }) {
   );
 }
 
+// ─── BottomNav (mobile only) ──────────────────────────────────────────────────
+
+function BottomNav({ currentView, onNavigate }) {
+  return (
+    <>
+      <style>{`
+        .bnav-item { -webkit-tap-highlight-color: transparent; }
+        .bnav-item:active { opacity: 0.7; }
+      `}</style>
+      <nav
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '60px',
+          background: t.colors.sidebar.bg,
+          borderTop: `1px solid ${t.colors.sidebar.border}`,
+          display: 'flex',
+          alignItems: 'stretch',
+          zIndex: 900,
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        {MOBILE_NAV.map(({ id, label, Icon }) => {
+          const active = currentView === id;
+          return (
+            <button
+              key={id}
+              className="bnav-item"
+              onClick={() => onNavigate(id)}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '3px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px 2px',
+                color: active ? '#4ade80' : t.colors.sidebar.text,
+                transition: 'color 0.12s',
+              }}
+            >
+              <Icon size={20} color={active ? '#4ade80' : t.colors.sidebar.text} />
+              <span style={{
+                fontSize: '9px',
+                fontWeight: active ? 700 : 500,
+                letterSpacing: '0.01em',
+                lineHeight: 1,
+                fontFamily: t.font.family,
+              }}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </>
+  );
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 export function Shell({ currentView, onNavigate, creditBalance, children }) {
+  const isMobile = useMobile();
+
   return (
     <div
       style={{
@@ -196,11 +282,13 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
         fontFamily: t.font.family,
       }}
     >
-      <Sidebar
-        currentView={currentView}
-        onNavigate={onNavigate}
-        creditBalance={creditBalance}
-      />
+      {!isMobile && (
+        <Sidebar
+          currentView={currentView}
+          onNavigate={onNavigate}
+          creditBalance={creditBalance}
+        />
+      )}
 
       {/* Content area */}
       <div
@@ -219,12 +307,16 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '28px 32px 40px',
+            padding: isMobile ? '16px 16px 76px' : '28px 32px 40px',
             background: t.colors.page.bg,
           }}
         >
           {children}
         </main>
+
+        {isMobile && (
+          <BottomNav currentView={currentView} onNavigate={onNavigate} />
+        )}
       </div>
     </div>
   );

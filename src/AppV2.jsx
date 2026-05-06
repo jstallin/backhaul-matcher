@@ -15,6 +15,7 @@ import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { tokens } from './styles/tokens.v2';
 import { useAuth } from './contexts/AuthContext';
 import { useCredits } from './hooks/useCredits';
+import { useMobile } from './hooks/useMobile';
 import { db } from './lib/supabase';
 import {
   Search, Truck, Package, BarChart2, FileText,
@@ -236,6 +237,7 @@ function StatCard({ label, value, sub, Icon, accentColor, loading, onClick }) {
 
 function DashboardView({ onNavigate }) {
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [loading, setLoading] = useState(true);
   const [fleets, setFleets] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -381,7 +383,7 @@ function DashboardView({ onNavigate }) {
           </Card>
 
           {/* Bottom two-column */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', alignItems: 'start' }}>
 
             {/* Recent Activity */}
             <Card style={{ padding: '20px 24px' }}>
