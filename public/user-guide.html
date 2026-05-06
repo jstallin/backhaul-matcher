@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HaulMonitor — User Guide</title>
+  <title>Haul Monitor — User Guide</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -112,7 +112,7 @@
 
 <!-- ══════════════ COVER ══════════════ -->
 <div class="cover">
-  <img src="/haul-monitor-full.png" alt="HaulMonitor" class="cover-logo" />
+  <img src="/haul-monitor-full.png" alt="Haul Monitor" class="cover-logo" />
   <div class="cover-title">User Guide</div>
   <div class="cover-subtitle">Getting started with fleet setup, backhaul requests, and estimate requests</div>
   <div class="cover-divider"></div>
@@ -140,8 +140,8 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Go to the Registration Page</div>
-        <p class="step-desc">Navigate to <strong>haulmonitor.cloud/app</strong> and click <strong>Create Account</strong> on the login screen.</p>
-        <img class="shot" src="/guide/s0-login.png" alt="Haul Monitor login screen with Create Account link" />
+        <p class="step-desc">Navigate to <strong>haulmonitor.cloud/app</strong> and click <strong>Sign Up</strong> on the login screen.</p>
+        <img class="shot" src="/guide/s0-login.png" alt="Haul Monitor login screen with Sign Up link" />
       </div>
     </div>
 
@@ -184,7 +184,7 @@
       <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Connect Your Load Board</div>
-        <p class="step-desc">Open the navigation menu (<strong>☰ Menu</strong>) and go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to your load board (DAT or Truckstop) and enter your credentials in the dialog that appears. This is a one-time step — once connected, every user in your organization will share this integration automatically.</p>
+        <p class="step-desc">From the navigation menu (<strong>☰ Menu</strong>) go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to your load board (DAT, Direct Freight or Truckstop) and enter your credentials in the dialog that appears. This is a one-time step — once connected, every user in your organization will share this integration automatically.</p>
         <img class="shot" src="/guide/s0-integrations.png" alt="Connect to Truckstop dialog showing API token, username, and password fields" />
         <div class="fields">
           <div class="field-row"><div class="field-name">API Token</div><div class="field-desc">Your load board API token. Log in to your load board account and navigate to API or developer settings to find this.</div></div>
@@ -219,7 +219,7 @@
   <div class="section-label">Section 2</div>
   <div class="section-title">Setting Up Your Fleet</div>
   <p class="section-intro">
-    Your fleet profile is the foundation of HaulMonitor. It stores your equipment details, home base location, and the rate structure used to calculate net revenue on every backhaul opportunity. Complete your fleet profile before creating any requests.
+    Your fleet profile is the foundation of Haul Monitor. It stores your equipment details, home base location, and the rate structure used to calculate net revenue on every backhaul opportunity. Complete your fleet profile before creating any requests.
   </p>
 
   <div class="steps">
@@ -228,7 +228,7 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Navigate to Fleet Setup</div>
-        <p class="step-desc">Open the navigation menu (<strong>☰ Menu</strong>) in the top-right corner and select <strong>Fleets</strong>. On the Fleets page, click <strong>+ Add Fleet</strong> to open the setup form.</p>
+        <p class="step-desc">From the navigation menu (<strong>☰ Menu</strong>) select <strong>Fleets</strong>. On the Fleets page, click <strong>+ New Fleet</strong> to open the setup form.</p>
         <img class="shot" src="/guide/s1-fleets.png" alt="Fleets page showing existing fleets and Add Fleet button" />
       </div>
     </div>
@@ -253,13 +253,13 @@
       <div class="step-num-col"><div class="step-num">3</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Set Your Home Base Location</div>
-        <p class="step-desc">Enter your fleet's home base address — this is where your trucks return to after deliveries. HaulMonitor uses this to calculate out-of-route miles for each backhaul opportunity.</p>
+        <p class="step-desc">Enter your fleet's home base address — this is where your trucks return to after deliveries. Haul Monitor uses this to calculate out-of-route miles for each backhaul opportunity.</p>
         <div class="fields">
           <div class="field-row"><div class="field-name">Home Base Address <span class="req">*</span></div><div class="field-desc">City and state or full street address (e.g., Davidson, NC or 123 Fleet Dr, Davidson, NC 28036)</div></div>
         </div>
         <div class="tip">
           <span class="tip-icon">💡</span>
-          <span>After you type the address and tab away, HaulMonitor automatically verifies it using PC*MILER and shows a <strong>✓ Verified</strong> confirmation with the exact coordinates. No manual lookup needed.</span>
+          <span>After you type the address and tab away, Haul Monitor automatically verifies it using PC*MILER and shows a <strong>✓ Verified</strong> confirmation with the exact coordinates. No manual lookup needed.</span>
         </div>
       </div>
     </div>
@@ -301,7 +301,7 @@
 
         <div class="subsection">
           <div class="subsection-title">Fuel Surcharge (FSC)</div>
-          <div class="subsection-desc">HaulMonitor calculates FSC automatically using live DOE diesel prices, or you can enter a rate manually.</div>
+          <div class="subsection-desc">Haul Monitor calculates FSC automatically using live DOE diesel prices, or you can enter a rate manually.</div>
           <div class="fields">
             <div class="field-row"><div class="field-name">PEG ($/gal)</div><div class="field-desc">Your baseline fuel cost per gallon already included in your mileage rate (e.g., 1.200)</div></div>
             <div class="field-row"><div class="field-name">MPG</div><div class="field-desc">Average fuel economy of your fleet — typically 6–8 mpg (default: 6.0)</div></div>
@@ -314,7 +314,7 @@
           </div>
         </div>
 
-        <img class="shot" src="/guide/s1-fuel-save.png" alt="Fuel Surcharge section with PEG, MPG, PADD Region fields and Create Fleet Profile button" />
+       <!-- <img class="shot" src="/guide/s1-fuel-save.png" alt="Fuel Surcharge section with PEG, MPG, PADD Region fields and Create Fleet Profile button" />-->
       </div>
     </div>
 
@@ -335,7 +335,7 @@
   <div class="section-label">Section 3</div>
   <div class="section-title">Creating a Backhaul Request</div>
   <p class="section-intro">
-    A Backhaul Request tells HaulMonitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
+    A Backhaul Request tells Haul Monitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
   </p>
 
   <div class="steps">
@@ -374,7 +374,7 @@
 
         <div class="subsection">
           <div class="subsection-title">Auto Refresh <span class="badge">Optional</span></div>
-          <div class="subsection-desc">HaulMonitor can automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
+          <div class="subsection-desc">Haul Monitor can automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
         </div>
 
         <div class="subsection">
@@ -390,7 +390,7 @@
       <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Submit the Request</div>
-        <p class="step-desc">Click <strong>+ Create Backhaul Request</strong>. HaulMonitor geocodes the datum point, builds the route corridor from your location to fleet home, and scores all matching loads. This typically takes 5–15 seconds.</p>
+        <p class="step-desc">Click <strong>+ Create Backhaul Request</strong>. Haul Monitor geocodes the datum point, builds the route corridor from your location to fleet home, and scores all matching loads. This typically takes 5–15 seconds.</p>
       </div>
     </div>
 
@@ -398,9 +398,9 @@
       <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Review Results</div>
-        <p class="step-desc">Your request appears in <strong>Open Backhaul Requests</strong>. Click a request card to open the full results view.</p>
+        <p class="step-desc">Your request appears in <strong>Search</strong>. Click a request card to open the full results view, and Run Search to execute the search.</p>
         <img class="shot" src="/guide/s2-requests-list.png" alt="Open Backhaul Requests page showing active request cards" />
-        <p class="step-desc" style="margin-top:12px;">The <strong>Route Home Map</strong> shows the top 10 opportunities plotted along your corridor home. The red <strong>A</strong> marker is your datum point; the green <strong>B</strong> is fleet home. Numbered circles show pickup locations.</p>
+        <p class="step-desc" style="margin-top:12px;">The <strong>Route Map</strong> shows the top 10 opportunities plotted along your corridor home. The red <strong>A</strong> marker is your datum point; the green <strong>B</strong> is fleet home. Numbered circles show pickup locations.</p>
         <img class="shot" src="/guide/s2-route-map.png" alt="Route Home Map showing datum point, fleet home, and opportunity markers along the corridor" />
         <p class="step-desc" style="margin-top:12px;">Below the map, opportunities are ranked by <strong>Customer Net Credit</strong> (highest first) with a full financial breakdown per load.</p>
         <img class="shot" src="/guide/s2-results.png" alt="Backhaul results ranked list showing financial breakdown with Customer Share, Mileage Exp, Stop Exp, Fuel Surcharge, and Net" />
@@ -439,7 +439,7 @@
       <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Open the Estimate Request Form</div>
-        <p class="step-desc">From the navigation menu (<strong>☰ Menu</strong>), select <strong>Create Estimate Request</strong>.</p>
+        <p class="step-desc">From the navigation select <strong>Estimates</strong>.</p>
       </div>
     </div>
 
@@ -472,7 +472,7 @@
       <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Submit and View the Report</div>
-        <p class="step-desc">Click <strong>+ Create Estimate Request</strong>. HaulMonitor finds matching opportunities and generates the report. It's saved under <strong>Open Estimate Requests</strong> — click any card to open it.</p>
+        <p class="step-desc">Click <strong>+ Create Estimate Request</strong>. Haul Monitor finds matching opportunities and generates the report. It's saved under <strong>Open Estimate Requests</strong> — click any card to open it.</p>
         <img class="shot" src="/guide/s3-estimates-list.png" alt="Open Estimate Requests page showing saved estimate request cards with datum point, dates, annual volume, and min net credit" />
       </div>
     </div>
@@ -521,7 +521,7 @@
 
 <!-- ══════════════ FOOTER ══════════════ -->
 <div class="footer">
-  <span>HaulMonitor — User Guide</span>
+  <span>Haul Monitor — User Guide</span>
   <span>Estimates only. Validate with your mileage engine before committing to any load.</span>
 </div>
 
