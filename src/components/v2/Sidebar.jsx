@@ -118,7 +118,7 @@ export function Sidebar({ currentView, onNavigate, creditBalance = null }) {
           lineHeight: 1,
           fontFamily: t.font.family,
         }}>
-          <span style={{ color: '#4ade80' }}>Haul</span>
+          <span style={{ color: '#93c5fd' }}>Haul</span>
           <span style={{ color: '#ffffff' }}> Monitor</span>
         </div>
       </div>
