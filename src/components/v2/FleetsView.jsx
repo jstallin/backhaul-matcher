@@ -64,8 +64,9 @@ function Field({ label, required, hint, children, span = 1 }) {
 }
 
 function FormGrid({ children, cols = 2 }) {
+  const isMobile = useMobile();
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '14px 20px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${cols}, 1fr)`, gap: '14px 20px' }}>
       {children}
     </div>
   );
@@ -666,6 +667,8 @@ const TABS = [
 ];
 
 function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onChanged }) {
+  const isMobile = useMobile();
+
   if (!fleet && !isNew) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', color: t.colors.text.muted, flexDirection: 'column', gap: '12px' }}>
@@ -679,7 +682,7 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
     <div style={{ flex: 1, minWidth: 0 }}>
       {/* Fleet name header */}
       <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ margin: 0, fontSize: t.font.size['2xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.01em' }}>
+        <h2 style={{ margin: 0, fontSize: isMobile ? t.font.size.lg : t.font.size['2xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.01em' }}>
           {isNew ? 'New Fleet' : fleet.name}
         </h2>
         {!isNew && fleet.home_address && (

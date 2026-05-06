@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { tokens } from '../../styles/tokens.v2';
+import { useMobile } from '../../hooks/useMobile';
 
 const t = tokens;
 
@@ -113,13 +114,13 @@ function filterRequests(requests, tab) {
 
 // ─── Shimmer Loading State ────────────────────────────────────────────────────
 
-function LoadingShimmer() {
+function LoadingShimmer({ isMobile }) {
   return (
     <div>
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
       {/* Stat cards */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '28px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} style={{ flex: 1, padding: '20px 24px' }}>
             <ShimmerBlock height="12px" width="60%" />
@@ -160,6 +161,7 @@ function LoadingShimmer() {
 
 export function LoadsView() {
   const { user } = useAuth();
+  const isMobile = useMobile();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [activeTab, setActiveTab] = useState('All');
@@ -187,7 +189,7 @@ export function LoadsView() {
           <ShimmerBlock width="100px" height="28px" radius={t.radius.lg} />
           <ShimmerBlock width="220px" height="14px" radius={t.radius.md} style={{ marginTop: '6px' }} />
         </div>
-        <LoadingShimmer />
+        <LoadingShimmer isMobile={isMobile} />
       </div>
     );
   }
@@ -222,8 +224,8 @@ export function LoadsView() {
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
 
       {/* Page header */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ margin: 0, fontSize: t.font.size['3xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.02em' }}>
+      <div style={{ marginBottom: '28px', paddingRight: isMobile ? '54px' : 0 }}>
+        <h1 style={{ margin: 0, fontSize: isMobile ? t.font.size.xl : t.font.size['3xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary, letterSpacing: '-0.02em' }}>
           Loads
         </h1>
         <p style={{ margin: '4px 0 0', fontSize: t.font.size.sm, color: t.colors.text.muted }}>
@@ -232,7 +234,7 @@ export function LoadsView() {
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '28px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
         <StatCard label="Total Completed" value={completed.length.toLocaleString()} />
         <StatCard label="Total Revenue"   value={formatCurrency(totalRevenue)} />
         <StatCard label="Net Revenue"     value={formatCurrency(totalNetRevenue)} />
