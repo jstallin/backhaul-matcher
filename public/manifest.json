@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0d1117",
-  "theme_color": "#008b00",
+  "theme_color": "#3d5f82",
   "icons": [
     {
       "src": "/haul-monitor-icon-192.png",

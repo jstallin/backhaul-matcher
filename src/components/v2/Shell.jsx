@@ -245,11 +245,11 @@ function BottomNav({ currentView, onNavigate }) {
                 border: 'none',
                 cursor: 'pointer',
                 padding: '6px 2px',
-                color: active ? '#93c5fd' : t.colors.sidebar.text,
+                color: active ? '#4ade80' : t.colors.sidebar.text,
                 transition: 'color 0.12s',
               }}
             >
-              <Icon size={20} color={active ? '#93c5fd' : t.colors.sidebar.text} />
+              <Icon size={20} color={active ? '#4ade80' : t.colors.sidebar.text} />
               <span style={{
                 fontSize: '9px',
                 fontWeight: active ? 700 : 500,
