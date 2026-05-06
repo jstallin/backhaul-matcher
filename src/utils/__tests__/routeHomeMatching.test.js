@@ -284,15 +284,16 @@ describe('findRouteHomeBackhauls — corridor filter', () => {
   });
 
   it('includes a load with null coords when state centroids are in-corridor', async () => {
-    // FL centroid (27.8, -81.7) is between Stockton GA (30.94N) and Hollywood FL (26.02N)
-    // Note: GA centroid (32.7N) is NORTH of datum so it fails corridor — use FL for pickup
+    // FL centroid (27.8, -81.7) is between Stockton GA (30.94N) and Hollywood FL (26.02N).
+    // With centroid fallback, firstLeg ≈ 311 mi and deliveryToHome ≈ 209 mi (Haversine).
+    // distance_miles kept short (50) so additionalMiles ≈ 55 stays under the 100-mile cap.
     const { opportunities } = await findRouteHomeBackhauls(
       STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET,
       [makeLoad({
         load_id: 'load-fl-null',
         pickup_lat: null, pickup_lng: null, pickup_state: 'FL',
         delivery_lat: null, delivery_lng: null, delivery_state: 'FL',
-        distance_miles: 200,
+        distance_miles: 50,
       })]
     );
     expect(opportunities).toHaveLength(1);
@@ -376,9 +377,11 @@ describe('findRouteHomeBackhauls — scoring math', () => {
     expect(opportunities).toHaveLength(0);
   });
 
-  it('does NOT reject a load when firstLeg is null — the null-coercion bug regression', async () => {
-    // Regression: null < 5 === true in JS because null coerces to 0.
-    // A load with no coords + no PC*MILER must not be silently dropped.
+  it('includes a load with null coords when state centroid fallback provides in-corridor Haversine distances', async () => {
+    // With centroid fallback, null pickup/delivery coords resolve to the FL centroid (27.8, -81.7).
+    // PC*MILER returns null, so all three legs fall back to Haversine.
+    // firstLeg ≈ 311 mi, pickupToDelivery = distance_miles = 50, deliveryToHome ≈ 209 mi.
+    // additionalMiles ≈ 55 — under the 100-mile cap, so the load is included.
     getDrivingDistance.mockResolvedValue(null);
 
     const { opportunities } = await findRouteHomeBackhauls(
@@ -387,7 +390,7 @@ describe('findRouteHomeBackhauls — scoring math', () => {
         load_id: 'load-no-coords',
         pickup_lat: null, pickup_lng: null, pickup_state: 'FL',
         delivery_lat: null, delivery_lng: null, delivery_state: 'FL',
-        distance_miles: 200,
+        distance_miles: 50,
       })]
     );
     expect(opportunities).toHaveLength(1);
