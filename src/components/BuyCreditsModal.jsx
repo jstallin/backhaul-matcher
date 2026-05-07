@@ -37,7 +37,11 @@ export const BuyCreditsModal = ({ onClose, onPurchase, insufficientCredits = fal
 
   const handleSelect = async (pkg) => {
     setLoading(pkg.id);
-    await onPurchase(pkg.id);
+    try {
+      await onPurchase(pkg.id);
+    } catch {
+      // ignore — openCheckout redirects on success, so only errors land here
+    }
     setLoading(null);
   };
 

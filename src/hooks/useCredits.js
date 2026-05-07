@@ -58,6 +58,10 @@ export const useCredits = () => {
       },
       body: JSON.stringify({ packageId })
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
+    }
     const d = await res.json();
     if (d.url) window.location.href = d.url;
   };
