@@ -12,6 +12,7 @@ import { ReportsView } from './components/v2/ReportsView';
 import { EstimatesView } from './components/v2/EstimatesView';
 import { SettingsView } from './components/v2/SettingsView';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
+import { BuyCreditsModal } from './components/BuyCreditsModal';
 import { tokens } from './styles/tokens.v2';
 import { useAuth } from './contexts/AuthContext';
 import { useCredits } from './hooks/useCredits';
@@ -509,11 +510,16 @@ function renderView(currentView, onNavigate) {
 function AppV2Inner() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [supportOpen, setSupportOpen] = useState(false);
-  const { balance } = useCredits();
+  const [buyCreditsOpen, setBuyCreditsOpen] = useState(false);
+  const { balance, openCheckout } = useCredits();
 
   const handleNavigate = (view) => {
     if (view === 'support') {
       setSupportOpen(true);
+      return;
+    }
+    if (view === 'buy-credits') {
+      setBuyCreditsOpen(true);
       return;
     }
     setCurrentView(view);
@@ -527,6 +533,12 @@ function AppV2Inner() {
           context="support"
           initialOpen={true}
           onClose={() => setSupportOpen(false)}
+        />
+      )}
+      {buyCreditsOpen && (
+        <BuyCreditsModal
+          onClose={() => setBuyCreditsOpen(false)}
+          onPurchase={async (pkgId) => { await openCheckout(pkgId); setBuyCreditsOpen(false); }}
         />
       )}
     </Shell>

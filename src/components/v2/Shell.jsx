@@ -31,7 +31,7 @@ const MOBILE_NAV = [
 
 function AvatarMenu({ onNavigate }) {
   const { user, isAdmin, signOut } = useAuth();
-  const { balance, openCheckout } = useCredits();
+  const { balance } = useCredits();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -142,7 +142,7 @@ function AvatarMenu({ onNavigate }) {
                 </div>
               </div>
               <button
-                onClick={() => { setOpen(false); openCheckout('standard'); }}
+                onClick={() => { setOpen(false); onNavigate('buy-credits'); }}
                 style={{
                   padding: '6px 12px',
                   background: t.colors.accent.blue,
