@@ -1111,6 +1111,7 @@ function App() {
       
       <InstallPrompt />
       <Analytics />
+      <SpeedInsights />
       {supportChatOpen && (
         <CoDriver
           context="support"

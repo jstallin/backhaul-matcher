@@ -44,10 +44,9 @@ const CONTEXT_LABELS = {
 function HaulMonitorIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <rect x="2" y="7" width="20" height="13" rx="2" stroke={BRAND_GREEN} strokeWidth="1.8"/>
-      <path d="M7 7V5a5 5 0 0110 0v2" stroke={BRAND_GREEN} strokeWidth="1.8" strokeLinecap="round"/>
-      <circle cx="12" cy="13.5" r="2" fill={BRAND_GREEN}/>
-      <path d="M12 15.5v2" stroke={BRAND_GREEN} strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M1 17h2m18 0h1M2 17V10l3-5h10l3 5h3v7H2z" stroke={BRAND_GREEN} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="8" cy="17" r="2" stroke={BRAND_GREEN} strokeWidth="1.8"/>
+      <circle cx="16" cy="17" r="2" stroke={BRAND_GREEN} strokeWidth="1.8"/>
     </svg>
   );
 }
