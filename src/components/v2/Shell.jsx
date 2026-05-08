@@ -29,7 +29,7 @@ const MOBILE_NAV = [
 
 // ─── Avatar menu (top-right of content area) ─────────────────────────────────
 
-function AvatarMenu({ onNavigate }) {
+function AvatarMenu({ onNavigate, inline = false }) {
   const { user, isAdmin, signOut } = useAuth();
   const { balance } = useCredits();
   const [open, setOpen] = useState(false);
@@ -49,7 +49,7 @@ function AvatarMenu({ onNavigate }) {
   }, [open]);
 
   return (
-    <div ref={menuRef} style={{ position: 'absolute', top: '16px', right: '20px', zIndex: 1100 }}>
+    <div ref={menuRef} style={inline ? { position: 'relative', zIndex: 1100 } : { position: 'absolute', top: '16px', right: '20px', zIndex: 1100 }}>
       {/* Avatar button */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -267,6 +267,30 @@ function BottomNav({ currentView, onNavigate }) {
   );
 }
 
+// ─── MobileHeader ─────────────────────────────────────────────────────────────
+
+function MobileHeader({ onNavigate }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 16px',
+      height: '56px',
+      flexShrink: 0,
+      background: '#ffffff',
+      borderBottom: `1px solid ${t.colors.border.default}`,
+    }}>
+      <img
+        src="/haul-monitor-full.png"
+        alt="Haul Monitor"
+        style={{ height: '28px', width: 'auto', objectFit: 'contain' }}
+      />
+      <AvatarMenu onNavigate={onNavigate} inline />
+    </div>
+  );
+}
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 export function Shell({ currentView, onNavigate, creditBalance, children }) {
@@ -301,7 +325,11 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
           flexDirection: 'column',
         }}
       >
-        <AvatarMenu onNavigate={onNavigate} />
+        {isMobile ? (
+          <MobileHeader onNavigate={onNavigate} />
+        ) : (
+          <AvatarMenu onNavigate={onNavigate} />
+        )}
 
         <main
           style={{
