@@ -1,45 +1,45 @@
 {
   "runDate": "2026-05-09",
-  "runAt": "2026-05-09T11:40:25.061Z",
-  "totalLoads": 22955,
-  "previousTotal": 22899,
-  "netChange": 56,
-  "added": 1108,
-  "removed": 1052,
-  "avgPay": 1190,
-  "loadsWithPay": 15721,
+  "runAt": "2026-05-09T17:41:13.472Z",
+  "totalLoads": 23057,
+  "previousTotal": 22955,
+  "netChange": 102,
+  "added": 1383,
+  "removed": 1281,
+  "avgPay": 1201,
+  "loadsWithPay": 15740,
   "equipmentTypes": [
     [
       "Flatbed",
-      10348
+      10385
     ],
     [
       "Dry Van",
-      5664
+      5713
     ],
     [
       "Step Deck",
-      4212
+      4201
     ],
     [
       "Refrigerated",
-      1847
+      1891
     ],
     [
       "Power Only",
-      591
+      578
     ],
     [
       "Hotshot",
-      83
+      80
     ],
     [
       "Lowboy",
-      64
+      65
     ],
     [
       "Curtain Van",
-      43
+      41
     ],
     [
       "Box Truck",
@@ -69,83 +69,83 @@
   "topPickupStates": [
     [
       "TX",
-      2596
+      2612
     ],
     [
       "GA",
-      1911
+      1939
     ],
     [
       "AL",
-      1609
+      1578
     ],
     [
       "FL",
-      1434
+      1416
     ],
     [
       "IL",
-      1157
+      1151
     ],
     [
       "CA",
-      952
+      974
     ],
     [
       "SC",
-      888
+      877
     ],
     [
       "OH",
-      826
+      870
     ],
     [
       "NC",
-      729
+      752
     ],
     [
       "IN",
-      698
+      706
     ],
     [
       "AR",
-      689
-    ],
-    [
-      "MI",
-      683
+      692
     ],
     [
       "PA",
-      672
+      668
+    ],
+    [
+      "MI",
+      636
     ],
     [
       "TN",
-      629
+      630
     ],
     [
       "MS",
-      555
+      622
     ],
     [
       "MA",
-      510
+      496
     ],
     [
       "LA",
-      481
+      486
     ],
     [
       "NY",
-      479
+      477
     ],
     [
       "WI",
-      468
+      459
     ],
     [
       "MN",
-      412
+      407
     ]
   ]
 }
