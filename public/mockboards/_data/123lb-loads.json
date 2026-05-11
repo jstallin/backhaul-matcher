@@ -1,0 +1,214 @@
+{
+  "success": true,
+  "meta": {
+    "version": "3.2.1",
+    "requestId": "req_9f3a2c18b441",
+    "timestamp": "2026-05-11T10:04:00Z",
+    "processingMs": 142
+  },
+  "result": {
+    "total": 523,
+    "page": 1,
+    "limit": 25,
+    "loads": [
+      {
+        "load_id": "123LB-449281",
+        "pickup_city": "Atlanta", "pickup_state": "GA", "pickup_zip": "30301", "pickup_lat": 33.7490, "pickup_lng": -84.3880,
+        "delivery_city": "Memphis", "delivery_state": "TN", "delivery_zip": "38101", "delivery_lat": 35.1495, "delivery_lng": -90.0490,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 35000, "commodity_desc": "Retail Goods", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 452, "rate_total": 940, "rate_per_mile": 2.08, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "52 min", "posted_timestamp": "2026-05-11T09:12:00Z",
+        "company_name": "Ryan Transportation", "company_mc": "312771", "credit_score": 86, "avg_pay_days": 32, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-449104",
+        "pickup_city": "Nashville", "pickup_state": "TN", "pickup_zip": "37201", "pickup_lat": 36.1627, "pickup_lng": -86.7816,
+        "delivery_city": "Dallas", "delivery_state": "TX", "delivery_zip": "75201", "delivery_lat": 32.7767, "delivery_lng": -96.7970,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 38000, "commodity_desc": "Building Supplies", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 663, "rate_total": 1680, "rate_per_mile": 2.53, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0700", "pickup_close": "1500", "delivery_date": "2026-05-13",
+        "age_display": "1h 18m", "posted_timestamp": "2026-05-11T08:46:00Z",
+        "company_name": "TQL", "company_mc": "419478", "credit_score": 95, "avg_pay_days": 26, "hot_load": 1
+      },
+      {
+        "load_id": "123LB-448927",
+        "pickup_city": "Memphis", "pickup_state": "TN", "pickup_zip": "38101", "pickup_lat": 35.1495, "pickup_lng": -90.0490,
+        "delivery_city": "Charlotte", "delivery_state": "NC", "delivery_zip": "28201", "delivery_lat": 35.2271, "delivery_lng": -80.8431,
+        "truck_type": "Reefer", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 40000, "commodity_desc": "Produce", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 621, "rate_total": 1640, "rate_per_mile": 2.64, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0500", "pickup_close": "1000", "delivery_date": "2026-05-13",
+        "age_display": "1h 44m", "posted_timestamp": "2026-05-11T08:20:00Z",
+        "company_name": "Coyote Logistics", "company_mc": "965442", "credit_score": 97, "avg_pay_days": 30, "hot_load": 1
+      },
+      {
+        "load_id": "123LB-448750",
+        "pickup_city": "Charlotte", "pickup_state": "NC", "pickup_zip": "28201", "pickup_lat": 35.2271, "pickup_lng": -80.8431,
+        "delivery_city": "Atlanta", "delivery_state": "GA", "delivery_zip": "30301", "delivery_lat": 33.7490, "delivery_lng": -84.3880,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 33500, "commodity_desc": "Office Furniture", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 272, "rate_total": 640, "rate_per_mile": 2.35, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0900", "pickup_close": "1700", "delivery_date": "2026-05-12",
+        "age_display": "2h 06m", "posted_timestamp": "2026-05-11T07:58:00Z",
+        "company_name": "Echo Global Logistics", "company_mc": "695390", "credit_score": 97, "avg_pay_days": 28, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-448573",
+        "pickup_city": "Dallas", "pickup_state": "TX", "pickup_zip": "75201", "pickup_lat": 32.7767, "pickup_lng": -96.7970,
+        "delivery_city": "Nashville", "delivery_state": "TN", "delivery_zip": "37201", "delivery_lat": 36.1627, "delivery_lng": -86.7816,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 41000, "commodity_desc": "Food Products", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 663, "rate_total": 1820, "rate_per_mile": 2.74, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0600", "pickup_close": "1400", "delivery_date": "2026-05-13",
+        "age_display": "2h 33m", "posted_timestamp": "2026-05-11T07:31:00Z",
+        "company_name": "C.H. Robinson", "company_mc": "147521", "credit_score": 99, "avg_pay_days": 24, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-448396",
+        "pickup_city": "Indianapolis", "pickup_state": "IN", "pickup_zip": "46201", "pickup_lat": 39.7684, "pickup_lng": -86.1581,
+        "delivery_city": "Birmingham", "delivery_state": "AL", "delivery_zip": "35201", "delivery_lat": 33.5186, "delivery_lng": -86.8104,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 36000, "commodity_desc": "Plastics", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 531, "rate_total": 1440, "rate_per_mile": 2.71, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "3h 01m", "posted_timestamp": "2026-05-11T07:03:00Z",
+        "company_name": "Nolan Transportation", "company_mc": "477766", "credit_score": 88, "avg_pay_days": 32, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-448219",
+        "pickup_city": "Birmingham", "pickup_state": "AL", "pickup_zip": "35201", "pickup_lat": 33.5186, "pickup_lng": -86.8104,
+        "delivery_city": "Charlotte", "delivery_state": "NC", "delivery_zip": "28201", "delivery_lat": 35.2271, "delivery_lng": -80.8431,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 34000, "commodity_desc": "Auto Components", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 390, "rate_total": 1120, "rate_per_mile": 2.87, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "3h 28m", "posted_timestamp": "2026-05-11T06:36:00Z",
+        "company_name": "Landstar", "company_mc": "319402", "credit_score": 99, "avg_pay_days": 21, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-448042",
+        "pickup_city": "Kansas City", "pickup_state": "MO", "pickup_zip": "64101", "pickup_lat": 39.0997, "pickup_lng": -94.5786,
+        "delivery_city": "Atlanta", "delivery_state": "GA", "delivery_zip": "30301", "delivery_lat": 33.7490, "delivery_lng": -84.3880,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 43000, "commodity_desc": "Industrial Parts", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 987, "rate_total": 2160, "rate_per_mile": 2.19, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0700", "pickup_close": "1500", "delivery_date": "2026-05-14",
+        "age_display": "3h 55m", "posted_timestamp": "2026-05-11T06:09:00Z",
+        "company_name": "Surge Transportation", "company_mc": "831294", "credit_score": 89, "avg_pay_days": 35, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-447865",
+        "pickup_city": "Columbus", "pickup_state": "OH", "pickup_zip": "43215", "pickup_lat": 39.9612, "pickup_lng": -82.9988,
+        "delivery_city": "Charlotte", "delivery_state": "NC", "delivery_zip": "28201", "delivery_lat": 35.2271, "delivery_lng": -80.8431,
+        "truck_type": "Flatbed", "truck_length": 48, "load_size": "Full",
+        "weight_lbs": 46000, "commodity_desc": "Construction Materials", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 561, "rate_total": 1520, "rate_per_mile": 2.71, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0700", "pickup_close": "1500", "delivery_date": "2026-05-13",
+        "age_display": "4h 22m", "posted_timestamp": "2026-05-11T05:42:00Z",
+        "company_name": "MoLo Solutions", "company_mc": "894094", "credit_score": 93, "avg_pay_days": 29, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-447688",
+        "pickup_city": "Philadelphia", "pickup_state": "PA", "pickup_zip": "19101", "pickup_lat": 39.9526, "pickup_lng": -75.1652,
+        "delivery_city": "Nashville", "delivery_state": "TN", "delivery_zip": "37201", "delivery_lat": 36.1627, "delivery_lng": -86.7816,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 38500, "commodity_desc": "Electronics", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 895, "rate_total": 1740, "rate_per_mile": 1.94, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "4h 49m", "posted_timestamp": "2026-05-11T05:15:00Z",
+        "company_name": "TQL", "company_mc": "419478", "credit_score": 95, "avg_pay_days": 26, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-447511",
+        "pickup_city": "Houston", "pickup_state": "TX", "pickup_zip": "77001", "pickup_lat": 29.7604, "pickup_lng": -95.3698,
+        "delivery_city": "Chicago", "delivery_state": "IL", "delivery_zip": "60601", "delivery_lat": 41.8781, "delivery_lng": -87.6298,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 44000, "commodity_desc": "Chemicals", "hazmat_flag": 1, "team_flag": 0,
+        "miles": 1098, "rate_total": 2860, "rate_per_mile": 2.60, "rate_type": "F",
+        "pickup_date": "2026-05-13", "pickup_open": "0600", "pickup_close": "1400", "delivery_date": "2026-05-15",
+        "age_display": "5h 16m", "posted_timestamp": "2026-05-11T04:48:00Z",
+        "company_name": "Coyote Logistics", "company_mc": "965442", "credit_score": 97, "avg_pay_days": 30, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-447334",
+        "pickup_city": "Jacksonville", "pickup_state": "FL", "pickup_zip": "32099", "pickup_lat": 30.3322, "pickup_lng": -81.6557,
+        "delivery_city": "Memphis", "delivery_state": "TN", "delivery_zip": "38101", "delivery_lat": 35.1495, "delivery_lng": -90.0490,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 37000, "commodity_desc": "Home Goods", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 614, "rate_total": 1360, "rate_per_mile": 2.21, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0900", "pickup_close": "1700", "delivery_date": "2026-05-13",
+        "age_display": "5h 43m", "posted_timestamp": "2026-05-11T04:21:00Z",
+        "company_name": "Ryan Transportation", "company_mc": "312771", "credit_score": 86, "avg_pay_days": 32, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-447157",
+        "pickup_city": "Memphis", "pickup_state": "TN", "pickup_zip": "38101", "pickup_lat": 35.1495, "pickup_lng": -90.0490,
+        "delivery_city": "Indianapolis", "delivery_state": "IN", "delivery_zip": "46201", "delivery_lat": 39.7684, "delivery_lng": -86.1581,
+        "truck_type": "Reefer", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 41000, "commodity_desc": "Frozen Meals", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 471, "rate_total": 1180, "rate_per_mile": 2.51, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0500", "pickup_close": "1100", "delivery_date": "2026-05-13",
+        "age_display": "6h 10m", "posted_timestamp": "2026-05-11T03:54:00Z",
+        "company_name": "Worldwide Express", "company_mc": "757867", "credit_score": 91, "avg_pay_days": 33, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-446980",
+        "pickup_city": "Nashville", "pickup_state": "TN", "pickup_zip": "37201", "pickup_lat": 36.1627, "pickup_lng": -86.7816,
+        "delivery_city": "Philadelphia", "delivery_state": "PA", "delivery_zip": "19101", "delivery_lat": 39.9526, "delivery_lng": -75.1652,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 36500, "commodity_desc": "Medical Equipment", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 830, "rate_total": 1820, "rate_per_mile": 2.19, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0700", "pickup_close": "1500", "delivery_date": "2026-05-13",
+        "age_display": "6h 37m", "posted_timestamp": "2026-05-11T03:27:00Z",
+        "company_name": "C.H. Robinson", "company_mc": "147521", "credit_score": 99, "avg_pay_days": 24, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-446803",
+        "pickup_city": "Atlanta", "pickup_state": "GA", "pickup_zip": "30301", "pickup_lat": 33.7490, "pickup_lng": -84.3880,
+        "delivery_city": "Chicago", "delivery_state": "IL", "delivery_zip": "60601", "delivery_lat": 41.8781, "delivery_lng": -87.6298,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 42000, "commodity_desc": "Paper Products", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 832, "rate_total": 2080, "rate_per_mile": 2.50, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "7h 04m", "posted_timestamp": "2026-05-11T03:00:00Z",
+        "company_name": "Landstar", "company_mc": "319402", "credit_score": 99, "avg_pay_days": 21, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-446626",
+        "pickup_city": "Dallas", "pickup_state": "TX", "pickup_zip": "75201", "pickup_lat": 32.7767, "pickup_lng": -96.7970,
+        "delivery_city": "Birmingham", "delivery_state": "AL", "delivery_zip": "35201", "delivery_lat": 33.5186, "delivery_lng": -86.8104,
+        "truck_type": "Flatbed", "truck_length": 48, "load_size": "Full",
+        "weight_lbs": 45000, "commodity_desc": "Heavy Equipment", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 762, "rate_total": 2020, "rate_per_mile": 2.65, "rate_type": "F",
+        "pickup_date": "2026-05-13", "pickup_open": "0700", "pickup_close": "1500", "delivery_date": "2026-05-14",
+        "age_display": "7h 31m", "posted_timestamp": "2026-05-11T02:33:00Z",
+        "company_name": "Echo Global Logistics", "company_mc": "695390", "credit_score": 97, "avg_pay_days": 28, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-446449",
+        "pickup_city": "Charlotte", "pickup_state": "NC", "pickup_zip": "28201", "pickup_lat": 35.2271, "pickup_lng": -80.8431,
+        "delivery_city": "Memphis", "delivery_state": "TN", "delivery_zip": "38101", "delivery_lat": 35.1495, "delivery_lng": -90.0490,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 38000, "commodity_desc": "Sporting Goods", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 621, "rate_total": 1320, "rate_per_mile": 2.13, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "0800", "pickup_close": "1600", "delivery_date": "2026-05-13",
+        "age_display": "7h 58m", "posted_timestamp": "2026-05-11T02:06:00Z",
+        "company_name": "TQL", "company_mc": "419478", "credit_score": 95, "avg_pay_days": 26, "hot_load": 0
+      },
+      {
+        "load_id": "123LB-446272",
+        "pickup_city": "Birmingham", "pickup_state": "AL", "pickup_zip": "35201", "pickup_lat": 33.5186, "pickup_lng": -86.8104,
+        "delivery_city": "Nashville", "delivery_state": "TN", "delivery_zip": "37201", "delivery_lat": 36.1627, "delivery_lng": -86.7816,
+        "truck_type": "Van", "truck_length": 53, "load_size": "Full",
+        "weight_lbs": 32000, "commodity_desc": "General Freight", "hazmat_flag": 0, "team_flag": 0,
+        "miles": 196, "rate_total": 660, "rate_per_mile": 3.37, "rate_type": "F",
+        "pickup_date": "2026-05-12", "pickup_open": "1000", "pickup_close": "1800", "delivery_date": "2026-05-12",
+        "age_display": "8h 25m", "posted_timestamp": "2026-05-11T01:39:00Z",
+        "company_name": "Nolan Transportation", "company_mc": "477766", "credit_score": 88, "avg_pay_days": 32, "hot_load": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "data": {
+    "searchLoads": {
+      "totalCount": 1243,
+      "pageInfo": {
+        "hasNextPage": true,
+        "hasPreviousPage": false,
+        "startCursor": "eyJpZCI6MX0=",
+        "endCursor": "eyJpZCI6MTh9"
+      },
+      "edges": [
+        {
+          "cursor": "eyJpZCI6MX0=",
+          "node": {
+            "id": "TS-7291048",
+            "originCity": "Nashville", "originState": "TN", "originZip": "37201", "originLat": 36.1627, "originLng": -86.7816,
+            "destinationCity": "Columbus", "destinationState": "OH", "destinationZip": "43215", "destinationLat": 39.9612, "destinationLng": -82.9988,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 34000, "commodity": "Auto Parts", "hazmat": false, "teamLoad": false,
+            "distance": 485, "rateTotal": 1120, "rateMile": 2.31, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "07:00", "pickupLatest": "15:00", "deliveryDate": "2026-05-13",
+            "postedAge": "14 min", "postedAt": "2026-05-11T09:50:00Z",
+            "company": { "id": "comp_8821", "name": "Landstar System", "mcNumber": "319402", "creditScore": 99, "avgDaysToPay": 21, "loadCount90Days": 847 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6Mn0=",
+          "node": {
+            "id": "TS-7289331",
+            "originCity": "Atlanta", "originState": "GA", "originZip": "30301", "originLat": 33.7490, "originLng": -84.3880,
+            "destinationCity": "Chicago", "destinationState": "IL", "destinationZip": "60601", "destinationLat": 41.8781, "destinationLng": -87.6298,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 41000, "commodity": "Consumer Goods", "hazmat": false, "teamLoad": false,
+            "distance": 832, "rateTotal": 2050, "rateMile": 2.46, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "08:00", "pickupLatest": "16:00", "deliveryDate": "2026-05-13",
+            "postedAge": "38 min", "postedAt": "2026-05-11T09:26:00Z",
+            "company": { "id": "comp_4412", "name": "Coyote Logistics", "mcNumber": "965442", "creditScore": 97, "avgDaysToPay": 30, "loadCount90Days": 2341 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6M30=",
+          "node": {
+            "id": "TS-7287614",
+            "originCity": "Memphis", "originState": "TN", "originZip": "38101", "originLat": 35.1495, "originLng": -90.0490,
+            "destinationCity": "Dallas", "destinationState": "TX", "destinationZip": "75201", "destinationLat": 32.7767, "destinationLng": -96.7970,
+            "equipmentType": "REEFER", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 42000, "commodity": "Frozen Foods", "hazmat": false, "teamLoad": false,
+            "distance": 450, "rateTotal": 1350, "rateMile": 3.00, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "05:00", "pickupLatest": "10:00", "deliveryDate": "2026-05-13",
+            "postedAge": "1h 02m", "postedAt": "2026-05-11T09:02:00Z",
+            "company": { "id": "comp_2287", "name": "C.H. Robinson", "mcNumber": "147521", "creditScore": 99, "avgDaysToPay": 24, "loadCount90Days": 5104 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6NH0=",
+          "node": {
+            "id": "TS-7285897",
+            "originCity": "Charlotte", "originState": "NC", "originZip": "28201", "originLat": 35.2271, "originLng": -80.8431,
+            "destinationCity": "Philadelphia", "destinationState": "PA", "destinationZip": "19101", "destinationLat": 39.9526, "destinationLng": -75.1652,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 39000, "commodity": "Retail Merchandise", "hazmat": false, "teamLoad": false,
+            "distance": 636, "rateTotal": 1420, "rateMile": 2.23, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "08:00", "pickupLatest": "16:00", "deliveryDate": "2026-05-13",
+            "postedAge": "1h 29m", "postedAt": "2026-05-11T08:35:00Z",
+            "company": { "id": "comp_9934", "name": "Echo Global Logistics", "mcNumber": "695390", "creditScore": 97, "avgDaysToPay": 28, "loadCount90Days": 1892 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6NX0=",
+          "node": {
+            "id": "TS-7284180",
+            "originCity": "Houston", "originState": "TX", "originZip": "77001", "originLat": 29.7604, "originLng": -95.3698,
+            "destinationCity": "Atlanta", "destinationState": "GA", "destinationZip": "30301", "destinationLat": 33.7490, "destinationLng": -84.3880,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 44000, "commodity": "Industrial Equipment", "hazmat": false, "teamLoad": false,
+            "distance": 1097, "rateTotal": 2680, "rateMile": 2.44, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "06:00", "pickupLatest": "14:00", "deliveryDate": "2026-05-14",
+            "postedAge": "1h 55m", "postedAt": "2026-05-11T08:09:00Z",
+            "company": { "id": "comp_5561", "name": "MoLo Solutions", "mcNumber": "894094", "creditScore": 93, "avgDaysToPay": 29, "loadCount90Days": 743 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6Nn0=",
+          "node": {
+            "id": "TS-7282463",
+            "originCity": "Indianapolis", "originState": "IN", "originZip": "46201", "originLat": 39.7684, "originLng": -86.1581,
+            "destinationCity": "Charlotte", "destinationState": "NC", "destinationZip": "28201", "destinationLat": 35.2271, "destinationLng": -80.8431,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 37500, "commodity": "Paper Goods", "hazmat": false, "teamLoad": false,
+            "distance": 762, "rateTotal": 1730, "rateMile": 2.27, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "09:00", "pickupLatest": "17:00", "deliveryDate": "2026-05-13",
+            "postedAge": "2h 18m", "postedAt": "2026-05-11T07:46:00Z",
+            "company": { "id": "comp_3378", "name": "Worldwide Express", "mcNumber": "757867", "creditScore": 91, "avgDaysToPay": 33, "loadCount90Days": 529 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6N30=",
+          "node": {
+            "id": "TS-7280746",
+            "originCity": "Kansas City", "originState": "MO", "originZip": "64101", "originLat": 39.0997, "originLng": -94.5786,
+            "destinationCity": "Nashville", "destinationState": "TN", "destinationZip": "37201", "destinationLat": 36.1627, "destinationLng": -86.7816,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 33000, "commodity": "General Freight", "hazmat": false, "teamLoad": false,
+            "distance": 551, "rateTotal": 1240, "rateMile": 2.25, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "08:00", "pickupLatest": "16:00", "deliveryDate": "2026-05-13",
+            "postedAge": "2h 44m", "postedAt": "2026-05-11T07:20:00Z",
+            "company": { "id": "comp_7712", "name": "TQL", "mcNumber": "419478", "creditScore": 95, "avgDaysToPay": 26, "loadCount90Days": 3218 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6OH0=",
+          "node": {
+            "id": "TS-7279029",
+            "originCity": "Jacksonville", "originState": "FL", "originZip": "32099", "originLat": 30.3322, "originLng": -81.6557,
+            "destinationCity": "Charlotte", "destinationState": "NC", "destinationZip": "28201", "destinationLat": 35.2271, "destinationLng": -80.8431,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 38000, "commodity": "Medical Devices", "hazmat": false, "teamLoad": false,
+            "distance": 627, "rateTotal": 1310, "rateMile": 2.09, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "07:00", "pickupLatest": "15:00", "deliveryDate": "2026-05-13",
+            "postedAge": "3h 07m", "postedAt": "2026-05-11T06:57:00Z",
+            "company": { "id": "comp_6623", "name": "Nolan Transportation", "mcNumber": "477766", "creditScore": 88, "avgDaysToPay": 32, "loadCount90Days": 411 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6OX0=",
+          "node": {
+            "id": "TS-7277312",
+            "originCity": "Birmingham", "originState": "AL", "originZip": "35201", "originLat": 33.5186, "originLng": -86.8104,
+            "destinationCity": "Atlanta", "destinationState": "GA", "destinationZip": "30301", "destinationLat": 33.7490, "destinationLng": -84.3880,
+            "equipmentType": "FLATBED", "equipmentLength": 48, "loadType": "FULL",
+            "weight": 45000, "commodity": "Steel Pipe", "hazmat": false, "teamLoad": false,
+            "distance": 170, "rateTotal": 760, "rateMile": 4.47, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "10:00", "pickupLatest": "18:00", "deliveryDate": "2026-05-12",
+            "postedAge": "3h 32m", "postedAt": "2026-05-11T06:32:00Z",
+            "company": { "id": "comp_8821", "name": "Landstar System", "mcNumber": "319402", "creditScore": 99, "avgDaysToPay": 21, "loadCount90Days": 847 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTB9",
+          "node": {
+            "id": "TS-7275595",
+            "originCity": "Dallas", "originState": "TX", "originZip": "75201", "originLat": 32.7767, "originLng": -96.7970,
+            "destinationCity": "Memphis", "destinationState": "TN", "destinationZip": "38101", "destinationLat": 35.1495, "destinationLng": -90.0490,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 40000, "commodity": "Apparel", "hazmat": false, "teamLoad": false,
+            "distance": 450, "rateTotal": 1080, "rateMile": 2.40, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "08:00", "pickupLatest": "16:00", "deliveryDate": "2026-05-13",
+            "postedAge": "4h 01m", "postedAt": "2026-05-11T06:03:00Z",
+            "company": { "id": "comp_1145", "name": "Ryan Transportation", "mcNumber": "312771", "creditScore": 86, "avgDaysToPay": 32, "loadCount90Days": 288 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTF9",
+          "node": {
+            "id": "TS-7273878",
+            "originCity": "Columbus", "originState": "OH", "originZip": "43215", "originLat": 39.9612, "originLng": -82.9988,
+            "destinationCity": "Nashville", "destinationState": "TN", "destinationZip": "37201", "destinationLat": 36.1627, "destinationLng": -86.7816,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 35000, "commodity": "Electronics", "hazmat": false, "teamLoad": false,
+            "distance": 485, "rateTotal": 1100, "rateMile": 2.27, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "09:00", "pickupLatest": "17:00", "deliveryDate": "2026-05-13",
+            "postedAge": "4h 45m", "postedAt": "2026-05-11T05:19:00Z",
+            "company": { "id": "comp_8834", "name": "Surge Transportation", "mcNumber": "831294", "creditScore": 89, "avgDaysToPay": 35, "loadCount90Days": 362 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTJ9",
+          "node": {
+            "id": "TS-7272161",
+            "originCity": "Chicago", "originState": "IL", "originZip": "60601", "originLat": 41.8781, "originLng": -87.6298,
+            "destinationCity": "Birmingham", "destinationState": "AL", "destinationZip": "35201", "destinationLat": 33.5186, "destinationLng": -86.8104,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 42000, "commodity": "Food & Beverage", "hazmat": false, "teamLoad": false,
+            "distance": 674, "rateTotal": 1730, "rateMile": 2.57, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "07:00", "pickupLatest": "15:00", "deliveryDate": "2026-05-13",
+            "postedAge": "5h 22m", "postedAt": "2026-05-11T04:42:00Z",
+            "company": { "id": "comp_4412", "name": "Coyote Logistics", "mcNumber": "965442", "creditScore": 97, "avgDaysToPay": 30, "loadCount90Days": 2341 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTN9",
+          "node": {
+            "id": "TS-7270444",
+            "originCity": "Greensboro", "originState": "NC", "originZip": "27401", "originLat": 36.0726, "originLng": -79.7920,
+            "destinationCity": "Nashville", "destinationState": "TN", "destinationZip": "37201", "destinationLat": 36.1627, "destinationLng": -86.7816,
+            "equipmentType": "REEFER", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 36000, "commodity": "Dairy Products", "hazmat": false, "teamLoad": false,
+            "distance": 562, "rateTotal": 1280, "rateMile": 2.28, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "06:00", "pickupLatest": "12:00", "deliveryDate": "2026-05-13",
+            "postedAge": "6h 08m", "postedAt": "2026-05-11T03:56:00Z",
+            "company": { "id": "comp_9934", "name": "Echo Global Logistics", "mcNumber": "695390", "creditScore": 97, "avgDaysToPay": 28, "loadCount90Days": 1892 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTR9",
+          "node": {
+            "id": "TS-7268727",
+            "originCity": "Philadelphia", "originState": "PA", "originZip": "19101", "originLat": 39.9526, "originLng": -75.1652,
+            "destinationCity": "Charlotte", "destinationState": "NC", "destinationZip": "28201", "destinationLat": 35.2271, "destinationLng": -80.8431,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 41500, "commodity": "Pharmaceuticals", "hazmat": false, "teamLoad": false,
+            "distance": 636, "rateTotal": 1390, "rateMile": 2.19, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "08:00", "pickupLatest": "16:00", "deliveryDate": "2026-05-13",
+            "postedAge": "6h 35m", "postedAt": "2026-05-11T03:29:00Z",
+            "company": { "id": "comp_7712", "name": "TQL", "mcNumber": "419478", "creditScore": 95, "avgDaysToPay": 26, "loadCount90Days": 3218 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTU9",
+          "node": {
+            "id": "TS-7267010",
+            "originCity": "Atlanta", "originState": "GA", "originZip": "30301", "originLat": 33.7490, "originLng": -84.3880,
+            "destinationCity": "Dallas", "destinationState": "TX", "destinationZip": "75201", "destinationLat": 32.7767, "destinationLng": -96.7970,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 44000, "commodity": "Automotive Parts", "hazmat": false, "teamLoad": true,
+            "distance": 1143, "rateTotal": 2890, "rateMile": 2.53, "rateType": "FLAT",
+            "pickupDate": "2026-05-13", "pickupEarliest": "06:00", "pickupLatest": "14:00", "deliveryDate": "2026-05-15",
+            "postedAge": "7h 12m", "postedAt": "2026-05-11T02:52:00Z",
+            "company": { "id": "comp_2287", "name": "C.H. Robinson", "mcNumber": "147521", "creditScore": 99, "avgDaysToPay": 24, "loadCount90Days": 5104 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTZ9",
+          "node": {
+            "id": "TS-7265293",
+            "originCity": "Nashville", "originState": "TN", "originZip": "37201", "originLat": 36.1627, "originLng": -86.7816,
+            "destinationCity": "Kansas City", "destinationState": "MO", "destinationZip": "64101", "destinationLat": 39.0997, "destinationLng": -94.5786,
+            "equipmentType": "FLATBED", "equipmentLength": 48, "loadType": "FULL",
+            "weight": 47000, "commodity": "Structural Steel", "hazmat": false, "teamLoad": false,
+            "distance": 551, "rateTotal": 1380, "rateMile": 2.50, "rateType": "FLAT",
+            "pickupDate": "2026-05-13", "pickupEarliest": "07:00", "pickupLatest": "15:00", "deliveryDate": "2026-05-14",
+            "postedAge": "7h 49m", "postedAt": "2026-05-11T02:15:00Z",
+            "company": { "id": "comp_5561", "name": "MoLo Solutions", "mcNumber": "894094", "creditScore": 93, "avgDaysToPay": 29, "loadCount90Days": 743 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTd9",
+          "node": {
+            "id": "TS-7263576",
+            "originCity": "Houston", "originState": "TX", "originZip": "77001", "originLat": 29.7604, "originLng": -95.3698,
+            "destinationCity": "Charlotte", "destinationState": "NC", "destinationZip": "28201", "destinationLat": 35.2271, "destinationLng": -80.8431,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 39000, "commodity": "Consumer Electronics", "hazmat": false, "teamLoad": true,
+            "distance": 1419, "rateTotal": 3020, "rateMile": 2.13, "rateType": "FLAT",
+            "pickupDate": "2026-05-13", "pickupEarliest": "06:00", "pickupLatest": "14:00", "deliveryDate": "2026-05-15",
+            "postedAge": "8h 15m", "postedAt": "2026-05-11T01:49:00Z",
+            "company": { "id": "comp_3378", "name": "Worldwide Express", "mcNumber": "757867", "creditScore": 91, "avgDaysToPay": 33, "loadCount90Days": 529 }
+          }
+        },
+        {
+          "cursor": "eyJpZCI6MTh9",
+          "node": {
+            "id": "TS-7261859",
+            "originCity": "Memphis", "originState": "TN", "originZip": "38101", "originLat": 35.1495, "originLng": -90.0490,
+            "destinationCity": "Indianapolis", "destinationState": "IN", "destinationZip": "46201", "destinationLat": 39.7684, "destinationLng": -86.1581,
+            "equipmentType": "VAN", "equipmentLength": 53, "loadType": "FULL",
+            "weight": 34500, "commodity": "General Freight", "hazmat": false, "teamLoad": false,
+            "distance": 471, "rateTotal": 1080, "rateMile": 2.29, "rateType": "FLAT",
+            "pickupDate": "2026-05-12", "pickupEarliest": "09:00", "pickupLatest": "17:00", "deliveryDate": "2026-05-13",
+            "postedAge": "8h 42m", "postedAt": "2026-05-11T01:22:00Z",
+            "company": { "id": "comp_8821", "name": "Landstar System", "mcNumber": "319402", "creditScore": 99, "avgDaysToPay": 21, "loadCount90Days": 847 }
+          }
+        }
+      ]
+    }
+  }
+}

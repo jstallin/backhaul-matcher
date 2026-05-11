@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<!-- HM Test Board: truckstop v1.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truckstop | Load Search</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-size: 13px;
+      background: #f7f8fa;
+      color: #1a2332;
+      min-height: 100vh;
+    }
+
+    /* ── Top nav ─────────────────────────────────────────────────── */
+    .topnav {
+      background: #003087;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      text-decoration: none;
+    }
+    .logo-truck { font-size: 20px; }
+    .logo-text {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .logo-dot { color: #f97316; }
+    .topnav-links { display: flex; gap: 2px; }
+    .topnav-link {
+      color: #b3c6e8;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 13px;
+      border-radius: 5px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .topnav-link:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .topnav-link.active { background: rgba(255,255,255,0.16); color: #fff; font-weight: 600; }
+    .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .nav-credits {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #b3c6e8;
+    }
+    .nav-credits strong { color: #fff; }
+    .topnav-avatar {
+      width: 32px; height: 32px;
+      background: #f97316;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      cursor: pointer;
+    }
+
+    /* ── Search strip ────────────────────────────────────────────── */
+    .search-strip {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 12px 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-field { display: flex; flex-direction: column; gap: 4px; }
+    .search-field label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.07em; }
+    .search-input {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-size: 13px;
+      color: #1a2332;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.12s;
+      min-width: 150px;
+    }
+    .search-input:focus { border-color: #003087; }
+    .search-select {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: #1a2332;
+      background: #fff;
+      outline: none;
+      min-width: 130px;
+    }
+    .search-divider { width: 1px; height: 38px; background: #e2e8f0; }
+    .btn-find {
+      background: #003087;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 22px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.12s;
+      height: 38px;
+    }
+    .btn-find:hover { background: #002266; }
+    .btn-advanced {
+      background: none;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      height: 38px;
+    }
+    .btn-advanced:hover { border-color: #003087; color: #003087; }
+
+    /* ── Main layout ─────────────────────────────────────────────── */
+    .page-layout {
+      display: flex;
+      height: calc(100vh - 112px);
+    }
+
+    /* ── Filter panel ────────────────────────────────────────────── */
+    .filter-panel {
+      width: 230px;
+      min-width: 230px;
+      background: #fff;
+      border-right: 1px solid #e2e8f0;
+      overflow-y: auto;
+      padding: 16px 0;
+    }
+    .fp-section { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
+    .fp-section:last-child { border-bottom: none; }
+    .fp-title { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 10px; }
+    .fp-row { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+    .fp-checkbox { width: 15px; height: 15px; accent-color: #003087; cursor: pointer; border-radius: 3px; }
+    .fp-label { font-size: 12px; color: #374151; cursor: pointer; }
+    .fp-badge { margin-left: auto; background: #f1f5f9; border-radius: 10px; padding: 1px 7px; font-size: 10px; color: #94a3b8; font-weight: 600; }
+    .fp-range { display: flex; align-items: center; gap: 6px; }
+    .fp-range-input {
+      flex: 1;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: #1a2332;
+      outline: none;
+    }
+    .fp-range-input:focus { border-color: #003087; }
+    .fp-range-sep { color: #94a3b8; font-size: 11px; }
+    .fp-input {
+      width: 100%;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #1a2332;
+      outline: none;
+      margin-bottom: 8px;
+    }
+    .fp-input:focus { border-color: #003087; }
+
+    /* ── Load list ───────────────────────────────────────────────── */
+    .load-list-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .list-toolbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-summary { font-size: 14px; font-weight: 700; color: #1a2332; }
+    .result-summary span { color: #003087; }
+    .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .sort-btn {
+      background: none;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .sort-btn.active { border-color: #003087; color: #003087; background: #eff6ff; }
+    .view-toggle {
+      display: flex;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .view-btn {
+      background: none;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #94a3b8;
+      border-right: 1px solid #e2e8f0;
+    }
+    .view-btn:last-child { border-right: none; }
+    .view-btn.active { background: #eff6ff; color: #003087; }
+
+    /* ── Load cards ──────────────────────────────────────────────── */
+    .load-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+
+    .load-card {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.12s, box-shadow 0.12s;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto auto;
+      align-items: center;
+      gap: 16px;
+    }
+    .load-card:hover { border-color: #003087; box-shadow: 0 2px 8px rgba(0,48,135,0.08); }
+    .load-card.selected { border-color: #003087; box-shadow: 0 2px 12px rgba(0,48,135,0.15); background: #f8faff; }
+
+    .card-route {}
+    .card-cities { font-size: 14px; font-weight: 700; color: #1a2332; display: flex; align-items: center; gap: 6px; }
+    .card-arrow { color: #003087; font-size: 14px; }
+    .card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+
+    .card-equip { text-align: center; }
+    .equip-pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .equip-pill.reefer { background: #dbeafe; color: #1d4ed8; }
+    .equip-pill.flatbed { background: #fef3c7; color: #92400e; }
+    .card-equip-len { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 3px; }
+
+    .card-rate { text-align: right; }
+    .card-rate-total { font-size: 17px; font-weight: 800; color: #1a2332; }
+    .card-rate-mile { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    .card-dist { text-align: right; }
+    .card-dist-val { font-size: 14px; font-weight: 600; color: #374151; }
+    .card-dist-label { font-size: 10px; color: #94a3b8; }
+
+    .card-broker {}
+    .broker-name { font-size: 12px; font-weight: 700; color: #1a2332; }
+    .broker-score {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+    .score-green { background: #dcfce7; color: #166534; }
+    .score-yellow { background: #fef9c3; color: #854d0e; }
+    .broker-pay { font-size: 10px; color: #94a3b8; margin-left: 4px; }
+
+    .card-age-badge {
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-new { background: #dcfce7; color: #15803d; }
+    .badge-recent { background: #fef9c3; color: #854d0e; }
+    .badge-old { background: #f1f5f9; color: #94a3b8; }
+
+    .tag-team {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      margin-left: 5px;
+    }
+
+    /* ── Loading ─────────────────────────────────────────────────── */
+    .loading-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #003087;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Pagination bar ──────────────────────────────────────────── */
+    .pagination-bar {
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .page-btn {
+      background: none;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .page-btn:hover { border-color: #003087; color: #003087; }
+    .page-btn:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<nav class="topnav">
+  <a class="topnav-logo" href="#">
+    <span class="logo-truck">🚚</span>
+    <span class="logo-text">Truckstop<span class="logo-dot">.</span>com</span>
+  </a>
+  <div class="topnav-links">
+    <a class="topnav-link active" href="#">Find Loads</a>
+    <a class="topnav-link" href="#">My Loads</a>
+    <a class="topnav-link" href="#">Saved Lanes</a>
+    <a class="topnav-link" href="#">Rate Index</a>
+    <a class="topnav-link" href="#">Tools</a>
+  </div>
+  <div class="topnav-right">
+    <div class="nav-credits">Credits: <strong>142</strong></div>
+    <div class="topnav-avatar">JS</div>
+  </div>
+</nav>
+
+<!-- Search strip -->
+<div class="search-strip">
+  <div class="search-field">
+    <label>Pickup Location</label>
+    <input class="search-input" type="text" placeholder="City, State or ZIP" value="">
+  </div>
+  <div class="search-field">
+    <label>Radius</label>
+    <select class="search-select" style="min-width:90px">
+      <option>100 mi</option>
+      <option selected>200 mi</option>
+      <option>Anywhere</option>
+    </select>
+  </div>
+  <div class="search-divider"></div>
+  <div class="search-field">
+    <label>Delivery Location</label>
+    <input class="search-input" type="text" placeholder="City, State or ZIP" value="">
+  </div>
+  <div class="search-field">
+    <label>Radius</label>
+    <select class="search-select" style="min-width:90px">
+      <option>100 mi</option>
+      <option selected>200 mi</option>
+      <option>Anywhere</option>
+    </select>
+  </div>
+  <div class="search-divider"></div>
+  <div class="search-field">
+    <label>Equipment</label>
+    <select class="search-select">
+      <option>All Types</option>
+      <option selected>Van</option>
+      <option>Reefer</option>
+      <option>Flatbed</option>
+      <option>Step Deck</option>
+    </select>
+  </div>
+  <div class="search-field">
+    <label>Pickup Date</label>
+    <input class="search-input" type="date" value="2026-05-12" style="min-width:130px">
+  </div>
+  <button class="btn-find">Find Loads</button>
+  <button class="btn-advanced">⚙ Advanced</button>
+</div>
+
+<!-- Page layout -->
+<div class="page-layout">
+
+  <!-- Filter panel -->
+  <aside class="filter-panel">
+    <div class="fp-section">
+      <div class="fp-title">Equipment</div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="eq-van" checked><label for="eq-van" class="fp-label">Van</label><span class="fp-badge">489</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="eq-reefer"><label for="eq-reefer" class="fp-label">Reefer</label><span class="fp-badge">218</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="eq-flat"><label for="eq-flat" class="fp-label">Flatbed</label><span class="fp-badge">301</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="eq-step"><label for="eq-step" class="fp-label">Step Deck</label><span class="fp-badge">115</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="eq-po"><label for="eq-po" class="fp-label">Power Only</label><span class="fp-badge">120</span></div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Load Type</div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="lt-full" checked><label for="lt-full" class="fp-label">Full Truckload</label></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="lt-ltl"><label for="lt-ltl" class="fp-label">LTL / Partial</label></div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Trip Miles</div>
+      <div class="fp-range">
+        <input class="fp-range-input" type="text" placeholder="Min">
+        <span class="fp-range-sep">—</span>
+        <input class="fp-range-input" type="text" placeholder="Max">
+      </div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Rate / Mile</div>
+      <div class="fp-range">
+        <input class="fp-range-input" type="text" placeholder="$0.00">
+        <span class="fp-range-sep">—</span>
+        <input class="fp-range-input" type="text" placeholder="Any">
+      </div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Broker / Carrier</div>
+      <input class="fp-input" type="text" placeholder="Company name…">
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="cs-verified"><label for="cs-verified" class="fp-label">Verified only</label></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="cs-90plus"><label for="cs-90plus" class="fp-label">Credit 90+</label></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="cs-quickpay"><label for="cs-quickpay" class="fp-label">Quick pay</label></div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Posted Age</div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="a-1h"><label for="a-1h" class="fp-label">Last hour</label><span class="fp-badge">88</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="a-6h"><label for="a-6h" class="fp-label">Last 6 hours</label><span class="fp-badge">403</span></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="a-12h" checked><label for="a-12h" class="fp-label">Last 12 hours</label><span class="fp-badge">1,243</span></div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Special</div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="sp-team"><label for="sp-team" class="fp-label">Team loads</label></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="sp-hazmat"><label for="sp-hazmat" class="fp-label">Hazmat</label></div>
+      <div class="fp-row"><input class="fp-checkbox" type="checkbox" id="sp-tsa"><label for="sp-tsa" class="fp-label">TSA certified</label></div>
+    </div>
+  </aside>
+
+  <!-- Load list -->
+  <div class="load-list-area">
+    <div class="list-toolbar">
+      <div class="result-summary"><span id="result-count">—</span> loads found</div>
+      <div class="toolbar-right">
+        <button class="sort-btn active">Newest</button>
+        <button class="sort-btn">Rate ↓</button>
+        <button class="sort-btn">$/mi ↓</button>
+        <button class="sort-btn">Distance</button>
+        <div class="view-toggle">
+          <button class="view-btn active">☰</button>
+          <button class="view-btn">⊞</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="load-scroll" id="load-scroll">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Searching for loads…
+      </div>
+    </div>
+
+    <div class="pagination-bar">
+      <button class="page-btn" disabled>← Prev</button>
+      <span>Page 1 of 70</span>
+      <button class="page-btn">Next →</button>
+      <span style="margin-left:auto; color:#cbd5e1; font-size:11px">Truckstop.com v2.14 · Test Environment</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── GraphQL-style fetch (simulated POST returning static JSON) ── */
+  async function fetchLoads() {
+    // Extension intercepts this fetch(). In production this is POST /graphql with operationName: SearchLoads
+    const res = await fetch('../_data/truckstop-graphql.json', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'X-Operation-Name': 'SearchLoads' }
+    });
+    const data = await res.json();
+    return data;
+  }
+
+  function equipPill(type) {
+    const cls = type === 'REEFER' ? 'reefer' : type === 'FLATBED' || type === 'STEP_DECK' ? 'flatbed' : '';
+    const label = { VAN: 'Van', REEFER: 'Reefer', FLATBED: 'Flatbed', STEP_DECK: 'Step Deck' }[type] || type;
+    return `<span class="equip-pill ${cls}">${label}</span>`;
+  }
+
+  function ageBadge(ageStr) {
+    if (ageStr.includes('min')) return `<span class="card-age-badge badge-new">${ageStr}</span>`;
+    const hrs = parseFloat(ageStr);
+    if (hrs <= 3) return `<span class="card-age-badge badge-recent">${ageStr}</span>`;
+    return `<span class="card-age-badge badge-old">${ageStr}</span>`;
+  }
+
+  function scoreClass(s) { return s >= 95 ? 'score-green' : 'score-yellow'; }
+
+  function formatDate(d) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function renderLoads(edges) {
+    const container = document.getElementById('load-scroll');
+    document.getElementById('result-count').textContent = '1,243';
+
+    container.innerHTML = edges.map(({ node: n }) => {
+      const teamTag = n.teamLoad ? '<span class="tag-team">Team</span>' : '';
+      return `
+        <div class="load-card" data-id="${n.id}" onclick="selectCard(this)">
+          <div class="card-route">
+            <div class="card-cities">
+              ${n.originCity}, ${n.originState}
+              <span class="card-arrow">→</span>
+              ${n.destinationCity}, ${n.destinationState}
+              ${teamTag}
+            </div>
+            <div class="card-sub">${n.commodity} · ${n.weight.toLocaleString()} lbs · ${n.equipmentLength}' · Pickup ${formatDate(n.pickupDate)} ${n.pickupEarliest}–${n.pickupLatest}</div>
+          </div>
+          <div class="card-equip">
+            ${equipPill(n.equipmentType)}
+          </div>
+          <div class="card-dist">
+            <div class="card-dist-val">${n.distance.toLocaleString()}</div>
+            <div class="card-dist-label">miles</div>
+          </div>
+          <div class="card-rate">
+            <div class="card-rate-total">$${n.rateTotal.toLocaleString()}</div>
+            <div class="card-rate-mile">$${n.rateMile.toFixed(2)}/mi</div>
+          </div>
+          <div class="card-broker">
+            <div class="broker-name">${n.company.name}</div>
+            <span class="broker-score ${scoreClass(n.company.creditScore)}">${n.company.creditScore}</span>
+            <span class="broker-pay">Net ${n.company.avgDaysToPay}</span>
+          </div>
+          <div>${ageBadge(n.postedAge)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function selectCard(card) {
+    document.querySelectorAll('.load-card.selected').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+
+  fetchLoads()
+    .then(data => renderLoads(data.data.searchLoads.edges))
+    .catch(err => {
+      document.getElementById('load-scroll').innerHTML =
+        `<div class="loading-state" style="color:#dc2626">Failed to load: ${err.message}</div>`;
+    });
+</script>
+</body>
+</html>

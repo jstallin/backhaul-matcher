@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<!-- HM Test Board: dat v1.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAT One | Load Search</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-size: 13px;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Top nav ─────────────────────────────────────────────────── */
+    .topnav {
+      background: #005eb8;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topnav-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+    .topnav-logo-box {
+      background: #fff;
+      border-radius: 4px;
+      padding: 3px 7px;
+      font-size: 17px;
+      font-weight: 900;
+      color: #005eb8;
+      letter-spacing: -0.5px;
+    }
+    .topnav-logo-tag {
+      color: #a8d0ff;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .topnav-links { display: flex; gap: 2px; }
+    .topnav-link {
+      color: #cce3ff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .topnav-link:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .topnav-link.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
+    .topnav-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .topnav-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #cce3ff;
+      font-size: 12px;
+    }
+    .topnav-avatar {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.22);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff;
+    }
+
+    /* ── Search bar ──────────────────────────────────────────────── */
+    .searchbar {
+      background: #fff;
+      border-bottom: 1px solid #d0d8e4;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .searchbar-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .searchbar-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .searchbar-field label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .searchbar-input {
+      border: 1px solid #c8d0dc;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 13px;
+      width: 160px;
+      color: #222;
+      background: #fafbfc;
+      outline: none;
+    }
+    .searchbar-input:focus { border-color: #005eb8; background: #fff; }
+    .searchbar-select {
+      border: 1px solid #c8d0dc;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 13px;
+      width: 130px;
+      color: #222;
+      background: #fafbfc;
+      outline: none;
+    }
+    .searchbar-divider { width: 1px; height: 32px; background: #dde3ea; flex-shrink: 0; }
+    .btn-search {
+      background: #005eb8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 7px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+      white-space: nowrap;
+    }
+    .btn-search:hover { background: #0049a0; }
+
+    /* ── Main layout ─────────────────────────────────────────────── */
+    .main-layout {
+      display: flex;
+      height: calc(100vh - 104px);
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: #fff;
+      border-right: 1px solid #d0d8e4;
+      overflow-y: auto;
+      padding: 14px 0;
+    }
+    .sidebar-section { border-bottom: 1px solid #edf0f4; padding: 10px 14px; }
+    .sidebar-section:last-child { border-bottom: none; }
+    .sidebar-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+    .filter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .filter-checkbox { width: 14px; height: 14px; accent-color: #005eb8; cursor: pointer; flex-shrink: 0; }
+    .filter-label { font-size: 12px; color: #333; cursor: pointer; }
+    .filter-count { margin-left: auto; font-size: 10px; color: #999; background: #f0f2f5; padding: 1px 6px; border-radius: 8px; }
+    .filter-input {
+      width: 100%;
+      border: 1px solid #d0d8e4;
+      border-radius: 3px;
+      padding: 5px 8px;
+      font-size: 12px;
+      outline: none;
+      margin-bottom: 6px;
+      color: #222;
+    }
+    .filter-input:focus { border-color: #005eb8; }
+    .filter-range { display: flex; gap: 6px; align-items: center; }
+    .filter-range-input {
+      width: 70px;
+      border: 1px solid #d0d8e4;
+      border-radius: 3px;
+      padding: 4px 6px;
+      font-size: 12px;
+      outline: none;
+      color: #222;
+    }
+    .filter-range-input:focus { border-color: #005eb8; }
+    .filter-range-sep { color: #999; font-size: 11px; }
+
+    /* ── Results area ────────────────────────────────────────────── */
+    .results-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .results-toolbar {
+      background: #fff;
+      border-bottom: 1px solid #d8dfe8;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .results-count { font-size: 13px; font-weight: 600; color: #333; }
+    .results-count span { color: #005eb8; }
+    .toolbar-spacer { flex: 1; }
+    .sort-label { font-size: 11px; color: #888; }
+    .sort-select {
+      border: 1px solid #d0d8e4;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #333;
+      background: #fafbfc;
+      outline: none;
+    }
+    .btn-save {
+      background: none;
+      border: 1px solid #005eb8;
+      color: #005eb8;
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-save:hover { background: #f0f6ff; }
+
+    /* ── Table ───────────────────────────────────────────────────── */
+    .table-wrap { flex: 1; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: #f4f6f9;
+      border-bottom: 2px solid #d0d8e4;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover { background: #eaecf0; }
+    thead th .sort-icon { color: #aaa; margin-left: 3px; }
+    tbody tr {
+      border-bottom: 1px solid #edf0f4;
+      cursor: pointer;
+      transition: background 0.08s;
+    }
+    tbody tr:hover { background: #f0f6ff; }
+    tbody tr.selected { background: #e3edfc; border-left: 3px solid #005eb8; }
+    tbody td { padding: 9px 10px; vertical-align: middle; }
+
+    .cell-route { min-width: 200px; }
+    .route-origin { font-weight: 600; color: #1a1a2e; font-size: 13px; }
+    .route-arrow { color: #005eb8; margin: 0 5px; font-size: 11px; }
+    .route-dest { font-weight: 600; color: #1a1a2e; font-size: 13px; }
+    .route-dates { font-size: 11px; color: #888; margin-top: 2px; }
+
+    .equip-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #edf1f7;
+      color: #445;
+      white-space: nowrap;
+    }
+    .equip-reefer { background: #e8f4fd; color: #0969a2; }
+    .equip-flatbed { background: #fdf2e3; color: #8a4b00; }
+    .equip-stepdeck { background: #f3eafd; color: #6b21a8; }
+
+    .cell-rate { min-width: 110px; }
+    .rate-total { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+    .rate-permile { font-size: 11px; color: #888; margin-top: 1px; }
+
+    .cell-dist { text-align: right; color: #444; }
+    .cell-weight { text-align: right; color: #444; }
+
+    .cell-age { white-space: nowrap; }
+    .age-fresh { color: #16a34a; font-weight: 600; }
+    .age-recent { color: #ca8a04; }
+    .age-old { color: #9ca3af; }
+
+    .cell-broker { min-width: 160px; }
+    .broker-name { font-weight: 600; color: #222; font-size: 12px; }
+    .broker-meta { font-size: 11px; color: #888; margin-top: 2px; }
+    .credit-score {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .credit-high { background: #dcfce7; color: #15803d; }
+    .credit-med { background: #fef9c3; color: #854d0e; }
+    .credit-low { background: #fee2e2; color: #991b1b; }
+
+    .badge-team {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-left: 4px;
+    }
+
+    /* ── Loading / empty ─────────────────────────────────────────── */
+    .loading-row td { text-align: center; padding: 40px; color: #888; font-size: 13px; }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid #d0d8e4;
+      border-top-color: #005eb8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ──────────────────────────────────────────────── */
+    .statusbar {
+      background: #f4f6f9;
+      border-top: 1px solid #d0d8e4;
+      padding: 5px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+    .statusbar-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; display: inline-block; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<nav class="topnav">
+  <a class="topnav-logo" href="#">
+    <span class="topnav-logo-box">dat</span>
+    <span class="topnav-logo-tag">One</span>
+  </a>
+  <div class="topnav-links">
+    <a class="topnav-link active" href="#">Find Loads</a>
+    <a class="topnav-link" href="#">My Loads</a>
+    <a class="topnav-link" href="#">Lanes</a>
+    <a class="topnav-link" href="#">Rate View</a>
+    <a class="topnav-link" href="#">Analytics</a>
+  </div>
+  <div class="topnav-right">
+    <div class="topnav-user">
+      <div class="topnav-avatar">J</div>
+      <span>Jason Stallings</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Search bar -->
+<div class="searchbar">
+  <div class="searchbar-field">
+    <label>Origin</label>
+    <input class="searchbar-input" type="text" placeholder="City, State or ZIP" value="Any Origin">
+  </div>
+  <div class="searchbar-field">
+    <label>D/H Miles</label>
+    <input class="searchbar-input" type="text" placeholder="0–250" style="width:80px" value="250">
+  </div>
+  <div class="searchbar-field">
+    <label>Destination</label>
+    <input class="searchbar-input" type="text" placeholder="City, State or ZIP" value="Any Destination">
+  </div>
+  <div class="searchbar-field">
+    <label>D/H Miles</label>
+    <input class="searchbar-input" type="text" placeholder="0–250" style="width:80px" value="250">
+  </div>
+  <div class="searchbar-divider"></div>
+  <div class="searchbar-field">
+    <label>Equipment</label>
+    <select class="searchbar-select">
+      <option>All Equipment</option>
+      <option selected>Van (53')</option>
+      <option>Reefer</option>
+      <option>Flatbed</option>
+      <option>Step Deck</option>
+    </select>
+  </div>
+  <div class="searchbar-field">
+    <label>Max Age</label>
+    <select class="searchbar-select" style="width:100px">
+      <option>Any Age</option>
+      <option>1 Hour</option>
+      <option selected>12 Hours</option>
+      <option>24 Hours</option>
+    </select>
+  </div>
+  <button class="btn-search">Search</button>
+</div>
+
+<!-- Main layout -->
+<div class="main-layout">
+
+  <!-- Sidebar filters -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Equipment Type</div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="eq-van" checked><label for="eq-van" class="filter-label">Van</label><span class="filter-count">312</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="eq-reefer"><label for="eq-reefer" class="filter-label">Reefer</label><span class="filter-count">184</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="eq-flat"><label for="eq-flat" class="filter-label">Flatbed</label><span class="filter-count">207</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="eq-step"><label for="eq-step" class="filter-label">Step Deck</label><span class="filter-count">91</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="eq-power"><label for="eq-power" class="filter-label">Power Only</label><span class="filter-count">53</span></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Trip Length</div>
+      <div class="filter-range">
+        <input class="filter-range-input" type="text" placeholder="Min" value="">
+        <span class="filter-range-sep">–</span>
+        <input class="filter-range-input" type="text" placeholder="Max" value="">
+        <span class="filter-range-sep">mi</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Weight</div>
+      <div class="filter-range">
+        <input class="filter-range-input" type="text" placeholder="Min" value="">
+        <span class="filter-range-sep">–</span>
+        <input class="filter-range-input" type="text" placeholder="Max" value="">
+        <span class="filter-range-sep">lbs</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Rate</div>
+      <div class="filter-range">
+        <input class="filter-range-input" type="text" placeholder="Min" value="$">
+        <span class="filter-range-sep">–</span>
+        <input class="filter-range-input" type="text" placeholder="Max" value="$">
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Load Options</div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="opt-full" checked><label for="opt-full" class="filter-label">Full loads</label></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="opt-partial"><label for="opt-partial" class="filter-label">Partial loads</label></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="opt-team"><label for="opt-team" class="filter-label">Team required</label></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="opt-hazmat"><label for="opt-hazmat" class="filter-label">Hazmat</label></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Company</div>
+      <input class="filter-input" type="text" placeholder="Search company name...">
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="cs-95"><label for="cs-95" class="filter-label">Credit score 95+</label></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="cs-90"><label for="cs-90" class="filter-label">Credit score 90+</label></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Posted Age</div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="age-1h"><label for="age-1h" class="filter-label">Under 1 hour</label><span class="filter-count">74</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="age-4h"><label for="age-4h" class="filter-label">Under 4 hours</label><span class="filter-count">231</span></div>
+      <div class="filter-row"><input class="filter-checkbox" type="checkbox" id="age-12h" checked><label for="age-12h" class="filter-label">Under 12 hours</label><span class="filter-count">847</span></div>
+    </div>
+  </aside>
+
+  <!-- Results -->
+  <div class="results-area">
+    <div class="results-toolbar">
+      <div class="results-count"><span id="result-count">—</span> loads found</div>
+      <div class="toolbar-spacer"></div>
+      <span class="sort-label">Sort by:</span>
+      <select class="sort-select">
+        <option>Age (Newest)</option>
+        <option>Rate (High–Low)</option>
+        <option>Rate/Mile (High–Low)</option>
+        <option>Distance</option>
+      </select>
+      <button class="btn-save">Save Search</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" style="accent-color:#005eb8"></th>
+            <th>Origin → Destination <span class="sort-icon">↕</span></th>
+            <th>Equip</th>
+            <th>Total Rate <span class="sort-icon">↕</span></th>
+            <th>Rate/Mi <span class="sort-icon">↕</span></th>
+            <th style="text-align:right">Miles <span class="sort-icon">↕</span></th>
+            <th style="text-align:right">Weight <span class="sort-icon">↕</span></th>
+            <th>Age <span class="sort-icon">↕</span></th>
+            <th>Company</th>
+          </tr>
+        </thead>
+        <tbody id="load-tbody">
+          <tr class="loading-row">
+            <td colspan="9"><span class="loading-spinner"></span> Loading loads…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="statusbar">
+      <span><span class="statusbar-dot"></span>Connected · Last updated just now</span>
+      <span>Page 1 of 34</span>
+      <span style="margin-left:auto; color:#aaa">DAT One v4.18.2 · Test Environment</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── Fetch loads and render ─────────────────────────────────────── */
+  async function fetchLoads() {
+    // Extension intercepts this fetch() call and reads the response payload
+    const res = await fetch('../_data/dat-loads.json');
+    const data = await res.json();
+    return data;
+  }
+
+  function equipTag(type) {
+    const cls = { 'Reefer': 'equip-reefer', 'Flatbed': 'equip-flatbed', 'Step Deck': 'equip-stepdeck' }[type] || '';
+    return `<span class="equip-tag ${cls}">${type}</span>`;
+  }
+
+  function creditClass(score) {
+    if (score >= 95) return 'credit-high';
+    if (score >= 88) return 'credit-med';
+    return 'credit-low';
+  }
+
+  function ageClass(ageStr) {
+    if (ageStr.includes('min')) return 'age-fresh';
+    const hrs = parseFloat(ageStr);
+    return hrs <= 3 ? 'age-recent' : 'age-old';
+  }
+
+  function formatPickup(date, window) {
+    const d = new Date(date + 'T12:00:00');
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${label} · ${window}`;
+  }
+
+  function renderLoads(loads) {
+    const tbody = document.getElementById('load-tbody');
+    document.getElementById('result-count').textContent = '847';
+
+    tbody.innerHTML = loads.map((load, i) => {
+      const teamBadge = load.shipment.teamRequired ? '<span class="badge-team">Team</span>' : '';
+      return `
+        <tr data-id="${load.id}" onclick="selectRow(this)">
+          <td><input type="checkbox" style="accent-color:#005eb8" onclick="event.stopPropagation()"></td>
+          <td class="cell-route">
+            <div>
+              <span class="route-origin">${load.origin.city}, ${load.origin.state}</span>
+              <span class="route-arrow">→</span>
+              <span class="route-dest">${load.destination.city}, ${load.destination.state}</span>
+              ${teamBadge}
+            </div>
+            <div class="route-dates">${formatPickup(load.trip.pickupDate, load.trip.pickupWindow)}</div>
+          </td>
+          <td>${equipTag(load.equipment.type)} ${load.equipment.length}'</td>
+          <td class="cell-rate">
+            <div class="rate-total">$${load.rate.total.toLocaleString()}</div>
+            <div class="rate-permile">${load.rate.type}</div>
+          </td>
+          <td><strong>$${load.rate.perMile.toFixed(2)}</strong></td>
+          <td class="cell-dist">${load.trip.distance.toLocaleString()}</td>
+          <td class="cell-weight">${(load.shipment.weight / 1000).toFixed(0)}k lbs</td>
+          <td class="cell-age"><span class="${ageClass(load.posting.age)}">${load.posting.age}</span></td>
+          <td class="cell-broker">
+            <div class="broker-name">${load.broker.name}</div>
+            <div class="broker-meta">
+              <span class="credit-score ${creditClass(load.broker.creditScore)}">${load.broker.creditScore}</span>
+              MC ${load.broker.mc} · Net ${load.broker.daysToPayAvg}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function selectRow(row) {
+    document.querySelectorAll('tbody tr.selected').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+  }
+
+  fetchLoads()
+    .then(data => renderLoads(data.data.loads))
+    .catch(err => {
+      document.getElementById('load-tbody').innerHTML =
+        `<tr class="loading-row"><td colspan="9" style="color:#c00">Failed to load data: ${err.message}</td></tr>`;
+    });
+</script>
+</body>
+</html>

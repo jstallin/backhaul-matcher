@@ -1,0 +1,209 @@
+{
+  "status": "success",
+  "data": {
+    "searchId": "srch_a7f3c2b19d",
+    "totalCount": 847,
+    "page": 1,
+    "pageSize": 25,
+    "loads": [
+      {
+        "id": "DAT-8842391",
+        "origin": { "city": "Memphis", "state": "TN", "zip": "38101", "lat": 35.1495, "lng": -90.0490 },
+        "destination": { "city": "Charlotte", "state": "NC", "zip": "28201", "lat": 35.2271, "lng": -80.8431 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 38500, "commodity": "General Freight", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1420, "perMile": 2.29, "type": "Flat" },
+        "trip": { "distance": 621, "pickupDate": "2026-05-12", "pickupWindow": "08:00-17:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "Echo Global Logistics", "mc": "695390", "daysToPayAvg": 28, "creditScore": 97 },
+        "posting": { "age": "23 min", "posted": "2026-05-11T09:41:00Z" }
+      },
+      {
+        "id": "DAT-8839204",
+        "origin": { "city": "Dallas", "state": "TX", "zip": "75201", "lat": 32.7767, "lng": -96.7970 },
+        "destination": { "city": "Atlanta", "state": "GA", "zip": "30301", "lat": 33.7490, "lng": -84.3880 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 42000, "commodity": "Consumer Goods", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2850, "perMile": 2.14, "type": "Flat" },
+        "trip": { "distance": 1331, "pickupDate": "2026-05-12", "pickupWindow": "06:00-14:00", "deliveryDate": "2026-05-14" },
+        "broker": { "name": "Coyote Logistics", "mc": "965442", "daysToPayAvg": 30, "creditScore": 97 },
+        "posting": { "age": "41 min", "posted": "2026-05-11T09:23:00Z" }
+      },
+      {
+        "id": "DAT-8836518",
+        "origin": { "city": "Nashville", "state": "TN", "zip": "37201", "lat": 36.1627, "lng": -86.7816 },
+        "destination": { "city": "Philadelphia", "state": "PA", "zip": "19101", "lat": 39.9526, "lng": -75.1652 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 36000, "commodity": "Medical Supplies", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1760, "perMile": 2.12, "type": "Flat" },
+        "trip": { "distance": 830, "pickupDate": "2026-05-12", "pickupWindow": "07:00-15:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "TQL", "mc": "419478", "daysToPayAvg": 26, "creditScore": 95 },
+        "posting": { "age": "1h 12m", "posted": "2026-05-11T08:52:00Z" }
+      },
+      {
+        "id": "DAT-8834091",
+        "origin": { "city": "Houston", "state": "TX", "zip": "77001", "lat": 29.7604, "lng": -95.3698 },
+        "destination": { "city": "Nashville", "state": "TN", "zip": "37201", "lat": 36.1627, "lng": -86.7816 },
+        "equipment": { "type": "Reefer", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 44000, "commodity": "Fresh Produce", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2240, "perMile": 2.55, "type": "Flat" },
+        "trip": { "distance": 878, "pickupDate": "2026-05-12", "pickupWindow": "05:00-10:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "C.H. Robinson", "mc": "147521", "daysToPayAvg": 24, "creditScore": 99 },
+        "posting": { "age": "1h 45m", "posted": "2026-05-11T08:19:00Z" }
+      },
+      {
+        "id": "DAT-8831774",
+        "origin": { "city": "Chicago", "state": "IL", "zip": "60601", "lat": 41.8781, "lng": -87.6298 },
+        "destination": { "city": "Atlanta", "state": "GA", "zip": "30301", "lat": 33.7490, "lng": -84.3880 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 39500, "commodity": "Auto Parts", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1980, "perMile": 2.38, "type": "Flat" },
+        "trip": { "distance": 832, "pickupDate": "2026-05-12", "pickupWindow": "08:00-16:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "MoLo Solutions", "mc": "894094", "daysToPayAvg": 29, "creditScore": 93 },
+        "posting": { "age": "2h 03m", "posted": "2026-05-11T08:01:00Z" }
+      },
+      {
+        "id": "DAT-8829340",
+        "origin": { "city": "Columbus", "state": "OH", "zip": "43215", "lat": 39.9612, "lng": -82.9988 },
+        "destination": { "city": "Dallas", "state": "TX", "zip": "75201", "lat": 32.7767, "lng": -96.7970 },
+        "equipment": { "type": "Flatbed", "length": 48, "fullOrPartial": "Full" },
+        "shipment": { "weight": 46500, "commodity": "Steel Coils", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2650, "perMile": 2.27, "type": "Flat" },
+        "trip": { "distance": 1168, "pickupDate": "2026-05-12", "pickupWindow": "07:00-15:00", "deliveryDate": "2026-05-14" },
+        "broker": { "name": "Worldwide Express", "mc": "757867", "daysToPayAvg": 33, "creditScore": 91 },
+        "posting": { "age": "2h 28m", "posted": "2026-05-11T07:36:00Z" }
+      },
+      {
+        "id": "DAT-8827016",
+        "origin": { "city": "Louisville", "state": "KY", "zip": "40201", "lat": 38.2527, "lng": -85.7585 },
+        "destination": { "city": "Jacksonville", "state": "FL", "zip": "32099", "lat": 30.3322, "lng": -81.6557 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 37000, "commodity": "Retail Merchandise", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1640, "perMile": 2.28, "type": "Flat" },
+        "trip": { "distance": 719, "pickupDate": "2026-05-12", "pickupWindow": "09:00-17:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "Nolan Transportation", "mc": "477766", "daysToPayAvg": 32, "creditScore": 88 },
+        "posting": { "age": "3h 15m", "posted": "2026-05-11T06:49:00Z" }
+      },
+      {
+        "id": "DAT-8824882",
+        "origin": { "city": "Kansas City", "state": "MO", "zip": "64101", "lat": 39.0997, "lng": -94.5786 },
+        "destination": { "city": "Charlotte", "state": "NC", "zip": "28201", "lat": 35.2271, "lng": -80.8431 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 40000, "commodity": "Electronics", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2180, "perMile": 2.10, "type": "Flat" },
+        "trip": { "distance": 1038, "pickupDate": "2026-05-12", "pickupWindow": "06:00-14:00", "deliveryDate": "2026-05-14" },
+        "broker": { "name": "Surge Transportation", "mc": "831294", "daysToPayAvg": 35, "creditScore": 89 },
+        "posting": { "age": "3h 41m", "posted": "2026-05-11T06:23:00Z" }
+      },
+      {
+        "id": "DAT-8822541",
+        "origin": { "city": "Birmingham", "state": "AL", "zip": "35201", "lat": 33.5186, "lng": -86.8104 },
+        "destination": { "city": "Memphis", "state": "TN", "zip": "38101", "lat": 35.1495, "lng": -90.0490 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 33000, "commodity": "General Freight", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 680, "perMile": 2.86, "type": "Flat" },
+        "trip": { "distance": 238, "pickupDate": "2026-05-12", "pickupWindow": "10:00-18:00", "deliveryDate": "2026-05-12" },
+        "broker": { "name": "Landstar", "mc": "319402", "daysToPayAvg": 21, "creditScore": 99 },
+        "posting": { "age": "4h 02m", "posted": "2026-05-11T06:02:00Z" }
+      },
+      {
+        "id": "DAT-8820317",
+        "origin": { "city": "Indianapolis", "state": "IN", "zip": "46201", "lat": 39.7684, "lng": -86.1581 },
+        "destination": { "city": "Houston", "state": "TX", "zip": "77001", "lat": 29.7604, "lng": -95.3698 },
+        "equipment": { "type": "Reefer", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 43500, "commodity": "Pharmaceuticals", "hazmat": false, "teamRequired": true },
+        "rate": { "total": 2720, "perMile": 2.34, "type": "Flat" },
+        "trip": { "distance": 1163, "pickupDate": "2026-05-12", "pickupWindow": "06:00-12:00", "deliveryDate": "2026-05-14" },
+        "broker": { "name": "Echo Global Logistics", "mc": "695390", "daysToPayAvg": 28, "creditScore": 97 },
+        "posting": { "age": "4h 30m", "posted": "2026-05-11T05:34:00Z" }
+      },
+      {
+        "id": "DAT-8818104",
+        "origin": { "city": "Atlanta", "state": "GA", "zip": "30301", "lat": 33.7490, "lng": -84.3880 },
+        "destination": { "city": "Kansas City", "state": "MO", "zip": "64101", "lat": 39.0997, "lng": -94.5786 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 35500, "commodity": "Paper Products", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1960, "perMile": 2.20, "type": "Flat" },
+        "trip": { "distance": 889, "pickupDate": "2026-05-12", "pickupWindow": "08:00-16:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "Ryan Transportation", "mc": "312771", "daysToPayAvg": 32, "creditScore": 86 },
+        "posting": { "age": "5h 11m", "posted": "2026-05-11T04:53:00Z" }
+      },
+      {
+        "id": "DAT-8815983",
+        "origin": { "city": "Greensboro", "state": "NC", "zip": "27401", "lat": 36.0726, "lng": -79.7920 },
+        "destination": { "city": "Dallas", "state": "TX", "zip": "75201", "lat": 32.7767, "lng": -96.7970 },
+        "equipment": { "type": "Flatbed", "length": 48, "fullOrPartial": "Full" },
+        "shipment": { "weight": 47000, "commodity": "Lumber", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2890, "perMile": 2.18, "type": "Flat" },
+        "trip": { "distance": 1326, "pickupDate": "2026-05-13", "pickupWindow": "07:00-15:00", "deliveryDate": "2026-05-15" },
+        "broker": { "name": "Coyote Logistics", "mc": "965442", "daysToPayAvg": 30, "creditScore": 97 },
+        "posting": { "age": "5h 38m", "posted": "2026-05-11T04:26:00Z" }
+      },
+      {
+        "id": "DAT-8813761",
+        "origin": { "city": "Jacksonville", "state": "FL", "zip": "32099", "lat": 30.3322, "lng": -81.6557 },
+        "destination": { "city": "Nashville", "state": "TN", "zip": "37201", "lat": 36.1627, "lng": -86.7816 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 38000, "commodity": "Food & Beverage", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1490, "perMile": 2.15, "type": "Flat" },
+        "trip": { "distance": 693, "pickupDate": "2026-05-12", "pickupWindow": "09:00-17:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "TQL", "mc": "419478", "daysToPayAvg": 26, "creditScore": 95 },
+        "posting": { "age": "6h 04m", "posted": "2026-05-11T04:00:00Z" }
+      },
+      {
+        "id": "DAT-8811549",
+        "origin": { "city": "Philadelphia", "state": "PA", "zip": "19101", "lat": 39.9526, "lng": -75.1652 },
+        "destination": { "city": "Atlanta", "state": "GA", "zip": "30301", "lat": 33.7490, "lng": -84.3880 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 40500, "commodity": "Apparel", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1860, "perMile": 2.11, "type": "Flat" },
+        "trip": { "distance": 881, "pickupDate": "2026-05-12", "pickupWindow": "08:00-16:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "MoLo Solutions", "mc": "894094", "daysToPayAvg": 29, "creditScore": 93 },
+        "posting": { "age": "6h 52m", "posted": "2026-05-11T03:12:00Z" }
+      },
+      {
+        "id": "DAT-8809328",
+        "origin": { "city": "Memphis", "state": "TN", "zip": "38101", "lat": 35.1495, "lng": -90.0490 },
+        "destination": { "city": "Houston", "state": "TX", "zip": "77001", "lat": 29.7604, "lng": -95.3698 },
+        "equipment": { "type": "Reefer", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 42000, "commodity": "Frozen Foods", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1380, "perMile": 2.30, "type": "Flat" },
+        "trip": { "distance": 600, "pickupDate": "2026-05-12", "pickupWindow": "05:00-11:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "C.H. Robinson", "mc": "147521", "daysToPayAvg": 24, "creditScore": 99 },
+        "posting": { "age": "7h 19m", "posted": "2026-05-11T02:45:00Z" }
+      },
+      {
+        "id": "DAT-8807106",
+        "origin": { "city": "Nashville", "state": "TN", "zip": "37201", "lat": 36.1627, "lng": -86.7816 },
+        "destination": { "city": "Columbus", "state": "OH", "zip": "43215", "lat": 39.9612, "lng": -82.9988 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 34000, "commodity": "Furniture", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 1120, "perMile": 2.31, "type": "Flat" },
+        "trip": { "distance": 485, "pickupDate": "2026-05-12", "pickupWindow": "08:00-16:00", "deliveryDate": "2026-05-13" },
+        "broker": { "name": "Landstar", "mc": "319402", "daysToPayAvg": 21, "creditScore": 99 },
+        "posting": { "age": "7h 45m", "posted": "2026-05-11T02:19:00Z" }
+      },
+      {
+        "id": "DAT-8804884",
+        "origin": { "city": "Charlotte", "state": "NC", "zip": "28201", "lat": 35.2271, "lng": -80.8431 },
+        "destination": { "city": "Chicago", "state": "IL", "zip": "60601", "lat": 41.8781, "lng": -87.6298 },
+        "equipment": { "type": "Van", "length": 53, "fullOrPartial": "Full" },
+        "shipment": { "weight": 39500, "commodity": "Building Materials", "hazmat": false, "teamRequired": false },
+        "rate": { "total": 2200, "perMile": 2.33, "type": "Flat" },
+        "trip": { "distance": 946, "pickupDate": "2026-05-13", "pickupWindow": "07:00-15:00", "deliveryDate": "2026-05-14" },
+        "broker": { "name": "Worldwide Express", "mc": "757867", "daysToPayAvg": 33, "creditScore": 91 },
+        "posting": { "age": "8h 03m", "posted": "2026-05-11T02:01:00Z" }
+      },
+      {
+        "id": "DAT-8802663",
+        "origin": { "city": "Dallas", "state": "TX", "zip": "75201", "lat": 32.7767, "lng": -96.7970 },
+        "destination": { "city": "Greensboro", "state": "NC", "zip": "27401", "lat": 36.0726, "lng": -79.7920 },
+        "equipment": { "type": "Step Deck", "length": 48, "fullOrPartial": "Full" },
+        "shipment": { "weight": 45000, "commodity": "Heavy Machinery", "hazmat": false, "teamRequired": true },
+        "rate": { "total": 2760, "perMile": 2.08, "type": "Flat" },
+        "trip": { "distance": 1326, "pickupDate": "2026-05-13", "pickupWindow": "06:00-14:00", "deliveryDate": "2026-05-15" },
+        "broker": { "name": "Surge Transportation", "mc": "831294", "daysToPayAvg": 35, "creditScore": 89 },
+        "posting": { "age": "8h 31m", "posted": "2026-05-11T01:33:00Z" }
+      }
+    ]
+  }
+}

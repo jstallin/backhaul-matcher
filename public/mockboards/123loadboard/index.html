@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<!-- HM Test Board: 123loadboard v1.0 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>123Loadboard | Available Loads</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      font-size: 13px;
+      background: #1a1f2e;
+      color: #d1d9e6;
+      min-height: 100vh;
+    }
+
+    /* ── Top nav ─────────────────────────────────────────────────── */
+    .topnav {
+      background: #111520;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 20px;
+      border-bottom: 2px solid #f97316;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo-mark {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    .logo-mark span:first-child { color: #f97316; }
+    .logo-mark span:last-child { color: #fff; }
+    .logo-sub { font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-top: -2px; }
+    .topnav-links { display: flex; gap: 2px; }
+    .topnav-link {
+      color: #8892a4;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 11px;
+      border-radius: 4px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .topnav-link:hover { background: rgba(255,255,255,0.06); color: #d1d9e6; }
+    .topnav-link.active { color: #f97316; font-weight: 700; }
+    .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .nav-badge {
+      background: #f97316;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .nav-user { font-size: 12px; color: #8892a4; }
+    .nav-avatar {
+      width: 30px; height: 30px;
+      background: #252d3f;
+      border: 1.5px solid #374155;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #d1d9e6;
+      cursor: pointer;
+    }
+
+    /* ── Search bar ──────────────────────────────────────────────── */
+    .searchbar {
+      background: #151923;
+      border-bottom: 1px solid #252d3f;
+      padding: 10px 16px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sb-field { display: flex; flex-direction: column; gap: 4px; }
+    .sb-label { font-size: 10px; font-weight: 700; color: #5a6378; text-transform: uppercase; letter-spacing: 0.07em; }
+    .sb-input {
+      border: 1px solid #2e3650;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: #d1d9e6;
+      background: #1e2538;
+      outline: none;
+      min-width: 150px;
+      transition: border-color 0.12s;
+    }
+    .sb-input:focus { border-color: #f97316; }
+    .sb-select {
+      border: 1px solid #2e3650;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 13px;
+      color: #d1d9e6;
+      background: #1e2538;
+      outline: none;
+    }
+    .sb-divider { width: 1px; height: 34px; background: #2e3650; }
+    .btn-search {
+      background: #f97316;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 7px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      height: 34px;
+      transition: background 0.12s;
+    }
+    .btn-search:hover { background: #ea6c10; }
+    .btn-reset {
+      background: none;
+      border: 1px solid #2e3650;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8892a4;
+      cursor: pointer;
+      height: 34px;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────────── */
+    .main-layout {
+      display: flex;
+      height: calc(100vh - 100px);
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .sidebar {
+      width: 200px;
+      min-width: 200px;
+      background: #151923;
+      border-right: 1px solid #252d3f;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .sb-section { border-bottom: 1px solid #252d3f; padding: 10px 12px; }
+    .sb-section:last-child { border-bottom: none; }
+    .sb-title {
+      font-size: 9px;
+      font-weight: 800;
+      color: #5a6378;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .sb-check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .sb-checkbox { width: 13px; height: 13px; accent-color: #f97316; cursor: pointer; }
+    .sb-check-label { font-size: 12px; color: #9aa3b5; cursor: pointer; }
+    .sb-check-count { margin-left: auto; font-size: 10px; color: #5a6378; background: #252d3f; padding: 1px 5px; border-radius: 8px; }
+    .sb-range { display: flex; gap: 5px; align-items: center; }
+    .sb-range-input {
+      flex: 1;
+      border: 1px solid #2e3650;
+      border-radius: 3px;
+      padding: 4px 7px;
+      font-size: 11px;
+      color: #d1d9e6;
+      background: #1e2538;
+      outline: none;
+    }
+    .sb-range-input:focus { border-color: #f97316; }
+    .sb-range-sep { color: #5a6378; font-size: 11px; }
+
+    /* ── Results table ───────────────────────────────────────────── */
+    .results-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .results-toolbar {
+      background: #151923;
+      border-bottom: 1px solid #252d3f;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .res-count { font-size: 13px; font-weight: 600; color: #d1d9e6; }
+    .res-count span { color: #f97316; }
+    .tb-spacer { flex: 1; }
+    .tb-btn {
+      background: #1e2538;
+      border: 1px solid #2e3650;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #8892a4;
+      cursor: pointer;
+    }
+    .tb-btn.active { border-color: #f97316; color: #f97316; background: rgba(249,115,22,0.08); }
+    .tb-sort-label { font-size: 11px; color: #5a6378; }
+    .tb-sort-select {
+      background: #1e2538;
+      border: 1px solid #2e3650;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #d1d9e6;
+      outline: none;
+    }
+
+    .table-wrap { flex: 1; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: #0f1320;
+      border-bottom: 1px solid #252d3f;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      color: #5a6378;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      cursor: pointer;
+    }
+    thead th:hover { background: #151923; color: #8892a4; }
+    tbody tr {
+      border-bottom: 1px solid #1e2538;
+      cursor: pointer;
+      transition: background 0.08s;
+    }
+    tbody tr:hover { background: #1e2538; }
+    tbody tr.selected { background: rgba(249,115,22,0.08); border-left: 3px solid #f97316; }
+    tbody td { padding: 9px 10px; vertical-align: middle; }
+
+    .cell-origin { font-weight: 700; color: #d1d9e6; white-space: nowrap; }
+    .cell-dest { font-weight: 700; color: #d1d9e6; white-space: nowrap; }
+    .route-arrow { color: #f97316; margin: 0 6px; }
+    .route-date { font-size: 10px; color: #5a6378; margin-top: 2px; }
+
+    .type-tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #252d3f;
+      color: #8892a4;
+      white-space: nowrap;
+    }
+    .type-reefer { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .type-flatbed { background: rgba(251,191,36,0.12); color: #fbbf24; }
+
+    .rate-val { font-size: 15px; font-weight: 800; color: #f1f5f9; }
+    .rate-pm { font-size: 10px; color: #5a6378; }
+
+    .cell-num { text-align: right; color: #9aa3b5; }
+
+    .broker-cell { }
+    .broker-nm { font-size: 12px; font-weight: 600; color: #d1d9e6; }
+    .broker-score-badge {
+      display: inline-block;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+    .bs-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .bs-yellow { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .bs-red { background: rgba(239,68,68,0.15); color: #f87171; }
+    .broker-pay-days { font-size: 10px; color: #5a6378; margin-left: 4px; }
+
+    .age-cell { white-space: nowrap; }
+    .age-new { color: #4ade80; font-weight: 700; }
+    .age-mid { color: #fbbf24; }
+    .age-stale { color: #5a6378; }
+
+    .hot-tag {
+      display: inline-block;
+      background: rgba(249,115,22,0.2);
+      color: #f97316;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      margin-left: 4px;
+      letter-spacing: 0.04em;
+    }
+    .hazmat-tag {
+      display: inline-block;
+      background: rgba(239,68,68,0.15);
+      color: #f87171;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+
+    /* ── Loading ─────────────────────────────────────────────────── */
+    .loading-row td { text-align: center; padding: 50px; color: #5a6378; }
+    .loading-spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid #252d3f;
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Status bar ──────────────────────────────────────────────── */
+    .statusbar {
+      background: #111520;
+      border-top: 1px solid #252d3f;
+      padding: 5px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 10px;
+      color: #5a6378;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<nav class="topnav">
+  <div>
+    <div class="logo-mark"><span>123</span><span>Loadboard</span></div>
+    <div class="logo-sub">Find Loads Fast</div>
+  </div>
+  <div class="topnav-links">
+    <a class="topnav-link active" href="#">Find Loads</a>
+    <a class="topnav-link" href="#">My Board</a>
+    <a class="topnav-link" href="#">Saved Searches</a>
+    <a class="topnav-link" href="#">Rates</a>
+    <a class="topnav-link" href="#">Fuel Map</a>
+    <a class="topnav-link" href="#">Factoring</a>
+  </div>
+  <div class="topnav-right">
+    <span class="nav-badge">Pro</span>
+    <span class="nav-user">Jason Stallings</span>
+    <div class="nav-avatar">JS</div>
+  </div>
+</nav>
+
+<!-- Search bar -->
+<div class="searchbar">
+  <div class="sb-field">
+    <div class="sb-label">Pickup City/State</div>
+    <input class="sb-input" type="text" placeholder="Any" value="">
+  </div>
+  <div class="sb-field">
+    <div class="sb-label">Radius</div>
+    <select class="sb-select" style="min-width:85px">
+      <option>50 mi</option>
+      <option selected>150 mi</option>
+      <option>Anywhere</option>
+    </select>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-field">
+    <div class="sb-label">Delivery City/State</div>
+    <input class="sb-input" type="text" placeholder="Any" value="">
+  </div>
+  <div class="sb-field">
+    <div class="sb-label">Radius</div>
+    <select class="sb-select" style="min-width:85px">
+      <option>50 mi</option>
+      <option selected>150 mi</option>
+      <option>Anywhere</option>
+    </select>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-field">
+    <div class="sb-label">Truck Type</div>
+    <select class="sb-select">
+      <option selected>All Types</option>
+      <option>Van</option>
+      <option>Reefer</option>
+      <option>Flatbed</option>
+    </select>
+  </div>
+  <div class="sb-field">
+    <div class="sb-label">Pickup Date</div>
+    <input class="sb-input" type="date" value="2026-05-12" style="min-width:130px">
+  </div>
+  <div class="sb-field">
+    <div class="sb-label">Min $/mi</div>
+    <input class="sb-input" type="text" placeholder="0.00" style="min-width:70px">
+  </div>
+  <button class="btn-search">Search</button>
+  <button class="btn-reset">Reset</button>
+</div>
+
+<!-- Main layout -->
+<div class="main-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Truck Type</div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="t-van" checked><label for="t-van" class="sb-check-label">Van</label><span class="sb-check-count">241</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="t-ref" checked><label for="t-ref" class="sb-check-label">Reefer</label><span class="sb-check-count">112</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="t-flat" checked><label for="t-flat" class="sb-check-label">Flatbed</label><span class="sb-check-count">170</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Miles</div>
+      <div class="sb-range">
+        <input class="sb-range-input" type="text" placeholder="Min">
+        <span class="sb-range-sep">–</span>
+        <input class="sb-range-input" type="text" placeholder="Max">
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Rate $/mi</div>
+      <div class="sb-range">
+        <input class="sb-range-input" type="text" placeholder="Min">
+        <span class="sb-range-sep">–</span>
+        <input class="sb-range-input" type="text" placeholder="Max">
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Weight (lbs)</div>
+      <div class="sb-range">
+        <input class="sb-range-input" type="text" placeholder="Min">
+        <span class="sb-range-sep">–</span>
+        <input class="sb-range-input" type="text" placeholder="Max">
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Broker Score</div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="bs-95"><label for="bs-95" class="sb-check-label">95–100</label><span class="sb-check-count">198</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="bs-85"><label for="bs-85" class="sb-check-label">85–94</label><span class="sb-check-count">212</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="bs-75"><label for="bs-75" class="sb-check-label">75–84</label><span class="sb-check-count">113</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Posted Age</div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="a-2h"><label for="a-2h" class="sb-check-label">Under 2 hrs</label><span class="sb-check-count">91</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="a-6h"><label for="a-6h" class="sb-check-label">Under 6 hrs</label><span class="sb-check-count">287</span></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="a-12h" checked><label for="a-12h" class="sb-check-label">Under 12 hrs</label><span class="sb-check-count">523</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Options</div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="o-hot"><label for="o-hot" class="sb-check-label">Hot loads only</label></div>
+      <div class="sb-check-row"><input class="sb-checkbox" type="checkbox" id="o-haz"><label for="o-haz" class="sb-check-label">Include hazmat</label></div>
+    </div>
+  </aside>
+
+  <!-- Results panel -->
+  <div class="results-panel">
+    <div class="results-toolbar">
+      <div class="res-count"><span id="result-count">—</span> loads available</div>
+      <div class="tb-spacer"></div>
+      <span class="tb-sort-label">Sort:</span>
+      <select class="tb-sort-select">
+        <option>Age (New First)</option>
+        <option>Rate/Mile (High)</option>
+        <option>Total Rate (High)</option>
+        <option>Miles</option>
+        <option>Broker Score</option>
+      </select>
+      <button class="tb-btn active">All</button>
+      <button class="tb-btn">Hot 🔥</button>
+      <button class="tb-btn">Saved</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Type</th>
+            <th>Total Rate</th>
+            <th>$/Mi</th>
+            <th style="text-align:right">Miles</th>
+            <th style="text-align:right">Wt (lbs)</th>
+            <th>Pickup</th>
+            <th>Broker</th>
+            <th>Score</th>
+            <th>Age</th>
+          </tr>
+        </thead>
+        <tbody id="load-tbody">
+          <tr class="loading-row">
+            <td colspan="12"><span class="loading-spinner"></span>Loading loads…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="statusbar">
+      <span><span class="status-dot"></span>Live · <span id="result-count-2">—</span> loads · Updated just now</span>
+      <span>|</span>
+      <span>Page 1 of 22</span>
+      <span style="margin-left:auto">123Loadboard v3.2.1 · Test Environment</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── Fetch loads ─────────────────────────────────────────────────── */
+  async function fetchLoads() {
+    // Extension intercepts this fetch(). Field names use snake_case (board-specific convention).
+    const res = await fetch('../_data/123lb-loads.json');
+    const json = await res.json();
+    return json;
+  }
+
+  function typTag(type) {
+    const cls = type === 'Reefer' ? 'type-reefer' : type === 'Flatbed' || type === 'Step Deck' ? 'type-flatbed' : '';
+    return `<span class="type-tag ${cls}">${type}</span>`;
+  }
+
+  function scoreClass(s) {
+    if (s >= 90) return 'bs-green';
+    if (s >= 80) return 'bs-yellow';
+    return 'bs-red';
+  }
+
+  function ageClass(a) {
+    if (a.includes('min')) return 'age-new';
+    const h = parseFloat(a);
+    return h <= 3 ? 'age-mid' : 'age-stale';
+  }
+
+  function fmtPickup(date, open, close) {
+    const d = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const o = open.replace(/^(\d{2})(\d{2})$/, '$1:$2');
+    const c = close.replace(/^(\d{2})(\d{2})$/, '$1:$2');
+    return `${d} ${o}–${c}`;
+  }
+
+  function renderLoads(loads) {
+    const tbody = document.getElementById('load-tbody');
+    document.getElementById('result-count').textContent = '523';
+    document.getElementById('result-count-2').textContent = '523';
+
+    tbody.innerHTML = loads.map(load => {
+      const hotTag = load.hot_load ? '<span class="hot-tag">Hot</span>' : '';
+      const hazTag = load.hazmat_flag ? '<span class="hazmat-tag">HazMat</span>' : '';
+      return `
+        <tr data-id="${load.load_id}" onclick="selectRow(this)">
+          <td><input type="checkbox" style="accent-color:#f97316" onclick="event.stopPropagation()"></td>
+          <td>
+            <div class="cell-origin">${load.pickup_city}, ${load.pickup_state}${hotTag}</div>
+          </td>
+          <td>
+            <div class="cell-dest">${load.delivery_city}, ${load.delivery_state}${hazTag}</div>
+          </td>
+          <td>${typTag(load.truck_type)} ${load.truck_length}'</td>
+          <td>
+            <div class="rate-val">$${load.rate_total.toLocaleString()}</div>
+            <div class="rate-pm">${load.rate_type === 'F' ? 'Flat' : 'Per Mile'}</div>
+          </td>
+          <td><strong style="color:#d1d9e6">$${load.rate_per_mile.toFixed(2)}</strong></td>
+          <td class="cell-num">${load.miles.toLocaleString()}</td>
+          <td class="cell-num">${load.weight_lbs.toLocaleString()}</td>
+          <td style="font-size:11px; color:#8892a4; white-space:nowrap">${fmtPickup(load.pickup_date, load.pickup_open, load.pickup_close)}</td>
+          <td class="broker-cell">
+            <div class="broker-nm">${load.company_name}</div>
+            <span style="font-size:10px; color:#5a6378">MC ${load.company_mc} · Net ${load.avg_pay_days}</span>
+          </td>
+          <td>
+            <span class="broker-score-badge ${scoreClass(load.credit_score)}">${load.credit_score}</span>
+          </td>
+          <td class="age-cell"><span class="${ageClass(load.age_display)}">${load.age_display}</span></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function selectRow(row) {
+    document.querySelectorAll('tbody tr.selected').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+  }
+
+  fetchLoads()
+    .then(data => renderLoads(data.result.loads))
+    .catch(err => {
+      document.getElementById('load-tbody').innerHTML =
+        `<tr class="loading-row"><td colspan="12" style="color:#f87171">Error: ${err.message}</td></tr>`;
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haul Monitor · Load Board Test Environment</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .header { text-align: center; margin-bottom: 48px; }
+    .hm-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+    .hm-icon-wrap {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(0,139,0,0.1); border-radius: 10px; padding: 8px;
+    }
+    .hm-icon { font-size: 28px; }
+    .hm-wordmark { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .hm-wordmark .green { color: #008b00; }
+    .hm-wordmark .dark { color: #0f172a; }
+    .header-tag {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+    .subtitle { font-size: 15px; color: #64748b; max-width: 500px; line-height: 1.6; }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      width: 100%;
+      margin-bottom: 40px;
+    }
+
+    .board-card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+      display: block;
+    }
+    .board-card:hover {
+      border-color: #008b00;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+
+    .board-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .board-logo-dat {
+      background: #005eb8; color: #fff;
+      font-size: 15px; font-weight: 900;
+      padding: 6px 10px; border-radius: 6px;
+      letter-spacing: -0.5px;
+    }
+    .board-logo-ts {
+      background: #003087; color: #fff;
+      font-size: 13px; font-weight: 800;
+      padding: 6px 10px; border-radius: 6px;
+    }
+    .board-logo-123 {
+      background: #111520; border: 2px solid #f97316;
+      color: #f97316; font-size: 12px; font-weight: 900;
+      padding: 5px 10px; border-radius: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .board-name { font-size: 16px; font-weight: 700; color: #0f172a; }
+    .board-style { font-size: 11px; color: #94a3b8; font-weight: 500; }
+
+    .board-desc { font-size: 13px; color: #64748b; line-height: 1.55; margin-bottom: 16px; }
+
+    .board-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+    .meta-tag {
+      background: #f1f5f9;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+    }
+    .meta-tag.green { background: #dcfce7; color: #166534; }
+
+    .board-loads { font-size: 12px; color: #94a3b8; margin-top: 14px; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+    .board-loads strong { color: #0f172a; }
+
+    .footer { text-align: center; font-size: 12px; color: #94a3b8; max-width: 600px; line-height: 1.7; }
+    .footer a { color: #008b00; text-decoration: none; font-weight: 600; }
+    .footer a:hover { text-decoration: underline; }
+    .footer-divider { margin: 0 8px; }
+
+    .info-box {
+      background: #f8faff;
+      border: 1.5px solid #dbeafe;
+      border-radius: 10px;
+      padding: 16px 20px;
+      max-width: 700px;
+      width: 100%;
+      margin-bottom: 32px;
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .info-box strong { color: #1d4ed8; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hm-logo">
+    <div class="hm-icon-wrap"><span class="hm-icon">🚛</span></div>
+    <div class="hm-wordmark"><span class="green">Haul</span><span class="dark"> Monitor</span></div>
+  </div>
+  <div class="header-tag">Extension Test Environment</div>
+  <h1>Load Board Mockups</h1>
+  <p class="subtitle">Simulated load boards for extension development and customer demos. Each board makes real <code>fetch()</code> calls with board-specific payload schemas.</p>
+</div>
+
+<div class="info-box">
+  <strong>For extension development:</strong> Each page fires a <code>fetch()</code> on load returning structured JSON. DAT uses a REST envelope, Truckstop uses a GraphQL <code>edges/nodes</code> structure, and 123Loadboard uses a snake_case REST response — three distinct schemas to validate the board adapter layer.
+</div>
+
+<div class="board-grid">
+
+  <a class="board-card" href="dat/">
+    <div class="board-header">
+      <div class="board-logo-dat">dat</div>
+      <div>
+        <div class="board-name">DAT One</div>
+        <div class="board-style">Table layout · REST JSON</div>
+      </div>
+    </div>
+    <div class="board-desc">Column-based results table with sidebar filters. Closest to the real DAT One UI — sticky header, sortable columns, broker credit scores.</div>
+    <div class="board-meta">
+      <span class="meta-tag">REST envelope</span>
+      <span class="meta-tag">camelCase fields</span>
+      <span class="meta-tag green">18 loads</span>
+    </div>
+    <div class="board-loads"><strong>847</strong> simulated results · Southeast &amp; national lanes</div>
+  </a>
+
+  <a class="board-card" href="truckstop/">
+    <div class="board-header">
+      <div class="board-logo-ts">Truckstop</div>
+      <div>
+        <div class="board-name">Truckstop.com</div>
+        <div class="board-style">Card layout · GraphQL edges/nodes</div>
+      </div>
+    </div>
+    <div class="board-desc">Modern card-based load list. GraphQL-style response with <code>edges[]</code> and <code>node</code> objects — validates the GraphQL operation intercept pattern.</div>
+    <div class="board-meta">
+      <span class="meta-tag">GraphQL shape</span>
+      <span class="meta-tag">SCREAMING_SNAKE equipment</span>
+      <span class="meta-tag green">18 loads</span>
+    </div>
+    <div class="board-loads"><strong>1,243</strong> simulated results · Overlapping lanes, different rates</div>
+  </a>
+
+  <a class="board-card" href="123loadboard/">
+    <div class="board-header">
+      <div class="board-logo-123">123LB</div>
+      <div>
+        <div class="board-name">123Loadboard</div>
+        <div class="board-style">Dark table · REST snake_case</div>
+      </div>
+    </div>
+    <div class="board-desc">Dark-themed utilitarian table. Snake_case field names, <code>hot_load</code> and <code>hazmat_flag</code> integer booleans — validates normalizer handles format variance.</div>
+    <div class="board-meta">
+      <span class="meta-tag">snake_case fields</span>
+      <span class="meta-tag">int booleans</span>
+      <span class="meta-tag green">18 loads</span>
+    </div>
+    <div class="board-loads"><strong>523</strong> simulated results · Includes hot load &amp; hazmat flags</div>
+  </a>
+
+</div>
+
+<div class="footer">
+  Each board fetches from <code>/mockboards/_data/</code> — static JSON served by Vercel.<br>
+  To add loads, edit the corresponding <code>_data/*.json</code> file and redeploy.
+  <br><br>
+  <a href="/">← Back to Haul Monitor</a>
+  <span class="footer-divider">·</span>
+  <span>Test Environment v1.0</span>
+</div>
+
+</body>
+</html>
