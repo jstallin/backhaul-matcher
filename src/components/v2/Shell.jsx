@@ -281,11 +281,33 @@ function MobileHeader({ onNavigate }) {
       background: '#ffffff',
       borderBottom: `1px solid ${t.colors.border.default}`,
     }}>
-      <img
-        src="/haul-monitor-full.png"
-        alt="Haul Monitor"
-        style={{ height: '28px', width: 'auto', objectFit: 'contain' }}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '6px',
+          background: 'rgba(0,139,0,0.08)',
+          borderRadius: t.radius.lg,
+          flexShrink: 0,
+        }}>
+          <img
+            src="/haul-monitor-cropped.png"
+            alt="Haul Monitor"
+            style={{ height: '36px', width: 'auto', objectFit: 'contain', display: 'block' }}
+          />
+        </div>
+        <div style={{
+          fontSize: '18px',
+          fontWeight: 800,
+          letterSpacing: '-0.01em',
+          lineHeight: 1,
+          fontFamily: t.font.family,
+        }}>
+          <span style={{ color: '#008b00' }}>Haul</span>
+          <span style={{ color: '#0f172a' }}> Monitor</span>
+        </div>
+      </div>
       <AvatarMenu onNavigate={onNavigate} inline />
     </div>
   );
