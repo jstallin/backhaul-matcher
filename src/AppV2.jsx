@@ -11,6 +11,7 @@ import { LoadsView } from './components/v2/LoadsView';
 import { ReportsView } from './components/v2/ReportsView';
 import { EstimatesView } from './components/v2/EstimatesView';
 import { SettingsView } from './components/v2/SettingsView';
+import { AdminDashboard } from './components/AdminDashboard';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { BuyCreditsModal } from './components/BuyCreditsModal';
 import { tokens } from './styles/tokens.v2';
@@ -500,8 +501,9 @@ function renderView(currentView, onNavigate) {
     case 'fleets':    return <FleetsView />;
     case 'reports':   return <ReportsView />;
     case 'estimates': return <EstimatesView />;
-    case 'settings':  return <SettingsView />;
-    default:          return <PlaceholderView icon={Search}   title="Coming Soon" description="This section is being built." phase="?" />;
+    case 'settings':        return <SettingsView />;
+    case 'admin-dashboard': return <AdminDashboard onMenuNavigate={onNavigate} onNavigateToSettings={() => onNavigate('settings')} />;
+    default:                return <PlaceholderView icon={Search} title="Coming Soon" description="This section is being built." phase="?" />;
   }
 }
 

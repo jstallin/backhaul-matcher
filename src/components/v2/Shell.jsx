@@ -126,6 +126,25 @@ function AvatarMenu({ onNavigate, inline = false }) {
                 }}>
                   {role}
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setOpen(false); onNavigate('admin-dashboard'); }}
+                    style={{
+                      marginTop: '6px',
+                      padding: '2px 8px',
+                      background: t.colors.accent.blueLight,
+                      border: `1px solid #bfdbfe`,
+                      borderRadius: t.radius.md,
+                      fontSize: t.font.size.xs,
+                      fontWeight: t.font.weight.semibold,
+                      color: t.colors.accent.blue,
+                      cursor: 'pointer',
+                      display: 'inline-block',
+                    }}
+                  >
+                    Admin Dashboard →
+                  </button>
+                )}
               </div>
             </div>
           </div>
