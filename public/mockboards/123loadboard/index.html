@@ -558,7 +558,7 @@
       const hotTag = load.hot_load ? '<span class="hot-tag">Hot</span>' : '';
       const hazTag = load.hazmat_flag ? '<span class="hazmat-tag">HazMat</span>' : '';
       return `
-        <tr data-id="${load.load_id}" onclick="selectRow(this)">
+        <tr data-load-id="123loadboard:${load.load_id}" onclick="selectRow(this)">
           <td><input type="checkbox" style="accent-color:#f97316" onclick="event.stopPropagation()"></td>
           <td>
             <div class="cell-origin">${load.pickup_city}, ${load.pickup_state}${hotTag}</div>

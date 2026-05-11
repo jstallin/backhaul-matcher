@@ -566,7 +566,7 @@
     tbody.innerHTML = loads.map((load, i) => {
       const teamBadge = load.shipment.teamRequired ? '<span class="badge-team">Team</span>' : '';
       return `
-        <tr data-id="${load.id}" onclick="selectRow(this)">
+        <tr data-load-id="dat:${load.id}" onclick="selectRow(this)">
           <td><input type="checkbox" style="accent-color:#005eb8" onclick="event.stopPropagation()"></td>
           <td class="cell-route">
             <div>

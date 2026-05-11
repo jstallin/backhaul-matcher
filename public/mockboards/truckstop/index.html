@@ -541,7 +541,7 @@
     container.innerHTML = edges.map(({ node: n }) => {
       const teamTag = n.teamLoad ? '<span class="tag-team">Team</span>' : '';
       return `
-        <div class="load-card" data-id="${n.id}" onclick="selectCard(this)">
+        <div class="load-card" data-load-id="truckstop:${n.id}" onclick="selectCard(this)">
           <div class="card-route">
             <div class="card-cities">
               ${n.originCity}, ${n.originState}
