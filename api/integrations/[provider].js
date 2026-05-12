@@ -403,24 +403,21 @@ async function handleTruckstop(req, res, supabase, user) {
   }
 
   if (req.method === 'POST') {
-    const { api_token, username, password } = req.body || {};
+    const { username, password } = req.body || {};
 
-    if (!api_token?.trim()) return res.status(400).json({ error: 'API token is required' });
     if (!username?.trim()) return res.status(400).json({ error: 'Username is required' });
     if (!password?.trim()) return res.status(400).json({ error: 'Password is required' });
 
-    const token = api_token.trim();
     const uname = username.trim();
 
     try {
       if (orgId && isOrgAdmin) {
-        // Org admin — save as org-level token
+        // Org admin — save as org-level credentials
         const { error: orgError } = await supabase
           .from('org_integrations')
           .upsert({
             org_id: orgId,
             provider: 'truckstop',
-            api_token: token,
             username: uname,
             password: password.trim(),
             connected_by: user.id
@@ -441,17 +438,16 @@ async function handleTruckstop(req, res, supabase, user) {
       } else if (orgId && !isOrgAdmin) {
         return res.status(403).json({ error: 'Only org admins can set the organization Truckstop token' });
       } else {
-        // No org — save as user-level token
+        // No org — save as user-level credentials
         const { error: userError } = await supabase
           .from('user_integrations')
           .upsert({
             user_id: user.id,
             provider: 'truckstop',
-            access_token: token,
             account_email: uname,
             is_connected: true,
             connected_at: new Date().toISOString(),
-            metadata: { auth_type: 'api_token', password: password.trim(), linked_at: new Date().toISOString() }
+            metadata: { username: uname, password: password.trim(), linked_at: new Date().toISOString() }
           }, { onConflict: 'user_id,provider', ignoreDuplicates: false });
 
         if (userError) {
@@ -500,41 +496,44 @@ async function handleTruckstop(req, res, supabase, user) {
 
   // ── GET loads ───────────────────────────────────────────────────────────────
   if (req.method === 'GET' && req.query.action === 'loads') {
-    // Retrieve stored credentials — org token takes priority over user token
-    let apiToken, username, password;
+    // HM partner API token comes from env — user credentials used for user-level auth
+    const partnerToken = process.env.TRUCKSTOP_PARTNER_TOKEN;
+    if (!partnerToken) {
+      return res.status(500).json({ error: 'Truckstop partner credentials not configured' });
+    }
+
+    let username, password;
 
     if (orgId) {
       const { data: orgRow } = await supabase
         .from('org_integrations')
-        .select('api_token, username, password')
+        .select('username, password')
         .eq('org_id', orgId)
         .eq('provider', 'truckstop')
         .single();
 
-      if (orgRow?.api_token) {
-        apiToken = orgRow.api_token;
+      if (orgRow?.username) {
         username = orgRow.username;
         password = orgRow.password;
       }
     }
 
-    if (!apiToken) {
+    if (!username) {
       const { data: userRow } = await supabase
         .from('user_integrations')
-        .select('access_token, account_email, metadata')
+        .select('account_email, metadata')
         .eq('user_id', user.id)
         .eq('provider', 'truckstop')
         .eq('is_connected', true)
         .single();
 
-      if (userRow?.access_token) {
-        apiToken = userRow.access_token;
+      if (userRow?.account_email) {
         username = userRow.account_email;
         password = userRow.metadata?.password;
       }
     }
 
-    if (!apiToken) {
+    if (!username) {
       return res.status(400).json({ error: 'Truckstop not connected', code: 'NOT_CONNECTED' });
     }
 
@@ -548,7 +547,7 @@ async function handleTruckstop(req, res, supabase, user) {
 
     try {
       const loads = await fetchTruckstopLoads({
-        apiToken, username, password,
+        apiToken: partnerToken, username, password,
         originCity: origin_city,
         originState: origin_state,
         destCity: dest_city,

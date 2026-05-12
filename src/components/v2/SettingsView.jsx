@@ -336,9 +336,13 @@ function IntegrationCard({ name, icon, statusUrl, connectUrl, disconnectUrl, con
     setSuccess('');
     setSubmitting(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(connectUrl, {
         method: connectMethod,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify(formValues),
       });
       if (!res.ok) {
