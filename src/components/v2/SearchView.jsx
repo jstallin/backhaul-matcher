@@ -1496,6 +1496,11 @@ export function SearchView() {
     if (user) loadData();
   }, [user]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'new') setMode('form');
+  }, []);
+
   const loadData = async () => {
     setLoading(true);
     try {
