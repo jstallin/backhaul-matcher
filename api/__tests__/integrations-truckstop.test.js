@@ -71,8 +71,8 @@ function makeRes() {
 }
 
 const MOCK_USER      = { id: 'user-123', email: 'jason@acme.com' };
-const CREDS          = { api_token: 'ts-api-key', username: 'chip', password: 'secret' };
-const ORG_TOKEN_ROW  = { api_token: 'ts-org-token', username: 'org-user', created_at: '2026-01-01' };
+const CREDS          = { username: 'chip', password: 'secret' };
+const ORG_TOKEN_ROW  = { username: 'org-user', created_at: '2026-01-01' };
 const USER_TOKEN_ROW = { is_connected: true, account_email: 'chip@ts.com', connected_at: '2026-01-01' };
 
 beforeEach(() => {
@@ -160,7 +160,11 @@ describe('POST /api/integrations/truckstop — save credentials', () => {
     expect(r._status).toBe(200);
     expect(r._body.is_org_token).toBe(true);
     expect(orgIntChain.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ org_id: 'org-1', provider: 'truckstop', api_token: 'ts-api-key', username: 'chip' }),
+      expect.objectContaining({ org_id: 'org-1', provider: 'truckstop', username: 'chip' }),
+      expect.anything()
+    );
+    expect(orgIntChain.upsert).toHaveBeenCalledWith(
+      expect.not.objectContaining({ api_token: expect.anything() }),
       expect.anything()
     );
   });
@@ -188,19 +192,13 @@ describe('POST /api/integrations/truckstop — save credentials', () => {
     expect(r._status).toBe(200);
     expect(r._body.is_org_token).toBe(false);
     expect(userIntChain.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: MOCK_USER.id, provider: 'truckstop', access_token: 'ts-api-key' }),
+      expect.objectContaining({ user_id: MOCK_USER.id, provider: 'truckstop', account_email: 'chip', is_connected: true }),
       expect.anything()
     );
-  });
-
-  it('returns 400 when api_token is missing', async () => {
-    mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
-      return q(null);
-    });
-    const r = makeRes();
-    await handler(tsReq('POST', { body: { username: 'chip', password: 'secret' } }), r);
-    expect(r._status).toBe(400);
+    expect(userIntChain.upsert).toHaveBeenCalledWith(
+      expect.not.objectContaining({ access_token: expect.anything() }),
+      expect.anything()
+    );
   });
 
   it('returns 400 when username is missing', async () => {
@@ -209,7 +207,7 @@ describe('POST /api/integrations/truckstop — save credentials', () => {
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: { api_token: 'tok', password: 'secret' } }), r);
+    await handler(tsReq('POST', { body: { password: 'secret' } }), r);
     expect(r._status).toBe(400);
   });
 
@@ -219,7 +217,7 @@ describe('POST /api/integrations/truckstop — save credentials', () => {
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: { api_token: 'tok', username: 'chip' } }), r);
+    await handler(tsReq('POST', { body: { username: 'chip' } }), r);
     expect(r._status).toBe(400);
   });
 });
