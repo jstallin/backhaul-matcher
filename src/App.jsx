@@ -167,6 +167,13 @@ function App() {
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
   const [supportChatOpen, setSupportChatOpen] = useState(false);
 
+  // Deep-link from extension: ?view=imported-loads
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view) setCurrentView(view);
+  }, []);
+
   // Load user's fleet data
   useEffect(() => {
     loadFleetData();
