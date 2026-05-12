@@ -23,6 +23,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { XMLParser } from 'fast-xml-parser';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -496,10 +497,9 @@ async function handleTruckstop(req, res, supabase, user) {
 
   // ── GET loads ───────────────────────────────────────────────────────────────
   if (req.method === 'GET' && req.query.action === 'loads') {
-    // HM partner API token comes from env — user credentials used for user-level auth
-    const partnerToken = process.env.TRUCKSTOP_PARTNER_TOKEN;
-    if (!partnerToken) {
-      return res.status(500).json({ error: 'Truckstop partner credentials not configured' });
+    const integrationId = process.env.TRUCKSTOP_INTEGRATION_ID;
+    if (!integrationId) {
+      return res.status(500).json({ error: 'Truckstop Integration ID not configured' });
     }
 
     let username, password;
@@ -547,14 +547,14 @@ async function handleTruckstop(req, res, supabase, user) {
 
     try {
       const loads = await fetchTruckstopLoads({
-        apiToken: partnerToken, username, password,
+        integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
         destCity: dest_city,
         destState: dest_state,
         equipmentType: equipment_type,
         pickupDate: pickup_date,
-        radiusMiles: parseInt(radius_miles, 10)
+        radiusMiles: parseInt(radius_miles, 10),
       });
 
       console.log(`✅ Truckstop: ${loads.length} loads returned`);
@@ -562,7 +562,7 @@ async function handleTruckstop(req, res, supabase, user) {
     } catch (err) {
       console.error('Truckstop loads fetch error:', err);
       if (err.code === 'UNAUTHORIZED') {
-        return res.status(401).json({ error: 'Truckstop credentials invalid or expired — please reconnect', code: 'TOKEN_EXPIRED' });
+        return res.status(401).json({ error: 'Truckstop credentials invalid — please reconnect', code: 'TOKEN_EXPIRED' });
       }
       return res.status(502).json({ error: 'Failed to fetch loads from Truckstop' });
     }
@@ -571,63 +571,103 @@ async function handleTruckstop(req, res, supabase, user) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-// ─── TRUCKSTOP LOAD FETCH + NORMALIZATION ─────────────────────────────────────
+// ─── TRUCKSTOP SOAP IMPLEMENTATION ────────────────────────────────────────────
 
-// TODO: verify base URL against Truckstop API docs
-const TS_BASE_URL = process.env.TRUCKSTOP_API_URL || 'https://api.integration.truckstop.com';
+// Set TRUCKSTOP_BASE_URL=https://webservices.truckstop.com in production Vercel env
+const TS_BASE_URL = process.env.TRUCKSTOP_BASE_URL || 'https://testws.truckstop.com';
+const TS_ENDPOINT = `${TS_BASE_URL}/v13/Searching/LoadSearch.svc`;
+const TS_SOAP_ACTION = 'http://webservices.truckstop.com/v12/ILoadSearch/GetLoadSearchResults';
 
-/**
- * Fetch loads from Truckstop API and return normalized load objects.
- *
- * All field names, endpoint paths, and request/response shapes below are
- * informed guesses based on REST load board API conventions.
- * TODO: verify every marked item against actual Truckstop API documentation.
- */
-async function fetchTruckstopLoads({
-  apiToken, username, password,
-  originCity, originState,
-  destCity, destState,
-  equipmentType, pickupDate,
-  radiusMiles = 150
-}) {
-  // TODO: verify auth mechanism — Truckstop may use Bearer token, x-api-key header,
-  // or OAuth 2.0 client credentials flow using username/password to obtain a session token.
-  // If OAuth, add a token-exchange step here before the load search call.
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiToken}`, // TODO: verify header name and format
-  };
+// App equipment type names → Truckstop codes
+const EQUIP_TO_TS = {
+  'Dry Van':      'V',
+  'Flatbed':      'F',
+  'Refrigerated': 'R',
+  'Step Deck':    'SD',
+  'Lowboy':       'LB',
+};
 
-  // TODO: verify search endpoint path and HTTP method
-  const searchBody = {
-    origin: {
-      city:   originCity  || '',
-      state:  originState || '',
-      radius: radiusMiles,          // TODO: verify radius units (miles assumed)
-    },
-    destination: {
-      city:  destCity  || '',
-      state: destState || '',
-      radius: radiusMiles,
-    },
-    // TODO: verify equipment type values — Truckstop may use codes like 'V', 'F', 'R'
-    // or full names like 'Van', 'Flatbed', 'Reefer'
-    equipmentTypes: equipmentType ? [mapTsEquipmentType(equipmentType)] : [],
-    ...(pickupDate && { pickupDate }),  // TODO: verify date field name and format (ISO 8601 assumed)
-    limit: 100,                         // TODO: verify pagination field name
-    fullLoadsOnly: true,                // TODO: verify field name and whether this param exists
-  };
+// Truckstop codes → app equipment type names
+const TS_TO_EQUIP = {
+  'V': 'Dry Van', 'VF': 'Dry Van', 'VB': 'Dry Van',
+  'F': 'Flatbed', 'FF': 'Flatbed',
+  'R': 'Refrigerated', 'RVF': 'Refrigerated', 'RV': 'Refrigerated',
+  'SD': 'Step Deck', 'SDF': 'Step Deck',
+  'LB': 'Lowboy',
+  'DD': 'Double Drop',
+  'TNK': 'Tanker',
+  'IM': 'Intermodal',
+};
 
-  const tsRes = await fetch(`${TS_BASE_URL}/v2/loadboard/loads/search`, { // TODO: verify path
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles }) {
+  const equip = equipmentType ? EQUIP_TO_TS[equipmentType] || equipmentType : '';
+  const pickupXml = pickupDate
+    ? `<web1:PickupDates><arr:dateTime>${pickupDate}</arr:dateTime></web1:PickupDates>`
+    : '';
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:v12="http://webservices.truckstop.com/v12"
+  xmlns:web="http://schemas.datacontract.org/2004/07/WebServices"
+  xmlns:web1="http://schemas.datacontract.org/2004/07/WebServices.Searching"
+  xmlns:arr="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <v12:GetLoadSearchResults>
+      <v12:searchRequest>
+        <web:IntegrationId>${integrationId}</web:IntegrationId>
+        <web:Password>${escapeXml(password)}</web:Password>
+        <web:UserName>${escapeXml(username)}</web:UserName>
+        <web1:Criteria>
+          ${destCity  ? `<web1:DestinationCity>${escapeXml(destCity)}</web1:DestinationCity>` : ''}
+          <web1:DestinationCountry>usa</web1:DestinationCountry>
+          <web1:DestinationRange>${radiusMiles}</web1:DestinationRange>
+          ${destState ? `<web1:DestinationState>${destState.toLowerCase()}</web1:DestinationState>` : ''}
+          ${equip     ? `<web1:EquipmentType>${equip}</web1:EquipmentType>` : ''}
+          <web1:LoadType>Full</web1:LoadType>
+          ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
+          <web1:OriginCountry>usa</web1:OriginCountry>
+          ${originState ? `<web1:OriginState>${originState.toLowerCase()}</web1:OriginState>` : ''}
+          <web1:PageNumber>1</web1:PageNumber>
+          <web1:PageSize>100</web1:PageSize>
+          ${pickupXml}
+          <web1:SortDescending>false</web1:SortDescending>
+        </web1:Criteria>
+      </v12:searchRequest>
+    </v12:GetLoadSearchResults>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+}
+
+function escapeXml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles });
+
+  const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
-    headers,
-    body: JSON.stringify(searchBody)
+    headers: {
+      'Content-Type': 'text/xml',
+      'Accept': 'text/xml',
+      'SOAPAction': TS_SOAP_ACTION,
+    },
+    body: envelope,
   });
 
+  const responseText = await tsRes.text();
+
   if (!tsRes.ok) {
-    const errText = await tsRes.text().catch(() => '');
-    console.error('Truckstop API error:', tsRes.status, errText);
-    if (tsRes.status === 401 || tsRes.status === 403) {
+    console.error('Truckstop SOAP error:', tsRes.status, responseText.slice(0, 500));
+    if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) {
       const err = new Error('Unauthorized');
       err.code = 'UNAUTHORIZED';
       throw err;
@@ -635,84 +675,88 @@ async function fetchTruckstopLoads({
     throw new Error(`Truckstop API returned ${tsRes.status}`);
   }
 
-  const tsData = await tsRes.json();
+  const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
+  const parsed = parser.parse(responseText);
 
-  // TODO: verify top-level response shape — may be { loads: [] }, { data: { items: [] } }, etc.
-  const rawLoads = tsData.loads || tsData.data?.loads || tsData.items || tsData.data || [];
+  const result = parsed?.Envelope?.Body?.GetLoadSearchResultsResponse?.GetLoadSearchResultsResult;
 
-  return Array.isArray(rawLoads) ? rawLoads.map(normalizeTsLoad).filter(Boolean) : [];
+  // Surface API-level errors (bad credentials, invalid integration ID, etc.)
+  const errors = result?.Errors;
+  if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
+    console.error('[Truckstop] API errors in response:', JSON.stringify(errors));
+    const err = new Error('Truckstop API returned errors');
+    err.code = 'UNAUTHORIZED';
+    throw err;
+  }
+
+  const rawLoads = toArray(result?.SearchResults?.LoadSearchItem);
+  console.log(`[Truckstop] Parsed ${rawLoads.length} load records from SOAP response`);
+  return rawLoads.map(normalizeTsLoad).filter(Boolean);
 }
 
-/**
- * Map app equipment type names to Truckstop API codes/values.
- * TODO: verify exact values against Truckstop API documentation.
- */
-function mapTsEquipmentType(appType) {
-  const map = {
-    'Dry Van':      'V',      // TODO: verify
-    'Flatbed':      'F',      // TODO: verify
-    'Refrigerated': 'R',      // TODO: verify
-    'Step Deck':    'SD',     // TODO: verify
-    'Lowboy':       'LB',     // TODO: verify
-  };
-  return map[appType] || appType;
+// Ensure a value is always an array (SOAP returns a single object when there's 1 result)
+function toArray(val) {
+  if (!val) return [];
+  return Array.isArray(val) ? val : [val];
 }
 
-/**
- * Normalize a Truckstop API load object to the app's canonical schema.
- * All field paths below are guesses — TODO: verify each against actual API response.
- */
+// Parse Truckstop date format "11/11/24" → "2024-11-11"
+function parseTsDate(str) {
+  if (!str) return null;
+  const parts = String(str).split('/');
+  if (parts.length !== 3) return str;
+  const [m, d, y] = parts;
+  const year = parseInt(y, 10) < 100 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
+  return `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
 function normalizeTsLoad(load) {
   if (!load) return null;
   try {
-    // TODO: verify origin/destination field structure
-    const origin = load.origin || load.pickup || {};
-    const dest   = load.destination || load.delivery || {};
+    const originCity  = load.OriginCity  ?? '';
+    const originState = load.OriginState ?? '';
+    if (!originCity && !originState) return null;
 
-    if (!origin.city || !origin.state) return null;
+    const equipCode = load.Equipment ?? '';
+    const payment   = parseFloat(String(load.Payment  ?? '0').replace(/[^0-9.]/g, '')) || 0;
+    const miles     = parseInt(load.Miles ?? 0, 10);
+    const rpm       = miles > 0 ? Math.round((payment / miles) * 100) / 100 : 0;
 
-    // TODO: verify rate field structure — may be { ratePerMile, totalRate } or flat fields
-    const totalRevenue    = load.rate?.total      ?? load.totalRate     ?? load.rate ?? 0;
-    const revenuePerMile  = load.rate?.perMile    ?? load.ratePerMile   ?? 0;
-
-    // TODO: verify equipment field path
-    const equipCode = load.equipment?.type ?? load.equipmentType ?? load.trailerType ?? '';
+    // Days2Pay comes as "----" when unknown
+    const days2PayRaw = String(load.Days2Pay ?? '');
+    const daysToPay   = /^\d+$/.test(days2PayRaw) ? parseInt(days2PayRaw, 10) : null;
 
     return {
-      load_id:          load.loadId      ?? load.id ?? load.load_id,
-      broker:           load.broker?.name ?? load.company ?? load.postedBy ?? 'Truckstop',
-      shipper:          '',
-      receiver:         '',
-      freight_type:     load.commodity   ?? load.freightDescription ?? 'General',
-      equipment_type:   mapTsEquipmentTypeToName(equipCode),
+      load_id:          String(load.ID),
+      broker:           load.CompanyName ?? 'Truckstop',
+      freight_type:     'General',
+      equipment_type:   TS_TO_EQUIP[equipCode] ?? equipCode,
       equipment_code:   equipCode,
-      pickup_city:      origin.city    ?? '',
-      pickup_state:     origin.state   ?? '',
-      pickup_lat:       origin.latitude  ?? origin.lat ?? null,   // TODO: verify field names
-      pickup_lng:       origin.longitude ?? origin.lng ?? null,
-      pickup_date:      load.pickupDate  ?? load.shipDate  ?? null,
-      delivery_city:    dest.city    ?? '',
-      delivery_state:   dest.state   ?? '',
-      delivery_lat:     dest.latitude  ?? dest.lat ?? null,
-      delivery_lng:     dest.longitude ?? dest.lng ?? null,
-      delivery_date:    load.deliveryDate ?? load.receiveDate ?? null,
-      distance_miles:   load.mileage  ?? load.distance ?? load.tripMiles ?? 0,
-      weight_lbs:       load.weight   ?? 0,
-      trailer_length:   load.length   ?? load.trailerLength ?? 53,
-      total_revenue:    totalRevenue,
-      revenue_per_mile: revenuePerMile,
+      pickup_city:      originCity,
+      pickup_state:     originState,
+      pickup_lat:       null,
+      pickup_lng:       null,
+      pickup_date:      parseTsDate(load.PickUpDate),
+      delivery_city:    load.DestinationCity  ?? '',
+      delivery_state:   load.DestinationState ?? '',
+      delivery_lat:     null,
+      delivery_lng:     null,
+      delivery_date:    null,
+      distance_miles:   miles,
+      weight_lbs:       parseInt(load.Weight ?? 0, 10),
+      trailer_length:   parseFloat(load.Length ?? 53),
+      total_revenue:    payment,
+      revenue_per_mile: rpm,
+      days_to_pay:      daysToPay,
+      phone:            load.PointOfContactPhone ?? null,
+      age_hours:        parseInt(load.Age ?? 0, 10),
       status:           'available',
-      posted_date:      load.postedDate ?? load.createdAt ?? new Date().toISOString(),
+      posted_date:      new Date().toISOString(),
     };
   } catch (err) {
     console.warn('Failed to normalize Truckstop load:', err);
     return null;
   }
-}
-
-function mapTsEquipmentTypeToName(code) {
-  const map = { 'V': 'Dry Van', 'F': 'Flatbed', 'R': 'Refrigerated', 'SD': 'Step Deck', 'LB': 'Lowboy' };
-  return map[code] || code;
 }
 
 // ─── DIRECT FREIGHT ───────────────────────────────────────────────────────────
