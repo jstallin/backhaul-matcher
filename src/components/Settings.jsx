@@ -45,7 +45,6 @@ export const Settings = ({ onBack }) => {
 
   // Truckstop Integration state
   const [showTsModal, setShowTsModal] = useState(false);
-  const [tsApiToken, setTsApiToken] = useState('');
   const [tsUsername, setTsUsername] = useState('');
   const [tsPassword, setTsPassword] = useState('');
   const [tsConnecting, setTsConnecting] = useState(false);
@@ -256,7 +255,6 @@ export const Settings = ({ onBack }) => {
     e.preventDefault();
     setTsError('');
 
-    if (!tsApiToken.trim()) { setTsError('API token is required'); return; }
     if (!tsUsername.trim()) { setTsError('Username is required'); return; }
     if (!tsPassword.trim()) { setTsError('Password is required'); return; }
 
@@ -275,7 +273,6 @@ export const Settings = ({ onBack }) => {
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          api_token: tsApiToken.trim(),
           username: tsUsername.trim(),
           password: tsPassword.trim()
         })
@@ -983,7 +980,7 @@ export const Settings = ({ onBack }) => {
                         {(!tsConnection.is_org_token || isOrgAdmin) && (
                           <>
                             <button
-                              onClick={() => { setTsApiToken(''); setTsPassword(''); setTsError(''); setShowTsModal(true); }}
+                              onClick={() => { setTsPassword(''); setTsError(''); setShowTsModal(true); }}
                               style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
                             >
                               Edit Credentials
@@ -1843,27 +1840,12 @@ export const Settings = ({ onBack }) => {
                   {tsConnection?.connected ? 'Edit Truckstop Credentials' : 'Connect to Truckstop'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
-                  Enter your Truckstop API token, username, and password
+                  Enter your Truckstop username and password
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleTsConnect} style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
-                  API Token
-                </label>
-                <input
-                  type="text"
-                  value={tsApiToken}
-                  onChange={(e) => setTsApiToken(e.target.value)}
-                  placeholder={tsConnection?.connected ? 'Enter new API token' : 'Paste your Truckstop API token'}
-                  disabled={tsConnecting}
-                  autoComplete="off"
-                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: 'monospace' }}
-                />
-              </div>
-
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
                   Username
@@ -1907,7 +1889,7 @@ export const Settings = ({ onBack }) => {
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   type="button"
-                  onClick={() => { setShowTsModal(false); setTsApiToken(''); setTsPassword(''); setTsError(''); }}
+                  onClick={() => { setShowTsModal(false); setTsPassword(''); setTsError(''); }}
                   disabled={tsConnecting}
                   style={{ flex: 1, padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.5 : 1 }}
                 >

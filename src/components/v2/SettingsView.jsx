@@ -441,32 +441,8 @@ function IntegrationsSection() {
         connectUrl="/api/integrations/truckstop"
         disconnectUrl="/api/integrations/truckstop"
         fields={[
-          { key: 'apiToken', label: 'API Token', type: 'password', placeholder: 'Your Truckstop API token' },
           { key: 'username', label: 'Username', placeholder: 'Truckstop username' },
           { key: 'password', label: 'Password', type: 'password', placeholder: 'Truckstop password' },
-        ]}
-      />
-
-      <IntegrationCard
-        name="Direct Freight"
-        icon="📦"
-        statusUrl="/api/integrations/directfreight?action=status"
-        connectUrl="/api/integrations/directfreight?action=auth"
-        disconnectUrl="/api/integrations/directfreight"
-        fields={[
-          { key: 'username', label: 'Username', placeholder: 'Direct Freight username' },
-          { key: 'password', label: 'Password', type: 'password', placeholder: 'Direct Freight password' },
-        ]}
-      />
-
-      <IntegrationCard
-        name="DAT"
-        icon="📡"
-        statusUrl="/api/integrations/dat"
-        connectUrl="/api/integrations/dat"
-        disconnectUrl="/api/integrations/dat"
-        fields={[
-          { key: 'email', label: 'Email Address', type: 'email', placeholder: 'your@email.com' },
         ]}
       />
     </div>
