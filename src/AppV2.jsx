@@ -12,6 +12,7 @@ import { ReportsView } from './components/v2/ReportsView';
 import { EstimatesView } from './components/v2/EstimatesView';
 import { SettingsView } from './components/v2/SettingsView';
 import { AdminDashboard } from './components/AdminDashboard';
+import { ImportedLoads } from './components/ImportedLoads';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { BuyCreditsModal } from './components/BuyCreditsModal';
 import { tokens } from './styles/tokens.v2';
@@ -502,8 +503,9 @@ function renderView(currentView, onNavigate) {
     case 'reports':   return <ReportsView />;
     case 'estimates': return <EstimatesView />;
     case 'settings':        return <SettingsView />;
-    case 'admin-dashboard': return <AdminDashboard onMenuNavigate={onNavigate} onNavigateToSettings={() => onNavigate('settings')} />;
-    default:                return <PlaceholderView icon={Search} title="Coming Soon" description="This section is being built." phase="?" />;
+    case 'admin-dashboard':  return <AdminDashboard onMenuNavigate={onNavigate} onNavigateToSettings={() => onNavigate('settings')} />;
+    case 'imported-loads':   return <ImportedLoads onMenuNavigate={onNavigate} />;
+    default:                 return <PlaceholderView icon={Search} title="Coming Soon" description="This section is being built." phase="?" />;
   }
 }
 
@@ -514,6 +516,13 @@ function AppV2Inner() {
   const [supportOpen, setSupportOpen] = useState(false);
   const [buyCreditsOpen, setBuyCreditsOpen] = useState(false);
   const { balance, openCheckout } = useCredits();
+
+  // Deep-link from extension: ?view=imported-loads
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view) setCurrentView(view);
+  }, []);
 
   const handleNavigate = (view) => {
     if (view === 'support') {
