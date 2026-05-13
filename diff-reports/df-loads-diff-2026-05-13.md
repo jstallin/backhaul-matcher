@@ -4,48 +4,154 @@
 
 | | Count |
 |---|---|
-| Previous total | 31849 |
-| New total | 1009 |
-| Net change | -30840 |
-| Added | +897 |
-| Removed | -31737 |
-| Avg pay (new file) | $1,825 |
+| Previous total | 1009 |
+| New total | 998 |
+| Net change | -11 |
+| Added | +898 |
+| Removed | -909 |
+| Avg pay (new file) | $2,017 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 669 |
-| Step Deck | 131 |
-| Dry Van | 78 |
-| Power Only | 77 |
-| Refrigerated | 45 |
-| Hotshot | 5 |
-| Container | 2 |
+| Flatbed | 714 |
+| Dry Van | 104 |
+| Step Deck | 67 |
+| Other | 56 |
+| Refrigerated | 41 |
+| Power Only | 13 |
 | Lowboy | 1 |
 | Curtain Van | 1 |
+| Hotshot | 1 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| WA | 93 |
-| TX | 68 |
-| OH | 62 |
-| SD | 62 |
-| AL | 58 |
-| MA | 56 |
-| OR | 52 |
-| PA | 50 |
-| FL | 42 |
-| IL | 35 |
-| LA | 32 |
-| GA | 30 |
-| AR | 27 |
-| CA | 26 |
-| NY | 24 |
+| WA | 95 |
+| IL | 81 |
+| TX | 59 |
+| MD | 51 |
+| PA | 48 |
+| OR | 48 |
+| AL | 46 |
+| ME | 42 |
+| OH | 34 |
+| FL | 34 |
+| AR | 32 |
+| IN | 30 |
+| LA | 28 |
+| NC | 28 |
+| GA | 27 |
 
-## Added Loads (+897)
+## Added Loads (+898)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
+| Chicago, IL → Alton, IL | Flatbed | $0 | 281 |
+| Chicago, IL → Carlinville, IL | Flatbed | $0 | 246 |
+| Chicago, IL → Edwardsville, IL | Flatbed | $0 | 272 |
+| Chicago, IL → Highland, IL | Flatbed | $0 | 280 |
+| Chicago, IL → Jerseyville, IL | Flatbed | $0 | 289 |
+| Chicago, IL → Litchfield, IL | Flatbed | $0 | 242 |
+| Chicago, IL → Morton, IL | Flatbed | $0 | 155 |
+| Chicago, IL → Robinson, IL | Flatbed | $0 | 227 |
+| Chicago, IL → Taylorville, IL | Flatbed | $0 | 220 |
+| Chicago, IL → Westville, IL | Flatbed | $0 | 147 |
+| Chicago, IL → Eau Claire, MI | Dry Van | $850 | 106 |
+| Chicago, IL → Cameron, MO | Flatbed | $0 | 475 |
+| Chicago, IL → Holiday City, OH | Flatbed | $0 | 187 |
+| Chicago, IL → Plain City, OH | Flatbed | $0 | 344 |
+| Schiller Park, IL → Appleton, WI | Flatbed | $0 | 184 |
+| South Chicago, IL → Springfield, OH | Flatbed | $1,625 | 298 |
+| Lebanon, IN → Alsip, IL | Refrigerated | $2,100 | 146 |
+| Sandborn, IN → Whitestown, IN | Flatbed | $0 | 105 |
+| Beavercreek, OH → Gainesville, GA | Dry Van | $0 | 471 |
+| Canton, OH → Cape May, NJ | Dry Van | $3,900 | 482 |
+| Milwaukee, WI → Chicago, IL | Dry Van | $600 | 93 |
+| Oldtown, ID → Holiday City, OH | Flatbed | $0 | 1966 |
+| Dallesport, WA → Wheat Ridge, CO | Flatbed | $4,600 | 1161 |
+| Dallesport, WA → Mableton, GA | Flatbed | $6,375 | 2514 |
+| Dallesport, WA → Elwood, IL | Flatbed | $6,300 | 2019 |
+| Dallesport, WA → Elwood, IL | Flatbed | $5,950 | 2019 |
+| Dallesport, WA → Elwood, IL | Flatbed | $6,050 | 2019 |
+| Dallesport, WA → Oklahoma City, OK | Flatbed | $5,175 | 1828 |
+| Dallesport, WA → Oklahoma City, OK | Flatbed | $4,375 | 1828 |
+| Dallesport, WA → Oklahoma City, OK | Flatbed | $5,700 | 1828 |
+| Dallesport, WA → Saginaw, TX | Flatbed | $7,500 | 1918 |
+| Dallesport, WA → Fairfax, VT | Flatbed | $10,600 | 2922 |
+| Napavine, WA → Stockton, CA | Flatbed | $2,325 | 705 |
+| Napavine, WA → Valley, NE | Flatbed | $5,300 | 1724 |
+| Napavine, WA → Eau Claire, WI | Flatbed | $6,250 | 1811 |
+| Selah, WA → Bronx, NY | Dry Van | $0 | 2760 |
+| West Memphis, AR → Akron, OH | Dry Van | $2,900 | 719 |
+| City of Industry, CA → Ceres, CA | Dry Van | $2,300 | ? |
+| Duson, LA → Pasadena, TX | Flatbed | $0 | 205 |
+| Kenner, LA → Baton Rouge, LA | Refrigerated | $800 | 65 |
+| Kenner, LA → Baton Rouge, LA | Dry Van | $800 | 65 |
+| Dexter, NM → Roanoke, AL | Flatbed | $0 | 1290 |
+| Dexter, NM → Roanoke, AL | Step Deck | $0 | 1290 |
+| Deer Park, TX → Alvarado, TX | Flatbed | $0 | 262 |
+| Deer Park, TX → Dallas, TX | Flatbed | $0 | 259 |
+| Doucette, TX → Keller, TX | Flatbed | $0 | 250 |
+| Lakeland, FL → Jacksonville, FL | Other | $525 | 192 |
+| Lakeland, FL → Jacksonville, FL | Other | $650 | 192 |
+| Lakeland, FL → Jacksonville, FL | Other | $700 | 192 |
+| Marianna, FL → Lakeland, FL | Other | $1,150 | 329 |
+| Marianna, FL → Dallas, TX | Flatbed | $0 | 807 |
+| Barnesville, GA → Acworth, GA | Flatbed | $0 | 91 |
+| Brooklet, GA → Live Oak, FL | Flatbed | $0 | 253 |
+| Hazlehurst, GA → Hialeah, FL | Flatbed | $0 | 488 |
+| Hazlehurst, GA → Leesburg, FL | Flatbed | $0 | 250 |
+| Hazlehurst, GA → Shiloh, OH | Flatbed | $0 | 825 |
+| Hazlehurst, GA → North Charleston, SC | Flatbed | $0 | 220 |
+| Hoboken, GA → Lakeland, FL | Other | $975 | 244 |
+| Warrenton, GA → Lakeland, FL | Other | $2,475 | 450 |
+| Hebron, KY → Pigeon, MI | Dry Van | $1,800 | 398 |
+| Bessemer City, NC → Findlay, OH | Dry Van | $1,800 | 528 |
+| Mount Gilead, NC → Saint Matthews, SC | Other | $800 | 145 |
+| Pendleton, SC → Conover, NC | Dry Van | $1,000 | 142 |
+| Chattanooga, TN → Belmont, NC | Dry Van | $0 | 334 |
+| Chattanooga, TN → Arlington, TX | Dry Van | $0 | 818 |
+| Blue Island, IL → Troy, IL | Flatbed | $0 | 272 |
+| Chicago, IL → Grinnell, IA | Flatbed | $0 | 284 |
+| Chicago, IL → Galesburg, IL | Flatbed | $0 | 196 |
+| Chicago, IL → Harrisburg, IL | Flatbed | $0 | 341 |
+| Chicago, IL → Hillsboro, IL | Flatbed | $0 | 252 |
+| Chicago, IL → Lebanon, IL | Flatbed | $0 | 283 |
+| Chicago, IL → Macomb, IL | Flatbed | $0 | 245 |
+| Chicago, IL → Princeton, IL | Flatbed | $0 | 114 |
+| Chicago, IL → Troy, IL | Flatbed | $0 | 279 |
+| Chicago, IL → Camdenton, MO | Flatbed | $0 | 449 |
+| Chicago, IL → Marshall, MO | Flatbed | $0 | 441 |
+| Chicago, IL → Mount Vernon, MO | Flatbed | $0 | 538 |
+| Indianapolis, IN → Saginaw, MI | Dry Van | $1,400 | 324 |
+| Indianapolis, IN → North Mankato, MN | Dry Van | $2,500 | 611 |
+| Croswell, MI → Crown Point, IN | Dry Van | $1,700 | 324 |
+| Cincinnati, OH → North Aurora, IL | Dry Van | $1,200 | 322 |
+| Oak Creek, WI → Kansas City, MO | Flatbed | $2,025 | 566 |
+| Oak Creek, WI → Kansas City, MO | Step Deck | $2,025 | 566 |
+| Kamiah, ID → Valley Park, MO | Flatbed | $4,000 | 1747 |
+| Saint Maries, ID → Conroe, TX | Flatbed | $3,900 | 2155 |
+| Saint Maries, ID → Houston, TX | Flatbed | $4,000 | 2192 |
+| Columbia Falls, MT → Willits, CA | Flatbed | $3,100 | 1137 |
+| Columbia Falls, MT → Willits, CA | Flatbed | $2,600 | 1137 |
+| North Billerica, MA → Whitesboro, NY | Flatbed | $1,450 | 269 |
+| Baltimore, MD → Grandville, MI | Flatbed | $2,200 | 659 |
+| Horsham, PA → De Forest, WI | Dry Van | $0 | 910 |
+| Little Rock, AR → Cleveland, OH | Dry Van | $4,925 | ? |
+| Malvern, AR → Corpus Christi, TX | Flatbed | $0 | 685 |
+| Russellville, AR → Youngstown, OH | Dry Van | $5,173 | ? |
+| Siloam Springs, AR → Midland, TX | Flatbed | $0 | 636 |
+| Chandler, AZ → Santa Teresa, NM | Dry Van | $0 | 406 |
+| Brighton, CO → Monroe Township, NJ | Dry Van | $0 | 1774 |
+| Pueblo, CO → Henderson, CO | Dry Van | $1,300 | 125 |
+| Plain Dealing, LA → Arthur, IL | Flatbed | $0 | 686 |
+| Plain Dealing, LA → Saint Rose, IL | Flatbed | $0 | 620 |
+| … and 798 more | | | |
+
+## Removed Loads (-909)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
@@ -149,110 +255,4 @@
 | Naples, FL → Port Charlotte, FL | Hotshot | $400 | ? |
 | Orange Park, FL → Panama City Beach, FL | Flatbed | $1,450 | ? |
 | Orange Park, FL → Panama City Beach, FL | Step Deck | $1,450 | ? |
-| … and 797 more | | | |
-
-## Removed Loads (-31737)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Osceola, IA → Naperville, IL | Refrigerated | $2,000 | 355 |
-| Chicago, IL → Berea, KY | Dry Van | $1,300 | 408 |
-| Dupo, IL → La Vergne, TN | Dry Van | $1,251 | 330 |
-| Joliet, IL → Franklin Park, IL | Flatbed | $601 | 39 |
-| Sandwich, IL → Topeka, KS | Refrigerated | $1,925 | 547 |
-| Duluth, MN → Scranton, PA | Dry Van | $0 | 1173 |
-| Fridley, MN → Rockford, IL | Refrigerated | $900 | 341 |
-| Fridley, MN → Rockford, IL | Dry Van | $900 | 341 |
-| Jefferson City, MO → Bismarck, ND | Flatbed | $4,000 | 941 |
-| Jefferson City, MO → Bismarck, ND | Step Deck | $4,000 | 941 |
-| Uhrichsville, OH → Oconomowoc, WI | Dry Van | $1,500 | 541 |
-| Pleasant Prairie, WI → Shelbyville, KY | Flatbed | $1,300 | 386 |
-| Verona, WI → Memphis, TN | Dry Van | $2,700 | 663 |
-| Sioux Falls, SD → Fontana, CA | Dry Van | $3,850 | 1634 |
-| Brewster, WA → Cheshire, CT | Refrigerated | $8,500 | 2762 |
-| Selah, WA → Aurora, CO | Refrigerated | $0 | 1182 |
-| Selah, WA → Cheshire, CT | Refrigerated | $8,300 | 2835 |
-| Yakima, WA → Chicago, IL | Refrigerated | $0 | 1969 |
-| Torrington, WY → Auburn, NE | Dry Van | $1,100 | 498 |
-| Sheffield, MA → Scranton, PA | Dry Van | $0 | 164 |
-| Baltimore, MD → Petersburg, IN | Flatbed | $0 | 690 |
-| Baltimore, MD → Petersburg, IN | Step Deck | $0 | 690 |
-| Sharon, PA → Lake Park, GA | Flatbed | $0 | 929 |
-| Arvin, CA → Colton, CA | Refrigerated | $659 | 161 |
-| National City, CA → Spokane, WA | Refrigerated | $8,000 | 1473 |
-| Rialto, CA → Kansas City, MO | Dry Van | $6,400 | 1571 |
-| Salinas, CA → Plymouth, MN | Refrigerated | $6,000 | 2064 |
-| Salinas, CA → Lacey, WA | Refrigerated | $5,500 | 840 |
-| San Bernardino, CA → Lacey, WA | Refrigerated | $5,000 | 1132 |
-| Turlock, CA → Sacramento, CA | Refrigerated | $481 | 86 |
-| Denham Springs, LA → Commerce, GA | Flatbed | $2,000 | 582 |
-| Jackson, LA → Commerce, GA | Flatbed | $2,000 | 618 |
-| Saint Gabriel, LA → Commerce, GA | Flatbed | $2,000 | 600 |
-| Zachary, LA → Commerce, GA | Flatbed | $2,000 | 603 |
-| Chickasha, OK → Gillette, WY | Flatbed | $5,500 | 1048 |
-| Okmulgee, OK → Dallas, TX | Dry Van | $1,000 | 218 |
-| Austin, TX → Shreveport, LA | Dry Van | $934 | 324 |
-| Austin, TX → Shreveport, LA | Dry Van | $934 | 324 |
-| Edinburg, TX → Oak Creek, WI | Refrigerated | $6,200 | 1488 |
-| Forney, TX → Rayville, LA | Step Deck | $3,000 | 285 |
-| Grand Prairie, TX → Houston, TX | Dry Van | $734 | 252 |
-| Winter Garden, FL → Bridgeton, MO | Refrigerated | $2,600 | 999 |
-| Winter Garden, FL → Bridgeton, MO | Refrigerated | $2,600 | 999 |
-| Cobbtown, GA → Salem, VA | Refrigerated | $3,001 | 451 |
-| Lake Park, GA → Frederick, MD | Refrigerated | $3,500 | 788 |
-| Norman Park, GA → Saxonburg, PA | Refrigerated | $4,500 | 880 |
-| Charlotte, NC → South Windsor, CT | Refrigerated | $2,200 | 745 |
-| Charlotte, NC → South Windsor, CT | Dry Van | $2,200 | 745 |
-| Mebane, NC → Corpus Christi, TX | Dry Van | $0 | 1364 |
-| Goose Creek, SC → Mesquite, TX | Refrigerated | $0 | 1057 |
-| Goose Creek, SC → Mesquite, TX | Dry Van | $0 | 1057 |
-| Laurens, SC → Hagerstown, MD | Flatbed | $2,700 | 510 |
-| Clarksville, TN → Mission, TX | Flatbed | $2,750 | 1181 |
-| Clarksville, TN → Mission, TX | Step Deck | $2,750 | 1181 |
-| Le Mars, IA → Webberville, MI | Refrigerated | $2,800 | 738 |
-| Elk Grove Village, IL → McDonough, GA | Refrigerated | $3,050 | 770 |
-| Glendale Heights, IL → Dubuque, IA | Dry Van | $900 | 163 |
-| Hampshire, IL → Mount Dora, FL | Dry Van | $3,400 | 1183 |
-| Joliet, IL → Lebanon, IL | Dry Van | $0 | 248 |
-| Lincoln, IL → Yankton, SD | Dry Van | $1,500 | 549 |
-| Quincy, IL → De Pere, WI | Dry Van | $1,200 | 453 |
-| Taylorville, IL → Myerstown, PA | Dry Van | $2,800 | 778 |
-| Vernon Hills, IL → North Kansas City, MO | Dry Van | $1,600 | 534 |
-| Pingree, ID → Spokane, WA | Refrigerated | $0 | 551 |
-| Rigby, ID → Zebulon, NC | Refrigerated | $7,200 | 2228 |
-| Albany, OR → Nampa, ID | Flatbed | $650 | 420 |
-| Albany, OR → Nampa, ID | Step Deck | $650 | 420 |
-| Plainville, CT → Altamonte Springs, FL | Dry Van | $1,294 | 1177 |
-| Allentown, PA → Baltimore, MD | Dry Van | $1,200 | 137 |
-| Allentown, PA → Feasterville Trevose, PA | Dry Van | $1,100 | 47 |
-| Easton, PA → Mira Loma, CA | Refrigerated | $0 | 2667 |
-| Exton, PA → Pittston, PA | Dry Van | $725 | 123 |
-| Philadelphia, PA → Oak Creek, WI | Dry Van | $1,900 | 838 |
-| Taylor, PA → Hazleton, PA | Dry Van | $450 | 39 |
-| Bentonville, AR → Keasbey, NJ | Refrigerated | $7,125 | 1276 |
-| El Dorado, AR → Vonore, TN | Flatbed | $3,000 | 673 |
-| Bay Minette, AL → Medley, FL | Dry Van | $2,500 | 724 |
-| Boaz, AL → Fontana, CA | Refrigerated | $0 | 2003 |
-| Boaz, AL → Fontana, CA | Dry Van | $0 | 2003 |
-| Englewood, FL → Richmond, IN | Dry Van | $2,600 | 1045 |
-| Lakeland, FL → Yonkers, NY | Dry Van | $0 | 1146 |
-| Miami, FL → Pleasant Prairie, WI | Dry Van | $0 | 1434 |
-| Saint Augustine, FL → Hadley, MA | Refrigerated | $6,000 | 1134 |
-| Saint Petersburg, FL → Athens, AL | Dry Van | $1,000 | 658 |
-| Saint Petersburg, FL → Athens, AL | Dry Van | $900 | 658 |
-| Gainesville, GA → Natchez, MS | Dry Van | $1,300 | 549 |
-| Kennesaw, GA → Grabill, IN | Dry Van | $2,425 | 618 |
-| Waukegan, IL → Joliet, IL | Dry Van | $0 | 73 |
-| Waukegan, IL → Whiteland, IN | Dry Van | $850 | 243 |
-| Bremen, IN → Villa Park, IL | Flatbed | $750 | 117 |
-| Oak Park, MI → Cedar Rapids, IA | Dry Van | $1,500 | 509 |
-| Shelby Township, MI → East Lansing, MI | Refrigerated | $0 | 93 |
-| Shelby Township, MI → East Lansing, MI | Dry Van | $0 | 93 |
-| Shelby Township, MI → Lansing, MI | Refrigerated | $0 | 100 |
-| Shelby Township, MI → Lansing, MI | Dry Van | $0 | 100 |
-| Shelby Township, MI → Warren, MI | Refrigerated | $0 | 12 |
-| Shelby Township, MI → Warren, MI | Dry Van | $0 | 12 |
-| Cleveland, OH → Springfield, OH | Refrigerated | $800 | 184 |
-| Columbus, OH → Mount Morris, MI | Refrigerated | $1,100 | 253 |
-| Columbus, OH → Mount Morris, MI | Dry Van | $1,100 | 253 |
-| … and 31637 more | | | |
+| … and 809 more | | | |
