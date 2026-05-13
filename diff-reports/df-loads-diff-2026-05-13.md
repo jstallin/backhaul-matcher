@@ -4,48 +4,157 @@
 
 | | Count |
 |---|---|
-| Previous total | 1009 |
-| New total | 998 |
-| Net change | -11 |
-| Added | +898 |
-| Removed | -909 |
-| Avg pay (new file) | $2,017 |
+| Previous total | 998 |
+| New total | 1056 |
+| Net change | +58 |
+| Added | +1056 |
+| Removed | -998 |
+| Avg pay (new file) | $1,952 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 714 |
-| Dry Van | 104 |
-| Step Deck | 67 |
-| Other | 56 |
-| Refrigerated | 41 |
-| Power Only | 13 |
-| Lowboy | 1 |
+| Flatbed | 435 |
+| Dry Van | 233 |
+| Step Deck | 147 |
+| Other | 105 |
+| Refrigerated | 101 |
+| Hotshot | 15 |
+| Power Only | 7 |
+| Lowboy | 5 |
+| Box Truck | 4 |
+| Cargo Van | 2 |
+| Landall | 1 |
 | Curtain Van | 1 |
-| Hotshot | 1 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| WA | 95 |
-| IL | 81 |
-| TX | 59 |
-| MD | 51 |
-| PA | 48 |
+| PA | 91 |
+| TX | 89 |
+| IL | 65 |
+| WA | 65 |
+| SC | 52 |
+| FL | 50 |
 | OR | 48 |
-| AL | 46 |
-| ME | 42 |
-| OH | 34 |
-| FL | 34 |
-| AR | 32 |
-| IN | 30 |
-| LA | 28 |
-| NC | 28 |
-| GA | 27 |
+| OH | 45 |
+| MA | 44 |
+| ID | 40 |
+| NJ | 36 |
+| IN | 35 |
+| NY | 29 |
+| CA | 27 |
+| MD | 26 |
 
-## Added Loads (+898)
+## Added Loads (+1056)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
+| Chillicothe, OH → Cockeysville, MD | Dry Van | $0 | 431 |
+| Dayton, OH → Baltimore, MD | Dry Van | $0 | 463 |
+| Harveysburg, OH → Cockeysville, MD | Dry Van | $0 | 465 |
+| Lebanon, OH → Baltimore, MD | Dry Van | $0 | 469 |
+| Loveland, OH → Baltimore, MD | Dry Van | $0 | 485 |
+| Mount Orab, OH → Baltimore, MD | Dry Van | $0 | 472 |
+| Washington Court House, OH → Baltimore, MD | Dry Van | $0 | 432 |
+| Iowa City, IA → Batavia, IL | Dry Van | $700 | 187 |
+| Des Plaines, IL → O Fallon, MO | Refrigerated | $2,200 | 329 |
+| Dwight, IL → Faribault, MN | Dry Van | $1,600 | 448 |
+| Effingham, IL → Miami, FL | Dry Van | $0 | 1208 |
+| Elgin, IL → Barnesville, PA | Dry Van | $0 | 721 |
+| Elk Grove Village, IL → Frederick, MD | Refrigerated | $7,000 | 679 |
+| Franklin Park, IL → Fort Wayne, IN | Flatbed | $0 | 176 |
+| Franklin Park, IL → Franklin, IN | Flatbed | $0 | 220 |
+| North Chicago, IL → Front Royal, VA | Refrigerated | $4,800 | 693 |
+| North Chicago, IL → Front Royal, VA | Dry Van | $4,800 | 693 |
+| Rochelle, IL → Las Vegas, NV | Flatbed | $0 | 1673 |
+| Summit, IL → Shepherdsville, KY | Refrigerated | $2,600 | 320 |
+| Waukegan, IL → Lockbourne, OH | Refrigerated | $2,400 | 403 |
+| Waukegan, IL → Lockbourne, OH | Dry Van | $2,400 | 403 |
+| Waukegan, IL → Lockbourne, OH | Refrigerated | $1,800 | 403 |
+| Waukegan, IL → Lockbourne, OH | Dry Van | $1,800 | 403 |
+| Fairfield, OH → Des Plaines, IL | Dry Van | $1,475 | 313 |
+| Fostoria, OH → Joliet, IL | Dry Van | $1,400 | 282 |
+| Franklin, OH → Joliet, IL | Dry Van | $1,000 | 318 |
+| Groveport, OH → Menomonie, WI | Dry Van | $3,500 | 705 |
+| Hebron, OH → Northbrook, IL | Refrigerated | $1,200 | 412 |
+| Hebron, OH → Northbrook, IL | Dry Van | $1,200 | 412 |
+| Lockbourne, OH → Le Center, MN | Dry Van | $2,900 | 795 |
+| Northwood, OH → Romeoville, IL | Dry Van | $1,800 | 254 |
+| Trotwood, OH → Terre Haute, IN | Refrigerated | $1,200 | 184 |
+| Trotwood, OH → Terre Haute, IN | Dry Van | $1,200 | 184 |
+| Green Bay, WI → Terre Haute, IN | Dry Van | $3,200 | 385 |
+| Green Bay, WI → Stevens Point, WI | Dry Van | $1,875 | 98 |
+| Jerome, ID → Tolleson, AZ | Refrigerated | $0 | 790 |
+| Jerome, ID → Clackamas, OR | Refrigerated | $0 | 551 |
+| Jerome, ID → Clackamas, OR | Refrigerated | $0 | 551 |
+| Jerome, ID → Clackamas, OR | Refrigerated | $0 | 551 |
+| Grand Forks, ND → Wilmington, IL | Refrigerated | $0 | 753 |
+| Gladstone, OR → Fort Wayne, IN | Dry Van | $6,700 | 2267 |
+| Nyssa, OR → Irvington, NJ | Refrigerated | $7,900 | 2521 |
+| Brookings, SD → Wrentham, MA | Flatbed | $0 | 1504 |
+| Brookings, SD → Wrentham, MA | Hotshot | $0 | 1504 |
+| Brookings, SD → Wrentham, MA | Step Deck | $0 | 1504 |
+| Brookings, SD → Menomonie, WI | Flatbed | $0 | 280 |
+| Brookings, SD → Menomonie, WI | Step Deck | $0 | 280 |
+| Anacortes, WA → Rockmart, GA | Refrigerated | $11,200 | 2727 |
+| Prosser, WA → Walnut, CA | Refrigerated | $0 | 1076 |
+| Farmington, CT → Miami, FL | Box Truck | $0 | 1397 |
+| Farmington, CT → Miami, FL | Refrigerated | $0 | 1397 |
+| Pittsfield, MA → Jersey City, NJ | Dry Van | $900 | 150 |
+| Brooklyn Park, MD → Raymond, NY | Flatbed | $0 | 367 |
+| Westbrook, ME → Norwich, CT | Dry Van | $1,700 | 192 |
+| Edison, NJ → Ellensburg, WA | Dry Van | $11,200 | 2705 |
+| Gloucester, NJ → Kenton, OH | Flatbed | $2,825 | 547 |
+| Gloucester, NJ → Kenton, OH | Step Deck | $2,825 | 547 |
+| Linden, NJ → Munster, IN | Refrigerated | $3,100 | 770 |
+| Linden, NJ → Munster, IN | Dry Van | $3,100 | 770 |
+| North Bergen, NJ → Chantilly, VA | Dry Van | $1,725 | 253 |
+| Farmingdale, NY → Atlanta, GA | Dry Van | $0 | 895 |
+| Geneva, NY → New Caney, TX | Refrigerated | $5,900 | 1555 |
+| Allentown, PA → Gordonsville, VA | Refrigerated | $0 | 265 |
+| Cranberry Township, PA → Harrisburg, PA | Flatbed | $0 | 222 |
+| Cranberry Township, PA → Harrisburg, PA | Hotshot | $0 | 222 |
+| Croydon, PA → Louisville, KY | Dry Van | $0 | 687 |
+| Mertztown, PA → Chicago, IL | Refrigerated | $1,300 | 732 |
+| Muncy, PA → North Salt Lake, UT | Dry Van | $7,000 | 2018 |
+| New Holland, PA → Fuquay-Varina, NC | Hotshot | $0 | 409 |
+| Pittston, PA → Galesburg, MI | Dry Van | $1,400 | 599 |
+| Emerson, AR → Fort Worth, TX | Flatbed | $2,065 | 276 |
+| Emerson, AR → Houston, TX | Flatbed | $1,857.99 | 312 |
+| Chopin, LA → Milan, TN | Flatbed | $2,182 | 474 |
+| Chopin, LA → Milan, TN | Flatbed | $2,246 | 474 |
+| Leesville, LA → Gallatin, TN | Flatbed | $3,029 | 708 |
+| Leesville, LA → Gallatin, TN | Flatbed | $2,419 | 708 |
+| Leesville, LA → Dallas, TX | Flatbed | $1,506 | 304 |
+| Leesville, LA → Dallas, TX | Flatbed | $1,692 | 304 |
+| Leesville, LA → Houston, TX | Flatbed | $1,314 | 200 |
+| Antlers, OK → Lincoln, AR | Flatbed | $1,575 | 187 |
+| Antlers, OK → Lincoln, AR | Flatbed | $1,158 | 187 |
+| Antlers, OK → Chicago, IL | Flatbed | $3,187 | 808 |
+| Antlers, OK → Chicago, IL | Flatbed | $2,930 | 808 |
+| Antlers, OK → Lombard, IL | Flatbed | $3,169.04 | 800 |
+| Antlers, OK → Lombard, IL | Flatbed | $3,587.68 | 800 |
+| Antlers, OK → Andrews, NC | Flatbed | $2,199 | 855 |
+| Antlers, OK → Andrews, NC | Flatbed | $3,387 | 855 |
+| Antlers, OK → San Antonio, TX | Flatbed | $1,746 | 427 |
+| Antlers, OK → San Antonio, TX | Flatbed | $1,515 | 427 |
+| Antlers, OK → Withee, WI | Flatbed | $4,347.59 | 952 |
+| Dallas, TX → Ponder, TX | Flatbed | $750 | 49 |
+| Dallas, TX → Ponder, TX | Flatbed | $525 | 49 |
+| Huntsville, TX → Bonham, TX | Flatbed | $1,501 | 244 |
+| Huntsville, TX → Bonham, TX | Flatbed | $1,301 | 244 |
+| Irving, TX → Tulsa, OK | Flatbed | $1,503 | 267 |
+| Irving, TX → Tulsa, OK | Flatbed | $2,031 | 267 |
+| Irving, TX → Houston, TX | Flatbed | $741 | 254 |
+| Irving, TX → Houston, TX | Flatbed | $1,043 | 254 |
+| Irving, TX → Midland, TX | Flatbed | $2,251 | 326 |
+| Irving, TX → San Antonio, TX | Flatbed | $1,343 | 285 |
+| … and 956 more | | | |
+
+## Removed Loads (-998)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
@@ -149,110 +258,4 @@
 | Pueblo, CO → Henderson, CO | Dry Van | $1,300 | 125 |
 | Plain Dealing, LA → Arthur, IL | Flatbed | $0 | 686 |
 | Plain Dealing, LA → Saint Rose, IL | Flatbed | $0 | 620 |
-| … and 798 more | | | |
-
-## Removed Loads (-909)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Thomasville, PA → Middletown, DE | Flatbed | $1,000 | 100 |
-| Thomasville, PA → Middletown, DE | Step Deck | $1,000 | 100 |
-| Thomasville, PA → Smyrna, DE | Flatbed | $675 | 116 |
-| Thomasville, PA → Smyrna, DE | Step Deck | $675 | 116 |
-| Thomasville, PA → Canton, PA | Flatbed | $700 | 158 |
-| Thomasville, PA → Canton, PA | Step Deck | $700 | 158 |
-| Teachey, NC → Auburn, WA | Refrigerated | $12,600 | ? |
-| Indianapolis, IN → Plymouth, IN | Flatbed | $1,000 | 115 |
-| Indianapolis, IN → Plymouth, IN | Step Deck | $1,000 | 115 |
-| Indianapolis, IN → Hilliard, OH | Flatbed | $1,200 | 173 |
-| Indianapolis, IN → Hilliard, OH | Step Deck | $1,200 | 173 |
-| Indianapolis, IN → Wilmington, OH | Flatbed | $900 | 146 |
-| Indianapolis, IN → Wilmington, OH | Step Deck | $900 | 146 |
-| Indianapolis, IN → Xenia, OH | Flatbed | $1,000 | 126 |
-| Indianapolis, IN → Xenia, OH | Step Deck | $1,000 | 126 |
-| Cincinnati, OH → Petersburg, IN | Flatbed | $1,000 | 228 |
-| Cincinnati, OH → Petersburg, IN | Step Deck | $1,000 | 228 |
-| Cincinnati, OH → Louisville, KY | Flatbed | $1,300 | 106 |
-| Cincinnati, OH → Louisville, KY | Step Deck | $1,300 | 106 |
-| Cincinnati, OH → Fremont, OH | Flatbed | $1,400 | 201 |
-| Cincinnati, OH → Fremont, OH | Step Deck | $1,400 | 201 |
-| Cincinnati, OH → Mansfield, OH | Flatbed | $1,150 | 170 |
-| Cincinnati, OH → Mansfield, OH | Step Deck | $1,150 | 170 |
-| Lee, MA → Newburgh, NY | Flatbed | $875 | 114 |
-| Lee, MA → Newburgh, NY | Step Deck | $875 | 114 |
-| Lee, MA → Rochester, NY | Flatbed | $1,500 | 269 |
-| Lee, MA → Rochester, NY | Step Deck | $1,500 | 269 |
-| Cincinnati, OH → Clarksville, IN | Flatbed | $1,300 | 106 |
-| Cincinnati, OH → Clarksville, IN | Step Deck | $1,300 | 106 |
-| Cincinnati, OH → Grabill, IN | Flatbed | $1,600 | 188 |
-| Cincinnati, OH → Grabill, IN | Step Deck | $1,600 | 188 |
-| Cincinnati, OH → Elizabethtown, KY | Flatbed | $1,450 | 147 |
-| Cincinnati, OH → Elizabethtown, KY | Step Deck | $1,450 | 147 |
-| Cincinnati, OH → Defiance, OH | Flatbed | $1,625 | 171 |
-| Cincinnati, OH → Defiance, OH | Step Deck | $1,625 | 171 |
-| Cincinnati, OH → Tiffin, OH | Flatbed | $1,550 | 179 |
-| Cincinnati, OH → Tiffin, OH | Step Deck | $1,550 | 179 |
-| Cairo, IL → Springfield, MO | Flatbed | $900 | 260 |
-| Alexandria, LA → McGuire AFB, NJ | Flatbed | $0 | 1338 |
-| Alexandria, LA → McGuire AFB, NJ | Step Deck | $0 | 1338 |
-| New Haven, CT → Greenland, NH | Flatbed | $1,400 | 187 |
-| Lee, MA → Bridgeport, CT | Flatbed | $675 | 92 |
-| Lee, MA → Bridgeport, CT | Step Deck | $675 | 92 |
-| Lee, MA → Bristol, CT | Flatbed | $700 | 61 |
-| Lee, MA → Bristol, CT | Step Deck | $700 | 61 |
-| Lee, MA → Danbury, CT | Flatbed | $1,000 | 90 |
-| Lee, MA → Danbury, CT | Step Deck | $1,000 | 90 |
-| Lee, MA → Derby, CT | Flatbed | $825 | 76 |
-| Lee, MA → Derby, CT | Step Deck | $825 | 76 |
-| Lee, MA → East Haven, CT | Flatbed | $700 | 89 |
-| Lee, MA → East Haven, CT | Step Deck | $700 | 89 |
-| Lee, MA → Fairfield, CT | Flatbed | $625 | 96 |
-| Lee, MA → Fairfield, CT | Step Deck | $625 | 96 |
-| Lee, MA → Hamden, CT | Flatbed | $650 | 83 |
-| Lee, MA → Hamden, CT | Step Deck | $650 | 83 |
-| Lee, MA → New Milford, CT | Flatbed | $600 | 68 |
-| Lee, MA → New Milford, CT | Step Deck | $600 | 68 |
-| Lee, MA → Waterbury, CT | Flatbed | $500 | 64 |
-| Lee, MA → Waterbury, CT | Step Deck | $500 | 64 |
-| Henniker, NH → Brooklyn, NY | Flatbed | $2,100 | 258 |
-| Piscataway, NJ → Bainbridge, NY | Flatbed | $2,000 | 192 |
-| Farmingdale, NY → Conklin, NY | Refrigerated | $1,300 | 204 |
-| Grand Prairie, TX → Houston, TX | Dry Van | $1,227 | 252 |
-| Watervliet, NY → Pittsfield, MA | Flatbed | $700 | 39 |
-| Watervliet, NY → Pittsfield, MA | Step Deck | $700 | 39 |
-| Watervliet, NY → Plattsburgh, NY | Flatbed | $1,500 | 155 |
-| Watervliet, NY → Plattsburgh, NY | Step Deck | $1,500 | 155 |
-| Watervliet, NY → Yorktown Heights, NY | Flatbed | $1,000 | 112 |
-| Watervliet, NY → Yorktown Heights, NY | Step Deck | $1,000 | 112 |
-| Watervliet, NY → Bennington, VT | Flatbed | $975 | 32 |
-| Watervliet, NY → Bennington, VT | Step Deck | $975 | 32 |
-| Watervliet, NY → South Burlington, VT | Flatbed | $1,300 | 153 |
-| Watervliet, NY → South Burlington, VT | Step Deck | $1,300 | 153 |
-| Watervliet, NY → Williston, VT | Flatbed | $925 | 166 |
-| Watervliet, NY → Williston, VT | Step Deck | $925 | 166 |
-| Wickliffe, OH → Mount Vernon, OH | Flatbed | $800 | 119 |
-| Wickliffe, OH → Mount Vernon, OH | Step Deck | $800 | 119 |
-| Wickliffe, OH → Wadsworth, OH | Flatbed | $750 | 51 |
-| Wickliffe, OH → Wadsworth, OH | Step Deck | $750 | 51 |
-| Wickliffe, OH → Wooster, OH | Flatbed | $700 | 72 |
-| Wickliffe, OH → Wooster, OH | Step Deck | $700 | 72 |
-| Bakersfield, CA → Mankato, MN | Refrigerated | $7,133 | 1810 |
-| Turlock, CA → Sacramento, CA | Refrigerated | $640 | 86 |
-| Dallas, TX → Houston, TX | Dry Van | $971 | 242 |
-| Denton, TX → Houston, TX | Refrigerated | $997 | 279 |
-| Lampasas, TX → Phoenix, AZ | Refrigerated | $3,657 | 1021 |
-| Paris, TX → Batesville, MS | Dry Van | $1,241 | 427 |
-| Sparrows Point, MD → Milford, DE | Flatbed | $950 | 91 |
-| Raymondville, MO → Cortez, CO | Flatbed | $5,100 | 1181 |
-| Denton, TX → Houston, TX | Refrigerated | $1,243 | 279 |
-| Claxton, GA → Harahan, LA | Refrigerated | $3,150 | ? |
-| Topeka, KS → San Antonio, TX | Dry Van | $2,234 | 755 |
-| Marion, IN → Port Chester, NY | Dry Van | $0 | ? |
-| Myerstown, PA → Milton, DE | Flatbed | $1,595 | ? |
-| Monroe, LA → Scott, LA | Flatbed | $1,300 | ? |
-| Monroe, LA → Scott, LA | Step Deck | $1,300 | ? |
-| Sugar Land, TX → College Station, TX | Flatbed | $800 | ? |
-| Naples, FL → Port Charlotte, FL | Hotshot | $400 | ? |
-| Orange Park, FL → Panama City Beach, FL | Flatbed | $1,450 | ? |
-| Orange Park, FL → Panama City Beach, FL | Step Deck | $1,450 | ? |
-| … and 809 more | | | |
+| … and 898 more | | | |
