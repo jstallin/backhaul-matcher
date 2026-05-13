@@ -44,3 +44,8 @@ Haul_Monitor_Gap_Analysis.md
 
 # Local docs (not for repo)
 docs/
+
+# Playwright
+tests/.auth/
+playwright-report/
+test-results/
