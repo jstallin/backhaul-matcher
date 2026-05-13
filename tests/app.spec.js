@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { STORAGE_STATE } from './auth.setup.js';
-import { appPath, resetPath } from './helpers.js';
+import { appPath, resetPath, STORAGE_STATE } from './helpers.js';
 
 // Authenticated tests — require TEST_EMAIL + TEST_PASSWORD to be set.
 // The auth setup saves a storage state file; if credentials weren't provided

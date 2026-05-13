@@ -1,10 +1,7 @@
 import { test as setup, expect } from '@playwright/test';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { appPath } from './helpers.js';
+import { appPath, STORAGE_STATE } from './helpers.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const STORAGE_STATE = path.join(__dirname, '.auth/user.json');
+export { STORAGE_STATE };
 
 // Runs once before all browser projects. Logs in with test credentials and
 // saves browser storage state so authenticated tests skip the login flow.
