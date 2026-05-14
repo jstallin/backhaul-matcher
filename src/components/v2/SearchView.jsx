@@ -415,11 +415,11 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           </Field>
 
           <Field label="Equipment Available Date">
-            <Input type="date" value={form.equipmentAvailableDate} onChange={e => set('equipmentAvailableDate', e.target.value)} />
+            <Input type="date" value={form.equipmentAvailableDate} onChange={e => set('equipmentAvailableDate', e.target.value)} min={new Date().toISOString().split('T')[0]} />
           </Field>
 
           <Field label="Equipment Needed By">
-            <Input type="date" value={form.equipmentNeededDate} onChange={e => set('equipmentNeededDate', e.target.value)} />
+            <Input type="date" value={form.equipmentNeededDate} onChange={e => set('equipmentNeededDate', e.target.value)} min={new Date().toISOString().split('T')[0]} />
           </Field>
         </div>
 
@@ -1510,6 +1510,7 @@ export function SearchView() {
       ]);
       setRequests(reqs || []);
       setFleets(fls || []);
+      return reqs || [];
     } finally {
       setLoading(false);
     }
@@ -1633,7 +1634,11 @@ export function SearchView() {
   };
 
   const handleFormSave = async () => {
-    await loadData();
+    const freshRequests = await loadData();
+    if (selectedRequest) {
+      const updated = freshRequests.find(r => r.id === selectedRequest.id);
+      if (updated) setSelectedRequest(updated);
+    }
     setMode(selectedRequest ? 'results' : 'empty');
     setEditingRequest(null);
   };
