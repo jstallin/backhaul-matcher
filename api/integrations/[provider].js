@@ -534,6 +534,11 @@ async function handleTruckstop(req, res, supabase, user) {
     }
 
     if (!username) {
+      username = process.env.TRUCKSTOP_WS_USERNAME;
+      password = process.env.TRUCKSTOP_WS_PASSWORD;
+    }
+
+    if (!username) {
       return res.status(400).json({ error: 'Truckstop not connected', code: 'NOT_CONNECTED' });
     }
 
