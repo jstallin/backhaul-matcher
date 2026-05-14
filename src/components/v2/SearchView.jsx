@@ -1566,11 +1566,12 @@ export function SearchView() {
       const homeRadiusMiles = geocodeFailed ? 200 : 100;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
+      const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
       const requestContext = {
-        datumCity: datumPoint.address || request.datum_point,
-        datumState: '',
-        homeCity: fleet.home_address,
-        homeState: '',
+        datumCity: datumCityParsed,
+        datumState: datumStateParsed,
+        homeCity: fleet.home_city || '',
+        homeState: fleet.home_state || '',
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
         pickupDate: request.equipment_available_date || '',
       };
