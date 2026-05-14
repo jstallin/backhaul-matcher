@@ -229,12 +229,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       const homeRadiusMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 200 : 100;
       const corridorWidthMiles = (datumPoint.lat === fleetHome.lat && datumPoint.lng === fleetHome.lng) ? 300 : 100;
 
-      // Build request context for Direct Freight live fetch
+      // Build request context for live load board fetch
+      // datum_point is stored as "City, ST" — split to give SOAP API separate city and state
+      const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
       const requestContext = {
-        datumCity:     datumPoint.address || request.datum_point,
-        datumState:    '',
-        homeCity:      fleet.home_address,
-        homeState:     '',
+        datumCity:     datumCityParsed,
+        datumState:    datumStateParsed,
+        homeCity:      fleet.home_city || '',
+        homeState:     fleet.home_state || '',
         equipmentType: fleetProfile.trailerType || 'Dry Van',
         pickupDate:    request.equipment_available_date || ''
       };

@@ -483,7 +483,7 @@ async function handleTruckstop(req, res, supabase, user) {
 
       await supabase
         .from('user_integrations')
-        .update({ is_connected: false, access_token: null })
+        .update({ is_connected: false, access_token: null, account_email: null, metadata: null })
         .eq('user_id', user.id)
         .eq('provider', 'truckstop');
 
