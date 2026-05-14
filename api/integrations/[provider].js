@@ -349,7 +349,7 @@ async function handleTruckstop(req, res, supabase, user) {
   const orgId = membership?.org_id || null;
   const isOrgAdmin = membership?.role === 'admin';
 
-  if (req.method === 'GET') {
+  if (req.method === 'GET' && req.query.action !== 'loads') {
     try {
       // Check org-level token first
       if (orgId) {
