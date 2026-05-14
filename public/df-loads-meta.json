@@ -1,45 +1,41 @@
 {
   "runDate": "2026-05-14",
-  "runAt": "2026-05-14T09:01:23.163Z",
-  "totalLoads": 1327,
-  "previousTotal": 1116,
-  "netChange": 211,
-  "added": 1327,
-  "removed": 1116,
-  "avgPay": 1782,
-  "loadsWithPay": 872,
+  "runAt": "2026-05-14T11:37:14.856Z",
+  "totalLoads": 1171,
+  "previousTotal": 1327,
+  "netChange": -156,
+  "added": 985,
+  "removed": 1141,
+  "avgPay": 1918,
+  "loadsWithPay": 805,
   "equipmentTypes": [
     [
       "Flatbed",
-      759
+      726
     ],
     [
       "Step Deck",
-      371
+      216
     ],
     [
       "Dry Van",
-      87
-    ],
-    [
-      "Power Only",
-      67
+      135
     ],
     [
       "Refrigerated",
-      31
+      74
     ],
     [
-      "Lowboy",
-      6
+      "Power Only",
+      11
     ],
     [
       "Hotshot",
-      4
+      5
     ],
     [
-      "Box Truck",
-      1
+      "Lowboy",
+      3
     ],
     [
       "Curtain Van",
@@ -52,56 +48,56 @@
       102
     ],
     [
-      "MA",
-      94
-    ],
-    [
-      "OH",
-      82
-    ],
-    [
       "TX",
-      76
+      89
     ],
     [
-      "IL",
-      75
-    ],
-    [
-      "AL",
-      75
-    ],
-    [
-      "GA",
+      "MA",
       68
     ],
     [
       "OR",
-      68
+      65
     ],
     [
-      "AR",
+      "OH",
+      64
+    ],
+    [
+      "AL",
+      60
+    ],
+    [
+      "NY",
       56
     ],
     [
+      "MO",
+      54
+    ],
+    [
       "PA",
-      50
+      53
     ],
     [
-      "SD",
-      48
-    ],
-    [
-      "ID",
+      "AR",
       44
     ],
     [
-      "MS",
-      36
+      "ID",
+      40
     ],
     [
-      "IN",
+      "SD",
+      37
+    ],
+    [
+      "GA",
       33
+    ],
+    [
+      "IL",
+      32
     ],
     [
       "CA",
@@ -109,23 +105,23 @@
     ],
     [
       "MD",
-      28
+      31
     ],
     [
-      "SC",
-      28
-    ],
-    [
-      "TN",
+      "IA",
       27
     ],
     [
-      "MN",
-      25
+      "NJ",
+      24
     ],
     [
-      "NY",
-      25
+      "MS",
+      24
+    ],
+    [
+      "ME",
+      24
     ]
   ]
 }
