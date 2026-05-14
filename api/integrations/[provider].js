@@ -658,6 +658,8 @@ function escapeXml(str) {
 async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles = 150 }) {
   const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles });
 
+  console.log('Truckstop SOAP envelope:\n', envelope);
+
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -671,7 +673,7 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   const responseText = await tsRes.text();
 
   if (!tsRes.ok) {
-    console.error('Truckstop SOAP error:', tsRes.status, responseText.slice(0, 500));
+    console.error('Truckstop SOAP error:', tsRes.status, responseText);
     if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) {
       const err = new Error('Unauthorized');
       err.code = 'UNAUTHORIZED';
