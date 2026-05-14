@@ -321,8 +321,13 @@ function IntegrationCard({ name, icon, statusUrl, connectUrl, disconnectUrl, con
   const checkStatus = async () => {
     setChecking(true);
     try {
-      const res = await fetch(statusUrl);
-      setConnected(res.ok);
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(statusUrl, {
+        headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {},
+      });
+      if (!res.ok) { setConnected(false); return; }
+      const data = await res.json();
+      setConnected(data.connected === true);
     } catch {
       setConnected(false);
     } finally {
@@ -364,7 +369,15 @@ function IntegrationCard({ name, icon, statusUrl, connectUrl, disconnectUrl, con
     setError('');
     setSuccess('');
     try {
-      await fetch(disconnectUrl, { method: 'DELETE' });
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(disconnectUrl, {
+        method: 'DELETE',
+        headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {},
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Disconnect failed (${res.status})`);
+      }
       setConnected(false);
       setSuccess('Disconnected.');
     } catch (err) {
