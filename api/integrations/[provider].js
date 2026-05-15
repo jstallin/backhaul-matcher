@@ -633,16 +633,16 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
         <web1:Criteria>
           ${destCity  ? `<web1:DestinationCity>${escapeXml(destCity)}</web1:DestinationCity>` : ''}
           <web1:DestinationCountry>usa</web1:DestinationCountry>
-          <web1:DestinationLatitude>0</web1:DestinationLatitude>
-          <web1:DestinationLongitude>0</web1:DestinationLongitude>
+          <web1:DestinationLatitude>${Math.round((destLat || 0) * 1000000)}</web1:DestinationLatitude>
+          <web1:DestinationLongitude>${Math.round((destLng || 0) * 1000000)}</web1:DestinationLongitude>
           <web1:DestinationRange>${radiusMiles}</web1:DestinationRange>
           ${destState ? `<web1:DestinationState>${destState.toLowerCase()}</web1:DestinationState>` : ''}
           ${equip     ? `<web1:EquipmentType>${equip}</web1:EquipmentType>` : ''}
           <web1:LoadType>Full</web1:LoadType>
           ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
-          <web1:OriginLatitude>0</web1:OriginLatitude>
-          <web1:OriginLongitude>0</web1:OriginLongitude>
+          <web1:OriginLatitude>${Math.round((originLat || 0) * 1000000)}</web1:OriginLatitude>
+          <web1:OriginLongitude>${Math.round((originLng || 0) * 1000000)}</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
           ${originState ? `<web1:OriginState>${originState.toLowerCase()}</web1:OriginState>` : ''}
           <web1:PageNumber>1</web1:PageNumber>
