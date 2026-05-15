@@ -232,14 +232,13 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Build request context for live load board fetch
       // datum_point is stored as "City, ST" — split to give SOAP API separate city and state
       const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
-      const [homeCityParsed = '', homeStateParsed = ''] = (fleet.home_address || '').split(',').map(s => s.trim());
       const requestContext = {
         datumCity:     datumCityParsed,
         datumState:    datumStateParsed,
         datumLat:      datumPoint.lat || 0,
         datumLng:      datumPoint.lng || 0,
-        homeCity:      fleet.home_city || homeCityParsed,
-        homeState:     fleet.home_state || homeStateParsed,
+        homeCity:      fleet.home_city || '',
+        homeState:     fleet.home_state || '',
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || 'Dry Van',

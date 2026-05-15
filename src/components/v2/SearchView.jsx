@@ -1568,14 +1568,13 @@ export function SearchView() {
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
       const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
-      const [homeCityParsed = '', homeStateParsed = ''] = (fleet.home_address || '').split(',').map(s => s.trim());
       const requestContext = {
         datumCity: datumCityParsed,
         datumState: datumStateParsed,
         datumLat: datumPoint.lat || 0,
         datumLng: datumPoint.lng || 0,
-        homeCity: fleet.home_city || homeCityParsed,
-        homeState: fleet.home_state || homeStateParsed,
+        homeCity: fleet.home_city || '',
+        homeState: fleet.home_state || '',
         homeLat: fleet.home_lat || 0,
         homeLng: fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
