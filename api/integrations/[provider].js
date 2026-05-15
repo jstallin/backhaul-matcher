@@ -557,8 +557,6 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
-        originLat: parseFloat(origin_lat) || 0,
-        originLng: parseFloat(origin_lng) || 0,
         equipmentType: equipment_type || null,
         radiusMiles: parseInt(radius_miles, 10),
       });
@@ -621,14 +619,22 @@ const STATE_NAME_TO_ABBR = {
   'Virginia':'va','Washington':'wa','West Virginia':'wv','Wisconsin':'wi','Wyoming':'wy',
 };
 
-// Parse a raw origin city/state from the client, which may be a full PC*MILER geocoded
-// string like "Dallas, Dallas County, Texas, United States" or a simple "Dallas, TX".
+// Parse a raw origin city/state which may be:
+//   "Dallas, Dallas County, Texas, United States"  (PC*MILER full label)
+//   "7663 sw 170th St Palmetto Bay, fl"            (full street address)
+//   "Greensboro, NC"                               (clean city/state)
 // Returns { city, state } with a clean city name and lowercase 2-letter state abbr.
 function parseOriginCityState(rawCity, rawState) {
   const parts = (rawCity || '').split(',').map(s => s.trim()).filter(Boolean);
-  const city = parts[0] || '';
+  let city = parts[0] || '';
 
-  // Try rawState first — accept it if it's already a short code
+  // Strip leading street address: "7663 sw 170th St Palmetto Bay" → "Palmetto Bay"
+  if (/^\d/.test(city)) {
+    const streetMatch = city.match(/\b(?:St|Ave|Blvd|Dr|Rd|Way|Ln|Ct|Pl|Pkwy|Hwy|Fwy|Loop|Trail|Ter|Trl|Cir|Pike|Pass|Run|Sq)\s+(.+)/i);
+    if (streetMatch) city = streetMatch[1].trim();
+  }
+
+  // Try rawState first — accept it if it's already a 2-letter code
   let state = (rawState || '').trim().toLowerCase();
   if (state.length === 2 && /^[a-z]{2}$/.test(state)) return { city, state };
 
@@ -649,18 +655,12 @@ function parseOriginCityState(rawCity, rawState) {
   return { city, state };
 }
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, equipmentType, radiusMiles }) {
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
 
-  // Use coordinates when available (Int32: decimal degrees × 1,000,000).
-  // When non-zero, Truckstop uses coords and ignores city/state text — this avoids
-  // failures when the datum point is a full street address or geocoded label.
-  const originLatInt = Math.round((originLat || 0) * 1000000);
-  const originLngInt = Math.round((originLng || 0) * 1000000);
-  const hasCoords = originLatInt !== 0 && originLngInt !== 0;
-
-  // Clean city/state from potentially full PC*MILER strings like
+  // Clean city/state from potentially full PC*MILER strings or street addresses:
   // "Dallas, Dallas County, Texas, United States" → { city:"Dallas", state:"tx" }
+  // "7663 sw 170th St Palmetto Bay, fl"           → { city:"Palmetto Bay", state:"fl" }
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
 
   return `<?xml version="1.0" encoding="utf-8"?>
@@ -683,12 +683,12 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationRange>0</web1:DestinationRange>
           <web1:EquipmentType>${equip}</web1:EquipmentType>
           <web1:LoadType>Full</web1:LoadType>
-          ${!hasCoords && cleanCity ? `<web1:OriginCity>${escapeXml(cleanCity)}</web1:OriginCity>` : ''}
+          ${cleanCity ? `<web1:OriginCity>${escapeXml(cleanCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
-          <web1:OriginLatitude>${originLatInt}</web1:OriginLatitude>
-          <web1:OriginLongitude>${originLngInt}</web1:OriginLongitude>
+          <web1:OriginLatitude>0</web1:OriginLatitude>
+          <web1:OriginLongitude>0</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
-          ${!hasCoords && cleanState ? `<web1:OriginState>${cleanState}</web1:OriginState>` : ''}
+          ${cleanState ? `<web1:OriginState>${cleanState}</web1:OriginState>` : ''}
           <web1:PageNumber>1</web1:PageNumber>
           <web1:PageSize>100</web1:PageSize>
           <web1:SortDescending>false</web1:SortDescending>
@@ -709,8 +709,8 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, originLat = 0, originLng = 0, equipmentType, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, equipmentType, radiusMiles });
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles });
 
   console.log('Truckstop SOAP envelope:\n', envelope);
 
