@@ -4,48 +4,152 @@
 
 | | Count |
 |---|---|
-| Previous total | 1169 |
-| New total | 1178 |
-| Net change | +9 |
-| Added | +1092 |
-| Removed | -1083 |
-| Avg pay (new file) | $2,114 |
+| Previous total | 1178 |
+| New total | 1081 |
+| Net change | -97 |
+| Added | +905 |
+| Removed | -1002 |
+| Avg pay (new file) | $2,157 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 777 |
-| Step Deck | 262 |
-| Power Only | 51 |
-| Dry Van | 49 |
-| Refrigerated | 34 |
-| Lowboy | 2 |
-| Curtain Van | 1 |
-| Other | 1 |
-| Hotshot | 1 |
+| Flatbed | 719 |
+| Step Deck | 172 |
+| Dry Van | 109 |
+| Power Only | 41 |
+| Refrigerated | 36 |
+| Hotshot | 2 |
+| Box Truck | 2 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| WA | 130 |
-| IL | 71 |
-| OR | 67 |
-| PA | 64 |
-| AR | 63 |
-| AL | 58 |
-| TX | 57 |
-| GA | 55 |
-| OH | 50 |
-| MA | 48 |
+| WA | 135 |
+| OH | 73 |
+| TX | 71 |
+| PA | 70 |
+| IL | 57 |
+| AR | 53 |
+| OR | 50 |
+| NJ | 45 |
+| AL | 43 |
+| NY | 38 |
+| MD | 36 |
 | SD | 35 |
-| CA | 33 |
-| SC | 33 |
-| MO | 31 |
-| MD | 30 |
+| FL | 33 |
+| IN | 26 |
+| GA | 26 |
 
-## Added Loads (+1092)
+## Added Loads (+905)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
+| Mount Vernon, IL → Counce, TN | Power Only | $0 | 257 |
+| Brazil, IN → South Brunswick Terrace, NJ | Power Only | $0 | 743 |
+| Lafayette, IN → Shoemakersville, PA | Power Only | $0 | 661 |
+| Lafayette, IN → Mount Vernon, TX | Power Only | $500 | 834 |
+| Whiteland, IN → Counce, TN | Power Only | $0 | 408 |
+| Whiteland, IN → Memphis, TN | Power Only | $0 | 473 |
+| Grand Rapids, MI → Counce, TN | Power Only | $0 | 673 |
+| Cleveland, OH → Burgettstown, PA | Power Only | $0 | 126 |
+| Medina, OH → Joplin, MO | Step Deck | $2,975 | 808 |
+| Medina, OH → Joplin, MO | Flatbed | $2,975 | 808 |
+| Lewiston, ID → Kansas City, KS | Power Only | $0 | 1636 |
+| Sioux Falls, SD → Elk Grove Village, IL | Power Only | $0 | 552 |
+| Olympia, WA → Elk Grove Village, IL | Power Only | $0 | 2063 |
+| Spanaway, WA → Advance, NC | Power Only | $0 | 2758 |
+| Spanaway, WA → Leesport, PA | Power Only | $0 | 2783 |
+| Cheyenne, WY → Elk Grove Village, IL | Power Only | $0 | 956 |
+| Attleboro, MA → Elk Grove Village, IL | Power Only | $0 | 998 |
+| Auburn, ME → Roxana, IL | Power Only | $0 | 1300 |
+| Elizabeth, NJ → Counce, TN | Power Only | $0 | 1002 |
+| Buffalo, NY → Mount Juliet, TN | Power Only | $2,100 | 709 |
+| Cheektowaga, NY → Mount Juliet, TN | Power Only | $1,900 | 707 |
+| Rochester, NY → Fairburn, GA | Power Only | $2,400 | 968 |
+| Rochester, NY → Mount Juliet, TN | Power Only | $2,400 | 774 |
+| Montgomery, PA → Jersey City, NJ | Flatbed | $1,522.48 | 179 |
+| Shippensburg, PA → Roxana, IL | Power Only | $0 | 749 |
+| Armorel, AR → Bartow, FL | Step Deck | $4,523.02 | 857 |
+| Armorel, AR → Bartow, FL | Flatbed | $4,523.02 | 857 |
+| Armorel, AR → Bartow, FL | Step Deck | $4,238.74 | 857 |
+| Armorel, AR → Bartow, FL | Flatbed | $4,238.74 | 857 |
+| Armorel, AR → Camanche, IA | Step Deck | $2,022.05 | 497 |
+| Armorel, AR → Camanche, IA | Flatbed | $2,022.05 | 497 |
+| Armorel, AR → Topeka, KS | Step Deck | $2,024.63 | 518 |
+| Armorel, AR → Topeka, KS | Flatbed | $2,024.63 | 518 |
+| Armorel, AR → Davison, MI | Step Deck | $4,224.47 | 718 |
+| Armorel, AR → Davison, MI | Flatbed | $4,224.47 | 718 |
+| Armorel, AR → Davison, MI | Step Deck | $3,435.96 | 718 |
+| Armorel, AR → Davison, MI | Flatbed | $3,435.96 | 718 |
+| Armorel, AR → Charlotte, NC | Step Deck | $2,815.59 | 632 |
+| Armorel, AR → Charlotte, NC | Flatbed | $2,815.59 | 632 |
+| Armorel, AR → Lebanon, OH | Step Deck | $2,391.88 | 504 |
+| Armorel, AR → Lebanon, OH | Flatbed | $2,391.88 | 504 |
+| Armorel, AR → Lebanon, OH | Step Deck | $2,286.07 | 504 |
+| Armorel, AR → Lebanon, OH | Flatbed | $2,286.07 | 504 |
+| Armorel, AR → Harrisburg, PA | Step Deck | $4,333.95 | 944 |
+| Armorel, AR → Harrisburg, PA | Flatbed | $4,333.95 | 944 |
+| Armorel, AR → Harrisburg, PA | Step Deck | $4,055.46 | 944 |
+| Armorel, AR → Harrisburg, PA | Flatbed | $4,055.46 | 944 |
+| Armorel, AR → Columbia, SC | Step Deck | $3,174.36 | 671 |
+| Armorel, AR → Columbia, SC | Flatbed | $3,174.36 | 671 |
+| Armorel, AR → Piedmont, SC | Step Deck | $2,737.18 | 592 |
+| Armorel, AR → Piedmont, SC | Flatbed | $2,737.18 | 592 |
+| Armorel, AR → Piedmont, SC | Step Deck | $2,491.89 | 592 |
+| Armorel, AR → Piedmont, SC | Flatbed | $2,491.89 | 592 |
+| Armorel, AR → Lynchburg, VA | Step Deck | $3,826.12 | 713 |
+| Armorel, AR → Lynchburg, VA | Flatbed | $3,826.12 | 713 |
+| Crossett, AR → University Park, IL | Power Only | $0 | 720 |
+| Mulberry, AR → Hampton, GA | Power Only | $0 | 672 |
+| Mulberry, AR → Las Vegas, NV | Power Only | $0 | 1317 |
+| Paragould, AR → Houston, TX | Power Only | $0 | 587 |
+| Brewton, AL → Maumelle, AR | Power Only | $0 | 564 |
+| Decatur, AL → Springfield, MA | Power Only | $0 | 1083 |
+| Fort Pierce, FL → Laredo, TX | Power Only | $0 | 1420 |
+| Jacksonville, FL → Buffalo, NY | Dry Van | $4,100 | 1046 |
+| Lakeland, FL → Conley, GA | Power Only | $0 | 438 |
+| Ghent, KY → Huger, SC | Flatbed | $2,575 | 652 |
+| Ghent, KY → Huger, SC | Step Deck | $2,575 | 652 |
+| Henderson, KY → Greenfield, IN | Power Only | $0 | 197 |
+| Paducah, KY → Humble, TX | Dry Van | $3,017 | 733 |
+| Lincolnton, NC → Jacksonville, FL | Step Deck | $3,215 | 417 |
+| Lincolnton, NC → Jacksonville, FL | Flatbed | $3,215 | 417 |
+| Washington, NC → Hanover Park, IL | Dry Van | $2,400 | 928 |
+| Columbia, SC → Fort Wayne, IN | Step Deck | $3,800 | 682 |
+| Columbia, SC → Fort Wayne, IN | Flatbed | $3,800 | 682 |
+| Columbia, SC → Albuquerque, NM | Step Deck | $7,319.42 | 1600 |
+| Columbia, SC → Albuquerque, NM | Flatbed | $7,319.42 | 1600 |
+| Columbia, SC → Albuquerque, NM | Step Deck | $8,224.3 | 1600 |
+| Columbia, SC → Albuquerque, NM | Flatbed | $8,224.3 | 1600 |
+| Spartanburg, SC → Saint Michael, MN | Dry Van | $4,000 | 1145 |
+| Trenton, SC → Jackson, TN | Power Only | $0 | 538 |
+| Knoxville, TN → New Paltz, NY | Power Only | $0 | 766 |
+| Richmond, VA → Laredo, TX | Power Only | $0 | 1676 |
+| Chicago, IL → South Whitley, IN | Flatbed | $1,250 | 141 |
+| Chicago, IL → South Whitley, IN | Flatbed | $1,425 | 141 |
+| Chicago, IL → South Whitley, IN | Flatbed | $1,450 | 141 |
+| Chicago, IL → Green Bay, WI | Flatbed | $1,350 | 208 |
+| Chicago Heights, IL → Lima, OH | Flatbed | $2,175 | 207 |
+| Rochelle, IL → Carneys Point, NJ | Refrigerated | $4,194 | 846 |
+| Rockville, IN → Loveland, CO | Flatbed | $4,350 | 1079 |
+| Merriam, KS → Waverly, NE | Flatbed | $1,250 | 202 |
+| Merriam, KS → Waverly, NE | Flatbed | $1,175 | 202 |
+| Merriam, KS → Waverly, NE | Flatbed | $1,200 | 202 |
+| Edwardsburg, MI → Merrillville, IN | Flatbed | $1,078 | 89 |
+| Marion, OH → South Wayne, WI | Flatbed | $2,450 | 438 |
+| Columbia Falls, MT → Bozeman, MT | Flatbed | $1,375 | 301 |
+| Columbia Falls, MT → Bozeman, MT | Flatbed | $1,675 | 301 |
+| Columbia Falls, MT → Bozeman, MT | Flatbed | $2,200 | 301 |
+| Gilchrist, OR → Superior, MT | Flatbed | $6,708 | 570 |
+| Gilchrist, OR → Superior, MT | Flatbed | $4,960 | 570 |
+| Chehalis, WA → Hayden, ID | Flatbed | $2,582 | 387 |
+| Chehalis, WA → Hayden, ID | Step Deck | $2,582 | 387 |
+| … and 805 more | | | |
+
+## Removed Loads (-1002)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
@@ -121,16 +225,10 @@
 | Columbus, OH → Rensselaer, IN | Step Deck | $0 | 276 |
 | South Point, OH → Gary, IN | Flatbed | $0 | 416 |
 | South Point, OH → Gary, IN | Step Deck | $0 | 416 |
-| Easton, ME → Lisbon, NH | Flatbed | $0 | 357 |
-| New Brunswick, NJ → Jaffrey, NH | Flatbed | $0 | 253 |
-| Fairless Hills, PA → Bainbridge, NY | Flatbed | $0 | 215 |
-| Hazleton, PA → Southington, CT | Flatbed | $0 | 218 |
 | McKees Rocks, PA → Carr, CO | Flatbed | $9,100 | 1428 |
 | McKees Rocks, PA → Carr, CO | Step Deck | $9,100 | 1428 |
 | McKees Rocks, PA → Cedar, UT | Flatbed | $10,200 | 1824 |
 | McKees Rocks, PA → Cedar, UT | Step Deck | $10,200 | 1824 |
-| Bellows Falls, VT → Hull, MA | Flatbed | $0 | 127 |
-| Bellows Falls, VT → Hull, MA | Step Deck | $0 | 127 |
 | Carthage, AR → Pine Bluff, AR | Flatbed | $600 | 56 |
 | Carthage, AR → Pine Bluff, AR | Step Deck | $600 | 56 |
 | Dierks, AR → Hillsboro, IL | Flatbed | $3,500 | 541 |
@@ -149,110 +247,10 @@
 | Ola, AR → Vincennes, IN | Step Deck | $3,500 | 565 |
 | Ola, AR → Knoxville, TN | Flatbed | $2,800 | 601 |
 | Ola, AR → Knoxville, TN | Step Deck | $2,800 | 601 |
-| … and 992 more | | | |
-
-## Removed Loads (-1083)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Waverly, IA → Marietta, GA | Curtain Van | $0 | 894 |
-| Waverly, IA → Marietta, GA | Flatbed | $0 | 894 |
-| Chicago Heights, IL → Bedford, IN | Dry Van | $0 | 230 |
-| Peru, IL → Fort Smith, AR | Dry Van | $0 | 642 |
-| Peru, IL → Denver, CO | Flatbed | $4,700 | 920 |
-| Peru, IL → Baltimore, MD | Flatbed | $4,300 | 770 |
-| Rockford, IL → Mount Joy, PA | Flatbed | $0 | 764 |
-| Hobart, IN → Fort Payne, AL | Dry Van | $2,200 | 596 |
-| Indianapolis, IN → Mount Vernon, IN | Power Only | $925 | 186 |
-| Indianapolis, IN → Nashville, TN | Dry Van | $0 | 290 |
-| Indianapolis, IN → Nashville, TN | Dry Van | $0 | 290 |
-| Lafayette, IN → Sauk Village, IL | Power Only | $0 | 98 |
-| Wellsville, KS → Fort Worth, TX | Flatbed | $0 | 502 |
-| Wellsville, KS → Fort Worth, TX | Step Deck | $0 | 502 |
-| Coldwater, MI → Bedford, IN | Flatbed | $0 | 260 |
-| Coldwater, MI → Bedford, IN | Step Deck | $0 | 260 |
-| Detroit, MI → Piedmont, SC | Flatbed | $0 | 687 |
-| Detroit, MI → Piedmont, SC | Step Deck | $0 | 687 |
-| Alton, MO → Houston, TX | Flatbed | $2,325 | 613 |
-| Pickering, MO → Hot Springs, AR | Step Deck | $0 | 524 |
-| Massillon, OH → Richmond, KY | Dry Van | $675 | 331 |
-| Medina, OH → Joplin, MO | Step Deck | $2,495.93 | 808 |
-| Medina, OH → Joplin, MO | Flatbed | $2,495.93 | 808 |
-| Versailles, OH → Carlstadt, NJ | Refrigerated | $7,100 | 641 |
-| Brodhead, WI → Gary, IN | Power Only | $0 | 151 |
-| Tillamook, OR → Eaton, CO | Dry Van | $0 | 1275 |
-| Sumner, WA → Bemidji, MN | Dry Van | $0 | 1575 |
-| Sumner, WA → Bemidji, MN | Dry Van | $0 | 1575 |
-| Tolland, CT → Rocky Mount, NC | Power Only | $1,900 | 594 |
-| Shrewsbury, MA → Mechanicsburg, PA | Power Only | $800 | 362 |
-| Uxbridge, MA → Mechanicsburg, PA | Power Only | $1,100 | 369 |
-| Uxbridge, MA → Tunkhannock, PA | Power Only | $0 | 287 |
-| Ward Hill, MA → Columbus, OH | Dry Van | $1,700 | 781 |
-| Newark, NJ → South Bend, IN | Flatbed | $0 | 692 |
-| Newark, NJ → South Bend, IN | Step Deck | $0 | 692 |
-| West Seneca, NY → Faribault, MN | Refrigerated | $3,300 | 850 |
-| Bradford, PA → Lima, OH | Power Only | $800 | 359 |
-| Bradford, PA → Seville, OH | Power Only | $700 | 229 |
-| Bradford, PA → Tunkhannock, PA | Power Only | $800 | 206 |
-| Duncansville, PA → Fall River, MA | Flatbed | $0 | 469 |
-| Duncansville, PA → Fall River, MA | Hotshot | $0 | 469 |
-| Duncansville, PA → Fall River, MA | Step Deck | $0 | 469 |
-| Midland, PA → Sparrows Point, MD | Dry Van | $0 | 298 |
-| Armorel, AR → Camanche, IA | Step Deck | $2,211.4 | 497 |
-| Armorel, AR → Camanche, IA | Flatbed | $2,211.4 | 497 |
-| El Dorado, AR → Camden, AR | Dry Van | $0 | 36 |
-| Lewisville, AR → Lafayette, AL | Dry Van | $3,075 | 613 |
-| Lewisville, AR → Lafayette, AL | Dry Van | $2,750 | 613 |
-| Lewisville, AR → Keller, TX | Flatbed | $1,300 | 239 |
-| Lewisville, AR → Keller, TX | Flatbed | $1,300 | 239 |
-| West Memphis, AR → Saint Peters, MO | Power Only | $900 | 292 |
-| Tucson, AZ → Salt Lake City, UT | Step Deck | $5,700 | 775 |
-| Tucson, AZ → Salt Lake City, UT | Flatbed | $5,700 | 775 |
-| Yucca, AZ → Fresno, CA | Step Deck | $2,480.27 | 422 |
-| Yucca, AZ → Fresno, CA | Flatbed | $2,480.27 | 422 |
-| Chino, CA → Vista, CA | Refrigerated | $1,300 | 78 |
-| Fresno, CA → Des Moines, IA | Dry Van | $0 | 1808 |
-| Irvine, CA → Branford, CT | Dry Van | $0 | 2865 |
-| Los Angeles, CA → El Paso, TX | Dry Van | $0 | 813 |
-| San Bernardino, CA → Kent, WA | Dry Van | $0 | 1174 |
-| Denver, CO → Salt Lake City, UT | Power Only | $2,000 | 517 |
-| Chopin, LA → Baldwin, FL | Flatbed | $0 | 733 |
-| Chopin, LA → Baldwin, FL | Step Deck | $0 | 733 |
-| Delhi, LA → Carlsbad, NM | Step Deck | $6,935.74 | 797 |
-| Delhi, LA → Carlsbad, NM | Flatbed | $6,935.74 | 797 |
-| Port Fourchon, LA → Hahnville, LA | Flatbed | $0 | 79 |
-| Port Fourchon, LA → Hahnville, LA | Step Deck | $0 | 79 |
-| Ruston, LA → Waterloo, IN | Flatbed | $3,800 | 899 |
-| Marshall, TX → Alvarado, TX | Flatbed | $0 | 185 |
-| Mont Belvieu, TX → Desoto, TX | Flatbed | $0 | 262 |
-| Mont Belvieu, TX → Desoto, TX | Hotshot | $0 | 262 |
-| Mont Belvieu, TX → Desoto, TX | Step Deck | $0 | 262 |
-| Von Ormy, TX → Mesquite, TX | Power Only | $1,200 | 297 |
-| Wilmer, TX → Laredo, TX | Power Only | $0 | 424 |
-| Salt Lake City, UT → Los Angeles, CA | Dry Van | $0 | 692 |
-| Tooele, UT → Woodway, TX | Step Deck | $5,375 | 1413 |
-| Tooele, UT → Woodway, TX | Flatbed | $5,375 | 1413 |
-| Cullman, AL → Columbus, MS | Power Only | $900 | 125 |
-| Huntsville, AL → Perth Amboy, NJ | Dry Van | $0 | 901 |
-| Northport, AL → Denton, TX | Flatbed | $0 | 624 |
-| Northport, AL → Denton, TX | Step Deck | $0 | 624 |
-| Northport, AL → Wichita Falls, TX | Flatbed | $0 | 730 |
-| Northport, AL → Wichita Falls, TX | Step Deck | $0 | 730 |
-| Tuscumbia, AL → Woodbine, KY | Dry Van | $2,800 | 360 |
-| Brooksville, FL → Whitehall, PA | Dry Van | $0 | 1069 |
-| Davenport, FL → Lebanon, TN | Power Only | $0 | 697 |
-| Fort Pierce, FL → Pooler, GA | Power Only | $0 | 359 |
-| Jacksonville, FL → Charlotte, NC | Refrigerated | $1,200 | 389 |
-| Jacksonville, FL → Charlotte, NC | Dry Van | $1,200 | 389 |
-| Ocala, FL → Kissimmee, FL | Dry Van | $0 | 93 |
-| Ocala, FL → Riverview, FL | Dry Van | $0 | 103 |
-| Odessa, FL → Selma, AL | Box Truck | $0 | 485 |
-| Odessa, FL → Selma, AL | Refrigerated | $0 | 485 |
-| Orlando, FL → Bloomingdale, GA | Power Only | $700 | 281 |
-| Orlando, FL → Buford, GA | Flatbed | $700 | 475 |
-| Orlando, FL → Buford, GA | Hotshot | $700 | 475 |
-| Perry, FL → Middletown, CT | Dry Van | $0 | 1162 |
-| Acworth, GA → Elk River, MN | Step Deck | $6,074.5 | 1129 |
-| Acworth, GA → Elk River, MN | Flatbed | $6,074.5 | 1129 |
-| Atlanta, GA → Portsmouth, OH | Flatbed | $2,500 | 463 |
-| … and 983 more | | | |
+| Plumerville, AR → Caddo Mills, TX | Flatbed | $1,425 | 317 |
+| Plumerville, AR → Caddo Mills, TX | Step Deck | $1,425 | 317 |
+| Plumerville, AR → Harrisonburg, VA | Flatbed | $5,800 | 921 |
+| Plumerville, AR → Harrisonburg, VA | Step Deck | $5,800 | 921 |
+| Plumerville, AR → Roanoke, VA | Flatbed | $4,500 | 823 |
+| Plumerville, AR → Roanoke, VA | Step Deck | $4,500 | 823 |
+| … and 902 more | | | |
