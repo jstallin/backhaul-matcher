@@ -313,7 +313,10 @@ function Toggle({ checked, onChange, label }) {
 
 const BLANK_FORM = {
   requestName: '',
-  datumPoint: '',
+  datumCity: '',
+  datumState: '',
+  datumLat: null,
+  datumLng: null,
   selectedFleetId: '',
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
@@ -327,7 +330,10 @@ const BLANK_FORM = {
 function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [form, setForm] = useState(() => initialValues ? {
     requestName: initialValues.request_name || '',
-    datumPoint: initialValues.datum_point || '',
+    datumCity: initialValues.datum_city || '',
+    datumState: initialValues.datum_state || '',
+    datumLat: initialValues.datum_lat || null,
+    datumLng: initialValues.datum_lng || null,
     selectedFleetId: initialValues.fleet_id || '',
     equipmentAvailableDate: initialValues.equipment_available_date || '',
     equipmentNeededDate: initialValues.equipment_needed_date || '',
@@ -339,14 +345,30 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   } : { ...BLANK_FORM, selectedFleetId: fleets.length === 1 ? fleets[0].id : '' });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [datumVerified, setDatumVerified] = useState(!!(initialValues?.datum_lat));
   const { user } = useAuth();
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
+  const handleDatumBlur = async () => {
+    const city = form.datumCity.trim();
+    const state = form.datumState.trim();
+    if (!city || !state) return;
+    setDatumVerified(false);
+    try {
+      const result = await geocodeAddress(`${city}, ${state}`);
+      if (result?.lat && result?.lng) {
+        setForm(f => ({ ...f, datumLat: result.lat, datumLng: result.lng }));
+        setDatumVerified(true);
+      }
+    } catch { /* geocode failure is non-fatal */ }
+  };
+
   const validate = () => {
     const e = {};
     if (!form.requestName.trim()) e.requestName = 'Required';
-    if (!form.datumPoint.trim()) e.datumPoint = 'Required — enter "City, ST" or ZIP code';
+    if (!form.datumCity.trim()) e.datumCity = 'Required';
+    if (!form.datumState.trim() || form.datumState.trim().length !== 2) e.datumState = '2-letter state required';
     if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -357,9 +379,15 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     if (!validate()) return;
     setSaving(true);
     try {
+      const city = form.datumCity.trim();
+      const state = form.datumState.trim().toUpperCase();
       const payload = {
         request_name: form.requestName.trim(),
-        datum_point: form.datumPoint.trim(),
+        datum_point: `${city}, ${state}`,
+        datum_city: city,
+        datum_state: state,
+        datum_lat: form.datumLat || null,
+        datum_lng: form.datumLng || null,
         fleet_id: form.selectedFleetId,
         equipment_available_date: form.equipmentAvailableDate || null,
         equipment_needed_date: form.equipmentNeededDate || null,
@@ -401,9 +429,30 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
             <ErrorMsg msg={errors.requestName} />
           </Field>
 
-          <Field label="Datum Point (Return Location)">
-            <Input value={form.datumPoint} onChange={e => set('datumPoint', e.target.value)} placeholder="City, ST or ZIP" />
-            <ErrorMsg msg={errors.datumPoint} />
+          <Field label="Datum City">
+            <Input
+              value={form.datumCity}
+              onChange={e => { set('datumCity', e.target.value); setDatumVerified(false); }}
+              onBlur={handleDatumBlur}
+              placeholder="e.g. Burlington"
+            />
+            <ErrorMsg msg={errors.datumCity} />
+          </Field>
+          <Field label="Datum State">
+            <Input
+              value={form.datumState}
+              onChange={e => { set('datumState', e.target.value.toUpperCase().slice(0, 2)); setDatumVerified(false); }}
+              onBlur={handleDatumBlur}
+              placeholder="NC"
+              maxLength={2}
+              style={{ textTransform: 'uppercase' }}
+            />
+            <ErrorMsg msg={errors.datumState} />
+            {datumVerified && (
+              <span style={{ fontSize: '11px', color: '#22c55e', marginTop: '4px', display: 'block' }}>
+                ✓ Location verified
+              </span>
+            )}
           </Field>
 
           <Field label="Fleet">
@@ -1528,7 +1577,11 @@ export function SearchView() {
     try {
       const [fleetData, geocoded] = await Promise.all([
         db.fleets.getById(request.fleet_id),
-        geocodeAddress(request.datum_point),
+        (request.datum_lat && request.datum_lng)
+          ? Promise.resolve({ lat: request.datum_lat, lng: request.datum_lng, label: request.datum_point })
+          : geocodeAddress(request.datum_city && request.datum_state
+              ? `${request.datum_city}, ${request.datum_state}`
+              : request.datum_point),
       ]);
 
       const fleet = fleetData;
@@ -1567,10 +1620,9 @@ export function SearchView() {
       const homeRadiusMiles = geocodeFailed ? 200 : 100;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
-      const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
       const requestContext = {
-        datumCity: datumCityParsed,
-        datumState: datumStateParsed,
+        datumCity: request.datum_city || (request.datum_point || '').split(',')[0]?.trim() || '',
+        datumState: request.datum_state || (request.datum_point || '').split(',')[1]?.trim() || '',
         datumLat: datumPoint.lat || 0,
         datumLng: datumPoint.lng || 0,
         homeCity: fleet.home_city || '',
