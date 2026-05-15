@@ -557,6 +557,8 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
+        originLat: parseFloat(origin_lat) || 0,
+        originLng: parseFloat(origin_lng) || 0,
         equipmentType: equipment_type || null,
         radiusMiles: parseInt(radius_miles, 10),
       });
@@ -606,8 +608,60 @@ const TS_TO_EQUIP = {
 // All major equipment codes sent when no specific type is requested
 const ALL_MAJOR_EQUIP = 'V F R SD LB';
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles }) {
+const STATE_NAME_TO_ABBR = {
+  'Alabama':'al','Alaska':'ak','Arizona':'az','Arkansas':'ar','California':'ca',
+  'Colorado':'co','Connecticut':'ct','Delaware':'de','Florida':'fl','Georgia':'ga',
+  'Hawaii':'hi','Idaho':'id','Illinois':'il','Indiana':'in','Iowa':'ia','Kansas':'ks',
+  'Kentucky':'ky','Louisiana':'la','Maine':'me','Maryland':'md','Massachusetts':'ma',
+  'Michigan':'mi','Minnesota':'mn','Mississippi':'ms','Missouri':'mo','Montana':'mt',
+  'Nebraska':'ne','Nevada':'nv','New Hampshire':'nh','New Jersey':'nj','New Mexico':'nm',
+  'New York':'ny','North Carolina':'nc','North Dakota':'nd','Ohio':'oh','Oklahoma':'ok',
+  'Oregon':'or','Pennsylvania':'pa','Rhode Island':'ri','South Carolina':'sc',
+  'South Dakota':'sd','Tennessee':'tn','Texas':'tx','Utah':'ut','Vermont':'vt',
+  'Virginia':'va','Washington':'wa','West Virginia':'wv','Wisconsin':'wi','Wyoming':'wy',
+};
+
+// Parse a raw origin city/state from the client, which may be a full PC*MILER geocoded
+// string like "Dallas, Dallas County, Texas, United States" or a simple "Dallas, TX".
+// Returns { city, state } with a clean city name and lowercase 2-letter state abbr.
+function parseOriginCityState(rawCity, rawState) {
+  const parts = (rawCity || '').split(',').map(s => s.trim()).filter(Boolean);
+  const city = parts[0] || '';
+
+  // Try rawState first — accept it if it's already a short code
+  let state = (rawState || '').trim().toLowerCase();
+  if (state.length === 2 && /^[a-z]{2}$/.test(state)) return { city, state };
+
+  // rawState is a county name or full name — search all parts of rawCity for a state
+  for (const part of parts.slice(1)) {
+    const lower = part.toLowerCase();
+    if (lower.length === 2 && /^[a-z]{2}$/.test(lower)) { state = lower; break; }
+    const abbr = STATE_NAME_TO_ABBR[part];
+    if (abbr) { state = abbr; break; }
+  }
+
+  // Last resort: check rawState as a full state name
+  if (!state || state.length !== 2) {
+    const abbr = STATE_NAME_TO_ABBR[rawState?.trim() || ''];
+    if (abbr) state = abbr;
+  }
+
+  return { city, state };
+}
+
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, equipmentType, radiusMiles }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
+
+  // Use coordinates when available (Int32: decimal degrees × 1,000,000).
+  // When non-zero, Truckstop uses coords and ignores city/state text — this avoids
+  // failures when the datum point is a full street address or geocoded label.
+  const originLatInt = Math.round((originLat || 0) * 1000000);
+  const originLngInt = Math.round((originLng || 0) * 1000000);
+  const hasCoords = originLatInt !== 0 && originLngInt !== 0;
+
+  // Clean city/state from potentially full PC*MILER strings like
+  // "Dallas, Dallas County, Texas, United States" → { city:"Dallas", state:"tx" }
+  const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope
@@ -630,12 +684,12 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationRange>0</web1:DestinationRange>
           <web1:EquipmentType>${equip}</web1:EquipmentType>
           <web1:LoadType>Full</web1:LoadType>
-          ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
+          ${!hasCoords && cleanCity ? `<web1:OriginCity>${escapeXml(cleanCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
-          <web1:OriginLatitude>0</web1:OriginLatitude>
-          <web1:OriginLongitude>0</web1:OriginLongitude>
+          <web1:OriginLatitude>${originLatInt}</web1:OriginLatitude>
+          <web1:OriginLongitude>${originLngInt}</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
-          ${originState ? `<web1:OriginState>${originState.toLowerCase()}</web1:OriginState>` : ''}
+          ${!hasCoords && cleanState ? `<web1:OriginState>${cleanState}</web1:OriginState>` : ''}
           <web1:PageNumber>1</web1:PageNumber>
           <web1:PageSize>100</web1:PageSize>
           <web1:SortDescending>false</web1:SortDescending>
@@ -656,8 +710,8 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles });
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, originLat = 0, originLng = 0, equipmentType, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, equipmentType, radiusMiles });
 
   console.log('Truckstop SOAP envelope:\n', envelope);
 
