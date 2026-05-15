@@ -557,8 +557,6 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
-        equipmentType: equipment_type,
-        pickupDate: pickup_date,
         radiusMiles: parseInt(radius_miles, 10),
       });
 
@@ -604,12 +602,7 @@ const TS_TO_EQUIP = {
   'IM': 'Intermodal',
 };
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, pickupDate, radiusMiles }) {
-  const equip = equipmentType ? EQUIP_TO_TS[equipmentType] || equipmentType : '';
-  const pickupXml = pickupDate
-    ? `<web1:PickupDates><arr:dateTime>${pickupDate}</arr:dateTime></web1:PickupDates>`
-    : '';
-
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, radiusMiles }) {
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -629,7 +622,6 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationLatitude>0</web1:DestinationLatitude>
           <web1:DestinationLongitude>0</web1:DestinationLongitude>
           <web1:DestinationRange>0</web1:DestinationRange>
-          ${equip ? `<web1:EquipmentType>${equip}</web1:EquipmentType>` : ''}
           <web1:LoadType>Full</web1:LoadType>
           ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
@@ -639,7 +631,6 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           ${originState ? `<web1:OriginState>${originState.toLowerCase()}</web1:OriginState>` : ''}
           <web1:PageNumber>1</web1:PageNumber>
           <web1:PageSize>100</web1:PageSize>
-          ${pickupXml}
           <web1:SortDescending>false</web1:SortDescending>
         </web1:Criteria>
       </v12:searchRequest>
@@ -658,8 +649,8 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, pickupDate, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, pickupDate, radiusMiles });
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, radiusMiles });
 
   console.log('Truckstop SOAP envelope:\n', envelope);
 
