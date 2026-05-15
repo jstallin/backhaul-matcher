@@ -750,6 +750,14 @@ const TS_PAGE_SIZE = 100;
 const TS_MAX_PAGES = 5;
 
 async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
+  // Validate city/state before making any SOAP calls.
+  // ZIP-only datum points ("27215") and missing states can't be searched by city name.
+  const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
+  if (!cleanState || /^\d{5}$/.test(cleanCity)) {
+    console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
+    return [];
+  }
+
   const args = { integrationId, username, password, originCity, originState, equipmentType, radiusMiles };
 
   // Fetch page 1 first to check if there's anything at all, then fan out to remaining pages
