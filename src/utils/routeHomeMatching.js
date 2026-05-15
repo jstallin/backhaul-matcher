@@ -247,14 +247,14 @@ export const findRouteHomeBackhauls = async (
       if (!inCorridor) continue;
     }
 
-    // 3. Corridor check on delivery — ensures load moves driver along the route, not off-corridor.
-    // Same state-centroid fallback when exact coordinates are missing.
-    const deliveryLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? null;
-    const deliveryLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? null;
-    if (deliveryLat !== null && deliveryLng !== null) {
+    // 3. Corridor check on delivery — only when precise coordinates are available.
+    // State-centroid fallback is too coarse for delivery: a load to "Jacksonville, FL"
+    // would use the FL centroid (Orlando area) and fail even though Jacksonville is on-route.
+    // When delivery lat/lng is missing, PC*MILER OOR miles handles the filtering instead.
+    if (load.delivery_lat !== null && load.delivery_lng !== null) {
       const inCorridor = useCorridor
-        ? isPointInCorridor(deliveryLat, deliveryLng, routeData.corridor)
-        : isAlongRoute(deliveryLat, deliveryLng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+        ? isPointInCorridor(load.delivery_lat, load.delivery_lng, routeData.corridor)
+        : isAlongRoute(load.delivery_lat, load.delivery_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
       if (!inCorridor) continue;
     }
 
