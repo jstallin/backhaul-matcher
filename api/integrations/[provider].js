@@ -655,7 +655,7 @@ function parseOriginCityState(rawCity, rawState) {
   return { city, state };
 }
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles }) {
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber = 1 }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
 
   // Clean city/state from potentially full PC*MILER strings or street addresses:
@@ -689,7 +689,7 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:OriginLongitude>0</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
           ${cleanState ? `<web1:OriginState>${cleanState}</web1:OriginState>` : ''}
-          <web1:PageNumber>1</web1:PageNumber>
+          <web1:PageNumber>${pageNumber}</web1:PageNumber>
           <web1:PageSize>100</web1:PageSize>
           <web1:SortDescending>false</web1:SortDescending>
         </web1:Criteria>
@@ -709,18 +709,15 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles });
+// Fetch a single page from Truckstop and return { loads, pageCount }
+async function fetchTruckstopPage({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber });
 
-  console.log('Truckstop SOAP envelope:\n', envelope);
+  if (pageNumber === 1) console.log('Truckstop SOAP envelope:\n', envelope);
 
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'text/xml',
-      'Accept': 'text/xml',
-      'SOAPAction': TS_SOAP_ACTION,
-    },
+    headers: { 'Content-Type': 'text/xml', 'Accept': 'text/xml', 'SOAPAction': TS_SOAP_ACTION },
     body: envelope,
   });
 
@@ -729,31 +726,64 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   if (!tsRes.ok) {
     console.error('Truckstop SOAP error:', tsRes.status, responseText);
     if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) {
-      const err = new Error('Unauthorized');
-      err.code = 'UNAUTHORIZED';
-      throw err;
+      const err = new Error('Unauthorized'); err.code = 'UNAUTHORIZED'; throw err;
     }
     throw new Error(`Truckstop API returned ${tsRes.status}`);
   }
 
   const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
   const parsed = parser.parse(responseText);
-
   const result = parsed?.Envelope?.Body?.GetLoadSearchResultsResponse?.GetLoadSearchResultsResult;
 
-  // Surface API-level errors (bad credentials, invalid integration ID, etc.)
   const errors = result?.Errors;
   if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
     console.error('[Truckstop] API errors in response:', JSON.stringify(errors));
-    const err = new Error('Truckstop API returned errors');
-    err.code = 'UNAUTHORIZED';
-    throw err;
+    const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
   }
 
   const rawLoads = toArray(result?.SearchResults?.LoadSearchItem);
-  const totalCount = result?.SearchResults?.TotalCount ?? result?.TotalCount ?? null;
-  console.log(`[Truckstop] Parsed ${rawLoads.length} load records from SOAP response${totalCount !== null ? ` (total available: ${totalCount})` : ''}`);
-  return rawLoads.map(normalizeTsLoad).filter(Boolean);
+  return { loads: rawLoads, pageCount: rawLoads.length };
+}
+
+// Fetch up to MAX_PAGES pages in parallel, deduplicate, and return normalized loads.
+const TS_PAGE_SIZE = 100;
+const TS_MAX_PAGES = 5;
+
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
+  const args = { integrationId, username, password, originCity, originState, equipmentType, radiusMiles };
+
+  // Fetch page 1 first to check if there's anything at all, then fan out to remaining pages
+  const page1 = await fetchTruckstopPage({ ...args, pageNumber: 1 });
+  if (page1.pageCount < TS_PAGE_SIZE) {
+    // Fewer than a full page — no more pages exist
+    const loads = page1.loads.map(normalizeTsLoad).filter(Boolean);
+    console.log(`[Truckstop] ${loads.length} loads from 1 page`);
+    return loads;
+  }
+
+  // Full first page — fetch remaining pages in parallel
+  const pageNumbers = Array.from({ length: TS_MAX_PAGES - 1 }, (_, i) => i + 2);
+  const remaining = await Promise.allSettled(
+    pageNumbers.map(p => fetchTruckstopPage({ ...args, pageNumber: p }))
+  );
+
+  const allRaw = [...page1.loads];
+  for (const r of remaining) {
+    if (r.status === 'fulfilled') allRaw.push(...r.value.loads);
+  }
+
+  // Deduplicate by load ID
+  const seen = new Set();
+  const deduped = allRaw.filter(l => {
+    const id = l?.ID;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+
+  const loads = deduped.map(normalizeTsLoad).filter(Boolean);
+  console.log(`[Truckstop] ${loads.length} loads from ${TS_MAX_PAGES} pages (${allRaw.length} raw, ${allRaw.length - deduped.length} dupes removed)`);
+  return loads;
 }
 
 // Ensure a value is always an array (SOAP returns a single object when there's 1 result)
