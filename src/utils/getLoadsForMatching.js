@@ -38,8 +38,12 @@ async function getTruckstopLoads(userId, requestContext = {}) {
     const {
       datumCity = '',
       datumState = '',
+      datumLat = 0,
+      datumLng = 0,
       homeCity = '',
       homeState = '',
+      homeLat = 0,
+      homeLng = 0,
       equipmentType = 'Dry Van',
       pickupDate = ''
     } = requestContext;
@@ -48,8 +52,12 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       action:         'loads',
       origin_city:    datumCity,
       origin_state:   datumState,
+      origin_lat:     datumLat,
+      origin_lng:     datumLng,
       dest_city:      homeCity,
       dest_state:     homeState,
+      dest_lat:       homeLat,
+      dest_lng:       homeLng,
       equipment_type: equipmentType,
       pickup_date:    pickupDate,
       radius_miles:   '150'

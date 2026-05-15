@@ -544,7 +544,9 @@ async function handleTruckstop(req, res, supabase, user) {
 
     const {
       origin_city, origin_state,
+      origin_lat, origin_lng,
       dest_city, dest_state,
+      dest_lat, dest_lng,
       equipment_type,
       pickup_date,
       radius_miles = '150'
@@ -555,8 +557,12 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
+        originLat: parseFloat(origin_lat) || 0,
+        originLng: parseFloat(origin_lng) || 0,
         destCity: dest_city,
         destState: dest_state,
+        destLat: parseFloat(dest_lat) || 0,
+        destLng: parseFloat(dest_lng) || 0,
         equipmentType: equipment_type,
         pickupDate: pickup_date,
         radiusMiles: parseInt(radius_miles, 10),
@@ -604,7 +610,7 @@ const TS_TO_EQUIP = {
   'IM': 'Intermodal',
 };
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles }) {
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, destCity, destState, destLat, destLng, equipmentType, pickupDate, radiusMiles }) {
   const equip = equipmentType ? EQUIP_TO_TS[equipmentType] || equipmentType : '';
   const pickupXml = pickupDate
     ? `<web1:PickupDates><arr:dateTime>${pickupDate}</arr:dateTime></web1:PickupDates>`
@@ -627,16 +633,16 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
         <web1:Criteria>
           ${destCity  ? `<web1:DestinationCity>${escapeXml(destCity)}</web1:DestinationCity>` : ''}
           <web1:DestinationCountry>usa</web1:DestinationCountry>
-          <web1:DestinationLatitude>0</web1:DestinationLatitude>
-          <web1:DestinationLongitude>0</web1:DestinationLongitude>
+          <web1:DestinationLatitude>${destLat || 0}</web1:DestinationLatitude>
+          <web1:DestinationLongitude>${destLng || 0}</web1:DestinationLongitude>
           <web1:DestinationRange>${radiusMiles}</web1:DestinationRange>
           ${destState ? `<web1:DestinationState>${destState.toLowerCase()}</web1:DestinationState>` : ''}
           ${equip     ? `<web1:EquipmentType>${equip}</web1:EquipmentType>` : ''}
           <web1:LoadType>Full</web1:LoadType>
           ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
-          <web1:OriginLatitude>0</web1:OriginLatitude>
-          <web1:OriginLongitude>0</web1:OriginLongitude>
+          <web1:OriginLatitude>${originLat || 0}</web1:OriginLatitude>
+          <web1:OriginLongitude>${originLng || 0}</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
           ${originState ? `<web1:OriginState>${originState.toLowerCase()}</web1:OriginState>` : ''}
           <web1:PageNumber>1</web1:PageNumber>
@@ -660,8 +666,8 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, destCity, destState, equipmentType, pickupDate, radiusMiles });
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, originLat = 0, originLng = 0, destCity, destState, destLat = 0, destLng = 0, equipmentType, pickupDate, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, originLat, originLng, destCity, destState, destLat, destLng, equipmentType, pickupDate, radiusMiles });
 
   console.log('Truckstop SOAP envelope:\n', envelope);
 
