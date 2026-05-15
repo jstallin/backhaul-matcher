@@ -751,7 +751,8 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   }
 
   const rawLoads = toArray(result?.SearchResults?.LoadSearchItem);
-  console.log(`[Truckstop] Parsed ${rawLoads.length} load records from SOAP response`);
+  const totalCount = result?.SearchResults?.TotalCount ?? result?.TotalCount ?? null;
+  console.log(`[Truckstop] Parsed ${rawLoads.length} load records from SOAP response${totalCount !== null ? ` (total available: ${totalCount})` : ''}`);
   return rawLoads.map(normalizeTsLoad).filter(Boolean);
 }
 
