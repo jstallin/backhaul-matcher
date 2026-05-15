@@ -235,27 +235,35 @@ export const findRouteHomeBackhauls = async (
     if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
     // Note: trailer type is soft-ranked in the sort step, not hard-filtered here
 
-    // 2. Corridor check on pickup — must be along the datum→home route.
-    // When exact coordinates are missing, fall back to the state centroid so loads
-    // from the wrong region (e.g. Illinois on a GA→FL route) are still rejected.
-    const pickupLat = load.pickup_lat ?? STATE_CENTROIDS[load.pickup_state]?.lat ?? null;
-    const pickupLng = load.pickup_lng ?? STATE_CENTROIDS[load.pickup_state]?.lng ?? null;
-    if (pickupLat !== null && pickupLng !== null) {
+    // 2. Corridor check on pickup — only when precise coordinates are available.
+    // State-centroid fallback is skipped here: live load boards (Truckstop) already
+    // constrain pickup to OriginRange miles of the datum, so city-level precision
+    // isn't needed. PC*MILER OOR miles handles any remaining geographic filtering.
+    if (load.pickup_lat !== null && load.pickup_lng !== null) {
       const inCorridor = useCorridor
-        ? isPointInCorridor(pickupLat, pickupLng, routeData.corridor)
-        : isAlongRoute(pickupLat, pickupLng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
+        ? isPointInCorridor(load.pickup_lat, load.pickup_lng, routeData.corridor)
+        : isAlongRoute(load.pickup_lat, load.pickup_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
       if (!inCorridor) continue;
     }
 
-    // 3. Corridor check on delivery — only when precise coordinates are available.
-    // State-centroid fallback is too coarse for delivery: a load to "Jacksonville, FL"
-    // would use the FL centroid (Orlando area) and fail even though Jacksonville is on-route.
-    // When delivery lat/lng is missing, PC*MILER OOR miles handles the filtering instead.
+    // 3. Delivery check — strategy depends on coordinate availability.
     if (load.delivery_lat !== null && load.delivery_lng !== null) {
+      // Precise coords: full corridor check.
       const inCorridor = useCorridor
         ? isPointInCorridor(load.delivery_lat, load.delivery_lng, routeData.corridor)
         : isAlongRoute(load.delivery_lat, load.delivery_lng, datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng, corridorWidthMiles);
       if (!inCorridor) continue;
+    } else if (load.delivery_state) {
+      // No precise coords: use state centroid proximity to home.
+      // A corridor check on a centroid is too aggressive (rejects Jacksonville FL because
+      // the FL centroid is near Orlando). Instead, reject states whose centroid is farther
+      // from home than the datum→home distance — this catches obvious off-route states
+      // (Indiana, West Virginia, Maryland on an NC→GA run) without being too narrow.
+      const centroid = STATE_CENTROIDS[load.delivery_state];
+      if (centroid) {
+        const centroidToHome = calculateDistance(centroid.lat, centroid.lng, fleetHome.lat, fleetHome.lng);
+        if (centroidToHome > haversineDirect) continue;
+      }
     }
 
     corridorCandidates.push(load);
