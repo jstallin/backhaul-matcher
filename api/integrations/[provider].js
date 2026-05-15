@@ -557,6 +557,7 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
+        equipmentType: equipment_type || null,
         radiusMiles: parseInt(radius_miles, 10),
       });
 
@@ -602,7 +603,12 @@ const TS_TO_EQUIP = {
   'IM': 'Intermodal',
 };
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, radiusMiles }) {
+// All major equipment codes sent when no specific type is requested
+const ALL_MAJOR_EQUIP = 'V F R SD LB';
+
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles }) {
+  const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
+
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope
   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -622,6 +628,7 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationLatitude>0</web1:DestinationLatitude>
           <web1:DestinationLongitude>0</web1:DestinationLongitude>
           <web1:DestinationRange>0</web1:DestinationRange>
+          <web1:EquipmentType>${equip}</web1:EquipmentType>
           <web1:LoadType>Full</web1:LoadType>
           ${originCity  ? `<web1:OriginCity>${escapeXml(originCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
@@ -649,8 +656,8 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, radiusMiles = 150 }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, radiusMiles });
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles });
 
   console.log('Truckstop SOAP envelope:\n', envelope);
 
