@@ -62,12 +62,17 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         dotNumber: fleet.dot_number || '',
         phoneNumber: fleet.phone_number || '',
         email: fleet.email || '',
-        homeAddress: fleet.home_address || '',
+        homeStreet: '',
+        homeCity: fleet.home_city || '',
+        homeState: fleet.home_state || '',
         homeLat: fleet.home_lat || '',
         homeLng: fleet.home_lng || ''
       });
       if (fleet.home_lat && fleet.home_lng) {
-        setGeocodeStatus({ ok: true, label: fleet.home_address || 'Verified' });
+        const label = fleet.home_city && fleet.home_state
+          ? `${fleet.home_city}, ${fleet.home_state}`
+          : fleet.home_address || 'Verified';
+        setGeocodeStatus({ ok: true, label });
       }
       loadFleetProfile(fleet.id);
     } else {
@@ -77,7 +82,9 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         dotNumber: '',
         phoneNumber: '',
         email: '',
-        homeAddress: '',
+        homeStreet: '',
+        homeCity: '',
+        homeState: '',
         homeLat: '',
         homeLng: ''
       });
@@ -138,10 +145,11 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     try {
       let { homeLat, homeLng } = formData;
 
-      // If address changed or coords not yet set, geocode via PC*MILER before saving
-      if (formData.homeAddress && (!homeLat || !homeLng)) {
+      // If coords not yet set, geocode from composed address before saving
+      const homeAddress = composeHomeAddress();
+      if (homeAddress && (!homeLat || !homeLng)) {
         setGeocoding(true);
-        const result = await geocodeAddress(formData.homeAddress.trim());
+        const result = await geocodeAddress(homeAddress);
         setGeocoding(false);
         if (result) {
           homeLat = result.lat;
@@ -149,7 +157,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           setFormData(prev => ({ ...prev, homeLat, homeLng }));
           setGeocodeStatus({ ok: true, label: result.label });
         } else {
-          setGeocodeStatus({ ok: false, label: 'Could not verify address — check spelling or try City, ST format' });
+          setGeocodeStatus({ ok: false, label: 'Could not verify — check city and state spelling' });
         }
       }
 
@@ -159,7 +167,9 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         dot_number: formData.dotNumber,
         phone_number: formData.phoneNumber,
         email: formData.email,
-        home_address: formData.homeAddress,
+        home_address: homeAddress,
+        home_city: formData.homeCity.trim() || null,
+        home_state: formData.homeState.trim().toUpperCase() || null,
         home_lat: homeLat ? parseFloat(homeLat) : null,
         home_lng: homeLng ? parseFloat(homeLng) : null
       };
@@ -218,9 +228,18 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     setRateData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleAddressBlur = async () => {
-    const addr = formData.homeAddress.trim();
-    if (!addr) return;
+  const composeHomeAddress = () => {
+    const street = formData.homeStreet.trim();
+    const city = formData.homeCity.trim();
+    const state = formData.homeState.trim();
+    if (!city || !state) return '';
+    return street ? `${street}, ${city}, ${state}` : `${city}, ${state}`;
+  };
+
+  const handleHomeCityStateBlur = async () => {
+    if (!formData.homeCity.trim() || !formData.homeState.trim()) return;
+    if (formData.homeLat && formData.homeLng) return; // already verified
+    const addr = composeHomeAddress();
     setGeocoding(true);
     setGeocodeStatus(null);
     const result = await geocodeAddress(addr);
@@ -228,7 +247,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       setFormData(prev => ({ ...prev, homeLat: result.lat, homeLng: result.lng }));
       setGeocodeStatus({ ok: true, label: result.label });
     } else {
-      setGeocodeStatus({ ok: false, label: 'Could not verify address — check spelling or try City, ST format' });
+      setGeocodeStatus({ ok: false, label: 'Could not verify — check city and state spelling' });
     }
     setGeocoding(false);
   };
@@ -425,21 +444,47 @@ export const FleetSetup = ({ fleet, onComplete }) => {
             <label style={labelStyle}>Home (Fleet Base Location) *</label>
             <input
               type="text"
-              value={formData.homeAddress}
+              value={formData.homeStreet}
               onChange={(e) => {
-                // Clear verified coords when address is edited
                 setGeocodeStatus(null);
-                setFormData(prev => ({ ...prev, homeAddress: e.target.value, homeLat: '', homeLng: '' }));
+                setFormData(prev => ({ ...prev, homeStreet: e.target.value, homeLat: '', homeLng: '' }));
               }}
-              onBlur={handleAddressBlur}
-              required
               disabled={saving || geocoding}
-              placeholder="e.g., Davidson, NC or 123 Fleet Dr, Davidson, NC 28036"
-              style={inputStyle}
+              placeholder="Street address (optional)"
+              style={{ ...inputStyle, marginBottom: '8px' }}
             />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                value={formData.homeCity}
+                onChange={(e) => {
+                  setGeocodeStatus(null);
+                  setFormData(prev => ({ ...prev, homeCity: e.target.value, homeLat: '', homeLng: '' }));
+                }}
+                onBlur={handleHomeCityStateBlur}
+                required
+                disabled={saving || geocoding}
+                placeholder="City *"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <input
+                type="text"
+                value={formData.homeState}
+                onChange={(e) => {
+                  setGeocodeStatus(null);
+                  setFormData(prev => ({ ...prev, homeState: e.target.value.toUpperCase().slice(0, 2), homeLat: '', homeLng: '' }));
+                }}
+                onBlur={handleHomeCityStateBlur}
+                required
+                disabled={saving || geocoding}
+                placeholder="ST *"
+                maxLength={2}
+                style={{ ...inputStyle, width: '64px', flexShrink: 0 }}
+              />
+            </div>
             <div style={{ marginTop: '8px', fontSize: '13px' }}>
               {geocoding && (
-                <span style={{ color: colors.text.tertiary }}>Verifying address via PC*MILER...</span>
+                <span style={{ color: colors.text.tertiary }}>Verifying via PC*MILER...</span>
               )}
               {!geocoding && geocodeStatus?.ok && (
                 <span style={{ color: colors.accent.success, fontWeight: 600 }}>
@@ -458,7 +503,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               )}
               {!geocoding && !geocodeStatus && (
                 <span style={{ color: colors.text.tertiary }}>
-                  Enter an address then tab away to verify coordinates via PC*MILER
+                  Enter city and state — coordinates verified via PC*MILER on tab
                 </span>
               )}
             </div>
