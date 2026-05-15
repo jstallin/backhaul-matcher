@@ -678,7 +678,6 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
         <web:Password>${escapeXml(password)}</web:Password>
         <web:UserName>${escapeXml(username)}</web:UserName>
         <web1:Criteria>
-          <web1:DestinationCountry>usa</web1:DestinationCountry>
           <web1:DestinationLatitude>0</web1:DestinationLatitude>
           <web1:DestinationLongitude>0</web1:DestinationLongitude>
           <web1:DestinationRange>0</web1:DestinationRange>
