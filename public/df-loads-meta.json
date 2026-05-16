@@ -1,40 +1,40 @@
 {
   "runDate": "2026-05-16",
-  "runAt": "2026-05-16T14:30:39.319Z",
-  "totalLoads": 1180,
-  "previousTotal": 1203,
-  "netChange": -23,
-  "added": 700,
-  "removed": 723,
-  "avgPay": 2491,
-  "loadsWithPay": 605,
+  "runAt": "2026-05-16T17:23:53.244Z",
+  "totalLoads": 1152,
+  "previousTotal": 1180,
+  "netChange": -28,
+  "added": 567,
+  "removed": 595,
+  "avgPay": 2396,
+  "loadsWithPay": 719,
   "equipmentTypes": [
     [
       "Flatbed",
-      462
+      468
     ],
     [
       "Dry Van",
-      340
+      330
     ],
     [
       "Refrigerated",
-      185
+      211
     ],
     [
       "Step Deck",
-      166
+      122
     ],
     [
       "Power Only",
-      13
+      10
     ],
     [
       "Hotshot",
-      9
+      6
     ],
     [
-      "Container",
+      "Other",
       2
     ],
     [
@@ -42,38 +42,42 @@
       2
     ],
     [
-      "Other",
+      "Lowboy",
       1
     ]
   ],
   "topPickupStates": [
     [
       "TX",
-      134
+      90
+    ],
+    [
+      "OH",
+      82
     ],
     [
       "WA",
-      78
-    ],
-    [
-      "MI",
-      63
-    ],
-    [
-      "MO",
-      59
-    ],
-    [
-      "FL",
-      58
+      82
     ],
     [
       "OR",
-      58
+      75
+    ],
+    [
+      "CA",
+      73
+    ],
+    [
+      "FL",
+      70
+    ],
+    [
+      "MO",
+      62
     ],
     [
       "GA",
-      53
+      55
     ],
     [
       "MA",
@@ -81,51 +85,47 @@
     ],
     [
       "PA",
-      44
-    ],
-    [
-      "IL",
-      42
-    ],
-    [
-      "AL",
-      41
-    ],
-    [
-      "NJ",
-      40
-    ],
-    [
-      "SC",
-      38
+      46
     ],
     [
       "SD",
+      40
+    ],
+    [
+      "MI",
       37
     ],
     [
-      "CA",
+      "ID",
+      35
+    ],
+    [
+      "NJ",
       34
     ],
     [
-      "OH",
-      33
-    ],
-    [
-      "TN",
-      32
-    ],
-    [
-      "ID",
-      31
+      "IL",
+      29
     ],
     [
       "MD",
-      30
+      28
     ],
     [
       "NY",
-      22
+      27
+    ],
+    [
+      "SC",
+      26
+    ],
+    [
+      "TN",
+      25
+    ],
+    [
+      "AZ",
+      23
     ]
   ]
 }
