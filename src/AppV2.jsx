@@ -29,7 +29,7 @@ const t = tokens;
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-function Card({ children, style = {} }) {
+function Card({ children, style = {}, ...rest }) {
   return (
     <div style={{
       background: t.colors.page.cardBg,
@@ -37,7 +37,7 @@ function Card({ children, style = {} }) {
       borderRadius: t.radius['2xl'],
       boxShadow: t.shadow.card,
       ...style,
-    }}>
+    }} {...rest}>
       {children}
     </div>
   );
@@ -355,7 +355,7 @@ function DashboardView({ onNavigate }) {
             <SectionLabel>Quick Actions</SectionLabel>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {[
-                { label: 'New Search Request', view: 'search',    color: t.colors.accent.blue },
+                { label: 'New Backhaul Request', view: 'search',    color: t.colors.accent.blue },
                 { label: 'New Estimate',        view: 'estimates', color: t.colors.accent.purple },
                 { label: 'Manage Fleets',       view: 'fleets',   color: t.colors.accent.green },
                 { label: 'View Reports',        view: 'reports',  color: t.colors.accent.amber },
@@ -405,11 +405,13 @@ function DashboardView({ onNavigate }) {
                     {recentActivity.map((r, idx) => (
                       <div
                         key={r.id || idx}
+                        onClick={() => onNavigate('search')}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '11px 0',
                           borderBottom: idx < recentActivity.length - 1 ? `1px solid ${t.colors.border.default}` : 'none',
                           gap: '12px',
+                          cursor: 'pointer',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>

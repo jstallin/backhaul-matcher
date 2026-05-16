@@ -190,7 +190,7 @@ function ProfileTab({ fleet, onSaved }) {
       homeAddress: fleet.home_address ?? '',
       homeLat: fleet.home_lat ?? null,
       homeLng: fleet.home_lng ?? null,
-      trailerType: fleet.trailer_type ?? '',
+      trailerType: fp?.trailer_type ?? '',
       revenueSplitCarrier: fp?.revenue_split_carrier ?? 70,
       mileageRate: fp?.mileage_rate ?? '',
       stopRate: fp?.stop_rate ?? '',
@@ -238,9 +238,9 @@ function ProfileTab({ fleet, onSaved }) {
         name: form.name, mc_number: form.mcNumber, dot_number: form.dotNumber,
         phone_number: form.phoneNumber, email: form.email,
         home_address: form.homeAddress, home_lat: form.homeLat, home_lng: form.homeLng,
-        trailer_type: form.trailerType,
       };
       const profileData = {
+        trailer_type: form.trailerType || null,
         revenue_split_carrier: Number(form.revenueSplitCarrier) || 70,
         mileage_rate: Number(form.mileageRate) || null,
         stop_rate: Number(form.stopRate) || null,

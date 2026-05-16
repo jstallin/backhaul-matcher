@@ -2,7 +2,7 @@
 -- Stores loads imported from load boards via Chrome extension
 
 CREATE TABLE imported_loads (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   fleet_id UUID REFERENCES fleets(id) ON DELETE CASCADE,
 

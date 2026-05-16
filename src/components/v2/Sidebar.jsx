@@ -15,7 +15,7 @@ const LayoutGrid = ({ size = 18, color = 'currentColor' }) => (
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', Icon: LayoutGrid },
-  { id: 'search',    label: 'Search',    Icon: Search },
+  { id: 'search',    label: 'Backhaul Requests', Icon: Search },
   { id: 'loads',     label: 'Loads',     Icon: Package },
   { id: 'fleets',    label: 'Fleets',    Icon: Truck },
   { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
