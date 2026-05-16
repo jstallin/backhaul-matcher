@@ -168,8 +168,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         phone_number: formData.phoneNumber,
         email: formData.email,
         home_address: homeAddress,
-        home_city: formData.homeCity.trim() || null,
-        home_state: formData.homeState.trim().toUpperCase() || null,
         home_lat: homeLat ? parseFloat(homeLat) : null,
         home_lng: homeLng ? parseFloat(homeLng) : null
       };
