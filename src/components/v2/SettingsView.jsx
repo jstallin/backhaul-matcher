@@ -488,7 +488,10 @@ function OrganizationSection({ user }) {
     setLoadingMembers(true);
     setMembersError('');
     try {
-      const res = await fetch('/api/orgs/members');
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/orgs/members', {
+        headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : {},
+      });
       if (!res.ok) throw new Error('Not available');
       const data = await res.json();
       setMembers(Array.isArray(data) ? data : data.members || []);
@@ -505,9 +508,10 @@ function OrganizationSection({ user }) {
     setInviting(true);
     setInviteFeedback(null);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/orgs/invite', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
       if (!res.ok) {
