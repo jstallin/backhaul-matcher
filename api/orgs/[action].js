@@ -306,7 +306,8 @@ async function handleInviteToken(req, res, supabase) {
       org_id: invite.org_id,
       inviter_name: inviterName,
       email: invite.email,
-      expires_at: invite.expires_at
+      expires_at: invite.expires_at,
+      is_new_user: invite.is_new_user
     });
   } catch (err) {
     console.error('Error validating invite token:', err);
@@ -380,15 +381,14 @@ async function handleRespond(req, res, supabase, user) {
 // ── GET/DELETE /api/orgs/members ──────────────────────────────────────────────
 
 async function handleMembers(req, res, supabase, user) {
-  // Verify caller is org admin
   const { data: callerMembership } = await supabase
     .from('org_memberships')
     .select('role, org_id')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!callerMembership || callerMembership.role !== 'admin') {
-    return res.status(403).json({ error: 'Only org admins can manage members' });
+  if (!callerMembership) {
+    return res.status(403).json({ error: 'You are not a member of any organization' });
   }
 
   const orgId = callerMembership.org_id;
@@ -423,6 +423,9 @@ async function handleMembers(req, res, supabase, user) {
   }
 
   if (req.method === 'DELETE') {
+    if (callerMembership.role !== 'admin') {
+      return res.status(403).json({ error: 'Only org admins can remove members' });
+    }
     const { userId: targetUserId } = req.body || {};
     if (!targetUserId) return res.status(400).json({ error: 'userId is required' });
     if (targetUserId === user.id) return res.status(400).json({ error: 'Cannot remove yourself' });

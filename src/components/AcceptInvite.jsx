@@ -14,11 +14,15 @@ export const AcceptInvite = () => {
   const [result, setResult] = useState(null);   // { action: 'accepted'|'declined' } | null
   const [error, setError] = useState(null);
 
-  // Login form state (shown when not logged in)
+  // Login form state (shown when not logged in — existing users)
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
+
+  // Magic-link state (shown for new invited users who have no password)
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -77,6 +81,26 @@ export const AcceptInvite = () => {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setResponding(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setSendingOtp(true);
+    setLoginError('');
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: invite.email,
+        options: {
+          emailRedirectTo: window.location.href,
+          shouldCreateUser: false
+        }
+      });
+      if (error) throw error;
+      setOtpSent(true);
+    } catch (err) {
+      setLoginError(err.message || 'Failed to send sign-in link. Please try again.');
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -204,27 +228,78 @@ export const AcceptInvite = () => {
     );
   }
 
-  // Show login form if not authenticated
+  // Show unauthenticated state — different flow for new vs existing users
   if (!user) {
+    const inviteBanner = (
+      <div style={{
+        background: `${colors.accent.primary}15`,
+        border: `1px solid ${colors.accent.primary}40`,
+        borderRadius: '10px',
+        padding: '16px 20px',
+        marginBottom: '28px',
+        textAlign: 'left'
+      }}>
+        <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: colors.text.secondary }}>
+          <strong style={{ color: colors.text.primary }}>{invite?.inviter_name}</strong> has invited you to join
+        </p>
+        <p style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
+          {invite?.org_name}
+        </p>
+      </div>
+    );
+
+    // New user — no password yet; send a magic sign-in link
+    if (invite?.is_new_user) {
+      return (
+        <div style={containerStyle}>
+          <div style={cardStyle}>
+            <div style={logoStyle}><span style={{ color: colors.accent.primary }}>Haul</span> Monitor</div>
+            {inviteBanner}
+
+            {otpSent ? (
+              <>
+                <div style={{ fontSize: '40px', marginBottom: '16px' }}>📬</div>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
+                  Check your inbox
+                </h3>
+                <p style={{ color: colors.text.secondary, fontSize: '14px', lineHeight: 1.6 }}>
+                  We sent a sign-in link to <strong style={{ color: colors.text.primary }}>{invite.email}</strong>.
+                  Click it to verify your email, then you'll be brought back here to accept the invite.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: colors.text.secondary }}>
+                  Verify your email to continue
+                </h3>
+                <p style={{ color: colors.text.secondary, fontSize: '14px', margin: '0 0 20px 0' }}>
+                  We'll send a sign-in link to <strong style={{ color: colors.text.primary }}>{invite?.email}</strong>.
+                </p>
+                {loginError && (
+                  <div style={{ padding: '10px', background: `${colors.accent.danger}20`, border: `1px solid ${colors.accent.danger}40`, borderRadius: '8px', color: colors.accent.danger, fontSize: '13px', marginBottom: '16px' }}>
+                    {loginError}
+                  </div>
+                )}
+                <button
+                  onClick={handleSendOtp}
+                  disabled={sendingOtp}
+                  style={{ width: '100%', padding: '13px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#0d1117', fontSize: '15px', fontWeight: 700, cursor: sendingOtp ? 'not-allowed' : 'pointer', opacity: sendingOtp ? 0.7 : 1 }}
+                >
+                  {sendingOtp ? 'Sending...' : 'Send Sign-In Link'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Existing user — show password login form
     return (
       <div style={containerStyle}>
         <div style={cardStyle}>
           <div style={logoStyle}><span style={{ color: colors.accent.primary }}>Haul</span> Monitor</div>
-          <div style={{
-            background: `${colors.accent.primary}15`,
-            border: `1px solid ${colors.accent.primary}40`,
-            borderRadius: '10px',
-            padding: '16px 20px',
-            marginBottom: '28px',
-            textAlign: 'left'
-          }}>
-            <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: colors.text.secondary }}>
-              <strong style={{ color: colors.text.primary }}>{invite?.inviter_name}</strong> has invited you to join
-            </p>
-            <p style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
-              {invite?.org_name}
-            </p>
-          </div>
+          {inviteBanner}
 
           <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: 600, color: colors.text.secondary }}>
             Log in to accept
