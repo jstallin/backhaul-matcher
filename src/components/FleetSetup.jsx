@@ -5,6 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { geocodeAddress } from '../utils/pcMilerClient';
 
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+];
+
 const PADD_REGIONS = [
   { value: '', label: 'Select PADD Region' },
   { value: 'national', label: 'National Average' },
@@ -56,22 +63,26 @@ export const FleetSetup = ({ fleet, onComplete }) => {
 
   useEffect(() => {
     if (fleet) {
+      // home_city/home_state don't exist as columns; parse from home_address ("City, ST" or "Street, City, ST")
+      const addrParts = (fleet.home_address || '').split(',').map(s => s.trim()).filter(Boolean);
+      const parsedState = addrParts.length >= 1 ? addrParts[addrParts.length - 1].slice(0, 2).toUpperCase() : '';
+      const parsedCity  = addrParts.length >= 2 ? addrParts[addrParts.length - 2] : '';
+      const parsedStreet = addrParts.length >= 3 ? addrParts.slice(0, addrParts.length - 2).join(', ') : '';
+
       setFormData({
         name: fleet.name || '',
         mcNumber: fleet.mc_number || '',
         dotNumber: fleet.dot_number || '',
         phoneNumber: fleet.phone_number || '',
         email: fleet.email || '',
-        homeStreet: '',
-        homeCity: fleet.home_city || '',
-        homeState: fleet.home_state || '',
+        homeStreet: parsedStreet,
+        homeCity: parsedCity,
+        homeState: parsedState,
         homeLat: fleet.home_lat || '',
         homeLng: fleet.home_lng || ''
       });
       if (fleet.home_lat && fleet.home_lng) {
-        const label = fleet.home_city && fleet.home_state
-          ? `${fleet.home_city}, ${fleet.home_state}`
-          : fleet.home_address || 'Verified';
+        const label = fleet.home_address || 'Verified';
         setGeocodeStatus({ ok: true, label });
       }
       loadFleetProfile(fleet.id);
@@ -465,20 +476,20 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 placeholder="City *"
                 style={{ ...inputStyle, flex: 1 }}
               />
-              <input
-                type="text"
+              <select
                 value={formData.homeState}
                 onChange={(e) => {
                   setGeocodeStatus(null);
-                  setFormData(prev => ({ ...prev, homeState: e.target.value.toUpperCase().slice(0, 2), homeLat: '', homeLng: '' }));
+                  setFormData(prev => ({ ...prev, homeState: e.target.value, homeLat: '', homeLng: '' }));
                 }}
                 onBlur={handleHomeCityStateBlur}
                 required
                 disabled={saving || geocoding}
-                placeholder="ST *"
-                maxLength={2}
-                style={{ ...inputStyle, width: '64px', flexShrink: 0 }}
-              />
+                style={{ ...inputStyle, width: '90px', flexShrink: 0, cursor: 'pointer', appearance: 'auto' }}
+              >
+                <option value="">ST *</option>
+                {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             <div style={{ marginTop: '8px', fontSize: '13px' }}>
               {geocoding && (

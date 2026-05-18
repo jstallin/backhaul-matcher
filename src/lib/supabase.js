@@ -167,8 +167,7 @@ export const db = {
     async update(fleetId, updates) {
       const { data, error } = await supabase
         .from('fleet_profiles')
-        .update(updates)
-        .eq('fleet_id', fleetId)
+        .upsert({ fleet_id: fleetId, ...updates }, { onConflict: 'fleet_id' })
         .select()
         .single();
       if (error) throw error;

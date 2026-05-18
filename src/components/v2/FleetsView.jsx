@@ -146,6 +146,13 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
 
 // ─── TRAILER TYPE OPTIONS ─────────────────────────────────────────────────────
 
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+];
+
 const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
@@ -575,7 +582,7 @@ function DriversTab({ fleet, onChanged }) {
             </Field>
             <Field label="Phone"><Input value={form.phone} onChange={set('phone')} placeholder="(555) 867-5309" /></Field>
             <Field label="CDL Number"><Input value={form.cdlNumber} onChange={set('cdlNumber')} placeholder="D1234567" /></Field>
-            <Field label="CDL State"><Input value={form.cdlState} onChange={(v) => set('cdlState')(v.toUpperCase().slice(0, 2))} placeholder="NC" /></Field>
+            <Field label="CDL State"><SelectInput value={form.cdlState} onChange={set('cdlState')} options={US_STATES} /></Field>
             <Field label="Assigned Truck"><SelectInput value={form.assignedTruckId} onChange={set('assignedTruckId')} options={truckOptions} /></Field>
             <Field label="Status"><SelectInput value={form.status} onChange={set('status')} options={DRIVER_STATUSES} /></Field>
           </FormGrid>
