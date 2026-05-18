@@ -785,6 +785,7 @@ function normalizeTsLoad(load) {
 
     return {
       load_id:          String(load.ID),
+      source:           'truckstop',
       broker:           load.CompanyName ?? 'Truckstop',
       freight_type:     'General',
       equipment_type:   TS_TO_EQUIP[equipCode] ?? equipCode,

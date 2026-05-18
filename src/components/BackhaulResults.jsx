@@ -275,23 +275,20 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
                     {getRankLabel(index)}
                   </div>
-                  {match.source && match.source !== 'demo' && LOAD_BOARD_CONFIG[match.source] && (() => {
-                    const board = LOAD_BOARD_CONFIG[match.source];
-                    const href = board.url(match.source_load_id || match.load_id, match);
-                    return (
-                      <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ padding: '4px 10px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: colors.accent.primary, letterSpacing: '0.03em', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}15`; e.currentTarget.style.borderColor = colors.accent.primary; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; e.currentTarget.style.borderColor = colors.border.primary; }}
-                      >
-                        {board.name} ↗
-                      </a>
-                    );
-                  })()}
+                  {match.source === 'truckstop' && match.load_id && (
+                    <a
+                      href={`https://truckstop.com/load-board/load-details/${match.load_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      title="View load on Truckstop"
+                      style={{ padding: '4px 8px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary, textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s', lineHeight: 1 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = colors.accent.primary; e.currentTarget.style.borderColor = colors.accent.primary; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = colors.text.secondary; e.currentTarget.style.borderColor = colors.border.primary; }}
+                    >
+                      ↗
+                    </a>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {match.has_rate_config ? (
@@ -795,11 +792,11 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
       {haulMatch && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => !completing && setHaulMatch(null)}>
           <div style={{ background: colors.background.overlay, borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '100%', border: `1px solid ${colors.border.primary}` }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>Confirm Haul</h3>
-            <p style={{ margin: '0 0 24px', fontSize: '14px', color: colors.text.secondary }}>
-              Record this as a completed haul? This will log the net revenue to your dashboard.
+            <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>Haul This Load</h3>
+            <p style={{ margin: '0 0 20px', fontSize: '14px', color: colors.text.secondary }}>
+              Book the load on Truckstop, then confirm here to log it to your dashboard.
             </p>
-            <div style={{ background: colors.background.secondary, borderRadius: '10px', padding: '16px', marginBottom: '24px' }}>
+            <div style={{ background: colors.background.secondary, borderRadius: '10px', padding: '16px', marginBottom: '20px' }}>
               <div style={{ fontWeight: 700, marginBottom: '4px', color: colors.text.primary }}>{haulMatch.origin.address} → {haulMatch.destination.address}</div>
               <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '12px' }}>{haulMatch.additionalMiles} out-of-route miles</div>
               <div style={{ display: 'flex', gap: '24px' }}>
@@ -813,13 +810,23 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                 </div>
               </div>
             </div>
+            {haulMatch.source === 'truckstop' && haulMatch.load_id && (
+              <a
+                href={`https://truckstop.com/load-board/load-details/${haulMatch.load_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'block', marginBottom: '20px', padding: '12px 16px', background: `${colors.accent.primary}15`, border: `1px solid ${colors.accent.primary}40`, borderRadius: '10px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}
+              >
+                Open Load in Truckstop ↗
+              </a>
+            )}
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={handleHaulConfirm}
                 disabled={completing}
                 style={{ flex: 1, padding: '12px 20px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#fff', fontSize: '15px', fontWeight: 800, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
               >
-                {completing ? 'Recording...' : 'Confirm Haul'}
+                {completing ? 'Recording...' : 'Mark as Hauled'}
               </button>
               <button
                 onClick={() => setHaulMatch(null)}
