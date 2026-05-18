@@ -20,7 +20,7 @@ import { Resend } from 'resend';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const APP_URL = process.env.VITE_APP_URL || 'https://app.haulmonitor.cloud';
+const APP_URL = process.env.VITE_APP_URL || 'https://haulmonitor.cloud';
 
 const FREE_EMAIL_DOMAINS = new Set([
   'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
