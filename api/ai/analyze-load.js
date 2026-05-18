@@ -154,10 +154,16 @@ async function executeTool(name, input, supabase, userId) {
       case 'list_fleets': {
         const { data, error } = await supabase
           .from('fleets')
-          .select('id, name, trailer_type, home_city, home_state')
+          .select('id, name, home_address, fleet_profiles(trailer_type)')
           .eq('user_id', userId);
         if (error) return { error: error.message };
-        return { fleets: data || [] };
+        const fleets = (data || []).map(f => ({
+          id: f.id,
+          name: f.name,
+          home_address: f.home_address,
+          trailer_type: f.fleet_profiles?.[0]?.trailer_type || null,
+        }));
+        return { fleets };
       }
 
       case 'create_fleet': {
