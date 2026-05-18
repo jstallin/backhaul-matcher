@@ -666,7 +666,10 @@ function escapeXml(str) {
 async function fetchTruckstopPage({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber }) {
   const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber });
 
-  if (pageNumber === 1) console.log('Truckstop SOAP envelope:\n', envelope);
+  if (pageNumber === 1) {
+    const sanitizedEnvelope = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
+    console.log('Truckstop SOAP envelope (page 1):\n', sanitizedEnvelope);
+  }
 
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
@@ -674,6 +677,7 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
     body: envelope,
   });
 
+  console.log(`Truckstop SOAP response: HTTP ${tsRes.status} (page ${pageNumber})`);
   const responseText = await tsRes.text();
 
   if (!tsRes.ok) {

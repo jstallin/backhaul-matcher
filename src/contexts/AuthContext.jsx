@@ -99,7 +99,8 @@ export const AuthProvider = ({ children }) => {
     },
     signOut: async () => {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // AuthSessionMissingError means the session was already gone — sign-out succeeded
+      if (error && error.name !== 'AuthSessionMissingError') throw error;
     },
     resetPassword: async (email) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {

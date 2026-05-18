@@ -28,7 +28,11 @@ export const AvatarMenu = ({ onNavigateToSettings }) => {
 
   const handleSignOut = async () => {
     setIsOpen(false);
-    await signOut();
+    try {
+      await signOut();
+    } catch (err) {
+      console.warn('Sign-out error (session may have already expired):', err.message);
+    }
   };
 
   const handleSettings = () => {
