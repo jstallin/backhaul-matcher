@@ -66,7 +66,7 @@ const LOAD_BOARD_CONFIG = {
   },
   truckstop: {
     name: 'Truckstop',
-    url: (id) => id ? `https://truckstop.com/load-board/load-details/${id}` : 'https://truckstop.com/',
+    url: (id) => id ? `https://fm.truckstop.com/PostingDetails/Loads/${id}` : 'https://fm.truckstop.com/',
   },
 };
 
@@ -277,7 +277,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                   {match.source === 'truckstop' && match.load_id && (
                     <a
-                      href={`https://truckstop.com/load-board/load-details/${match.load_id}`}
+                      href={`https://fm.truckstop.com/PostingDetails/Loads/${match.load_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -812,7 +812,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
             </div>
             {haulMatch.source === 'truckstop' && haulMatch.load_id && (
               <a
-                href={`https://truckstop.com/load-board/load-details/${haulMatch.load_id}`}
+                href={`https://fm.truckstop.com/PostingDetails/Loads/${haulMatch.load_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ display: 'block', marginBottom: '20px', padding: '12px 16px', background: `${colors.accent.primary}15`, border: `1px solid ${colors.accent.primary}40`, borderRadius: '10px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}
