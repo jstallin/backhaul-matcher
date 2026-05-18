@@ -38,7 +38,7 @@
       "schedule": "0 14 * * *"
     },
     {
-      "path": "/api/cron/trimble-monthly-report",
+      "path": "/api/cron/refresh-requests?action=trimble-report",
       "schedule": "0 8 1 * *"
     }
   ]

@@ -85,7 +85,8 @@ export default async function handler(req, res) {
     case 'role':            return handleRole(req, res, supabase, user);
     case 'all':             return handleAll(req, res, supabase, user);
     case 'pilot':           return handlePilot(req, res, supabase, user);
-    case 'admin-settings':  return handleAdminSettings(req, res, supabase, user);
+    case 'admin-settings':    return handleAdminSettings(req, res, supabase, user);
+    case 'trimble-actuals':   return handleTrimbleActuals(req, res, supabase, user);
     default:
       return res.status(404).json({ error: `Unknown action: ${action}` });
   }
@@ -625,6 +626,53 @@ async function handleAdminSettings(req, res, supabase, user) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
+}
+
+// ── GET /api/orgs/trimble-actuals?month=YYYY-MM ───────────────────────────────
+// App admin only. Returns all completed (hauled) loads for the given month.
+
+async function handleTrimbleActuals(req, res, supabase, user) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { data: adminRow } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  const monthParam = req.query.month;
+  let start;
+  if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    start = new Date(`${monthParam}-01T00:00:00.000Z`);
+  } else {
+    const now = new Date();
+    start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  }
+  const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+
+  const { data: loads, error } = await supabase
+    .from('backhaul_requests')
+    .select('completed_at, hauled_load_id, hauled_load_source')
+    .eq('status', 'completed')
+    .gte('completed_at', start.toISOString())
+    .lt('completed_at', end.toISOString())
+    .order('completed_at', { ascending: true });
+
+  if (error) {
+    console.error('[trimble-actuals] query error:', error.message);
+    return res.status(500).json({ error: 'Failed to query loads' });
+  }
+
+  return res.status(200).json({
+    month: start.toISOString().slice(0, 7),
+    count: loads.length,
+    loads: loads.map(r => ({
+      completed_at: r.completed_at,
+      load_id: r.hauled_load_id || null,
+      source: r.hauled_load_source || null,
+    })),
+  });
 }
 
 // ── Email template ────────────────────────────────────────────────────────────

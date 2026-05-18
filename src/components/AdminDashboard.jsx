@@ -228,7 +228,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const fetchTrimbleActuals = async () => {
     if (!session?.access_token) return;
     try {
-      const res = await fetch('/api/reports/trimble-actuals', {
+      const res = await fetch('/api/orgs/trimble-actuals', {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
       if (!res.ok) return;
