@@ -20,9 +20,16 @@ export const AcceptInvite = () => {
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
-  // Magic-link state (shown for new invited users who have no password)
+  // Magic-link state (shown for unauthenticated new users)
   const [otpSent, setOtpSent] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+
+  // Password-setting state (shown for authenticated new users before accepting)
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [passwordSet, setPasswordSet] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -101,6 +108,29 @@ export const AcceptInvite = () => {
       setLoginError(err.message || 'Failed to send sign-in link. Please try again.');
     } finally {
       setSendingOtp(false);
+    }
+  };
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+    setSettingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordSet(true);
+    } catch (err) {
+      setPasswordError(err.message || 'Failed to set password. Please try again.');
+    } finally {
+      setSettingPassword(false);
     }
   };
 
@@ -223,6 +253,54 @@ export const AcceptInvite = () => {
               Go to Haul Monitor →
             </a>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated new user must set a password before accepting
+  if (user && invite?.is_new_user && !passwordSet) {
+    return (
+      <div style={containerStyle}>
+        <div style={cardStyle}>
+          <div style={logoStyle}><span style={{ color: colors.accent.primary }}>Haul</span> Monitor</div>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>🔐</div>
+          <h2 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700, color: colors.text.primary }}>
+            Create your password
+          </h2>
+          <p style={{ color: colors.text.secondary, fontSize: '14px', margin: '0 0 24px 0' }}>
+            Set a password for <strong style={{ color: colors.text.primary }}>{user.email}</strong> to finish joining {invite?.org_name}.
+          </p>
+          <form onSubmit={handleSetPassword}>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="New password (min 8 characters)"
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '12px', background: colors.background.primary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '16px', background: colors.background.primary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+            />
+            {passwordError && (
+              <div style={{ padding: '10px', background: `${colors.accent.danger}20`, border: `1px solid ${colors.accent.danger}40`, borderRadius: '8px', color: colors.accent.danger, fontSize: '13px', marginBottom: '16px' }}>
+                {passwordError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={settingPassword}
+              style={{ width: '100%', padding: '13px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#0d1117', fontSize: '15px', fontWeight: 700, cursor: settingPassword ? 'not-allowed' : 'pointer', opacity: settingPassword ? 0.7 : 1 }}
+            >
+              {settingPassword ? 'Setting password...' : 'Set Password & Continue'}
+            </button>
+          </form>
         </div>
       </div>
     );
