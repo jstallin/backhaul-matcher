@@ -201,16 +201,15 @@ describe('findRouteHomeBackhauls — equipment filter', () => {
     expect(opportunities).toHaveLength(1);
   });
 
-  it('includes a Flatbed load for a Dry Van fleet but marks it as a type mismatch', async () => {
+  it('excludes a Flatbed load for a Dry Van fleet (hard equipment filter)', async () => {
     const { opportunities } = await findRouteHomeBackhauls(
       STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET,
       [makeLoad({ equipment_type: 'Flatbed' })]
     );
-    expect(opportunities).toHaveLength(1);
-    expect(opportunities[0].trailer_type_match).toBe(false);
+    expect(opportunities).toHaveLength(0);
   });
 
-  it('ranks type-matched loads above mismatched loads', async () => {
+  it('excludes mismatched loads and returns only type-matched loads', async () => {
     const { opportunities } = await findRouteHomeBackhauls(
       STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET,
       [
@@ -218,11 +217,9 @@ describe('findRouteHomeBackhauls — equipment filter', () => {
         makeLoad({ load_id: 'match',    equipment_type: 'Dry Van',  total_revenue: 100  }),
       ]
     );
-    expect(opportunities).toHaveLength(2);
+    expect(opportunities).toHaveLength(1);
     expect(opportunities[0].load_id).toBe('match');
     expect(opportunities[0].trailer_type_match).toBe(true);
-    expect(opportunities[1].load_id).toBe('mismatch');
-    expect(opportunities[1].trailer_type_match).toBe(false);
   });
 
   it('rejects a load over the weight limit', async () => {
