@@ -98,9 +98,15 @@ export const AuthProvider = ({ children }) => {
       return data;
     },
     signOut: async () => {
-      // scope:'local' clears the browser session without a server round-trip,
-      // avoiding Firefox's 403 on the global revocation endpoint.
+      // Best-effort server revocation — ignore errors (403/session_not_found means already expired)
       await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+      // Manually clear state so AuthWrapper shows login regardless of whether
+      // Supabase fired the SIGNED_OUT event (Firefox drops it on 403)
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      setOrg(null);
+      setIsOrgAdmin(false);
     },
     resetPassword: async (email) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
