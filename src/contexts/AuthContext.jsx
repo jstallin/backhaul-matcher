@@ -98,9 +98,9 @@ export const AuthProvider = ({ children }) => {
       return data;
     },
     signOut: async () => {
-      const { error } = await supabase.auth.signOut();
-      // AuthSessionMissingError means the session was already gone — sign-out succeeded
-      if (error && error.name !== 'AuthSessionMissingError') throw error;
+      // Supabase clears the local session regardless of server response.
+      // A 403 or AuthSessionMissingError just means the token was already expired — still logged out.
+      await supabase.auth.signOut().catch(() => {});
     },
     resetPassword: async (email) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
