@@ -4,3 +4,5 @@
 - [AIM Integration](project_aim_integration.md) — pending agreement → DAT/Truckstop as production load sources; DF becomes testing-only
 - [SOC 2 Readiness](reference_uptime_status.md) — self-assessment in progress; Better Uptime status page live
 - [v2 UI Switchover Plan](project_v2_switchover.md) — when switching v2 to default: update user guide screenshots + update tests
+- [PostgREST auth.users join fails](feedback_supabase_postrest_auth_join.md) — never join to auth.users via PostgREST; use auth.admin.getUserById in serverless functions
+- [Vercel SPA routes need explicit rewrites](feedback_vercel_spa_routes.md) — every new client-side route needs an entry in vercel.json rewrites

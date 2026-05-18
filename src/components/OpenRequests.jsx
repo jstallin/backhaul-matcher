@@ -241,7 +241,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeState:     fleet.home_state || '',
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
-        equipmentType: fleetProfile.trailerType || 'Dry Van',
+        equipmentType: rawProfile?.trailer_type || 'Dry Van',
         pickupDate:    request.equipment_available_date || ''
       };
 
