@@ -20,6 +20,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/accept-invite",
+      "destination": "/app.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy.html"
     },
