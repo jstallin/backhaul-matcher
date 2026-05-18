@@ -98,9 +98,9 @@ export const AuthProvider = ({ children }) => {
       return data;
     },
     signOut: async () => {
-      // Supabase clears the local session regardless of server response.
-      // A 403 or AuthSessionMissingError just means the token was already expired — still logged out.
-      await supabase.auth.signOut().catch(() => {});
+      // scope:'local' clears the browser session without a server round-trip,
+      // avoiding Firefox's 403 on the global revocation endpoint.
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
     },
     resetPassword: async (email) => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
