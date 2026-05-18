@@ -36,6 +36,10 @@
     {
       "path": "/api/cron/update-diesel-prices",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/trimble-monthly-report",
+      "schedule": "0 8 1 * *"
     }
   ]
 }

@@ -78,6 +78,18 @@ const Table = ({ headers, rows }) => (
   </div>
 );
 
+function getBillingTier(billingStartDate) {
+  if (!billingStartDate) return null;
+  const start = new Date(billingStartDate);
+  const now = new Date();
+  const monthsElapsed =
+    (now.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (now.getUTCMonth() - start.getUTCMonth());
+  if (monthsElapsed < 3) return { perLoad: 0.10, minimum: 0, tier: '1–3' };
+  if (monthsElapsed < 6) return { perLoad: 0.10, minimum: 250, tier: '4–6' };
+  return { perLoad: 0.10, minimum: 500, tier: '7+' };
+}
+
 export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { user, session } = useAuth();
 
@@ -93,9 +105,13 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [datesSaving, setDatesSaving] = useState(null);
   const [debugSettings, setDebugSettings] = useState({ dat_debug_email: false });
   const [debugSaving, setDebugSaving] = useState(false);
+  const [trimbleLoads, setTrimbleLoads] = useState(null);
+  const [trimbleBillingStart, setTrimbleBillingStart] = useState('');
+  const [trimbleBillingStartInput, setTrimbleBillingStartInput] = useState('');
+  const [trimbleBillingStartSaving, setTrimbleBillingStartSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchDebugSettings()]).finally(() => setLoading(false));
+    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
   }, []);
 
   const fetchMetas = async () => {
@@ -206,6 +222,54 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Non-critical
     } finally {
       setDatesSaving(null);
+    }
+  };
+
+  const fetchTrimbleActuals = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/reports/trimble-actuals', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setTrimbleLoads(data);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const fetchTrimbleBillingStart = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/orgs/admin-settings', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const setting = (data.settings || []).find(s => s.key === 'trimble_billing_start');
+      const date = setting?.value?.date || '';
+      setTrimbleBillingStart(date);
+      setTrimbleBillingStartInput(date);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const saveTrimbleBillingStart = async () => {
+    if (!session?.access_token) return;
+    setTrimbleBillingStartSaving(true);
+    try {
+      const res = await fetch('/api/orgs/admin-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ key: 'trimble_billing_start', value: { date: trimbleBillingStartInput } }),
+      });
+      if (res.ok) setTrimbleBillingStart(trimbleBillingStartInput);
+    } catch {
+      // Non-critical
+    } finally {
+      setTrimbleBillingStartSaving(false);
     }
   };
 
@@ -543,6 +607,87 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             </div>
           </>
         )}
+
+        {/* ── TRIMBLE ACTUALS ── */}
+        <SectionHeader title="Trimble Actuals — This Month" />
+        {(() => {
+          const tier = getBillingTier(trimbleBillingStart);
+          const count = trimbleLoads?.count ?? 0;
+          const rawCost = count * 0.10;
+          const minCost = tier ? Math.max(rawCost, tier.minimum) : rawCost;
+          const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Summary cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                <StatCard label="Hauled Loads" value={count} sub={currentMonth} icon={FileText} color={t.colors.accent.blue} />
+                <StatCard
+                  label="Estimated Cost"
+                  value={`$${minCost.toFixed(2)}`}
+                  sub={tier ? `Tier ${tier.tier} · $0.10/load${tier.minimum > 0 ? ` · $${tier.minimum} min` : ''}` : 'Set billing start date below'}
+                  icon={BarChart2}
+                  color={t.colors.accent.green}
+                />
+              </div>
+
+              {/* Load table */}
+              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, overflow: 'hidden', boxShadow: t.shadow.card }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm }}>
+                  <thead>
+                    <tr style={{ background: t.colors.accent.blueLight }}>
+                      {['Date / Time (CT)', 'Load ID', 'Source'].map((h, i) => (
+                        <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: t.font.weight.bold, fontSize: t.font.size.xs, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${t.colors.page.cardBorder}` }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trimbleLoads?.loads?.length > 0 ? trimbleLoads.loads.map((load, i) => (
+                      <tr key={i} style={{ borderBottom: i < trimbleLoads.loads.length - 1 ? `1px solid ${t.colors.page.cardBorder}` : 'none' }}>
+                        <td style={{ padding: '11px 16px', color: t.colors.text.primary }}>
+                          {load.completed_at ? new Date(load.completed_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '—'}
+                        </td>
+                        <td style={{ padding: '11px 16px', color: t.colors.text.primary, fontFamily: t.font.mono }}>{load.load_id || '—'}</td>
+                        <td style={{ padding: '11px 16px', color: t.colors.text.muted, textTransform: 'capitalize' }}>{load.source || '—'}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={3} style={{ padding: '24px 16px', textAlign: 'center', color: t.colors.text.muted, fontSize: t.font.size.sm }}>
+                          No hauled loads recorded this month.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Billing start date config */}
+              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '18px 24px', boxShadow: t.shadow.card, display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>Trimble Billing Start Date</div>
+                  <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, marginTop: '3px' }}>
+                    Month 1 of the Trimble agreement. Used to calculate the correct billing tier.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="date"
+                    value={trimbleBillingStartInput}
+                    onChange={e => setTrimbleBillingStartInput(e.target.value)}
+                    style={{ padding: '6px 10px', border: `1px solid ${t.colors.border.strong}`, borderRadius: t.radius.md, fontSize: t.font.size.sm, background: t.colors.page.bg, color: t.colors.text.primary }}
+                  />
+                  <button
+                    onClick={saveTrimbleBillingStart}
+                    disabled={trimbleBillingStartSaving || trimbleBillingStartInput === trimbleBillingStart}
+                    style={{ padding: '6px 16px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.md, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, cursor: (trimbleBillingStartSaving || trimbleBillingStartInput === trimbleBillingStart) ? 'not-allowed' : 'pointer', opacity: (trimbleBillingStartSaving || trimbleBillingStartInput === trimbleBillingStart) ? 0.5 : 1 }}
+                  >
+                    {trimbleBillingStartSaving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── DEBUG SETTINGS ── */}
         <SectionHeader title="Debug Settings" />
