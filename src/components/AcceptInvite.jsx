@@ -32,6 +32,19 @@ export const AcceptInvite = () => {
   const [passwordSet, setPasswordSet] = useState(false);
 
   useEffect(() => {
+    // Check for Supabase auth error in the URL hash (e.g. otp_expired)
+    const hash = new URLSearchParams(window.location.hash.replace('#', ''));
+    if (hash.get('error')) {
+      const code = hash.get('error_code') || hash.get('error');
+      const isExpired = code === 'otp_expired' || code === 'access_denied';
+      setError(isExpired
+        ? 'This sign-in link has expired. Ask your admin to resend the invite.'
+        : hash.get('error_description')?.replace(/\+/g, ' ') || 'Authentication failed. Please try again.'
+      );
+      setLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const t = params.get('token');
     if (!t) {

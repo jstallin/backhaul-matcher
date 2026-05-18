@@ -274,11 +274,12 @@ async function handleInviteToken(req, res, supabase) {
   try {
     const { data: invite, error } = await supabase
       .from('org_invites')
-      .select('*, orgs(name), invited_by_profile:invited_by(email:raw_user_meta_data->full_name)')
+      .select('*, orgs(name)')
       .eq('token', token)
       .single();
 
     if (error || !invite) {
+      console.error('invite-token lookup failed:', error?.message, '| token:', token);
       return res.status(404).json({ error: 'Invite not found or has expired' });
     }
 
