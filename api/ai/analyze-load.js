@@ -505,8 +505,9 @@ export default async function handler(req, res) {
     || (match.delivery_city ? `${match.delivery_city}, ${match.delivery_state || ''}`.trim() : null)
     || 'Unknown';
 
-  // Trailer type match context
-  const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
+  // PostgREST returns fleet_profiles as object (not array) when fleet_id is UNIQUE
+  const fleetProfileRow = Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles;
+  const fleetTrailerType = fleetProfileRow?.trailer_type || fleet.trailer_type || null;
   const isTypeMismatch = match.trailer_type_match === false;
   const typeMatchLine = isTypeMismatch
     ? `- Equipment match: MISMATCH — fleet runs ${fleetTrailerType}, load requires ${equipment}`
@@ -625,7 +626,8 @@ If asked something you cannot resolve after a genuine attempt, tell the user: "I
 
   if (context === 'results') {
     const { matches = [], fleet = {}, request = {} } = contextData;
-    const fleetTrailerType = fleet.fleet_profiles?.[0]?.trailer_type || fleet.trailer_type || null;
+    const fleetProfileRow = Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles;
+    const fleetTrailerType = fleetProfileRow?.trailer_type || fleet.trailer_type || null;
     const matchSummary = matches.map((m, i) => {
       const rpm = m.revenuePerMile ? `$${m.revenuePerMile.toFixed(2)}/mi` : 'no rate';
       const net = m.has_rate_config ? ` | net $${m.customer_net_credit?.toFixed(0)}` : '';

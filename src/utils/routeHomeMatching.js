@@ -233,7 +233,8 @@ export const findRouteHomeBackhauls = async (
     const reqWeight = fleetProfile.weightLimit    || fleetProfile.weight_limit;
     if (reqLength && load.trailer_length  && load.trailer_length  >  reqLength)  continue;
     if (reqWeight && load.weight_lbs      && load.weight_lbs      >  reqWeight)  continue;
-    // Note: trailer type is soft-ranked in the sort step, not hard-filtered here
+    // Equipment type — hard filter when both sides are known
+    if (fleetTrailerType && load.equipment_type && load.equipment_type !== fleetTrailerType) continue;
 
     // 2. Corridor check on pickup — only when precise coordinates are available.
     // State-centroid fallback is skipped here: live load boards (Truckstop) already

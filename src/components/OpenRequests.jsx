@@ -151,18 +151,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
 
       setSelectedFleet(fleet);
 
-      // Get fleet profile for equipment specs
-      const fleetProfile = fleet.fleet_profiles?.[0] || {
+      // PostgREST returns fleet_profiles as an object (not array) when fleet_id has a UNIQUE constraint
+      const rawProfile = Array.isArray(fleet.fleet_profiles)
+        ? fleet.fleet_profiles[0]
+        : fleet.fleet_profiles;
+
+      const fleetProfile = rawProfile || {
         trailerType: 'Dry Van',
         trailerLength: 53,
         weightLimit: 45000
       };
-
-      // Extract rate configuration for net revenue calculations
-      // fleet_profiles comes as array from Supabase join, or could be object
-      const rawProfile = Array.isArray(fleet.fleet_profiles)
-        ? fleet.fleet_profiles[0]
-        : fleet.fleet_profiles;
 
       console.log('📋 Raw fleet profile data:', JSON.stringify(rawProfile, null, 2));
 
