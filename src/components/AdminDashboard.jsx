@@ -88,6 +88,9 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
   const [roleChanging, setRoleChanging] = useState(null);
+  const [pilotToggling, setPilotToggling] = useState(null);
+  const [pilotDates, setPilotDates] = useState({}); // { [orgId]: { start, end } }
+  const [datesSaving, setDatesSaving] = useState(null);
   const [debugSettings, setDebugSettings] = useState({ dat_debug_email: false });
   const [debugSaving, setDebugSaving] = useState(false);
 
@@ -123,6 +126,11 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       if (!res.ok) return;
       const data = await res.json();
       setOrgs(data.orgs || []);
+      const dates = {};
+      for (const org of data.orgs || []) {
+        dates[org.id] = { start: org.pilot_start_date || '', end: org.pilot_end_date || '' };
+      }
+      setPilotDates(dates);
     } catch {
       // Non-critical
     }
@@ -145,6 +153,59 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Non-critical
     } finally {
       setRoleChanging(null);
+    }
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const handlePilotToggle = async (orgId, currentValue) => {
+    if (!session?.access_token) return;
+    const enabling = !currentValue;
+    setPilotToggling(orgId);
+    // Default start date to today when enabling
+    if (enabling) {
+      setPilotDates(prev => ({ ...prev, [orgId]: { start: prev[orgId]?.start || today, end: prev[orgId]?.end || '' } }));
+    }
+    try {
+      const dates = pilotDates[orgId] || {};
+      const res = await fetch('/api/orgs/pilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          org_id: orgId,
+          is_pilot: enabling,
+          pilot_start_date: enabling ? (dates.start || today) : null,
+          pilot_end_date:   enabling ? (dates.end   || null) : null,
+        })
+      });
+      if (res.ok) await fetchOrgs();
+    } catch {
+      // Non-critical
+    } finally {
+      setPilotToggling(null);
+    }
+  };
+
+  const handleSavePilotDates = async (orgId) => {
+    if (!session?.access_token) return;
+    setDatesSaving(orgId);
+    const dates = pilotDates[orgId] || {};
+    try {
+      await fetch('/api/orgs/pilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({
+          org_id: orgId,
+          is_pilot: true,
+          pilot_start_date: dates.start || null,
+          pilot_end_date:   dates.end   || null,
+        })
+      });
+      await fetchOrgs();
+    } catch {
+      // Non-critical
+    } finally {
+      setDatesSaving(null);
     }
   };
 
@@ -389,16 +450,61 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               {orgs.map(org => (
                 <div key={org.id} style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '20px 24px', boxShadow: t.shadow.card }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: t.radius.lg, background: t.colors.accent.green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: t.font.weight.black, fontSize: t.font.size.md, flexShrink: 0 }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: t.radius.lg, background: org.is_pilot ? t.colors.accent.blue : t.colors.accent.green, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: t.font.weight.black, fontSize: t.font.size.md, flexShrink: 0 }}>
                       {org.name?.charAt(0)?.toUpperCase() || 'O'}
                     </div>
-                    <div>
-                      <div style={{ fontSize: t.font.size.md, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{org.name}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ fontSize: t.font.size.md, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{org.name}</div>
+                        {org.is_pilot && (
+                          <span style={{ padding: '2px 8px', background: t.colors.accent.blueLight, border: '1px solid #bfdbfe', borderRadius: t.radius.md, fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: t.colors.accent.blue, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Pilot
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted }}>
                         {org.email_domain} · {org.members?.length || 0} member{org.members?.length !== 1 ? 's' : ''}
                       </div>
                     </div>
+                    <button
+                      onClick={() => handlePilotToggle(org.id, org.is_pilot)}
+                      disabled={pilotToggling === org.id}
+                      style={{ padding: '5px 12px', background: org.is_pilot ? t.colors.accent.blue : 'transparent', border: `1px solid ${org.is_pilot ? t.colors.accent.blue : t.colors.border.strong}`, borderRadius: t.radius.md, color: org.is_pilot ? '#fff' : t.colors.text.secondary, fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: pilotToggling === org.id ? 'not-allowed' : 'pointer', opacity: pilotToggling === org.id ? 0.5 : 1, flexShrink: 0 }}
+                    >
+                      {pilotToggling === org.id ? '...' : org.is_pilot ? 'Remove Pilot' : 'Mark as Pilot'}
+                    </button>
                   </div>
+                  {org.is_pilot && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', padding: '12px 16px', background: t.colors.accent.blueLight, borderRadius: t.radius.lg, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.accent.blue, whiteSpace: 'nowrap' }}>Start</label>
+                        <input
+                          type="date"
+                          min={today}
+                          value={pilotDates[org.id]?.start || ''}
+                          onChange={e => setPilotDates(prev => ({ ...prev, [org.id]: { ...prev[org.id], start: e.target.value } }))}
+                          style={{ padding: '4px 8px', border: `1px solid #bfdbfe`, borderRadius: t.radius.md, fontSize: t.font.size.sm, background: '#fff', color: t.colors.text.primary }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <label style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.accent.blue, whiteSpace: 'nowrap' }}>End</label>
+                        <input
+                          type="date"
+                          min={pilotDates[org.id]?.start || today}
+                          value={pilotDates[org.id]?.end || ''}
+                          onChange={e => setPilotDates(prev => ({ ...prev, [org.id]: { ...prev[org.id], end: e.target.value } }))}
+                          style={{ padding: '4px 8px', border: '1px solid #bfdbfe', borderRadius: t.radius.md, fontSize: t.font.size.sm, background: '#fff', color: t.colors.text.primary }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSavePilotDates(org.id)}
+                        disabled={datesSaving === org.id}
+                        style={{ padding: '4px 12px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.md, color: '#fff', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: datesSaving === org.id ? 'not-allowed' : 'pointer', opacity: datesSaving === org.id ? 0.5 : 1 }}
+                      >
+                        {datesSaving === org.id ? 'Saving…' : 'Save Dates'}
+                      </button>
+                    </div>
+                  )}
                   {org.members?.length > 0 && (
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm }}>
                       <thead>

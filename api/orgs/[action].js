@@ -84,6 +84,7 @@ export default async function handler(req, res) {
     case 'members': return handleMembers(req, res, supabase, user);
     case 'role':            return handleRole(req, res, supabase, user);
     case 'all':             return handleAll(req, res, supabase, user);
+    case 'pilot':           return handlePilot(req, res, supabase, user);
     case 'admin-settings':  return handleAdminSettings(req, res, supabase, user);
     default:
       return res.status(404).json({ error: `Unknown action: ${action}` });
@@ -519,6 +520,9 @@ async function handleAll(req, res, supabase, user) {
         id: org.id,
         name: org.name,
         email_domain: org.email_domain,
+        is_pilot: org.is_pilot || false,
+        pilot_start_date: org.pilot_start_date || null,
+        pilot_end_date: org.pilot_end_date || null,
         created_at: org.created_at,
         member_count: members.length,
         members
@@ -530,6 +534,55 @@ async function handleAll(req, res, supabase, user) {
     console.error('Error fetching all orgs:', err);
     return res.status(500).json({ error: 'Failed to fetch orgs' });
   }
+}
+
+// ── POST /api/orgs/pilot ──────────────────────────────────────────────────────
+// App admin only: set or clear the pilot flag on an org
+
+async function handlePilot(req, res, supabase, user) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { data: adminRow } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  const { org_id, is_pilot, pilot_start_date, pilot_end_date } = req.body || {};
+  if (!org_id || typeof is_pilot !== 'boolean') {
+    return res.status(400).json({ error: 'org_id and is_pilot (boolean) are required' });
+  }
+
+  // Validate dates if provided
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (pilot_start_date && !dateRegex.test(pilot_start_date)) {
+    return res.status(400).json({ error: 'pilot_start_date must be YYYY-MM-DD' });
+  }
+  if (pilot_end_date && !dateRegex.test(pilot_end_date)) {
+    return res.status(400).json({ error: 'pilot_end_date must be YYYY-MM-DD' });
+  }
+
+  const updates = {
+    is_pilot,
+    // When removing pilot status, clear the dates. Otherwise set whatever was passed (null clears).
+    pilot_start_date: is_pilot ? (pilot_start_date || null) : null,
+    pilot_end_date:   is_pilot ? (pilot_end_date   || null) : null,
+  };
+
+  const { error } = await supabase
+    .from('orgs')
+    .update(updates)
+    .eq('id', org_id);
+
+  if (error) {
+    console.error('Error updating pilot status:', error);
+    return res.status(500).json({ error: 'Failed to update pilot status' });
+  }
+
+  console.log(`Org ${org_id} pilot=${is_pilot} (${pilot_start_date || 'no start'} → ${pilot_end_date || 'no end'}) set by admin ${user.id}`);
+  return res.status(200).json({ success: true, org_id, is_pilot, pilot_start_date: updates.pilot_start_date, pilot_end_date: updates.pilot_end_date });
 }
 
 // ── GET/POST /api/orgs/admin-settings ────────────────────────────────────────

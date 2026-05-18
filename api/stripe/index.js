@@ -33,6 +33,24 @@ async function getUserId(req) {
   return user.id;
 }
 
+// Returns true if the user belongs to a pilot org whose date window is active
+async function isInPilotOrg(userId) {
+  const { data } = await supabaseAdmin
+    .from('org_memberships')
+    .select('orgs(is_pilot, pilot_start_date, pilot_end_date)')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const org = data?.orgs;
+  if (!org?.is_pilot) return false;
+
+  const today = new Date().toISOString().split('T')[0];
+  if (org.pilot_start_date && org.pilot_start_date > today) return false;
+  if (org.pilot_end_date && org.pilot_end_date < today) return false;
+
+  return true;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -49,6 +67,10 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
     const userId = await getUserId(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (await isInPilotOrg(userId)) {
+      return res.status(200).json({ balance: 999, is_pilot: true });
+    }
 
     const { data, error } = await supabaseAdmin
       .from('user_credits')
@@ -93,6 +115,10 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
     const userId = await getUserId(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (await isInPilotOrg(userId)) {
+      return res.status(200).json({ success: true, balance: 999, is_pilot: true });
+    }
 
     const rawBody = await readRawBody(req);
     const { description = 'Backhaul search' } = JSON.parse(rawBody || '{}');
