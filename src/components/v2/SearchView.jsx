@@ -70,7 +70,7 @@ const LOAD_BOARD_CONFIG = {
   },
   truckstop: {
     name: 'Truckstop',
-    url: (id) => id ? `https://truckstop.com/load-board/load-details/${id}` : 'https://truckstop.com/',
+    url: (id) => id ? `https://fm.truckstop.com/PostingDetails/Loads/${id}` : 'https://fm.truckstop.com/',
   },
 };
 
