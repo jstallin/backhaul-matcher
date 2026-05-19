@@ -189,7 +189,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         {!loading && (totalNetRevenue > 0 || totalGallonsSaved > 0) && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '28px' }}>
             {totalNetRevenue > 0 && (
-              <div style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div onClick={() => onMenuNavigate('fleet-reports')} style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer' }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `${colors.accent.success}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <DollarSign size={26} color={colors.accent.success} />
                 </div>
@@ -204,7 +204,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
             )}
             {totalGallonsSaved > 0 && (
-              <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', overflow: 'hidden' }}>
+              <div onClick={() => onMenuNavigate('fleet-reports')} style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))', border: '1px solid rgba(34,197,94,0.35)', borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
                 <div style={{ position: 'absolute', top: '10px', right: '14px', opacity: 0.7 }}>
                   <Leaf size={22} />
                 </div>
