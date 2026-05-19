@@ -15,11 +15,12 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { ImportedLoads } from './components/ImportedLoads';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { BuyCreditsModal } from './components/BuyCreditsModal';
+import { TruckstopOnboarding } from './components/TruckstopOnboarding';
 import { tokens } from './styles/tokens.v2';
 import { useAuth } from './contexts/AuthContext';
 import { useCredits } from './hooks/useCredits';
 import { useMobile } from './hooks/useMobile';
-import { db } from './lib/supabase';
+import { db, supabase } from './lib/supabase';
 import {
   Search, Truck, Package, BarChart2, FileText,
   TrendingUp, DollarSign, Navigation, Plus, CheckCircle, MapPin,
@@ -496,7 +497,7 @@ function PlaceholderView({ icon: Icon, title, description, phase, accentColor = 
 
 // ─── View router ──────────────────────────────────────────────────────────────
 
-function renderView(currentView, onNavigate) {
+function renderView(currentView, onNavigate, onboardingProps = {}) {
   switch (currentView) {
     case 'dashboard': return <DashboardView onNavigate={onNavigate} />;
     case 'search':    return <SearchView />;
@@ -507,6 +508,7 @@ function renderView(currentView, onNavigate) {
     case 'settings':        return <SettingsView />;
     case 'admin-dashboard':  return <AdminDashboard onMenuNavigate={onNavigate} onNavigateToSettings={() => onNavigate('settings')} />;
     case 'imported-loads':   return <ImportedLoads onMenuNavigate={onNavigate} />;
+    case 'onboarding':       return <TruckstopOnboarding {...onboardingProps} onComplete={onNavigate} />;
     default:                 return <PlaceholderView icon={Search} title="Coming Soon" description="This section is being built." phase="?" />;
   }
 }
@@ -517,7 +519,10 @@ function AppV2Inner() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [supportOpen, setSupportOpen] = useState(false);
   const [buyCreditsOpen, setBuyCreditsOpen] = useState(false);
+  const [org, setOrg] = useState(null);
+  const [isOrgAdmin, setIsOrgAdmin] = useState(false);
   const { balance, openCheckout } = useCredits();
+  const { user } = useAuth();
 
   // Deep-link from extension: ?view=imported-loads
   useEffect(() => {
@@ -525,6 +530,29 @@ function AppV2Inner() {
     const view = params.get('view');
     if (view) setCurrentView(view);
   }, []);
+
+  // Check if Truckstop onboarding is needed on first load
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/orgs/me', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.org) {
+          setOrg(data.org);
+          setIsOrgAdmin(data.is_org_admin);
+          if (!data.org.ts_onboarding_complete) {
+            setCurrentView('onboarding');
+          }
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }, [user]);
 
   const handleNavigate = (view) => {
     if (view === 'support') {
@@ -540,7 +568,7 @@ function AppV2Inner() {
 
   return (
     <Shell currentView={currentView} onNavigate={handleNavigate} creditBalance={balance}>
-      {renderView(currentView, handleNavigate)}
+      {renderView(currentView, handleNavigate, { org, isOrgAdmin })}
       {supportOpen && (
         <CoDriverV2
           context="support"

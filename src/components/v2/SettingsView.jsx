@@ -458,8 +458,7 @@ function IntegrationsSection() {
         connectUrl="/api/integrations/truckstop"
         disconnectUrl="/api/integrations/truckstop"
         fields={[
-          { key: 'username', label: 'Username', placeholder: 'Truckstop username' },
-          { key: 'password', label: 'Password', type: 'password', placeholder: 'Truckstop password' },
+          { key: 'integration_id', label: 'Integration ID', placeholder: 'Your Truckstop Integration ID' },
         ]}
       />
     </div>

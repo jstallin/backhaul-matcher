@@ -45,11 +45,10 @@ export const Settings = ({ onBack }) => {
 
   // Truckstop Integration state
   const [showTsModal, setShowTsModal] = useState(false);
-  const [tsUsername, setTsUsername] = useState('');
-  const [tsPassword, setTsPassword] = useState('');
+  const [tsIntegrationId, setTsIntegrationId] = useState('');
   const [tsConnecting, setTsConnecting] = useState(false);
   const [tsError, setTsError] = useState('');
-  const [tsConnection, setTsConnection] = useState(null); // { connected, is_org_token, org_domain, username, connected_at }
+  const [tsConnection, setTsConnection] = useState(null); // { connected, is_org_token, connected_at }
   const [loadingTsStatus, setLoadingTsStatus] = useState(true);
 
   // Check all connection statuses on mount
@@ -255,14 +254,13 @@ export const Settings = ({ onBack }) => {
     e.preventDefault();
     setTsError('');
 
-    if (!tsUsername.trim()) { setTsError('Username is required'); return; }
-    if (!tsPassword.trim()) { setTsError('Password is required'); return; }
+    if (!tsIntegrationId.trim()) { setTsError('Integration ID is required'); return; }
 
     setTsConnecting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setTsError('Please log in to connect your Truckstop account');
+        setTsError('Please log in to connect Truckstop');
         return;
       }
 
@@ -272,30 +270,19 @@ export const Settings = ({ onBack }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          username: tsUsername.trim(),
-          password: tsPassword.trim()
-        })
+        body: JSON.stringify({ integration_id: tsIntegrationId.trim() })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setTsError(data.error || 'Failed to save credentials');
+        setTsError(data.error || 'Failed to save integration ID');
         return;
       }
 
-      setTsConnection({
-        connected: true,
-        is_org_token: data.is_org_token,
-        org_domain: data.org_domain,
-        username: data.username,
-        connected_at: new Date().toISOString()
-      });
+      setTsConnection({ connected: true, is_org_token: true, connected_at: new Date().toISOString() });
       setShowTsModal(false);
-      setTsApiToken('');
-      setTsUsername('');
-      setTsPassword('');
+      setTsIntegrationId('');
     } catch (error) {
       console.error('Truckstop connect error:', error);
       setTsError('An unexpected error occurred. Please try again.');
@@ -949,11 +936,9 @@ export const Settings = ({ onBack }) => {
                         <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
                           Access live loads from Truckstop.com
                         </p>
-                        {tsConnection?.connected && tsConnection.username && (
+                        {tsConnection?.connected && tsConnection.is_org_token && (
                           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: colors.text.tertiary }}>
-                            {tsConnection.is_org_token
-                              ? `Org token · ${tsConnection.username}`
-                              : tsConnection.username}
+                            Org integration ID saved
                           </p>
                         )}
                       </div>
@@ -980,10 +965,10 @@ export const Settings = ({ onBack }) => {
                         {(!tsConnection.is_org_token || isOrgAdmin) && (
                           <>
                             <button
-                              onClick={() => { setTsPassword(''); setTsError(''); setShowTsModal(true); }}
+                              onClick={() => { setTsIntegrationId(''); setTsError(''); setShowTsModal(true); }}
                               style={{ padding: '12px 24px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
                             >
-                              Edit Credentials
+                              Update Integration ID
                             </button>
                             <button
                               onClick={handleTsDisconnect}
@@ -1001,7 +986,7 @@ export const Settings = ({ onBack }) => {
                       </>
                     ) : (
                       <button
-                        onClick={() => { setShowTsModal(true); setTsError(''); }}
+                        onClick={() => { setTsIntegrationId(''); setTsError(''); setShowTsModal(true); }}
                         disabled={loadingTsStatus}
                         style={{ padding: '12px 24px', background: '#1B7A4A', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: loadingTsStatus ? 'not-allowed' : 'pointer', opacity: loadingTsStatus ? 0.5 : 1 }}
                       >
@@ -1837,41 +1822,25 @@ export const Settings = ({ onBack }) => {
               </div>
               <div>
                 <h3 style={{ margin: '0 0 2px 0', fontSize: '18px', fontWeight: 700, color: colors.text.primary }}>
-                  {tsConnection?.connected ? 'Edit Truckstop Credentials' : 'Connect to Truckstop'}
+                  {tsConnection?.connected ? 'Update Integration ID' : 'Connect to Truckstop'}
                 </h3>
                 <p style={{ margin: 0, fontSize: '14px', color: colors.text.secondary }}>
-                  Enter your Truckstop username and password
+                  Enter your Truckstop Integration ID
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleTsConnect} style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
-                  Username
+                  Integration ID
                 </label>
                 <input
                   type="text"
-                  value={tsUsername}
-                  onChange={(e) => setTsUsername(e.target.value)}
-                  placeholder="Truckstop username or email"
+                  value={tsIntegrationId}
+                  onChange={(e) => setTsIntegrationId(e.target.value)}
+                  placeholder="Your Truckstop Integration ID"
                   disabled={tsConnecting}
-                  autoComplete="username"
-                  style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={tsPassword}
-                  onChange={(e) => setTsPassword(e.target.value)}
-                  placeholder={tsConnection?.connected ? 'Enter new password' : 'Truckstop password'}
-                  disabled={tsConnecting}
-                  autoComplete="current-password"
                   style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
@@ -1883,13 +1852,13 @@ export const Settings = ({ onBack }) => {
               )}
 
               <p style={{ margin: '0 0 24px 0', fontSize: '12px', color: colors.text.tertiary, lineHeight: '1.5' }}>
-                Users with the same company email domain will share these credentials — you only need to enter them once for your organization.
+                Your Integration ID is shared across your organization. Only org admins can update it. Don't have yours yet? Contact Truckstop at tsi@truckstop.com.
               </p>
 
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
                   type="button"
-                  onClick={() => { setShowTsModal(false); setTsPassword(''); setTsError(''); }}
+                  onClick={() => { setShowTsModal(false); setTsIntegrationId(''); setTsError(''); }}
                   disabled={tsConnecting}
                   style={{ flex: 1, padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', fontWeight: 600, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.5 : 1 }}
                 >
@@ -1900,7 +1869,7 @@ export const Settings = ({ onBack }) => {
                   disabled={tsConnecting}
                   style={{ flex: 1, padding: '12px', background: '#1B7A4A', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: tsConnecting ? 'not-allowed' : 'pointer', opacity: tsConnecting ? 0.7 : 1 }}
                 >
-                  {tsConnecting ? 'Saving...' : tsConnection?.connected ? 'Update Credentials' : 'Save Credentials'}
+                  {tsConnecting ? 'Saving...' : tsConnection?.connected ? 'Update ID' : 'Save & Connect'}
                 </button>
               </div>
             </form>

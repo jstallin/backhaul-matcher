@@ -352,11 +352,10 @@ async function handleTruckstop(req, res, supabase, user) {
 
   if (req.method === 'GET' && req.query.action !== 'loads') {
     try {
-      // Check org-level token first
       if (orgId) {
-        const { data: orgToken, error: orgError } = await supabase
+        const { data: orgRow, error: orgError } = await supabase
           .from('org_integrations')
-          .select('*')
+          .select('integration_id_vault_id, created_at')
           .eq('org_id', orgId)
           .eq('provider', 'truckstop')
           .single();
@@ -365,39 +364,17 @@ async function handleTruckstop(req, res, supabase, user) {
           return res.status(500).json({ error: 'Failed to check connection status' });
         }
 
-        if (orgToken) {
+        if (orgRow?.integration_id_vault_id) {
           return res.status(200).json({
             connected: true,
             provider: 'truckstop',
             is_org_token: true,
-            username: orgToken.username,
-            connected_at: orgToken.created_at
+            connected_at: orgRow.created_at,
           });
         }
       }
 
-      const { data: userToken, error: userError } = await supabase
-        .from('user_integrations')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('provider', 'truckstop')
-        .single();
-
-      if (userError && userError.code !== 'PGRST116') {
-        return res.status(500).json({ error: 'Failed to check connection status' });
-      }
-
-      if (!userToken || !userToken.is_connected) {
-        return res.status(200).json({ connected: false, provider: 'truckstop', is_org_token: false });
-      }
-
-      return res.status(200).json({
-        connected: true,
-        provider: 'truckstop',
-        is_org_token: false,
-        username: userToken.account_email,
-        connected_at: userToken.connected_at
-      });
+      return res.status(200).json({ connected: false, provider: 'truckstop', is_org_token: !!orgId });
     } catch (err) {
       console.error('Truckstop GET error:', err);
       return res.status(500).json({ error: 'Failed to check connection status' });
@@ -405,61 +382,26 @@ async function handleTruckstop(req, res, supabase, user) {
   }
 
   if (req.method === 'POST') {
-    const { username, password } = req.body || {};
+    const { integration_id } = req.body || {};
 
-    if (!username?.trim()) return res.status(400).json({ error: 'Username is required' });
-    if (!password?.trim()) return res.status(400).json({ error: 'Password is required' });
+    if (!integration_id?.trim()) return res.status(400).json({ error: 'Integration ID is required' });
 
-    const uname = username.trim();
+    if (!orgId) return res.status(400).json({ error: 'No organization found — contact support' });
+    if (!isOrgAdmin) return res.status(403).json({ error: 'Only org admins can save the integration ID' });
 
     try {
-      if (orgId && isOrgAdmin) {
-        // Org admin — save as org-level credentials
-        const { error: orgError } = await supabase
-          .from('org_integrations')
-          .upsert({
-            org_id: orgId,
-            provider: 'truckstop',
-            username: uname,
-            password: password.trim(),
-            connected_by: user.id
-          }, { onConflict: 'org_id,provider', ignoreDuplicates: false });
+      const { error: rpcError } = await supabase.rpc('store_ts_integration_id', {
+        p_org_id: orgId,
+        p_integration_id: integration_id.trim(),
+      });
 
-        if (orgError) {
-          console.error('Failed to save org Truckstop token:', orgError);
-          return res.status(500).json({ error: 'Failed to save credentials', code: 'DB_ERROR' });
-        }
-
-        console.log(`✅ Truckstop org credentials saved for org: ${orgId}`);
-        return res.status(200).json({
-          success: true,
-          message: 'Truckstop connected for your organization',
-          is_org_token: true,
-          username: uname
-        });
-      } else if (orgId && !isOrgAdmin) {
-        return res.status(403).json({ error: 'Only org admins can set the organization Truckstop token' });
-      } else {
-        // No org — save as user-level credentials
-        const { error: userError } = await supabase
-          .from('user_integrations')
-          .upsert({
-            user_id: user.id,
-            provider: 'truckstop',
-            account_email: uname,
-            is_connected: true,
-            connected_at: new Date().toISOString(),
-            metadata: { username: uname, password: password.trim(), linked_at: new Date().toISOString() }
-          }, { onConflict: 'user_id,provider', ignoreDuplicates: false });
-
-        if (userError) {
-          console.error('Failed to save user Truckstop credentials:', userError);
-          return res.status(500).json({ error: 'Failed to save credentials', code: 'DB_ERROR' });
-        }
-
-        console.log(`✅ Truckstop user credentials saved for user: ${user.id}`);
-        return res.status(200).json({ success: true, message: 'Truckstop connected successfully', is_org_token: false, username: uname });
+      if (rpcError) {
+        console.error('store_ts_integration_id error:', rpcError);
+        return res.status(500).json({ error: 'Failed to save integration ID', code: 'DB_ERROR' });
       }
+
+      console.log(`✅ Truckstop integration ID saved for org: ${orgId}`);
+      return res.status(200).json({ success: true, message: 'Truckstop connected for your organization', is_org_token: true });
     } catch (err) {
       console.error('Truckstop POST error:', err);
       return res.status(500).json({ error: 'An unexpected error occurred', code: 'INTERNAL_ERROR' });
@@ -467,28 +409,19 @@ async function handleTruckstop(req, res, supabase, user) {
   }
 
   if (req.method === 'DELETE') {
+    if (!orgId) return res.status(400).json({ error: 'No organization found' });
+    if (!isOrgAdmin) return res.status(403).json({ error: 'Only org admins can disconnect Truckstop' });
+
     try {
-      if (orgId && isOrgAdmin) {
-        const { error } = await supabase
-          .from('org_integrations')
-          .delete()
-          .eq('org_id', orgId)
-          .eq('provider', 'truckstop');
-
-        if (error && error.code !== 'PGRST116') {
-          return res.status(500).json({ error: 'Failed to disconnect' });
-        }
-      } else if (orgId && !isOrgAdmin) {
-        return res.status(403).json({ error: 'Only org admins can disconnect the organization Truckstop token' });
-      }
-
-      await supabase
-        .from('user_integrations')
-        .update({ is_connected: false, access_token: null, account_email: null, metadata: null })
-        .eq('user_id', user.id)
+      const { error } = await supabase
+        .from('org_integrations')
+        .update({ integration_id_vault_id: null })
+        .eq('org_id', orgId)
         .eq('provider', 'truckstop');
 
-      console.log(`🔌 Truckstop disconnected for user ${user.id} (org: ${orgId})`);
+      if (error) return res.status(500).json({ error: 'Failed to disconnect' });
+
+      console.log(`🔌 Truckstop disconnected for org ${orgId}`);
       return res.status(200).json({ success: true, message: 'Truckstop disconnected' });
     } catch (err) {
       console.error('Truckstop DELETE error:', err);
@@ -498,49 +431,26 @@ async function handleTruckstop(req, res, supabase, user) {
 
   // ── GET loads ───────────────────────────────────────────────────────────────
   if (req.method === 'GET' && req.query.action === 'loads') {
-    const integrationId = process.env.TRUCKSTOP_INTEGRATION_ID;
-    if (!integrationId) {
-      return res.status(500).json({ error: 'Truckstop Integration ID not configured' });
+    // WS credentials are Haul Monitor's server-side env vars
+    const username = process.env.TRUCKSTOP_WS_USERNAME;
+    const password = process.env.TRUCKSTOP_WS_PASSWORD;
+
+    if (!username) {
+      return res.status(500).json({ error: 'Truckstop WS credentials not configured' });
     }
 
-    let username, password;
-
+    // Integration ID is per-org (encrypted in vault), falls back to env for dev/testing
+    let integrationId = null;
     if (orgId) {
-      const { data: orgRow } = await supabase
-        .from('org_integrations')
-        .select('username, password')
-        .eq('org_id', orgId)
-        .eq('provider', 'truckstop')
-        .single();
-
-      if (orgRow?.username) {
-        username = orgRow.username;
-        password = orgRow.password;
-      }
+      const { data: rpcResult } = await supabase.rpc('get_ts_integration_id', { p_org_id: orgId });
+      integrationId = rpcResult || null;
+    }
+    if (!integrationId) {
+      integrationId = process.env.TRUCKSTOP_INTEGRATION_ID;
     }
 
-    if (!username) {
-      const { data: userRow } = await supabase
-        .from('user_integrations')
-        .select('account_email, metadata')
-        .eq('user_id', user.id)
-        .eq('provider', 'truckstop')
-        .eq('is_connected', true)
-        .single();
-
-      if (userRow?.account_email) {
-        username = userRow.account_email;
-        password = userRow.metadata?.password;
-      }
-    }
-
-    if (!username) {
-      username = process.env.TRUCKSTOP_WS_USERNAME;
-      password = process.env.TRUCKSTOP_WS_PASSWORD;
-    }
-
-    if (!username) {
-      return res.status(400).json({ error: 'Truckstop not connected', code: 'NOT_CONNECTED' });
+    if (!integrationId) {
+      return res.status(400).json({ error: 'Truckstop not connected — add your Integration ID in Settings', code: 'NOT_CONNECTED' });
     }
 
     const {

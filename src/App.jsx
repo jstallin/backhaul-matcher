@@ -26,7 +26,8 @@ import { ImportedLoads } from './components/ImportedLoads';
 import { AdminDashboard } from './components/AdminDashboard';
 import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { InstallPrompt } from './components/InstallPrompt';
-import { db } from './lib/supabase';
+import { db, supabase } from './lib/supabase';
+import { TruckstopOnboarding } from './components/TruckstopOnboarding';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
 // Calculate distance between two points (Haversine formula)
@@ -166,6 +167,8 @@ function App() {
   const [selectedRouteForModal, setSelectedRouteForModal] = useState(null);
   const [selectedBackhaulForModal, setSelectedBackhaulForModal] = useState(null);
   const [supportChatOpen, setSupportChatOpen] = useState(false);
+  const [onboardingOrg, setOnboardingOrg] = useState(null);
+  const [onboardingIsAdmin, setOnboardingIsAdmin] = useState(false);
 
   // Deep-link from extension: ?view=imported-loads
   useEffect(() => {
@@ -173,6 +176,27 @@ function App() {
     const view = params.get('view');
     if (view) setCurrentView(view);
   }, []);
+
+  // Check if Truckstop onboarding is needed on first load
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/orgs/me', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.org && !data.org.ts_onboarding_complete) {
+          setOnboardingOrg(data.org);
+          setOnboardingIsAdmin(data.is_org_admin);
+          setCurrentView('onboarding');
+        }
+      } catch { /* non-fatal */ }
+    })();
+  }, [user]);
 
   // Load user's fleet data
   useEffect(() => {
@@ -474,7 +498,9 @@ function App() {
 
   return (
     <AuthWrapper>
-      {currentView === 'settings' ? (
+      {currentView === 'onboarding' ? (
+        <TruckstopOnboarding org={onboardingOrg} isOrgAdmin={onboardingIsAdmin} onComplete={(view) => setCurrentView(view || 'dashboard')} />
+      ) : currentView === 'settings' ? (
         <Settings onBack={handleBackFromSettings} />
       ) : currentView === 'dashboard' ? (
         <Dashboard
