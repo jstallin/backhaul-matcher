@@ -108,7 +108,7 @@ export function TruckstopOnboarding({ org, isOrgAdmin, onComplete }) {
                 disabled={loading}
                 style={choiceBtn}
               >
-                {loading ? 'Sending…' : 'No, we're not yet'}
+                {loading ? 'Sending…' : "No, we're not yet"}
               </button>
             </div>
           </div>
