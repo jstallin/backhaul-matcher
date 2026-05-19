@@ -375,7 +375,7 @@ async function handleTruckstop(req, res, supabase, user) {
         const result = await resend.emails.send({
           from: 'notifications@haulmonitor.cloud',
           to: tsEmail,
-          cc: 'support@haulmonitor.cloud',
+          cc: ['support@haulmonitor.cloud', user.email],
           reply_to: user.email,
           subject,
           text: body,
@@ -409,7 +409,7 @@ async function handleTruckstop(req, res, supabase, user) {
     if (onboarding_action === 'not_customer') {
       await sendTsEmail(
         `Haul Monitor Account Inquiry – ${displayName}`,
-        `Hello Team,\n\n${displayName} is interested in a Truckstop account as part of registering with Haul Monitor. Can you please have the sales team contact them at this email address?\n\nThank you,\nHaul Monitor Team`
+        `Hello Team,\n\n${displayName} is interested in a Truckstop account as part of registering with Haul Monitor. Can you please have the sales team contact them at the reply-to email address?\n\nThank you,\nHaul Monitor Team`
       );
       await markComplete();
       return res.status(200).json({ success: true, email_sent: true });
