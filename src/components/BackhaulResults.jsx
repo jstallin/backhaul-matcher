@@ -275,19 +275,8 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
                     {getRankLabel(index)}
                   </div>
-                  {match.source === 'truckstop' && match.load_id && (
-                    <a
-                      href={`https://fm.truckstop.com/PostingDetails/Loads/${match.load_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      title="View load on Truckstop"
-                      style={{ padding: '4px 8px', background: colors.background.secondary, border: `1px solid ${colors.border.primary}`, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary, textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s', lineHeight: 1 }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = colors.accent.primary; e.currentTarget.style.borderColor = colors.accent.primary; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = colors.text.secondary; e.currentTarget.style.borderColor = colors.border.primary; }}
-                    >
-                      ↗
-                    </a>
+                  {match.source === 'truckstop' && (
+                    <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '20px', display: 'block' }} />
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -702,7 +691,9 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                         <div>
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Load Source</div>
                           <div style={{ fontWeight: 600, color: colors.text.primary }}>
-                            {{ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT', truckstop: 'Truckstop' }[m.source] || m.source}
+                            {m.source === 'truckstop'
+                              ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '16px', display: 'block' }} />
+                              : ({ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT' }[m.source] || m.source)}
                           </div>
                         </div>
                       )}
@@ -810,16 +801,6 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                 </div>
               </div>
             </div>
-            {haulMatch.source === 'truckstop' && haulMatch.load_id && (
-              <a
-                href={`https://fm.truckstop.com/PostingDetails/Loads/${haulMatch.load_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: 'block', marginBottom: '20px', padding: '12px 16px', background: `${colors.accent.primary}15`, border: `1px solid ${colors.accent.primary}40`, borderRadius: '10px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}
-              >
-                Open Load in Truckstop ↗
-              </a>
-            )}
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={handleHaulConfirm}
