@@ -131,7 +131,7 @@ export function TruckstopOnboarding({ org, isOrgAdmin, onComplete }) {
                   disabled={loading}
                   style={choiceBtn}
                 >
-                  {loading ? 'Sending…' : 'No, I'll need to get it'}
+                  {loading ? 'Sending…' : "No, I'll need to get it"}
                 </button>
                 <button onClick={() => setStep(1)} style={ghostBtn}>
                   ← Back
