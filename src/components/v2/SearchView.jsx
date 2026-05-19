@@ -759,7 +759,7 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
             </a>
           )}
           {match.source === 'truckstop' && (
-            <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '20px', display: 'block' }} />
+            <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '20px', display: 'block' }} />
           )}
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -1126,7 +1126,7 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
             <div style={{ padding: '16px', background: '#f8fafc', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.xl }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
                 {[
-                  match.source && { label: 'Load Source', value: match.source === 'truckstop' ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '16px', display: 'block' }} /> : ({ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT', imported: 'Imported' }[match.source] || match.source) },
+                  match.source && { label: 'Load Source', value: match.source === 'truckstop' ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '16px', display: 'block' }} /> : ({ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT', imported: 'Imported' }[match.source] || match.source) },
                   (match.df_load_number || match.source_load_id || match.load_id) && { label: 'Load Number', value: match.df_load_number || match.source_load_id || match.load_id, mono: true },
                   { label: 'Pickup Date', value: fmtDate(mPickupDate(match)) },
                   { label: 'Delivery Date', value: fmtDate(mDeliveryDate(match)) },

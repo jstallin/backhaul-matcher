@@ -276,7 +276,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                     {getRankLabel(index)}
                   </div>
                   {match.source === 'truckstop' && (
-                    <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '20px', display: 'block' }} />
+                    <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '20px', display: 'block' }} />
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -692,7 +692,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Load Source</div>
                           <div style={{ fontWeight: 600, color: colors.text.primary }}>
                             {m.source === 'truckstop'
-                              ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" style={{ height: '16px', display: 'block' }} />
+                              ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '16px', display: 'block' }} />
                               : ({ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT' }[m.source] || m.source)}
                           </div>
                         </div>
