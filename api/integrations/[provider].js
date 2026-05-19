@@ -350,6 +350,77 @@ async function handleTruckstop(req, res, supabase, user) {
   const orgId = membership?.org_id || null;
   const isOrgAdmin = membership?.role === 'admin';
 
+  // ── Onboarding actions (POST ?action=onboard) ────────────────────────────────
+  if (req.method === 'POST' && req.query.action === 'onboard') {
+    if (!orgId) return res.status(400).json({ error: 'No organization found for this user' });
+
+    const { onboarding_action, integration_id } = req.body || {};
+    const orgName = membership?.org_name || orgId;
+
+    // Fetch org name separately since membership select only has org_id/role
+    const { data: orgRow } = await supabase.from('orgs').select('name').eq('id', orgId).single();
+    const displayName = orgRow?.name || orgId;
+
+    const markComplete = () =>
+      supabase.from('orgs').update({ ts_onboarding_complete: true }).eq('id', orgId);
+
+    const sendTsEmail = async (subject, body) => {
+      const resendKey = process.env.RESEND_API_KEY;
+      const tsEmail = process.env.TRUCKSTOP_INTEGRATION_CONTACT_EMAIL;
+      if (!resendKey || !tsEmail) return;
+      try {
+        const { Resend } = await import('resend');
+        const resend = new Resend(resendKey);
+        await resend.emails.send({
+          from: 'notifications@haulmonitor.cloud',
+          to: tsEmail,
+          cc: 'support@haulmonitor.cloud',
+          reply_to: user.email,
+          subject,
+          text: body,
+        });
+      } catch (err) {
+        console.error('Failed to send Truckstop onboarding email:', err);
+      }
+    };
+
+    if (onboarding_action === 'save_id') {
+      if (!isOrgAdmin) return res.status(403).json({ error: 'Only org admins can save the integration ID' });
+      if (!integration_id?.trim()) return res.status(400).json({ error: 'integration_id is required' });
+      const { error: rpcError } = await supabase.rpc('store_ts_integration_id', {
+        p_org_id: orgId, p_integration_id: integration_id.trim(),
+      });
+      if (rpcError) { console.error('store_ts_integration_id error:', rpcError); return res.status(500).json({ error: 'Failed to save integration ID' }); }
+      await markComplete();
+      return res.status(200).json({ success: true });
+    }
+
+    if (onboarding_action === 'no_id') {
+      await sendTsEmail(
+        `Haul Monitor Integration Request – ${displayName}`,
+        `Hello Team,\n\n${displayName} would like to connect with Haul Monitor. Can you please verify whether they have the required licenses enabled for the integration and provide the Integration ID if available?\n\nThank you,\nHaul Monitor Team`
+      );
+      await markComplete();
+      return res.status(200).json({ success: true, email_sent: true });
+    }
+
+    if (onboarding_action === 'not_customer') {
+      await sendTsEmail(
+        `Haul Monitor Account Inquiry – ${displayName}`,
+        `Hello Team,\n\n${displayName} is interested in a Truckstop account as part of registering with Haul Monitor. Can you please have the sales team contact them at this email address?\n\nThank you,\nHaul Monitor Team`
+      );
+      await markComplete();
+      return res.status(200).json({ success: true, email_sent: true });
+    }
+
+    if (onboarding_action === 'skip') {
+      await markComplete();
+      return res.status(200).json({ success: true });
+    }
+
+    return res.status(400).json({ error: `Unknown onboarding_action: ${onboarding_action}` });
+  }
+
   if (req.method === 'GET' && req.query.action !== 'loads') {
     try {
       if (orgId) {

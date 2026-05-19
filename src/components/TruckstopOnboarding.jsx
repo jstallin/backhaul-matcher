@@ -3,19 +3,19 @@ import { supabase } from '../lib/supabase';
 
 const GREEN = '#1B7A4A';
 
-async function postOnboarding(action, body = {}) {
+async function postOnboarding(onboarding_action, body = {}) {
   const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch('/api/integrations/truckstop-onboarding', {
+  const res = await fetch('/api/integrations/truckstop?action=onboard', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
     },
-    body: JSON.stringify({ action, ...body }),
+    body: JSON.stringify({ onboarding_action, ...body }),
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (${res.status})`);
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed (${res.status})`);
   }
   return res.json();
 }
