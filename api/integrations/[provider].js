@@ -367,11 +367,12 @@ async function handleTruckstop(req, res, supabase, user) {
     const sendTsEmail = async (subject, body) => {
       const resendKey = process.env.RESEND_API_KEY;
       const tsEmail = process.env.TRUCKSTOP_INTEGRATION_CONTACT_EMAIL;
-      if (!resendKey || !tsEmail) return;
+      console.log(`[TS onboarding] sendTsEmail — resendKey present: ${!!resendKey}, tsEmail: ${tsEmail || '(not set)'}`);
+      if (!resendKey) { console.warn('[TS onboarding] RESEND_API_KEY not set — skipping email'); return; }
+      if (!tsEmail)   { console.warn('[TS onboarding] TRUCKSTOP_INTEGRATION_CONTACT_EMAIL not set — skipping email'); return; }
       try {
-        const { Resend } = await import('resend');
         const resend = new Resend(resendKey);
-        await resend.emails.send({
+        const result = await resend.emails.send({
           from: 'notifications@haulmonitor.cloud',
           to: tsEmail,
           cc: 'support@haulmonitor.cloud',
@@ -379,8 +380,9 @@ async function handleTruckstop(req, res, supabase, user) {
           subject,
           text: body,
         });
+        console.log(`[TS onboarding] Email sent — id: ${result?.data?.id}, error: ${JSON.stringify(result?.error)}`);
       } catch (err) {
-        console.error('Failed to send Truckstop onboarding email:', err);
+        console.error('[TS onboarding] Failed to send email:', err);
       }
     };
 
