@@ -1541,37 +1541,6 @@ export function SearchView() {
     if (params.get('action') === 'new') setMode('form');
   }, []);
 
-  // Auto-refresh timer
-  useEffect(() => {
-    if (!selectedRequest?.auto_refresh) {
-      setNextRefreshTime(null);
-      return;
-    }
-    const intervalMinutes = selectedRequest.auto_refresh_interval || 240;
-    const intervalMs = intervalMinutes * 60 * 1000;
-    setNextRefreshTime(new Date(Date.now() + intervalMs));
-    const timer = setInterval(() => {
-      runMatching(selectedRequest);
-      setNextRefreshTime(new Date(Date.now() + intervalMs));
-    }, intervalMs);
-    return () => clearInterval(timer);
-  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, runMatching]);
-
-  // Countdown display
-  useEffect(() => {
-    if (!nextRefreshTime) { setTimeUntilRefresh(''); return; }
-    const update = () => {
-      const diff = nextRefreshTime - Date.now();
-      if (diff <= 0) { setTimeUntilRefresh('Refreshing…'); return; }
-      const m = Math.floor(diff / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeUntilRefresh(m > 0 ? `${m}m ${s}s` : `${s}s`);
-    };
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, [nextRefreshTime]);
-
   const loadData = async () => {
     setLoading(true);
     try {
@@ -1708,6 +1677,37 @@ export function SearchView() {
       setIsMatching(false);
     }
   }, [user, deductCredit]);
+
+  // Auto-refresh timer — must be after runMatching to avoid TDZ
+  useEffect(() => {
+    if (!selectedRequest?.auto_refresh) {
+      setNextRefreshTime(null);
+      return;
+    }
+    const intervalMinutes = selectedRequest.auto_refresh_interval || 240;
+    const intervalMs = intervalMinutes * 60 * 1000;
+    setNextRefreshTime(new Date(Date.now() + intervalMs));
+    const timer = setInterval(() => {
+      runMatching(selectedRequest);
+      setNextRefreshTime(new Date(Date.now() + intervalMs));
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, runMatching]);
+
+  // Countdown display
+  useEffect(() => {
+    if (!nextRefreshTime) { setTimeUntilRefresh(''); return; }
+    const update = () => {
+      const diff = nextRefreshTime - Date.now();
+      if (diff <= 0) { setTimeUntilRefresh('Refreshing…'); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeUntilRefresh(m > 0 ? `${m}m ${s}s` : `${s}s`);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [nextRefreshTime]);
 
   const handleSelectRequest = (request) => {
     previousMatchesRef.current = [];
