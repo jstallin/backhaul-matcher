@@ -9,7 +9,7 @@ A logistics platform that solves the backhaul dilemma by matching empty return t
 - **OOR Miles Calculation**: Compares additional miles vs. direct return
 - **Relay Mode**: Optional return to fleet home between pickup and delivery
 - **Equipment Compatibility**: Filters loads by trailer type, length, and weight
-- **DAT Integration**: Ready for DAT Load Board API connection
+- **Truckstop Integration**: Realtime load search via Truckstop API
 
 ## Tech Stack
 
@@ -72,12 +72,8 @@ Higher scores indicate better opportunities (more revenue per additional mile).
 
 ## Next Steps for Production
 
-1. **DAT API Integration** - Replace mock data with real DAT API calls
-2. **Real Routing** - Integrate PC Miler
-3. **Mobile Apps** - Build native iOS/Android apps
-4. **WebSocket Updates** - Real-time load availability
-5. **Toll Calculations** - Add toll avoidance options
-6. **Multiple Mileage Engines** - Support PC Miler variants
+1. **Toll Calculations** - Add toll avoidance options
+2. **Multiple Mileage Engines** - Support PC Miler variants
 
 ## Environment Variables
 
