@@ -650,8 +650,7 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
   const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber });
 
   if (pageNumber === 1) {
-    const pwPreview = password ? `${password.slice(0, 3)}***${password.slice(-3)} (len:${password.length})` : '(empty)';
-    const sanitizedEnvelope = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, `<web:Password>${pwPreview}</web:Password>`);
+    const sanitizedEnvelope = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
     console.log('Truckstop SOAP envelope (page 1):\n', sanitizedEnvelope);
   }
 
