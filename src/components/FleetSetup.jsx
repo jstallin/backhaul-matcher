@@ -382,7 +382,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
             />
           </div>
 
-          {/* MC and DOT Numbers */}
+          {/* MC and DOT Numbers — commented out, may not need these
           <div className="fs-2col" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -412,6 +412,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               />
             </div>
           </div>
+          */}
 
           {/* Phone and Email */}
           <div className="fs-2col" style={{

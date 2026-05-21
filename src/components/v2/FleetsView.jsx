@@ -272,8 +272,10 @@ function ProfileTab({ fleet, onSaved }) {
         <Field label="Fleet Name" required span={2}>
           <Input value={form.name} onChange={set('name')} placeholder="Acme Logistics" />
         </Field>
+        {/* MC/DOT Number fields — commented out, may not need these
         <Field label="MC Number"><Input value={form.mcNumber} onChange={set('mcNumber')} placeholder="MC-123456" /></Field>
         <Field label="DOT Number"><Input value={form.dotNumber} onChange={set('dotNumber')} placeholder="1234567" /></Field>
+        */}
         <Field label="Phone" required><Input value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="(555) 867-5309" /></Field>
         <Field label="Email" required><Input value={form.email} onChange={set('email')} type="email" placeholder="dispatch@fleet.com" /></Field>
       </FormGrid>
@@ -736,9 +738,11 @@ function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn }) {
                 <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fleet.home_address}</div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                {/* MC number badge — commented out, may not need this
                 {fleet.mc_number && (
                   <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>MC {fleet.mc_number}</span>
                 )}
+                */}
                 {truckCount > 0 && (
                   <span style={{ fontSize: t.font.size.xs, padding: '1px 7px', borderRadius: t.radius.full, background: t.colors.accent.blueLight, color: t.colors.accent.blue, fontWeight: t.font.weight.medium }}>
                     {truckCount} truck{truckCount !== 1 ? 's' : ''}
