@@ -326,38 +326,35 @@ const buildEmailHtml = (title, fields) => {
  * Detect material changes in backhaul results
  */
 export const detectBackhaulChanges = (oldMatches, newMatches) => {
-  if (!oldMatches || oldMatches.length === 0) {
-    // First time running - no changes to detect
-    return null;
-  }
+  if (!oldMatches || oldMatches.length === 0) return null;
+  if (!newMatches || newMatches.length === 0) return null;
 
-  if (!newMatches || newMatches.length === 0) {
-    // No matches found anymore
-    return null;
-  }
+  const oldTop5 = oldMatches.slice(0, 5);
+  const newTop5 = newMatches.slice(0, 5);
 
-  const oldTop = oldMatches[0];
-  const newTop = newMatches[0];
-
-  // Check if top match changed
-  if (oldTop.load_id !== newTop.load_id) {
+  // Check if the composition of the top 5 changed
+  const oldIds = new Set(oldTop5.map(m => m.load_id));
+  if (newTop5.some(m => !oldIds.has(m.load_id))) {
     return {
       type: 'new_top',
-      oldMatch: oldTop,
-      newMatch: newTop
+      oldMatch: oldMatches[0],
+      newMatch: newMatches[0],
     };
   }
 
-  // Check if price changed significantly (more than $10)
-  const priceDiff = newTop.totalRevenue - oldTop.totalRevenue;
-  if (Math.abs(priceDiff) >= 10) {
-    return {
-      type: priceDiff > 0 ? 'price_increase' : 'price_decrease',
-      oldMatch: oldTop,
-      newMatch: newTop
-    };
+  // Same loads in top 5 — check if any revenue shifted by $10+
+  for (const newMatch of newTop5) {
+    const oldMatch = oldTop5.find(m => m.load_id === newMatch.load_id);
+    if (!oldMatch) continue;
+    const diff = (newMatch.totalRevenue ?? 0) - (oldMatch.totalRevenue ?? 0);
+    if (Math.abs(diff) >= 10) {
+      return {
+        type: diff > 0 ? 'price_increase' : 'price_decrease',
+        oldMatch: oldMatches[0],
+        newMatch: newMatches[0],
+      };
+    }
   }
 
-  // No material change
   return null;
 };

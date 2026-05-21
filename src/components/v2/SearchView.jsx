@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +8,7 @@ import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildRequestPayload } from '../../utils/buildRequestPayload';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
+import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
 import { CoDriverV2 } from './CoDriverV2';
@@ -1272,7 +1273,7 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
 
 // ─── Results panel (right side when request selected) ────────────────────────
 
-function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoading, error, onRun, onEdit, onComplete }) {
+function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoading, error, onRun, onEdit, onComplete, timeUntilRefresh }) {
   const isMobile = useMobile();
   const [mapVisible, setMapVisible] = useState(true);
   const [mapFocusLoad, setMapFocusLoad] = useState(null);
@@ -1328,6 +1329,12 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
             <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
             {isLoading ? 'Searching…' : 'Run Search'}
           </PrimaryBtn>
+          {request.auto_refresh && timeUntilRefresh && !isLoading && (
+            <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={11} />
+              {timeUntilRefresh}
+            </span>
+          )}
         </div>
       </div>
 
@@ -1521,6 +1528,9 @@ export function SearchView() {
   const [noCredits, setNoCredits] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [nextRefreshTime, setNextRefreshTime] = useState(null);
+  const [timeUntilRefresh, setTimeUntilRefresh] = useState('');
+  const previousMatchesRef = useRef([]);
 
   useEffect(() => {
     if (user) loadData();
@@ -1530,6 +1540,37 @@ export function SearchView() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'new') setMode('form');
   }, []);
+
+  // Auto-refresh timer
+  useEffect(() => {
+    if (!selectedRequest?.auto_refresh) {
+      setNextRefreshTime(null);
+      return;
+    }
+    const intervalMinutes = selectedRequest.auto_refresh_interval || 240;
+    const intervalMs = intervalMinutes * 60 * 1000;
+    setNextRefreshTime(new Date(Date.now() + intervalMs));
+    const timer = setInterval(() => {
+      runMatching(selectedRequest);
+      setNextRefreshTime(new Date(Date.now() + intervalMs));
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, runMatching]);
+
+  // Countdown display
+  useEffect(() => {
+    if (!nextRefreshTime) { setTimeUntilRefresh(''); return; }
+    const update = () => {
+      const diff = nextRefreshTime - Date.now();
+      if (diff <= 0) { setTimeUntilRefresh('Refreshing…'); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeUntilRefresh(m > 0 ? `${m}m ${s}s` : `${s}s`);
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [nextRefreshTime]);
 
   const loadData = async () => {
     setLoading(true);
@@ -1639,7 +1680,26 @@ export function SearchView() {
         request.is_relay || false
       );
 
-      setMatches(result.opportunities || []);
+      const opportunities = result.opportunities || [];
+
+      if (request.notification_enabled && previousMatchesRef.current.length > 0) {
+        const change = detectBackhaulChanges(previousMatchesRef.current, opportunities);
+        if (change) {
+          sendBackhaulChangeNotification({
+            method: request.notification_method || 'email',
+            email: fleet?.email,
+            phone: fleet?.phone_number,
+            requestName: request.request_name,
+            fleetName: fleet?.name,
+            oldTopMatch: change.oldMatch,
+            newTopMatch: change.newMatch,
+            changeType: change.type,
+          }).catch(err => console.error('Notification error:', err));
+        }
+      }
+      previousMatchesRef.current = opportunities;
+
+      setMatches(opportunities);
       setRouteData(result.routeData || null);
     } catch (err) {
       console.error('Matching error:', err);
@@ -1650,6 +1710,7 @@ export function SearchView() {
   }, [user, deductCredit]);
 
   const handleSelectRequest = (request) => {
+    previousMatchesRef.current = [];
     setSelectedRequest(request);
     setMode('results');
     setMatches([]);
@@ -1805,6 +1866,7 @@ export function SearchView() {
               onRun={() => runMatching(selectedRequest)}
               onEdit={handleEdit}
               onComplete={loadData}
+              timeUntilRefresh={timeUntilRefresh}
             />
           )}
         </div>
