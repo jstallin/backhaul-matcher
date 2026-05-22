@@ -769,33 +769,44 @@ function normalizeTsLoad(load) {
     const days2PayRaw = String(load.Days2Pay ?? '');
     const daysToPay   = /^\d+$/.test(days2PayRaw) ? parseInt(days2PayRaw, 10) : null;
 
+    // FuelCost comes as "$812.33" — strip currency symbol
+    const fuelCostRaw = String(load.FuelCost ?? '');
+    const fuelCost    = parseFloat(fuelCostRaw.replace(/[^0-9.]/g, '')) || null;
+
+    // EquipmentOptions can be empty or contain modifiers like "TEAM"
+    const equipOptions = load.EquipmentOptions ? String(load.EquipmentOptions).trim() : null;
+
     return {
-      load_id:          String(load.ID),
-      source:           'truckstop',
-      broker:           load.CompanyName ?? 'Truckstop',
-      freight_type:     'General',
-      equipment_type:   TS_TO_EQUIP[equipCode] ?? equipCode,
-      equipment_code:   equipCode,
-      pickup_city:      originCity,
-      pickup_state:     originState,
-      pickup_lat:       null,
-      pickup_lng:       null,
-      pickup_date:      parseTsDate(load.PickUpDate),
-      delivery_city:    load.DestinationCity  ?? '',
-      delivery_state:   load.DestinationState ?? '',
-      delivery_lat:     null,
-      delivery_lng:     null,
-      delivery_date:    null,
-      distance_miles:   miles,
-      weight_lbs:       parseInt(load.Weight ?? 0, 10),
-      trailer_length:   parseFloat(load.Length ?? 53),
-      total_revenue:    payment,
-      revenue_per_mile: rpm,
-      days_to_pay:      daysToPay,
-      phone:            load.PointOfContactPhone ?? null,
-      age_hours:        parseInt(load.Age ?? 0, 10),
-      status:           'available',
-      posted_date:      new Date().toISOString(),
+      load_id:            String(load.ID),
+      source:             'truckstop',
+      broker:             load.CompanyName ?? 'Truckstop',
+      freight_type:       'General',
+      equipment_type:     TS_TO_EQUIP[equipCode] ?? equipCode,
+      equipment_code:     equipCode,
+      equipment_options:  equipOptions || null,
+      load_type:          load.LoadType ?? null,
+      pickup_city:        originCity,
+      pickup_state:       originState,
+      pickup_lat:         null,
+      pickup_lng:         null,
+      pickup_date:        parseTsDate(load.PickUpDate),
+      delivery_city:      load.DestinationCity  ?? '',
+      delivery_state:     load.DestinationState ?? '',
+      delivery_lat:       null,
+      delivery_lng:       null,
+      delivery_date:      null,
+      distance_miles:     miles,
+      weight_lbs:         parseInt(load.Weight ?? 0, 10),
+      trailer_length:     parseFloat(load.Length ?? 53),
+      total_revenue:      payment,
+      revenue_per_mile:   rpm,
+      days_to_pay:        daysToPay,
+      phone:              load.PointOfContactPhone ?? null,
+      age_hours:          parseInt(load.Age ?? 0, 10),
+      fuel_cost:          fuelCost,
+      experience_factor:  load.ExperienceFactor ?? null,
+      status:             'available',
+      posted_date:        new Date().toISOString(),
     };
   } catch (err) {
     console.warn('Failed to normalize Truckstop load:', err);

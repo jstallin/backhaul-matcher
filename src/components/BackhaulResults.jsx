@@ -438,6 +438,18 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                     <div style={{ fontSize: '13px', fontWeight: 600, color: match.age_hours > 48 ? colors.accent.danger : colors.text.secondary }}>{fmtAge(match.age_hours)}</div>
                   </div>
                 )}
+                {match.fuel_cost != null && (
+                  <div>
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Est. Fuel</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>${match.fuel_cost.toFixed(0)}</div>
+                  </div>
+                )}
+                {match.experience_factor && (
+                  <div>
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: match.experience_factor === 'A' ? colors.accent.success : colors.text.primary }}>{match.experience_factor}</div>
+                  </div>
+                )}
               </div>
 
               {/* Financial Breakdown (when rate config available) */}
@@ -846,6 +858,24 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                         <div>
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Posted</div>
                           <div style={{ fontWeight: 600, color: m.age_hours > 48 ? colors.accent.danger : colors.text.secondary }}>{fmtAge(m.age_hours)}</div>
+                        </div>
+                      )}
+                      {m.fuel_cost != null && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Est. Fuel Cost</div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary }}>${m.fuel_cost.toFixed(2)}</div>
+                        </div>
+                      )}
+                      {m.experience_factor && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker Rating</div>
+                          <div style={{ fontWeight: 700, color: m.experience_factor === 'A' ? colors.accent.success : colors.text.primary }}>{m.experience_factor}</div>
+                        </div>
+                      )}
+                      {m.equipment_options && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Equip. Options</div>
+                          <div style={{ fontWeight: 600, color: colors.accent.primary }}>{m.equipment_options}</div>
                         </div>
                       )}
                       {m.contactPhone && (

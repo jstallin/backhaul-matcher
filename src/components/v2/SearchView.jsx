@@ -834,6 +834,8 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           { label: '$/Mile', value: mRevPerMile(match) ? `$${mRevPerMile(match).toFixed(2)}` : '—' },
           match.days_to_pay != null && { label: 'Pay Terms', value: `Net ${match.days_to_pay}` },
           match.age_hours > 0 && { label: 'Posted', value: match.age_hours < 24 ? `${match.age_hours}h ago` : `${Math.floor(match.age_hours / 24)}d ago` },
+          match.fuel_cost != null && { label: 'Est. Fuel', value: `$${match.fuel_cost.toFixed(0)}` },
+          match.experience_factor && { label: 'Broker', value: match.experience_factor },
         ].filter(Boolean).map(({ label, value }) => (
           <div key={label}>
             <div style={{ fontSize: '10px', fontWeight: t.font.weight.semibold, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
@@ -1180,6 +1182,9 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                   match.posted_rate_per_mile > 0 && { label: 'Posted $/mi', value: `$${match.posted_rate_per_mile.toFixed(2)}` },
                   match.days_to_pay != null && { label: 'Pay Terms', value: `Net ${match.days_to_pay}` },
                   match.age_hours > 0 && { label: 'Posted', value: match.age_hours < 24 ? `${match.age_hours}h ago` : `${Math.floor(match.age_hours / 24)}d ago`, color: match.age_hours > 48 ? '#dc2626' : undefined },
+                  match.fuel_cost != null && { label: 'Est. Fuel Cost', value: `$${match.fuel_cost.toFixed(2)}` },
+                  match.experience_factor && { label: 'Broker Rating', value: match.experience_factor, color: match.experience_factor === 'A' ? '#16a34a' : undefined },
+                  match.equipment_options && { label: 'Equip. Options', value: match.equipment_options, color: t.colors.accent.blue },
                   match.contactPhone && {
                     label: 'Contact Broker',
                     value: (
