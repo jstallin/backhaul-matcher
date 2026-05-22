@@ -66,7 +66,7 @@ const LOAD_BOARD_CONFIG = {
   },
   truckstop: {
     name: 'Truckstop',
-    url: (id) => id ? `https://fm.truckstop.com/PostingDetails/Loads/${id}` : 'https://fm.truckstop.com/',
+    url: (id) => id ? `https://main.truckstop.com/PostingDetails/Loads/${id}` : 'https://main.truckstop.com/',
   },
 };
 
@@ -275,9 +275,16 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ padding: '6px 16px', background: `${getRankColor(index)}20`, borderRadius: '20px', fontSize: '14px', fontWeight: 800, color: getRankColor(index) }}>
                     {getRankLabel(index)}
                   </div>
-                  {match.source === 'truckstop' && (
-                    <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '20px', display: 'block' }} />
-                  )}
+                  {match.source === 'truckstop' && (() => {
+                    const href = LOAD_BOARD_CONFIG.truckstop.url(match.load_id || match.id);
+                    return href ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" title="View load on Truckstop" style={{ display: 'flex', alignItems: 'center' }}>
+                        <img src="/Waypoint%20Default.png" alt="View on Truckstop" style={{ height: '20px', display: 'block' }} />
+                      </a>
+                    ) : (
+                      <img src="/Waypoint%20Default.png" alt="Truckstop load" style={{ height: '20px', display: 'block' }} />
+                    );
+                  })()}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   {match.has_rate_config ? (
@@ -702,9 +709,20 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>
                             Load Number
                           </div>
-                          <div style={{ fontWeight: 600, color: colors.text.primary, fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>
-                            {m.df_load_number || m.source_load_id || m.load_id}
-                          </div>
+                          {m.source === 'truckstop' && (m.source_load_id || m.load_id) ? (
+                            <a
+                              href={LOAD_BOARD_CONFIG.truckstop.url(m.source_load_id || m.load_id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontWeight: 600, color: colors.accent.primary, fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all', textDecoration: 'none' }}
+                            >
+                              {m.source_load_id || m.load_id} ↗
+                            </a>
+                          ) : (
+                            <div style={{ fontWeight: 600, color: colors.text.primary, fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all' }}>
+                              {m.df_load_number || m.source_load_id || m.load_id}
+                            </div>
+                          )}
                         </div>
                       )}
                       <div>

@@ -71,7 +71,7 @@ const LOAD_BOARD_CONFIG = {
   },
   truckstop: {
     name: 'Truckstop',
-    url: (id) => id ? `https://fm.truckstop.com/PostingDetails/Loads/${id}` : 'https://fm.truckstop.com/',
+    url: (id) => id ? `https://main.truckstop.com/PostingDetails/Loads/${id}` : 'https://main.truckstop.com/',
   },
 };
 
@@ -645,7 +645,7 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
     imported:      'Imported',
   }[match.source] || match.source;
 
-  const boardCfg = match.source && match.source !== 'demo' && match.source !== 'truckstop' && LOAD_BOARD_CONFIG[match.source];
+  const boardCfg = match.source && match.source !== 'demo' && LOAD_BOARD_CONFIG[match.source];
   const boardHref = boardCfg
     ? boardCfg.url(match.source_load_id || match.load_id, match)
     : null;
@@ -738,7 +738,24 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           }}>
             #{rank}
           </div>
-          {boardCfg && boardHref && (
+          {match.source === 'truckstop' ? (
+            boardHref ? (
+              <a
+                href={boardHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                title="View load on Truckstop"
+                style={{ display: 'flex', alignItems: 'center', opacity: 0.9 }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.9'}
+              >
+                <img src="/Waypoint%20Default.png" alt="View on Truckstop" style={{ height: '20px', display: 'block' }} />
+              </a>
+            ) : (
+              <img src="/Waypoint%20Default.png" alt="Truckstop load" style={{ height: '20px', display: 'block', opacity: 0.9 }} />
+            )
+          ) : (boardCfg && boardHref && (
             <a
               href={boardHref}
               target="_blank"
@@ -758,10 +775,7 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
             >
               {boardCfg.name} ↗
             </a>
-          )}
-          {match.source === 'truckstop' && (
-            <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '20px', display: 'block' }} />
-          )}
+          ))}
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ fontSize: t.font.size.xl, fontWeight: t.font.weight.bold, color: rc.text }}>
