@@ -630,7 +630,7 @@ function fmtNum(n, decimals = 1) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: decimals }).format(n);
 }
 
-function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis }) {
+function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis, onTruckstopClick, isPending }) {
   const rc = RANK_COLORS[rank] || DEFAULT_RANK_COLORS;
 
   const hasRateConfig = match.has_rate_config;
@@ -740,18 +740,15 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           </div>
           {match.source === 'truckstop' ? (
             boardHref ? (
-              <a
-                href={boardHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
+              <button
+                onClick={e => { e.stopPropagation(); onTruckstopClick && onTruckstopClick(match, boardHref); }}
                 title="View load on Truckstop"
-                style={{ display: 'flex', alignItems: 'center', opacity: 0.9 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', opacity: 0.9 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '0.9'}
               >
                 <img src="/Waypoint%20Default.png" alt="View on Truckstop" style={{ height: '20px', display: 'block' }} />
-              </a>
+              </button>
             ) : (
               <img src="/Waypoint%20Default.png" alt="Truckstop load" style={{ height: '20px', display: 'block', opacity: 0.9 }} />
             )
@@ -835,7 +832,9 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           { label: 'OOR Miles', value: `+${fmtNum(mAdditional(match), 0)} mi` },
           { label: 'To Pickup', value: `${fmtNum(mToPickup(match), 0)} mi` },
           { label: '$/Mile', value: mRevPerMile(match) ? `$${mRevPerMile(match).toFixed(2)}` : '—' },
-        ].map(({ label, value }) => (
+          match.days_to_pay != null && { label: 'Pay Terms', value: `Net ${match.days_to_pay}` },
+          match.age_hours > 0 && { label: 'Posted', value: match.age_hours < 24 ? `${match.age_hours}h ago` : `${Math.floor(match.age_hours / 24)}d ago` },
+        ].filter(Boolean).map(({ label, value }) => (
           <div key={label}>
             <div style={{ fontSize: '10px', fontWeight: t.font.weight.semibold, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>{label}</div>
             <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{value}</div>
@@ -881,6 +880,14 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           <div><strong style={{ color: t.colors.text.primary }}>Broker:</strong> {match.broker || '—'}</div>
           <div><strong style={{ color: t.colors.text.primary }}>Shipper:</strong> {match.shipper || '—'}</div>
           <div><strong style={{ color: t.colors.text.primary }}>Freight:</strong> {mFreight(match) || '—'}</div>
+        </div>
+      )}
+      {match.contactPhone && (
+        <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}`, background: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: t.font.size.xs }}>
+          <span style={{ color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>Contact Broker:</span>
+          <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Call</a>
+          <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Text</a>
+          <span style={{ color: t.colors.text.secondary }}>{match.contactPhone}</span>
         </div>
       )}
 
@@ -955,12 +962,46 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
       </div>
 
       {/* ── Action buttons ── */}
-      <div style={{ padding: '10px 16px 14px', borderTop: `1px solid ${rc.border}`, display: 'flex', gap: '8px' }}>
+      <div style={{ padding: '10px 16px 14px', borderTop: `1px solid ${rc.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => onViewDetails(match)}
+            style={{
+              flex: 1, padding: '9px 12px',
+              background: t.colors.accent.blue,
+              border: 'none',
+              borderRadius: t.radius.lg,
+              color: '#fff',
+              fontSize: t.font.size.xs,
+              fontWeight: t.font.weight.bold,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+            }}
+          >
+            <Package size={13} /> View Details
+          </button>
+          <button
+            onClick={() => onMapClick(match)}
+            style={{
+              flex: 1, padding: '9px 12px',
+              background: 'transparent',
+              border: `1px solid ${t.colors.accent.blue}`,
+              borderRadius: t.radius.lg,
+              color: t.colors.accent.blue,
+              fontSize: t.font.size.xs,
+              fontWeight: t.font.weight.bold,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+            }}
+          >
+            <Map size={13} /> View on Map
+          </button>
+        </div>
         <button
-          onClick={() => onViewDetails(match)}
+          onClick={() => onHaulThis(match)}
           style={{
-            flex: 1, padding: '9px 12px',
-            background: t.colors.accent.blue,
+            width: '100%', padding: '9px 12px',
+            background: '#16a34a',
             border: 'none',
             borderRadius: t.radius.lg,
             color: '#fff',
@@ -970,23 +1011,10 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
           }}
         >
-          <Package size={13} /> View Details
-        </button>
-        <button
-          onClick={() => onMapClick(match)}
-          style={{
-            flex: 1, padding: '9px 12px',
-            background: 'transparent',
-            border: `1px solid ${t.colors.accent.blue}`,
-            borderRadius: t.radius.lg,
-            color: t.colors.accent.blue,
-            fontSize: t.font.size.xs,
-            fontWeight: t.font.weight.bold,
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
-          }}
-        >
-          <Map size={13} /> View on Map
+          <TrendingUp size={13} /> Haul This Load
+          {isPending && (
+            <span style={{ marginLeft: '4px', background: 'rgba(255,255,255,0.25)', borderRadius: '10px', padding: '1px 6px', fontSize: '10px' }}>viewed on TS</span>
+          )}
         </button>
       </div>
     </div>
@@ -1150,7 +1178,18 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                   { label: 'Freight', value: mFreight(match) || '—' },
                   { label: 'Distance Source', value: match.distance_source === 'pcmiler' ? 'PC*Miler' : 'Estimated', color: match.distance_source === 'pcmiler' ? '#16a34a' : t.colors.text.secondary },
                   match.posted_rate_per_mile > 0 && { label: 'Posted $/mi', value: `$${match.posted_rate_per_mile.toFixed(2)}` },
-                  match.contactPhone && { label: 'Contact', value: match.contactPhone },
+                  match.days_to_pay != null && { label: 'Pay Terms', value: `Net ${match.days_to_pay}` },
+                  match.age_hours > 0 && { label: 'Posted', value: match.age_hours < 24 ? `${match.age_hours}h ago` : `${Math.floor(match.age_hours / 24)}d ago`, color: match.age_hours > 48 ? '#dc2626' : undefined },
+                  match.contactPhone && {
+                    label: 'Contact Broker',
+                    value: (
+                      <span style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 8px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, fontSize: t.font.size.xs, whiteSpace: 'nowrap' }}>Call</a>
+                        <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 8px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, fontSize: t.font.size.xs, whiteSpace: 'nowrap' }}>Text</a>
+                        <span style={{ color: t.colors.text.secondary, fontSize: t.font.size.xs }}>{match.contactPhone}</span>
+                      </span>
+                    )
+                  },
                 ].filter(Boolean).map(({ label, value, mono, color }) => (
                   <div key={label}>
                     <div style={{ fontSize: '10px', color: t.colors.text.muted, marginBottom: '2px' }}>{label}</div>
@@ -1298,6 +1337,11 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const [haulMatch, setHaulMatch] = useState(null);
   const [completing, setCompleting] = useState(false);
 
+  // Pending / nudge state
+  const [pendingLoads, setPendingLoads] = useState(new Set());
+  const [toastLoad, setToastLoad] = useState(null);
+  const toastTimerRef = useRef(null);
+
   const fleetHome = fleet ? { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address } : null;
 
   const handleHaulConfirm = async () => {
@@ -1311,6 +1355,8 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         out_of_route_miles: mAdditional(haulMatch),
         completed_at: new Date().toISOString(),
       });
+      const id = haulMatch.load_id || haulMatch.id;
+      setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
       setHaulMatch(null);
       if (onComplete) onComplete();
     } catch (err) {
@@ -1318,6 +1364,19 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
     } finally {
       setCompleting(false);
     }
+  };
+
+  const handleTruckstopClick = (match, href) => {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    const id = match.load_id || match.id;
+    setPendingLoads(prev => { const next = new Set(prev); next.add(id); return next; });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastLoad(match);
+    toastTimerRef.current = setTimeout(() => setToastLoad(null), 5000);
+  };
+
+  const dismissPending = (id) => {
+    setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
   };
 
   return (
@@ -1419,6 +1478,32 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
             <SectionLabel style={{ marginBottom: '12px' }}>
               {matches.length} Load{matches.length !== 1 ? 's' : ''} Found — Ranked by {matches[0]?.has_rate_config ? 'Net Credit' : 'Revenue'}
             </SectionLabel>
+
+            {/* Pending loads banner */}
+            {pendingLoads.size > 0 && (() => {
+              const pending = matches.filter(m => pendingLoads.has(m.load_id || m.id));
+              if (!pending.length) return null;
+              return (
+                <div style={{ marginBottom: '12px', padding: '14px 16px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: t.radius.xl }}>
+                  <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: '#15803d', marginBottom: '8px' }}>Did you book one of these?</div>
+                  {pending.map(m => {
+                    const id = m.load_id || m.id;
+                    return (
+                      <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ flex: 1, minWidth: '140px', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+                          {mOriginAddr(m)} → {mDestAddr(m)}
+                        </span>
+                        <button onClick={() => { setHaulMatch(m); dismissPending(id); }} style={{ padding: '4px 12px', background: '#16a34a', border: 'none', borderRadius: t.radius.md, color: '#fff', fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          Mark as Hauled
+                        </button>
+                        <button onClick={() => dismissPending(id)} style={{ padding: '4px 8px', background: 'none', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.md, color: t.colors.text.muted, fontSize: t.font.size.xs, cursor: 'pointer' }}>✕</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             {matches.map((match, idx) => (
               <MatchCard
                 key={match.load_id || idx}
@@ -1429,6 +1514,8 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
                 onViewDetails={m => setSelectedMatch(m)}
                 onMapClick={m => { setMapFocusLoad(m); setMapMatch(m); }}
                 onHaulThis={m => setHaulMatch(m)}
+                onTruckstopClick={handleTruckstopClick}
+                isPending={pendingLoads.has(match.load_id || match.id)}
               />
             ))}
           </>
@@ -1462,9 +1549,29 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         onClose={() => setHaulMatch(null)}
       />
 
+      {/* Truckstop nudge toast */}
+      {toastLoad && (
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 20000, background: '#fff', border: '1px solid #86efac', borderRadius: t.radius.xl, padding: '16px', maxWidth: '340px', boxShadow: t.shadow.lg, animation: 'fadeInUp 0.2s ease' }}>
+          <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '2px' }}>
+            {mOriginAddr(toastLoad)} → {mDestAddr(toastLoad)}
+          </div>
+          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '12px' }}>
+            If you book it, mark it as hauled to track your revenue.
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => { setHaulMatch(toastLoad); setToastLoad(null); }} style={{ flex: 1, padding: '8px 12px', background: '#16a34a', border: 'none', borderRadius: t.radius.lg, color: '#fff', fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, cursor: 'pointer' }}>
+              Mark as Hauled
+            </button>
+            <button onClick={() => setToastLoad(null)} style={{ padding: '8px 12px', background: 'none', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.lg, color: t.colors.text.muted, fontSize: t.font.size.xs, cursor: 'pointer' }}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes shimmer { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   );

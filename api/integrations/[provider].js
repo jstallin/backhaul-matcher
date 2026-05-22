@@ -682,6 +682,9 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
   }
 
   const rawLoads = toArray(result?.SearchResults?.LoadSearchItem);
+  if (rawLoads.length > 0) {
+    console.log('[Truckstop] Raw LoadSearchItem sample (first result):', JSON.stringify(rawLoads[0], null, 2));
+  }
   return { loads: rawLoads, pageCount: rawLoads.length };
 }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
@@ -82,6 +82,9 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [aiAnalysis, setAiAnalysis] = useState({}); // keyed by load_id
   const [aiLoading, setAiLoading] = useState({});   // keyed by load_id
   const [aiFeedback, setAiFeedback] = useState({}); // keyed by load_id: { rating, comment, showInput, submitted }
+  const [pendingLoads, setPendingLoads] = useState(new Set());
+  const [toastLoad, setToastLoad] = useState(null);
+  const toastTimerRef = useRef(null);
 
   const handleAiAnalyze = async (match) => {
     const id = match.load_id || match.id;
@@ -174,6 +177,8 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
     setCompleting(true);
     try {
       await onComplete(haulMatch);
+      const id = haulMatch.load_id || haulMatch.id;
+      setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
       setHaulMatch(null);
       setSelectedMatch(null);
     } catch (error) {
@@ -182,6 +187,24 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
     } finally {
       setCompleting(false);
     }
+  };
+
+  const handleTruckstopLinkClick = (match, href) => {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    const id = match.load_id || match.id;
+    setPendingLoads(prev => { const next = new Set(prev); next.add(id); return next; });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastLoad(match);
+    toastTimerRef.current = setTimeout(() => setToastLoad(null), 5000);
+  };
+
+  const dismissPending = (id) => {
+    setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const fmtAge = (hours) => {
+    if (!hours) return null;
+    return hours < 24 ? `${hours}h old` : `${Math.floor(hours / 24)}d old`;
   };
 
   const formatCurrency = (value) => {
@@ -266,6 +289,30 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
       ) : (
         /* Matches List */
         <div>
+          {/* Pending loads banner */}
+          {pendingLoads.size > 0 && (() => {
+            const pending = matches.filter(m => pendingLoads.has(m.load_id || m.id));
+            if (!pending.length) return null;
+            return (
+              <div style={{ marginBottom: '16px', padding: '14px 16px', background: `${colors.accent.success}12`, border: `1px solid ${colors.accent.success}50`, borderRadius: '12px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: colors.text.primary, marginBottom: '10px' }}>Did you book one of these?</div>
+                {pending.map(m => {
+                  const id = m.load_id || m.id;
+                  return (
+                    <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                      <span style={{ flex: 1, minWidth: '160px', fontSize: '13px', color: colors.text.secondary }}>
+                        {m.origin.address} → {m.destination.address}
+                      </span>
+                      <button onClick={() => { setHaulMatch(m); dismissPending(id); }} style={{ padding: '4px 12px', background: colors.accent.success, border: 'none', borderRadius: '6px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        Mark as Hauled
+                      </button>
+                      <button onClick={() => dismissPending(id)} style={{ padding: '4px 8px', background: 'none', border: `1px solid ${colors.border.accent}`, borderRadius: '6px', color: colors.text.tertiary, fontSize: '12px', cursor: 'pointer' }}>✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           {matches.map((match, index) => (
             <div key={match.id} style={{ marginBottom: '16px', background: colors.background.card, border: `2px solid ${index < 3 ? getRankColor(index) + '40' : colors.border.primary}`, borderRadius: '16px', padding: '24px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${getRankColor(index)}30`; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
               
@@ -278,9 +325,9 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   {match.source === 'truckstop' && (() => {
                     const href = LOAD_BOARD_CONFIG.truckstop.url(match.load_id || match.id);
                     return href ? (
-                      <a href={href} target="_blank" rel="noopener noreferrer" title="View load on Truckstop" style={{ display: 'flex', alignItems: 'center' }}>
+                      <button onClick={e => { e.stopPropagation(); handleTruckstopLinkClick(match, href); }} title="View load on Truckstop" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
                         <img src="/Waypoint%20Default.png" alt="View on Truckstop" style={{ height: '20px', display: 'block' }} />
-                      </a>
+                      </button>
                     ) : (
                       <img src="/Waypoint%20Default.png" alt="Truckstop load" style={{ height: '20px', display: 'block' }} />
                     );
@@ -379,6 +426,18 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>To Pickup</div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.secondary }}>{match.finalToPickup} mi</div>
                 </div>
+                {match.days_to_pay != null && (
+                  <div>
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Pay Terms</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.primary }}>Net {match.days_to_pay}</div>
+                  </div>
+                )}
+                {fmtAge(match.age_hours) && (
+                  <div>
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Posted</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: match.age_hours > 48 ? colors.accent.danger : colors.text.secondary }}>{fmtAge(match.age_hours)}</div>
+                  </div>
+                )}
               </div>
 
               {/* Financial Breakdown (when rate config available) */}
@@ -433,6 +492,14 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div><strong>Shipper:</strong> {match.shipper}</div>
                   <div><strong>Freight:</strong> {match.freightType}</div>
                 </div>
+                {match.contactPhone && (
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ color: colors.text.tertiary, fontWeight: 600 }}>Contact Broker:</span>
+                    <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Call</a>
+                    <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Text</a>
+                    <span style={{ color: colors.text.secondary }}>{match.contactPhone}</span>
+                  </div>
+                )}
               </div>
 
               {/* AI Analysis */}
@@ -514,14 +581,26 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
               })()}
 
               {/* Action Buttons */}
-              <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
-                <button onClick={() => setSelectedMatch(match)} style={{ flex: 1, padding: '12px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent.secondary; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent.primary; }}>
-                  <Package size={16} />
-                  View Details
-                </button>
-                <button onClick={(e) => { e.stopPropagation(); setMapMatch(match); }} style={{ flex: 1, padding: '12px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}10`; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; }}>
-                  <Map size={16} />
-                  View on Map
+              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button onClick={() => setSelectedMatch(match)} style={{ flex: 1, padding: '12px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent.secondary; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent.primary; }}>
+                    <Package size={16} />
+                    View Details
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setMapMatch(match); }} style={{ flex: 1, padding: '12px 20px', background: colors.background.secondary, border: `2px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = `${colors.accent.primary}10`; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.background.secondary; }}>
+                    <Map size={16} />
+                    View on Map
+                  </button>
+                </div>
+                <button
+                  onClick={() => setHaulMatch(match)}
+                  style={{ width: '100%', padding: '11px 20px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <TrendingUp size={16} />
+                  Haul This Load
+                  {pendingLoads.has(match.load_id || match.id) && (
+                    <span style={{ marginLeft: '4px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', padding: '1px 7px', fontSize: '11px' }}>viewed on TS</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -757,10 +836,26 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           <div style={{ fontWeight: 600, color: colors.text.primary }}>${m.posted_rate_per_mile.toFixed(2)}</div>
                         </div>
                       )}
+                      {m.days_to_pay != null && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Pay Terms</div>
+                          <div style={{ fontWeight: 600, color: colors.text.primary }}>Net {m.days_to_pay}</div>
+                        </div>
+                      )}
+                      {fmtAge(m.age_hours) && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Posted</div>
+                          <div style={{ fontWeight: 600, color: m.age_hours > 48 ? colors.accent.danger : colors.text.secondary }}>{fmtAge(m.age_hours)}</div>
+                        </div>
+                      )}
                       {m.contactPhone && (
                         <div>
-                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Contact</div>
-                          <div style={{ fontWeight: 600, color: colors.text.primary }}>{m.contactPhone}</div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Contact Broker</div>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <a href={`tel:${m.contactPhone}`} style={{ color: colors.accent.primary, fontWeight: 700, fontSize: '12px', textDecoration: 'none', padding: '2px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', whiteSpace: 'nowrap' }}>Call</a>
+                            <a href={`sms:${m.contactPhone}`} style={{ color: colors.accent.primary, fontWeight: 700, fontSize: '12px', textDecoration: 'none', padding: '2px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', whiteSpace: 'nowrap' }}>Text</a>
+                            <span style={{ fontWeight: 600, color: colors.text.secondary, fontSize: '12px' }}>{m.contactPhone}</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -912,7 +1007,27 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           </div>
         </div>
       )}
+      {/* Truckstop nudge toast */}
+      {toastLoad && (
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 20000, background: colors.background.overlay, border: `1px solid ${colors.accent.success}60`, borderRadius: '12px', padding: '16px', maxWidth: '340px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', animation: 'fadeInUp 0.2s ease' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: colors.text.primary, marginBottom: '2px' }}>
+            {toastLoad.origin.address} → {toastLoad.destination.address}
+          </div>
+          <div style={{ fontSize: '12px', color: colors.text.secondary, marginBottom: '12px' }}>
+            If you book it, mark it as hauled to track your revenue.
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => { setHaulMatch(toastLoad); setToastLoad(null); }} style={{ flex: 1, padding: '8px 12px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+              Mark as Hauled
+            </button>
+            <button onClick={() => setToastLoad(null)} style={{ padding: '8px 12px', background: 'none', border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.secondary, fontSize: '12px', cursor: 'pointer' }}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <style>{`
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 560px) {
           .br-header-actions { width: 100%; }
           .br-header-actions button { flex: 1; justify-content: center; }

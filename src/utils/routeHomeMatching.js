@@ -559,6 +559,8 @@ export const findRouteHomeBackhauls = async (
       shipper: load.shipper_name || null,
       freightType: load.freight_type || load.commodity || null,
       contactPhone: load.phone || null,
+      days_to_pay: load.days_to_pay ?? null,
+      age_hours: load.age_hours || null,
       // Load-leg distance used by the card arrow display and detail panel fallback
       distance: Math.round(pickupToDelivery),
       // Shipper-posted rate/mile (from DF/DAT raw data) — distinct from our computed revenuePerMile
