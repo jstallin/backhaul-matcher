@@ -1,127 +1,127 @@
 {
   "runDate": "2026-05-22",
-  "runAt": "2026-05-22T09:09:10.858Z",
-  "totalLoads": 1158,
-  "previousTotal": 1109,
-  "netChange": 49,
-  "added": 1113,
-  "removed": 1064,
-  "avgPay": 2093,
-  "loadsWithPay": 620,
+  "runAt": "2026-05-22T11:57:38.984Z",
+  "totalLoads": 1059,
+  "previousTotal": 1158,
+  "netChange": -99,
+  "added": 942,
+  "removed": 1041,
+  "avgPay": 2054,
+  "loadsWithPay": 881,
   "equipmentTypes": [
     [
       "Flatbed",
-      765
+      575
     ],
     [
-      "Step Deck",
-      275
+      "Other",
+      203
     ],
     [
       "Dry Van",
-      69
+      119
+    ],
+    [
+      "Step Deck",
+      94
     ],
     [
       "Refrigerated",
-      29
+      57
     ],
     [
       "Power Only",
-      10
-    ],
-    [
-      "Hotshot",
       6
     ],
     [
-      "Container",
-      2
+      "Hotshot",
+      3
     ],
     [
-      "Lowboy",
+      "Curtain Van",
       2
     ]
   ],
   "topPickupStates": [
     [
+      "PA",
+      136
+    ],
+    [
       "WA",
-      92
+      85
     ],
     [
       "OR",
-      89
+      73
     ],
     [
       "TX",
-      84
-    ],
-    [
-      "AL",
-      83
-    ],
-    [
-      "AR",
-      65
-    ],
-    [
-      "PA",
-      63
+      71
     ],
     [
       "IL",
-      55
+      59
+    ],
+    [
+      "AL",
+      46
     ],
     [
       "ID",
-      54
+      38
     ],
     [
-      "OK",
-      46
+      "CA",
+      35
     ],
     [
-      "NJ",
-      46
+      "FL",
+      35
     ],
     [
-      "GA",
-      39
-    ],
-    [
-      "SC",
-      36
-    ],
-    [
-      "MA",
-      34
+      "MI",
+      31
     ],
     [
       "OH",
       31
     ],
     [
-      "MO",
-      27
-    ],
-    [
       "IN",
+      28
+    ],
+    [
+      "NJ",
+      28
+    ],
+    [
+      "WI",
       27
     ],
     [
-      "NY",
-      25
+      "LA",
+      26
     ],
     [
-      "MS",
-      25
+      "GA",
+      26
+    ],
+    [
+      "AR",
+      26
     ],
     [
       "MD",
-      23
+      22
     ],
     [
-      "FL",
-      20
+      "MS",
+      21
+    ],
+    [
+      "SC",
+      18
     ]
   ]
 }
