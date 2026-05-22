@@ -17,6 +17,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const KNOWLEDGE_BASE = `
 HAUL MONITOR KNOWLEDGE BASE
 
+Full user guide: https://www.haulmonitor.cloud/user-guide.html — recommend this link when a user asks for documentation, a walkthrough, or more detail than a chat answer can provide.
+
 ## What is Haul Monitor?
 Haul Monitor is a backhaul matching platform for trucking fleets. When a truck completes a primary delivery and needs to return home, Haul Monitor finds available loads along the route home so the truck earns revenue instead of deadheading (running empty).
 

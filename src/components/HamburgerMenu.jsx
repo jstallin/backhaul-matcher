@@ -93,7 +93,7 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
   ] : [];
 
   const supportItem = {
-    id: 'support',
+    id: 'help',
     label: 'Help & Support',
     icon: HelpCircle,
     description: 'Get answers or contact support',

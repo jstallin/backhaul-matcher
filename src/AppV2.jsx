@@ -11,6 +11,7 @@ import { LoadsView } from './components/v2/LoadsView';
 import { ReportsView } from './components/v2/ReportsView';
 import { EstimatesView } from './components/v2/EstimatesView';
 import { SettingsView } from './components/v2/SettingsView';
+import { HelpView } from './components/v2/HelpView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ImportedLoads } from './components/ImportedLoads';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
@@ -497,7 +498,7 @@ function PlaceholderView({ icon: Icon, title, description, phase, accentColor = 
 
 // ─── View router ──────────────────────────────────────────────────────────────
 
-function renderView(currentView, onNavigate, onboardingProps = {}) {
+function renderView(currentView, onNavigate, onboardingProps = {}, callbacks = {}) {
   switch (currentView) {
     case 'dashboard': return <DashboardView onNavigate={onNavigate} />;
     case 'search':    return <SearchView />;
@@ -506,6 +507,7 @@ function renderView(currentView, onNavigate, onboardingProps = {}) {
     case 'reports':   return <ReportsView />;
     case 'estimates': return <EstimatesView />;
     case 'settings':        return <SettingsView />;
+    case 'help':            return <HelpView onOpenCoDriver={callbacks.onOpenCoDriver} />;
     case 'admin-dashboard':  return <AdminDashboard onMenuNavigate={onNavigate} onNavigateToSettings={() => onNavigate('settings')} />;
     case 'imported-loads':   return <ImportedLoads onMenuNavigate={onNavigate} />;
     case 'onboarding':       return <TruckstopOnboarding {...onboardingProps} onComplete={onNavigate} />;
@@ -555,10 +557,6 @@ function AppV2Inner() {
   }, [user]);
 
   const handleNavigate = (view) => {
-    if (view === 'support') {
-      setSupportOpen(true);
-      return;
-    }
     if (view === 'buy-credits') {
       setBuyCreditsOpen(true);
       return;
@@ -568,7 +566,7 @@ function AppV2Inner() {
 
   return (
     <Shell currentView={currentView} onNavigate={handleNavigate} creditBalance={balance}>
-      {renderView(currentView, handleNavigate, { org, isOrgAdmin })}
+      {renderView(currentView, handleNavigate, { org, isOrgAdmin }, { onOpenCoDriver: () => setSupportOpen(true) })}
       {supportOpen && (
         <CoDriverV2
           context="support"

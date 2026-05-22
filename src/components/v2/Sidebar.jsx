@@ -142,11 +142,11 @@ export function Sidebar({ currentView, onNavigate, creditBalance = null }) {
         <div style={{ margin: '0 4px 8px', borderTop: `1px solid ${t.colors.sidebar.divider}` }} />
 
         <NavItem
-          id="support"
+          id="help"
           label="Help & Support"
           Icon={HelpCircle}
-          active={currentView === 'support'}
-          onClick={() => onNavigate('support')}
+          active={currentView === 'help'}
+          onClick={() => onNavigate('help')}
         />
         <NavItem
           id="settings"

@@ -28,6 +28,7 @@ import { HaulMonitorLogo } from './components/HaulMonitorLogo';
 import { InstallPrompt } from './components/InstallPrompt';
 import { db, supabase } from './lib/supabase';
 import { TruckstopOnboarding } from './components/TruckstopOnboarding';
+import { HelpPage } from './components/HelpPage';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
 // Calculate distance between two points (Haversine formula)
@@ -321,10 +322,6 @@ function App() {
   };
 
   const handleMenuNavigation = (view) => {
-    if (view === 'support') {
-      setSupportChatOpen(true);
-      return;
-    }
     setCurrentView(view);
     // Reset other state when navigating
     if (view !== 'fleet-management') {
@@ -558,9 +555,15 @@ function App() {
           onNavigateToSettings={handleNavigateToSettings}
         />
       ) : currentView === 'fleet-management' ? (
-        <FleetDashboard 
+        <FleetDashboard
           fleetId={selectedFleetId}
-          onBackToSearch={() => setCurrentView('fleets')} 
+          onBackToSearch={() => setCurrentView('fleets')}
+        />
+      ) : currentView === 'help' ? (
+        <HelpPage
+          onMenuNavigate={handleMenuNavigation}
+          onNavigateToSettings={handleNavigateToSettings}
+          onOpenCoDriver={() => setSupportChatOpen(true)}
         />
       ) : (
     <div style={styles.container}>
