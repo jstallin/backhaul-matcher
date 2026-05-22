@@ -12,6 +12,8 @@ v2 redesign ("Haul Monitor" — dark sidebar, light cards, Inter font) is comple
 - Backhaul load markers now plot on map (state-centroid fallback for DF loads with null coordinates)
 - Avatar popup z-index raised above Leaflet map layers
 - Mobile layout: bottom tab bar replaces sidebar on <768px; SearchView has master-detail navigation on mobile
+- Help & Support page live in both V1 and V2 (FAQ accordion + user guide link + Co-driver chat button). User guide URL: https://www.haulmonitor.cloud/user-guide.html. Co-driver knowledge base includes the URL so it can recommend it contextually.
+- V1 is NOT being phased out — users may prefer it; both UIs maintained in parallel.
 
 **When switching over, three things to do:**
 1. **User guide** — needs screenshots and copy updated to reflect v2 UI (navigation, card layouts, new Search results view, Co-driver panel, mobile layout).
