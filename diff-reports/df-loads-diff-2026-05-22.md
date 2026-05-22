@@ -4,47 +4,154 @@
 
 | | Count |
 |---|---|
-| Previous total | 1158 |
-| New total | 1059 |
-| Net change | -99 |
-| Added | +942 |
-| Removed | -1041 |
-| Avg pay (new file) | $2,054 |
+| Previous total | 1059 |
+| New total | 1212 |
+| Net change | +153 |
+| Added | +1212 |
+| Removed | -1059 |
+| Avg pay (new file) | $2,003 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 575 |
-| Other | 203 |
-| Dry Van | 119 |
-| Step Deck | 94 |
-| Refrigerated | 57 |
-| Power Only | 6 |
-| Hotshot | 3 |
-| Curtain Van | 2 |
+| Flatbed | 528 |
+| Step Deck | 269 |
+| Dry Van | 235 |
+| Refrigerated | 82 |
+| Other | 57 |
+| Power Only | 25 |
+| Hotshot | 12 |
+| Box Truck | 3 |
+| Lowboy | 1 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| PA | 136 |
-| WA | 85 |
-| OR | 73 |
-| TX | 71 |
-| IL | 59 |
-| AL | 46 |
-| ID | 38 |
-| CA | 35 |
-| FL | 35 |
-| MI | 31 |
-| OH | 31 |
-| IN | 28 |
-| NJ | 28 |
-| WI | 27 |
-| LA | 26 |
+| IL | 96 |
+| TX | 82 |
+| PA | 72 |
+| NJ | 69 |
+| AR | 63 |
+| OR | 62 |
+| AL | 61 |
+| MA | 55 |
+| CA | 42 |
+| FL | 42 |
+| ID | 40 |
+| WA | 38 |
+| MS | 36 |
+| LA | 36 |
+| GA | 33 |
 
-## Added Loads (+942)
+## Added Loads (+1212)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
+| Des Moines, IA → Middletown, OH | Dry Van | $1,700 | 581 |
+| Dixon, IL → Osage, IA | Dry Van | $1,500 | 275 |
+| Plainfield, IN → Cypress, CA | Dry Van | $6,300 | 2060 |
+| Plainfield, IN → San Antonio, TX | Dry Van | $4,100 | 1162 |
+| Plainfield, IN → Manassas, VA | Dry Van | $4,300 | 563 |
+| Montgomery, MN → Jacksonville, FL | Refrigerated | $0 | 1431 |
+| Montgomery, MN → Jacksonville, FL | Dry Van | $0 | 1431 |
+| Montgomery, MN → Atlanta, GA | Refrigerated | $0 | 1081 |
+| Montgomery, MN → Atlanta, GA | Dry Van | $0 | 1081 |
+| Montgomery, MN → Shakopee, MN | Refrigerated | $0 | 29 |
+| Montgomery, MN → Shakopee, MN | Dry Van | $0 | 29 |
+| Montgomery, MN → Hattiesburg, MS | Refrigerated | $0 | 1095 |
+| Montgomery, MN → Hattiesburg, MS | Dry Van | $0 | 1095 |
+| Montgomery, MN → Oklahoma City, OK | Refrigerated | $0 | 759 |
+| Montgomery, MN → Oklahoma City, OK | Dry Van | $0 | 759 |
+| Montgomery, MN → New Braunfels, TX | Refrigerated | $0 | 1194 |
+| Montgomery, MN → New Braunfels, TX | Dry Van | $0 | 1194 |
+| Montgomery, MN → Prince George, VA | Refrigerated | $0 | 1254 |
+| Montgomery, MN → Prince George, VA | Dry Van | $0 | 1254 |
+| Canton, OH → Eau Claire, WI | Dry Van | $2,742 | 701 |
+| La Crosse, WI → Bradley, IL | Dry Van | $1,200 | 330 |
+| Menomonie, WI → Fort Dodge, IA | Dry Van | $1,300 | 277 |
+| Edison, NJ → Plainfield, IN | Dry Van | $2,175 | 707 |
+| Brewster, NY → Indianapolis, IN | Other | $2,000 | ? |
+| Allentown, PA → Monrovia, MD | Dry Van | $0 | 169 |
+| Hazleton, PA → Fort Worth, TX | Dry Van | $4,639 | 1490 |
+| Warren, AR → Buckner, MO | Flatbed | $2,600 | 523 |
+| Arvin, CA → Elizabeth, NJ | Refrigerated | $0 | 2790 |
+| Chino, CA → Orlando, FL | Refrigerated | $10,000 | 2477 |
+| Chino, CA → Orlando, FL | Dry Van | $10,000 | 2477 |
+| Los Angeles, CA → Salt Lake City, UT | Flatbed | $0 | 691 |
+| Modesto, CA → Bristol, TN | Dry Van | $9,800 | 2517 |
+| Henderson, NV → Mira Loma, CA | Dry Van | $900 | 232 |
+| North Las Vegas, NV → Mira Loma, CA | Dry Van | $900 | 242 |
+| Grand Prairie, TX → Middletown, OH | Dry Van | $4,100 | 983 |
+| Houston, TX → New Orleans, LA | Flatbed | $1,100 | 351 |
+| Houston, TX → New Orleans, LA | Flatbed | $1,200 | 351 |
+| Birmingham, AL → Middletown, OH | Dry Van | $3,000 | 500 |
+| Troy, AL → Munfordville, KY | Flatbed | $2,600 | 436 |
+| Havana, FL → Lake Panasoffkee, FL | Flatbed | $1,600 | 226 |
+| Orlando, FL → Lancaster, TX | Dry Van | $3,500 | 1127 |
+| Forest Park, GA → Middletown, OH | Dry Van | $3,500 | 497 |
+| Griffin, GA → Myrtle Beach, SC | Refrigerated | $0 | 368 |
+| Griffin, GA → Myrtle Beach, SC | Dry Van | $0 | 368 |
+| Louisville, KY → Union City, CA | Dry Van | $0 | 2335 |
+| Gulfport, MS → Gulf Breeze, FL | Flatbed | $700 | 146 |
+| Oakland, MS → Bloomington, CA | Refrigerated | $5,500 | 1835 |
+| Maxton, NC → Boston, MA | Dry Van | $5,775 | 793 |
+| Mills River, NC → Longwood, FL | Dry Van | $4,000 | 561 |
+| Allendale, SC → Lake Panasoffkee, FL | Flatbed | $2,500 | 338 |
+| Brookhaven, MS → Mobile, AL | Flatbed | $1,050 | 177 |
+| Brookhaven, MS → Mobile, AL | Step Deck | $1,050 | 177 |
+| Brookhaven, MS → Mobile, AL | Flatbed | $1,375 | 177 |
+| Brookhaven, MS → Mobile, AL | Step Deck | $1,375 | 177 |
+| Brookhaven, MS → Mobile, AL | Flatbed | $1,325 | 177 |
+| Brookhaven, MS → Mobile, AL | Step Deck | $1,325 | 177 |
+| Brookhaven, MS → Northport, AL | Flatbed | $1,751 | 239 |
+| Brookhaven, MS → Northport, AL | Step Deck | $1,751 | 239 |
+| Brookhaven, MS → Northport, AL | Flatbed | $1,303 | 239 |
+| Brookhaven, MS → Northport, AL | Step Deck | $1,303 | 239 |
+| Brookhaven, MS → Northport, AL | Flatbed | $1,389 | 239 |
+| Brookhaven, MS → Northport, AL | Step Deck | $1,389 | 239 |
+| Brookhaven, MS → Robertsdale, AL | Flatbed | $1,648 | 216 |
+| Brookhaven, MS → Robertsdale, AL | Step Deck | $1,648 | 216 |
+| Brookhaven, MS → Robertsdale, AL | Flatbed | $1,295 | 216 |
+| Brookhaven, MS → Robertsdale, AL | Step Deck | $1,295 | 216 |
+| Brookhaven, MS → Milton, FL | Flatbed | $1,348 | 248 |
+| Brookhaven, MS → Milton, FL | Step Deck | $1,348 | 248 |
+| Brookhaven, MS → Milton, FL | Flatbed | $1,776 | 248 |
+| Brookhaven, MS → Milton, FL | Step Deck | $1,776 | 248 |
+| Brookhaven, MS → Milton, FL | Flatbed | $1,831 | 248 |
+| Brookhaven, MS → Milton, FL | Step Deck | $1,831 | 248 |
+| Brookhaven, MS → Piperton, TN | Flatbed | $1,667 | 271 |
+| Brookhaven, MS → Piperton, TN | Step Deck | $1,667 | 271 |
+| Brookhaven, MS → Piperton, TN | Flatbed | $1,167 | 271 |
+| Brookhaven, MS → Piperton, TN | Step Deck | $1,167 | 271 |
+| Brookhaven, MS → Piperton, TN | Flatbed | $1,535 | 271 |
+| Brookhaven, MS → Piperton, TN | Step Deck | $1,535 | 271 |
+| Blackstone, VA → Emporia, VA | Flatbed | $816 | 47 |
+| Blackstone, VA → Emporia, VA | Flatbed | $854 | 47 |
+| Detroit, MI → Lansing, MI | Flatbed | $775 | 89 |
+| Bemidji, MN → San Antonio, TX | Flatbed | $4,100 | 1473 |
+| Salem, MO → Lamoni, IA | Flatbed | $1,725 | 337 |
+| Napoleon, OH → Maxton, NC | Refrigerated | $0 | 655 |
+| Oldtown, ID → Richmond, VA | Flatbed | $7,525 | 2577 |
+| Oldtown, ID → Richmond, VA | Flatbed | $6,325 | 2577 |
+| New England, ND → Oasis, NV | Flatbed | $4,000 | 947 |
+| Riddle, OR → Phoenix, AZ | Flatbed | $4,200 | 1138 |
+| Baltimore, MD → Greensboro, NC | Flatbed | $700 | 349 |
+| Baltimore, MD → Greensboro, NC | Step Deck | $700 | 349 |
+| Belleville, PA → Ashburn, VA | Flatbed | $0 | 145 |
+| Belleville, PA → Ashburn, VA | Step Deck | $0 | 145 |
+| Philadelphia, PA → Rochester, NY | Dry Van | $2,300 | 338 |
+| Glenwood, AR → Aldine, TX | Flatbed | $2,300 | 381 |
+| Jonesboro, AR → Mount Vernon, NY | Dry Van | $0 | 1181 |
+| Magnolia, AR → Oklahoma City, OK | Flatbed | $0 | 368 |
+| Magnolia, AR → Oklahoma City, OK | Step Deck | $0 | 368 |
+| Osceola, AR → Wilmington, IL | Dry Van | $1,325 | 445 |
+| Waldo, AR → Lagrange, IN | Flatbed | $5,300 | 883 |
+| Montrose, CO → Schiller Park, IL | Flatbed | $3,725 | 1289 |
+| … and 1112 more | | | |
+
+## Removed Loads (-1059)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
@@ -148,110 +255,4 @@
 | Archbold, OH → Grand Rapids, MI | Step Deck | $1,000 | 171 |
 | Archbold, OH → Jackson, MI | Flatbed | $625 | 55 |
 | Archbold, OH → Jackson, MI | Step Deck | $625 | 55 |
-| … and 842 more | | | |
-
-## Removed Loads (-1041)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Centerville, IA → Antigo, WI | Flatbed | $0 | 497 |
-| Centerville, IA → Antigo, WI | Step Deck | $0 | 497 |
-| Bourbonnais, IL → Sedalia, MO | Flatbed | $0 | 436 |
-| Bourbonnais, IL → Sedalia, MO | Step Deck | $0 | 436 |
-| Mountain Grove, MO → Baker, MT | Flatbed | $0 | 1157 |
-| Mountain Grove, MO → Baker, MT | Step Deck | $0 | 1157 |
-| Norfolk, NE → Florence, KY | Flatbed | $0 | 815 |
-| Norfolk, NE → Florence, KY | Step Deck | $0 | 815 |
-| Gilchrist, OR → Olivehurst, CA | Flatbed | $0 | 348 |
-| Gilchrist, OR → Olivehurst, CA | Step Deck | $0 | 348 |
-| Gilchrist, OR → Henderson, CO | Flatbed | $0 | 1175 |
-| Gilchrist, OR → Henderson, CO | Step Deck | $0 | 1175 |
-| Gilchrist, OR → Dacula, GA | Flatbed | $0 | 2559 |
-| Gilchrist, OR → Dacula, GA | Step Deck | $0 | 2559 |
-| Gilchrist, OR → Indianapolis, IN | Flatbed | $0 | 2194 |
-| Gilchrist, OR → Indianapolis, IN | Step Deck | $0 | 2194 |
-| Gilchrist, OR → Zeeland, MI | Flatbed | $0 | 2197 |
-| Gilchrist, OR → Zeeland, MI | Step Deck | $0 | 2197 |
-| Gilchrist, OR → Big Lake, MN | Flatbed | $0 | 1760 |
-| Gilchrist, OR → Big Lake, MN | Step Deck | $0 | 1760 |
-| Gilchrist, OR → Onamia, MN | Flatbed | $0 | 1743 |
-| Gilchrist, OR → Onamia, MN | Step Deck | $0 | 1743 |
-| Gilchrist, OR → Osseo, MN | Flatbed | $0 | 1780 |
-| Gilchrist, OR → Osseo, MN | Step Deck | $0 | 1780 |
-| Gilchrist, OR → Vicksburg, MS | Flatbed | $0 | 2356 |
-| Gilchrist, OR → Vicksburg, MS | Step Deck | $0 | 2356 |
-| Gilchrist, OR → Concord, NC | Flatbed | $0 | 2711 |
-| Gilchrist, OR → Concord, NC | Step Deck | $0 | 2711 |
-| Gilchrist, OR → Reno, NV | Flatbed | $0 | 339 |
-| Gilchrist, OR → Reno, NV | Step Deck | $0 | 339 |
-| Gilchrist, OR → Wadsworth, OH | Flatbed | $0 | 2400 |
-| Gilchrist, OR → Wadsworth, OH | Step Deck | $0 | 2400 |
-| Gilchrist, OR → Oklahoma City, OK | Flatbed | $0 | 1845 |
-| Gilchrist, OR → Oklahoma City, OK | Step Deck | $0 | 1845 |
-| Gilchrist, OR → Bellwood, PA | Flatbed | $0 | 2600 |
-| Gilchrist, OR → Bellwood, PA | Step Deck | $0 | 2600 |
-| Gilchrist, OR → Sparta, TN | Flatbed | $0 | 2382 |
-| Gilchrist, OR → Sparta, TN | Step Deck | $0 | 2382 |
-| Gilchrist, OR → Green Bay, WI | Flatbed | $0 | 2073 |
-| Gilchrist, OR → Green Bay, WI | Step Deck | $0 | 2073 |
-| Gilchrist, OR → Amma, WV | Container | $0 | 2513 |
-| Auburn, NY → Brooklyn, NY | Flatbed | $0 | 255 |
-| Auburn, NY → Brooklyn, NY | Step Deck | $0 | 255 |
-| Armorel, AR → Saginaw, AL | Flatbed | $0 | 334 |
-| Armorel, AR → Saginaw, AL | Step Deck | $0 | 334 |
-| Armorel, AR → Bridgeport, CT | Flatbed | $0 | 1169 |
-| Armorel, AR → Bridgeport, CT | Step Deck | $0 | 1169 |
-| Armorel, AR → New Castle, DE | Flatbed | $0 | 995 |
-| Armorel, AR → New Castle, DE | Flatbed | $0 | 995 |
-| Armorel, AR → New Castle, DE | Step Deck | $0 | 995 |
-| Armorel, AR → Wilmington, DE | Flatbed | $0 | 997 |
-| Armorel, AR → Wilmington, DE | Step Deck | $0 | 997 |
-| Armorel, AR → Lakeland, FL | Flatbed | $0 | 844 |
-| Armorel, AR → Sarasota, FL | Flatbed | $0 | 903 |
-| Armorel, AR → Buchanan, GA | Flatbed | $0 | 422 |
-| Armorel, AR → Buchanan, GA | Step Deck | $0 | 422 |
-| Armorel, AR → Eastman, GA | Flatbed | $0 | 595 |
-| Armorel, AR → Eastman, GA | Step Deck | $0 | 595 |
-| Armorel, AR → Suwanee, GA | Flatbed | $0 | 482 |
-| Armorel, AR → Suwanee, GA | Step Deck | $0 | 482 |
-| Armorel, AR → Camanche, IA | Flatbed | $0 | 497 |
-| Armorel, AR → Camanche, IA | Step Deck | $0 | 497 |
-| Armorel, AR → Camanche, IA | Flatbed | $0 | 497 |
-| Armorel, AR → Camanche, IA | Step Deck | $0 | 497 |
-| Armorel, AR → Dubuque, IA | Flatbed | $0 | 555 |
-| Armorel, AR → Arthur, IL | Flatbed | $0 | 313 |
-| Armorel, AR → Arthur, IL | Step Deck | $0 | 313 |
-| Armorel, AR → Chicago, IL | Flatbed | $0 | 471 |
-| Armorel, AR → Chicago, IL | Step Deck | $0 | 471 |
-| Armorel, AR → Chicago Heights, IL | Flatbed | $0 | 447 |
-| Armorel, AR → Chicago Heights, IL | Step Deck | $0 | 447 |
-| Armorel, AR → Hazel Crest, IL | Flatbed | $0 | 449 |
-| Armorel, AR → Hazel Crest, IL | Step Deck | $0 | 449 |
-| Armorel, AR → Marseilles, IL | Flatbed | $0 | 466 |
-| Armorel, AR → Marseilles, IL | Step Deck | $0 | 466 |
-| Armorel, AR → Peoria, IL | Flatbed | $0 | 389 |
-| Armorel, AR → Peoria, IL | Step Deck | $0 | 389 |
-| Armorel, AR → Peotone, IL | Flatbed | $0 | 429 |
-| Armorel, AR → Peotone, IL | Step Deck | $0 | 429 |
-| Madill, OK → Loveland, CO | Flatbed | $0 | 840 |
-| Madill, OK → Loveland, CO | Step Deck | $0 | 840 |
-| Madill, OK → Wellington, CO | Step Deck | $0 | 859 |
-| Madill, OK → Albuquerque, NM | Flatbed | $0 | 662 |
-| Madill, OK → Albuquerque, NM | Step Deck | $0 | 662 |
-| Madill, OK → Las Vegas, NM | Flatbed | $0 | 621 |
-| Madill, OK → Las Vegas, NM | Step Deck | $0 | 621 |
-| Madill, OK → Henderson, NV | Flatbed | $0 | 1224 |
-| Madill, OK → Henderson, NV | Step Deck | $0 | 1224 |
-| Madill, OK → Devine, TX | Flatbed | $0 | 411 |
-| Madill, OK → Devine, TX | Step Deck | $0 | 411 |
-| Madill, OK → Llano, TX | Step Deck | $0 | 336 |
-| Madill, OK → San Antonio, TX | Flatbed | $0 | 377 |
-| Madill, OK → San Antonio, TX | Step Deck | $0 | 377 |
-| Madill, OK → Hurricane, UT | Flatbed | $0 | 1246 |
-| Madill, OK → Hurricane, UT | Step Deck | $0 | 1246 |
-| Madill, OK → Panguitch, UT | Flatbed | $0 | 1265 |
-| Madill, OK → Panguitch, UT | Step Deck | $0 | 1265 |
-| Madill, OK → Salt Lake City, UT | Step Deck | $0 | 1305 |
-| Madill, OK → West Jordan, UT | Flatbed | $0 | 1316 |
-| Madill, OK → West Jordan, UT | Step Deck | $0 | 1316 |
-| … and 941 more | | | |
+| … and 959 more | | | |
