@@ -142,9 +142,9 @@ export const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) =
   const otherCharge2 = Number(rateConfig.otherCharge2Amount) || 0;
   const totalOtherCharges = otherCharge1 + otherCharge2;
 
-  // Fuel surcharge per mile
-  const fscPerMile = (doePaddRate > 0 && fuelPeg > 0 && fuelMpg > 0)
-    ? (doePaddRate - fuelPeg) / fuelMpg
+  // Fuel surcharge per mile — fuelPeg of 0 is valid (full diesel rate is the basis)
+  const fscPerMile = (doePaddRate > 0 && fuelMpg > 0)
+    ? Math.max(0, (doePaddRate - fuelPeg) / fuelMpg)
     : 0;
 
   const customerShare = safeRevenue * customerPct;
