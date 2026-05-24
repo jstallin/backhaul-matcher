@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCredits } from '../../hooks/useCredits';
+import { BuyCreditsModal } from '../BuyCreditsModal';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
@@ -1217,6 +1219,7 @@ function EmptyRight() {
 
 export function EstimatesView() {
   const { user } = useAuth();
+  const { deductCredit, openCheckout } = useCredits();
   const isMobile = useMobile();
 
   const [estimates, setEstimates] = useState([]);
@@ -1233,6 +1236,7 @@ export function EstimatesView() {
   const [matchError, setMatchError] = useState(null);
   const [hasRun, setHasRun] = useState(false);
 
+  const [buyCreditsOpen, setBuyCreditsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
@@ -1261,10 +1265,16 @@ export function EstimatesView() {
     setHasRun(false);
 
     try {
-      const [fleetData, geocoded] = await Promise.all([
+      const [creditResult, fleetData, geocoded] = await Promise.all([
+        deductCredit('Estimate search'),
         db.fleets.getById(estimate.fleet_id),
         geocodeAddress(estimate.datum_point),
       ]);
+
+      if (!creditResult.success) {
+        setBuyCreditsOpen(true);
+        return;
+      }
 
       setSelectedFleet(fleetData);
 
@@ -1451,6 +1461,14 @@ export function EstimatesView() {
             />
           )}
         </div>
+      )}
+
+      {buyCreditsOpen && (
+        <BuyCreditsModal
+          onClose={() => setBuyCreditsOpen(false)}
+          onPurchase={async (pkgId) => { await openCheckout(pkgId); setBuyCreditsOpen(false); }}
+          insufficientCredits={true}
+        />
       )}
 
       {deleteTarget && (
