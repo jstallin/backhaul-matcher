@@ -1359,6 +1359,8 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         net_revenue: haulMatch.customer_net_credit ?? haulMatch.netRevenue ?? 0,
         out_of_route_miles: mAdditional(haulMatch),
         completed_at: new Date().toISOString(),
+        hauled_load_id: haulMatch.load_id || haulMatch.source_load_id || null,
+        hauled_load_source: haulMatch.source || null,
       });
       const id = haulMatch.load_id || haulMatch.id;
       setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });

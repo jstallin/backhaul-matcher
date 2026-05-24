@@ -632,27 +632,58 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
 
               {/* Load table */}
-              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, overflow: 'hidden', boxShadow: t.shadow.card }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm }}>
+              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, overflow: 'hidden', boxShadow: t.shadow.card, overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm, minWidth: '780px' }}>
                   <thead>
                     <tr style={{ background: t.colors.accent.blueLight }}>
-                      {['Date / Time (CT)', 'Load ID', 'Source'].map((h, i) => (
-                        <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: t.font.weight.bold, fontSize: t.font.size.xs, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${t.colors.page.cardBorder}` }}>{h}</th>
+                      {['Date / Time (CT)', 'Fleet', 'Request', 'Datum Point', 'Load ID', 'Source', 'Revenue', 'Exclude'].map((h, i) => (
+                        <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: t.font.weight.bold, fontSize: t.font.size.xs, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${t.colors.page.cardBorder}`, whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {trimbleLoads?.loads?.length > 0 ? trimbleLoads.loads.map((load, i) => (
-                      <tr key={i} style={{ borderBottom: i < trimbleLoads.loads.length - 1 ? `1px solid ${t.colors.page.cardBorder}` : 'none' }}>
-                        <td style={{ padding: '11px 16px', color: t.colors.text.primary }}>
-                          {load.completed_at ? new Date(load.completed_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '—'}
-                        </td>
-                        <td style={{ padding: '11px 16px', color: t.colors.text.primary, fontFamily: t.font.mono }}>{load.load_id || '—'}</td>
-                        <td style={{ padding: '11px 16px', color: t.colors.text.muted, textTransform: 'capitalize' }}>{load.source || '—'}</td>
-                      </tr>
-                    )) : (
+                    {trimbleLoads?.loads?.length > 0 ? trimbleLoads.loads.map((load, i) => {
+                      const excluded = load.excluded_from_billing;
+                      const rowStyle = { borderBottom: i < trimbleLoads.loads.length - 1 ? `1px solid ${t.colors.page.cardBorder}` : 'none', opacity: excluded ? 0.45 : 1, background: excluded ? '#fafafa' : 'transparent' };
+                      const cellStyle = { padding: '11px 16px', color: t.colors.text.primary, textDecoration: excluded ? 'line-through' : 'none' };
+                      return (
+                        <tr key={load.id || i} style={rowStyle}>
+                          <td style={{ ...cellStyle, whiteSpace: 'nowrap', color: t.colors.text.muted }}>
+                            {load.completed_at ? new Date(load.completed_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) : '—'}
+                          </td>
+                          <td style={{ ...cellStyle, color: t.colors.text.secondary }}>{load.fleet_name || '—'}</td>
+                          <td style={{ ...cellStyle, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={load.request_name}>{load.request_name || '—'}</td>
+                          <td style={{ ...cellStyle, color: t.colors.text.secondary }}>{load.datum_point || '—'}</td>
+                          <td style={{ ...cellStyle, fontFamily: t.font.mono, fontSize: t.font.size.xs }}>{load.load_id || '—'}</td>
+                          <td style={{ ...cellStyle, textTransform: 'capitalize', color: t.colors.text.muted }}>{load.source || '—'}</td>
+                          <td style={{ ...cellStyle, whiteSpace: 'nowrap' }}>
+                            {load.revenue_amount != null ? `$${Number(load.revenue_amount).toLocaleString()}` : '—'}
+                          </td>
+                          <td style={{ padding: '11px 16px' }}>
+                            <button
+                              onClick={async () => {
+                                const next = !excluded;
+                                await fetch('/api/orgs/trimble-actuals', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: load.id, excluded_from_billing: next }),
+                                });
+                                setTrimbleLoads(prev => ({
+                                  ...prev,
+                                  count: prev.loads.filter(l => l.id !== load.id && !l.excluded_from_billing).length + (next ? 0 : 1),
+                                  loads: prev.loads.map(l => l.id === load.id ? { ...l, excluded_from_billing: next } : l),
+                                }));
+                              }}
+                              style={{ padding: '3px 10px', background: excluded ? t.colors.accent.blueLight : '#fee2e2', border: `1px solid ${excluded ? t.colors.accent.blue : '#fca5a5'}`, borderRadius: t.radius.md, color: excluded ? t.colors.accent.blue : '#dc2626', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            >
+                              {excluded ? 'Restore' : 'Exclude'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }) : (
                       <tr>
-                        <td colSpan={3} style={{ padding: '24px 16px', textAlign: 'center', color: t.colors.text.muted, fontSize: t.font.size.sm }}>
+                        <td colSpan={8} style={{ padding: '24px 16px', textAlign: 'center', color: t.colors.text.muted, fontSize: t.font.size.sm }}>
                           No hauled loads recorded this month.
                         </td>
                       </tr>

@@ -628,18 +628,33 @@ async function handleAdminSettings(req, res, supabase, user) {
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-// ── GET /api/orgs/trimble-actuals?month=YYYY-MM ───────────────────────────────
-// App admin only. Returns all completed (hauled) loads for the given month.
+// ── GET /api/orgs/trimble-actuals?month=YYYY-MM ──────────────────────────────
+// ── PATCH /api/orgs/trimble-actuals  { id, excluded_from_billing } ────────────
+// App admin only.
 
 async function handleTrimbleActuals(req, res, supabase, user) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
   const { data: adminRow } = await supabase
     .from('admin_users')
     .select('user_id')
     .eq('user_id', user.id)
     .maybeSingle();
   if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  // PATCH — toggle excluded_from_billing on a single record
+  if (req.method === 'PATCH') {
+    const { id, excluded_from_billing } = req.body || {};
+    if (!id || typeof excluded_from_billing !== 'boolean') {
+      return res.status(400).json({ error: 'id and excluded_from_billing required' });
+    }
+    const { error } = await supabase
+      .from('backhaul_requests')
+      .update({ excluded_from_billing })
+      .eq('id', id);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ ok: true });
+  }
+
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const monthParam = req.query.month;
   let start;
@@ -653,7 +668,18 @@ async function handleTrimbleActuals(req, res, supabase, user) {
 
   const { data: loads, error } = await supabase
     .from('backhaul_requests')
-    .select('completed_at, hauled_load_id, hauled_load_source')
+    .select(`
+      id,
+      request_name,
+      datum_point,
+      completed_at,
+      hauled_load_id,
+      hauled_load_source,
+      revenue_amount,
+      net_revenue,
+      excluded_from_billing,
+      fleets ( name )
+    `)
     .eq('status', 'completed')
     .gte('completed_at', start.toISOString())
     .lt('completed_at', end.toISOString())
@@ -664,14 +690,25 @@ async function handleTrimbleActuals(req, res, supabase, user) {
     return res.status(500).json({ error: 'Failed to query loads' });
   }
 
+  const mapped = loads.map(r => ({
+    id: r.id,
+    completed_at: r.completed_at,
+    request_name: r.request_name || null,
+    datum_point: r.datum_point || null,
+    fleet_name: r.fleets?.name || null,
+    load_id: r.hauled_load_id || null,
+    source: r.hauled_load_source || null,
+    revenue_amount: r.revenue_amount ? parseFloat(r.revenue_amount) : null,
+    net_revenue: r.net_revenue ? parseFloat(r.net_revenue) : null,
+    excluded_from_billing: r.excluded_from_billing ?? false,
+  }));
+
+  const billableCount = mapped.filter(r => !r.excluded_from_billing).length;
+
   return res.status(200).json({
     month: start.toISOString().slice(0, 7),
-    count: loads.length,
-    loads: loads.map(r => ({
-      completed_at: r.completed_at,
-      load_id: r.hauled_load_id || null,
-      source: r.hauled_load_source || null,
-    })),
+    count: billableCount,
+    loads: mapped,
   });
 }
 
