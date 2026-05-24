@@ -844,6 +844,52 @@
       text-align: center;
       letter-spacing: 0.3px;
     }
+
+    /* ── TRUCKSTOP PARTNER BADGE (hero) ── */
+    .partner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px 7px 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 100px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      letter-spacing: 0.1px;
+    }
+
+    .partner-badge-logo {
+      height: 22px;
+      width: auto;
+      display: block;
+      border-radius: 4px;
+      background: #fff;
+      padding: 2px 6px;
+    }
+
+    /* ── TRUCKSTOP SOURCE (step 3) ── */
+    .step-source {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      letter-spacing: 0.2px;
+    }
+
+    .step-source-icon {
+      height: 16px;
+      width: auto;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -871,6 +917,10 @@
     Backhaul Revenue Recovery
   </div>
   <h1>Stop paying to drive empty.<br><span>Start recovering backhaul revenue.</span></h1>
+  <div class="partner-badge">
+    <img src="/Truckstop%20Logo%20-%20Default.png" alt="Truckstop.com" class="partner-badge-logo" />
+    Proud Member of the Truckstop.com Marketplace
+  </div>
   <div class="hero-map-wrap">
     <img src="/haul-monitor-route-map.png" alt="Route Home Map showing backhaul load opportunities along a truck's return corridor" class="hero-map-img" />
     <p class="hero-map-caption">Potential Backhaul Loads <strong>ALL ALONG</strong> Your Truck's Return.</p>
@@ -1008,6 +1058,10 @@
         <div class="step-num">3</div>
         <h3>Review Matched Loads</h3>
         <p>Get a ranked list of available backhaul loads with full financial analysis — gross revenue, customer net credit, out-of-route miles, and fuel surcharge baked in.</p>
+        <div class="step-source">
+          <img src="/Waypoint%20Default.png" alt="" class="step-source-icon" />
+          Live Loads from Truckstop.com
+        </div>
       </div>
     </div>
   </div>
