@@ -1,135 +1,135 @@
 {
-  "runDate": "2026-05-23",
-  "runAt": "2026-05-23T20:20:46.683Z",
-  "totalLoads": 1147,
-  "previousTotal": 1137,
-  "netChange": 10,
-  "added": 369,
-  "removed": 359,
-  "avgPay": 2387,
-  "loadsWithPay": 673,
+  "runDate": "2026-05-24",
+  "runAt": "2026-05-24T08:54:21.066Z",
+  "totalLoads": 1182,
+  "previousTotal": 1147,
+  "netChange": 35,
+  "added": 960,
+  "removed": 925,
+  "avgPay": 2074,
+  "loadsWithPay": 765,
   "equipmentTypes": [
     [
       "Flatbed",
-      482
-    ],
-    [
-      "Dry Van",
-      346
-    ],
-    [
-      "Refrigerated",
-      164
+      647
     ],
     [
       "Step Deck",
+      230
+    ],
+    [
+      "Dry Van",
       138
     ],
     [
-      "Container",
-      4
+      "Power Only",
+      96
+    ],
+    [
+      "Refrigerated",
+      53
+    ],
+    [
+      "Lowboy",
+      8
     ],
     [
       "Hotshot",
-      4
+      6
     ],
     [
-      "Power Only",
-      3
+      "Container",
+      2
     ],
     [
       "Box Truck",
-      2
-    ],
-    [
-      "Other",
-      2
+      1
     ],
     [
       "Curtain Van",
-      2
+      1
     ]
   ],
   "topPickupStates": [
     [
-      "CA",
-      76
-    ],
-    [
-      "GA",
-      74
-    ],
-    [
-      "OR",
-      69
-    ],
-    [
-      "FL",
-      67
+      "MS",
+      94
     ],
     [
       "WA",
-      67
+      84
+    ],
+    [
+      "PA",
+      78
+    ],
+    [
+      "AL",
+      68
+    ],
+    [
+      "OR",
+      68
     ],
     [
       "TX",
-      62
+      63
     ],
     [
-      "NJ",
-      53
+      "MN",
+      56
     ],
     [
       "ID",
       52
     ],
     [
-      "PA",
-      49
+      "IL",
+      43
     ],
     [
-      "OK",
-      49
+      "GA",
+      42
+    ],
+    [
+      "SC",
+      37
     ],
     [
       "MA",
-      46
+      31
     ],
     [
       "OH",
-      44
-    ],
-    [
-      "IL",
-      41
-    ],
-    [
-      "AL",
-      30
-    ],
-    [
-      "NY",
-      28
-    ],
-    [
-      "MO",
-      26
-    ],
-    [
-      "NE",
-      25
+      31
     ],
     [
       "IN",
-      24
+      30
     ],
     [
-      "ME",
-      22
+      "CA",
+      29
     ],
     [
-      "MI",
-      21
+      "MO",
+      28
+    ],
+    [
+      "AR",
+      27
+    ],
+    [
+      "NJ",
+      27
+    ],
+    [
+      "NM",
+      25
+    ],
+    [
+      "CT",
+      23
     ]
   ]
 }
