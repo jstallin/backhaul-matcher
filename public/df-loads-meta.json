@@ -1,49 +1,49 @@
 {
   "runDate": "2026-05-24",
-  "runAt": "2026-05-24T11:31:21.220Z",
-  "totalLoads": 1304,
-  "previousTotal": 1182,
-  "netChange": 122,
-  "added": 590,
-  "removed": 468,
-  "avgPay": 2137,
-  "loadsWithPay": 589,
+  "runAt": "2026-05-24T14:33:34.833Z",
+  "totalLoads": 1316,
+  "previousTotal": 1304,
+  "netChange": 12,
+  "added": 317,
+  "removed": 305,
+  "avgPay": 2240,
+  "loadsWithPay": 561,
   "equipmentTypes": [
     [
       "Flatbed",
-      690
+      669
     ],
     [
       "Step Deck",
-      353
+      336
     ],
     [
       "Dry Van",
-      128
+      177
     ],
     [
       "Refrigerated",
-      64
+      87
     ],
     [
       "Power Only",
-      54
+      27
     ],
     [
       "Lowboy",
-      6
+      8
     ],
     [
       "Hotshot",
+      6
+    ],
+    [
+      "Container",
       4
     ],
     [
       "Other",
-      2
-    ],
-    [
-      "Container",
-      2
+      1
     ],
     [
       "Curtain Van",
@@ -53,83 +53,83 @@
   "topPickupStates": [
     [
       "TX",
-      112
+      114
     ],
     [
       "OR",
-      88
-    ],
-    [
-      "SC",
-      88
-    ],
-    [
-      "PA",
-      73
-    ],
-    [
-      "AL",
-      65
+      81
     ],
     [
       "WA",
-      61
+      79
     ],
     [
-      "IL",
-      59
+      "SC",
+      74
     ],
     [
-      "GA",
-      57
-    ],
-    [
-      "ID",
-      52
+      "PA",
+      63
     ],
     [
       "OK",
-      47
+      60
+    ],
+    [
+      "IL",
+      54
+    ],
+    [
+      "AL",
+      54
+    ],
+    [
+      "GA",
+      50
     ],
     [
       "MN",
-      45
+      49
     ],
     [
-      "MS",
-      38
-    ],
-    [
-      "OH",
-      37
-    ],
-    [
-      "AR",
-      35
+      "ID",
+      49
     ],
     [
       "IN",
-      34
+      45
     ],
     [
       "FL",
-      33
+      43
+    ],
+    [
+      "AR",
+      38
     ],
     [
       "MO",
-      30
+      35
+    ],
+    [
+      "NJ",
+      34
+    ],
+    [
+      "OH",
+      32
+    ],
+    [
+      "MS",
+      32
     ],
     [
       "MA",
       30
     ],
     [
-      "NJ",
-      28
-    ],
-    [
       "CT",
-      23
+      25
     ]
   ]
 }
