@@ -1,17 +1,17 @@
 {
   "runDate": "2026-05-24",
-  "runAt": "2026-05-24T14:33:34.833Z",
-  "totalLoads": 1316,
-  "previousTotal": 1304,
-  "netChange": 12,
-  "added": 317,
-  "removed": 305,
-  "avgPay": 2240,
-  "loadsWithPay": 561,
+  "runAt": "2026-05-24T17:24:18.793Z",
+  "totalLoads": 1335,
+  "previousTotal": 1316,
+  "netChange": 19,
+  "added": 229,
+  "removed": 210,
+  "avgPay": 2195,
+  "loadsWithPay": 582,
   "equipmentTypes": [
     [
       "Flatbed",
-      669
+      674
     ],
     [
       "Step Deck",
@@ -19,27 +19,31 @@
     ],
     [
       "Dry Van",
-      177
+      198
     ],
     [
       "Refrigerated",
-      87
+      84
     ],
     [
       "Power Only",
-      27
-    ],
-    [
-      "Lowboy",
-      8
+      21
     ],
     [
       "Hotshot",
+      8
+    ],
+    [
+      "Lowboy",
       6
     ],
     [
       "Container",
       4
+    ],
+    [
+      "Box Truck",
+      2
     ],
     [
       "Other",
@@ -53,82 +57,82 @@
   "topPickupStates": [
     [
       "TX",
-      114
-    ],
-    [
-      "OR",
-      81
+      100
     ],
     [
       "WA",
-      79
+      80
+    ],
+    [
+      "PA",
+      78
+    ],
+    [
+      "OR",
+      77
     ],
     [
       "SC",
       74
     ],
     [
-      "PA",
-      63
-    ],
-    [
-      "OK",
-      60
+      "AL",
+      64
     ],
     [
       "IL",
-      54
-    ],
-    [
-      "AL",
-      54
-    ],
-    [
-      "GA",
-      50
-    ],
-    [
-      "MN",
-      49
-    ],
-    [
-      "ID",
-      49
-    ],
-    [
-      "IN",
-      45
+      58
     ],
     [
       "FL",
-      43
+      57
     ],
     [
-      "AR",
-      38
+      "ID",
+      55
+    ],
+    [
+      "GA",
+      54
+    ],
+    [
+      "OK",
+      52
+    ],
+    [
+      "MN",
+      52
+    ],
+    [
+      "IN",
+      44
     ],
     [
       "MO",
-      35
+      34
     ],
     [
-      "NJ",
+      "AR",
       34
     ],
     [
       "OH",
-      32
+      33
     ],
     [
-      "MS",
+      "NJ",
       32
     ],
     [
       "MA",
+      32
+    ],
+    [
+      "MI",
       30
     ],
     [
-      "CT",
+      "CA",
       25
     ]
   ]
