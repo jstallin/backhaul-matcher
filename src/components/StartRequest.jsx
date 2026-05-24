@@ -15,6 +15,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fleets, setFleets] = useState([]);
+  const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const hasLoadedEditingRequest = useRef(false);
 
   const [formData, setFormData] = useState({
@@ -179,10 +180,25 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const refreshCreditLabel = (intervalHours) => {
+    const h = parseFloat(intervalHours);
+    if (h === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
+    if (h === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
+    if (h === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
+    return { interval: `every ${h} hours`, cost: `1 credit every ${h} hours` };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+    if (formData.autoRefresh) {
+      setShowRefreshConfirm(true);
+      return;
+    }
+    await doSave();
+  };
+
+  const doSave = async () => {
     setSaving(true);
     try {
       // Prepare request data for database
@@ -406,6 +422,37 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           </form>
         )}
       </div>
+
+      {showRefreshConfirm && (() => {
+        const { interval, cost } = refreshCreditLabel(formData.autoRefreshInterval);
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+            onClick={() => setShowRefreshConfirm(false)}>
+            <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: '28px', marginBottom: '12px' }}>🪙</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: colors.text.primary, marginBottom: '10px' }}>Auto-refresh uses credits</div>
+              <div style={{ fontSize: '14px', color: colors.text.secondary, lineHeight: 1.65, marginBottom: '24px' }}>
+                With auto-refresh set to <strong style={{ color: colors.text.primary }}>{interval}</strong>, this request will consume <strong style={{ color: colors.text.primary }}>{cost}</strong>. Each refresh runs a new search and deducts 1 credit.
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => { setShowRefreshConfirm(false); doSave(); }}
+                  disabled={saving}
+                  style={{ flex: 1, padding: '12px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}
+                >
+                  {saving ? 'Saving…' : 'Yes, save request'}
+                </button>
+                <button
+                  onClick={() => setShowRefreshConfirm(false)}
+                  style={{ flex: 1, padding: '12px', background: 'transparent', border: `1px solid ${colors.border.primary}`, borderRadius: '8px', color: colors.text.secondary, fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Go back
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

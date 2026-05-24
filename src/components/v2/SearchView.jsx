@@ -367,6 +367,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [datumVerified, setDatumVerified] = useState(!!(initialValues?.datum_lat));
+  const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -395,9 +396,14 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const refreshCreditLabel = (intervalHours) => {
+    if (intervalHours === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
+    if (intervalHours === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
+    if (intervalHours === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
+    return { interval: `every ${intervalHours} hours`, cost: `1 credit every ${intervalHours} hours` };
+  };
+
+  const doSave = async () => {
     setSaving(true);
     try {
       const payload = buildRequestPayload(form, user.id);
@@ -412,6 +418,16 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (form.autoRefresh) {
+      setShowRefreshConfirm(true);
+      return;
+    }
+    await doSave();
   };
 
   return (
@@ -511,6 +527,28 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           <GhostBtn onClick={onCancel}>Cancel</GhostBtn>
         </div>
       </Card>
+
+      {showRefreshConfirm && (() => {
+        const { interval, cost } = refreshCreditLabel(form.autoRefreshInterval);
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+            onClick={() => setShowRefreshConfirm(false)}>
+            <div style={{ background: '#fff', borderRadius: t.radius['2xl'], padding: '32px', maxWidth: '420px', width: '100%', boxShadow: t.shadow.lg }} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: '22px', marginBottom: '10px' }}>🪙</div>
+              <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '10px' }}>Auto-refresh uses credits</div>
+              <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary, lineHeight: 1.6, marginBottom: '24px' }}>
+                With auto-refresh set to <strong>{interval}</strong>, this request will consume <strong>{cost}</strong>. Each refresh runs a new search and deducts 1 credit.
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <PrimaryBtn onClick={() => { setShowRefreshConfirm(false); doSave(); }} disabled={saving}>
+                  {saving ? 'Saving…' : 'Yes, save request'}
+                </PrimaryBtn>
+                <GhostBtn onClick={() => setShowRefreshConfirm(false)}>Go back</GhostBtn>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </form>
   );
 }
