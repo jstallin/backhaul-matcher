@@ -11,16 +11,20 @@ import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
+import { useCredits } from '../hooks/useCredits';
+import { BuyCreditsModal } from './BuyCreditsModal';
 
 export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { deductCredit, openCheckout } = useCredits();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedFleet, setSelectedFleet] = useState(null);
   const [matches, setMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -45,7 +49,18 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
     setMatches([]);
 
     try {
-      let fleet = await db.fleets.getById(request.fleet_id);
+      const [creditResult, fleetRaw] = await Promise.all([
+        deductCredit('Estimate search'),
+        db.fleets.getById(request.fleet_id),
+      ]);
+
+      if (!creditResult.success) {
+        setLoadingMatches(false);
+        setShowBuyCredits(true);
+        return;
+      }
+
+      let fleet = fleetRaw;
 
       if (!fleet.home_lat || !fleet.home_lng) {
         const success = await updateFleetCoordinates(db, fleet.id, fleet.home_address);
@@ -306,12 +321,25 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
                       RELAY REQUEST
                     </div>
                   )}
+
+                  <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: colors.text.tertiary }}>
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #fcd34d, #f59e0b)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', display: 'inline-block' }} />
+                    1 credit per search
+                  </div>
                 </div>
               ))}
             </div>
           </>
         )}
       </div>
+
+      {showBuyCredits && (
+        <BuyCreditsModal
+          onClose={() => setShowBuyCredits(false)}
+          onPurchase={async (pkgId) => { await openCheckout(pkgId); setShowBuyCredits(false); }}
+          insufficientCredits={true}
+        />
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
