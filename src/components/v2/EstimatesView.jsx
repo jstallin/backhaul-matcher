@@ -166,6 +166,25 @@ function PrimaryBtn({ children, onClick, disabled, style = {}, type = 'button' }
   );
 }
 
+function CreditBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+      marginLeft: '6px', paddingLeft: '8px',
+      borderLeft: '1px solid rgba(255,255,255,0.28)',
+      fontSize: '11px', fontWeight: 700, opacity: 0.9, whiteSpace: 'nowrap',
+    }}>
+      <span style={{
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        background: 'linear-gradient(135deg, #fcd34d, #f59e0b)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        display: 'inline-block',
+      }} />
+      1 credit
+    </span>
+  );
+}
+
 function GhostBtn({ children, onClick, style = {}, type = 'button' }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -782,7 +801,7 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
         {canPrint && <GhostBtn onClick={handlePrint} style={{ fontSize: t.font.size.xs, padding: '6px 12px' }}>🖨 Print / Save PDF</GhostBtn>}
         <GhostBtn onClick={() => onEdit(estimate)} style={{ fontSize: t.font.size.xs, padding: '6px 10px' }}>✏️ Edit</GhostBtn>
         <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ fontSize: t.font.size.xs, padding: '6px 14px' }}>
-          {isLoading ? 'Running…' : '▶ Run Estimate'}
+          {isLoading ? 'Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
         </PrimaryBtn>
       </div>
 
@@ -811,7 +830,7 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
             <div style={{ fontSize: '36px', marginBottom: '12px' }}>📊</div>
             <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '8px' }}>Ready to estimate</div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '20px' }}>Click "Run Estimate" to find loads along this route and project annual revenue.</div>
-            <PrimaryBtn onClick={onRun}>▶ Run Estimate</PrimaryBtn>
+            <PrimaryBtn onClick={onRun}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
           </Card>
         )}
 
@@ -1117,7 +1136,7 @@ function EstimateResultsPanel({ estimate, fleet, matches, isLoading, error, hasR
             ✏️ Edit
           </GhostBtn>
           <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ padding: '6px 14px', fontSize: t.font.size.xs }}>
-            {isLoading ? '⏳ Running…' : '▶ Run Estimate'}
+            {isLoading ? '⏳ Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
           </PrimaryBtn>
         </div>
       </div>
@@ -1148,7 +1167,7 @@ function EstimateResultsPanel({ estimate, fleet, matches, isLoading, error, hasR
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '20px' }}>
               Click "Run Estimate" to find loads along this route and project annual revenue.
             </div>
-            <PrimaryBtn onClick={onRun}>▶ Run Estimate</PrimaryBtn>
+            <PrimaryBtn onClick={onRun}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
           </Card>
         )}
 

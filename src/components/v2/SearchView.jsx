@@ -181,6 +181,25 @@ function PrimaryBtn({ children, onClick, disabled, style = {}, type = 'button' }
   );
 }
 
+function CreditBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+      marginLeft: '6px', paddingLeft: '8px',
+      borderLeft: '1px solid rgba(255,255,255,0.28)',
+      fontSize: '11px', fontWeight: 700, opacity: 0.9, whiteSpace: 'nowrap',
+    }}>
+      <span style={{
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        background: 'linear-gradient(135deg, #fcd34d, #f59e0b)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        display: 'inline-block',
+      }} />
+      1 credit
+    </span>
+  );
+}
+
 function GhostBtn({ children, onClick, style = {}, type = 'button' }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -1407,7 +1426,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
           </GhostBtn>
           <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ padding: '6px 14px', fontSize: t.font.size.xs }}>
             <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
-            {isLoading ? 'Searching…' : 'Run Search'}
+            {isLoading ? 'Searching…' : <><span>Run Search</span><CreditBadge /></>}
           </PrimaryBtn>
           {request.auto_refresh && timeUntilRefresh && !isLoading && (
             <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1474,7 +1493,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
               Click "Run Search" to find backhaul loads along this route.
             </div>
             <PrimaryBtn onClick={onRun}>
-              <Search size={14} /> Run Search
+              <Search size={14} /> Run Search <CreditBadge />
             </PrimaryBtn>
           </Card>
         )}
