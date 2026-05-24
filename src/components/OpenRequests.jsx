@@ -829,6 +829,11 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <span style={{ fontSize: '14px' }}>⬆</span> Import from DAT
                   </button>
                   */}
+
+                  <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: colors.text.tertiary }}>
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #fcd34d, #f59e0b)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', display: 'inline-block' }} />
+                    1 credit per search
+                  </div>
                 </div>
               ))}
             </div>
