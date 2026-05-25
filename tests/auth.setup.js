@@ -1,22 +1,20 @@
 import { test as setup, expect } from '@playwright/test';
 import { appPath, STORAGE_STATE } from './helpers.js';
+import fs from 'fs';
+import path from 'path';
 
 export { STORAGE_STATE };
-
-// Runs once before all browser projects. Logs in with test credentials and
-// saves browser storage state so authenticated tests skip the login flow.
-//
-// Required env vars:
-//   TEST_EMAIL    — email of a valid test account
-//   TEST_PASSWORD — password for that account
 
 setup('authenticate', async ({ page }) => {
   const email = process.env.TEST_EMAIL;
   const password = process.env.TEST_PASSWORD;
 
   if (!email || !password) {
-    console.log('TEST_EMAIL / TEST_PASSWORD not set — skipping auth setup. Authenticated tests will be skipped.');
-    await page.context().storageState({ path: STORAGE_STATE });
+    console.log('TEST_EMAIL / TEST_PASSWORD not set — skipping auth setup.');
+    // Write empty storage state so dependent tests can load it without errors
+    fs.mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
+    fs.writeFileSync(STORAGE_STATE, JSON.stringify({ cookies: [], origins: [] }));
+    setup.skip();
     return;
   }
 
@@ -29,5 +27,6 @@ setup('authenticate', async ({ page }) => {
 
   await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 15_000 });
 
+  fs.mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
   await page.context().storageState({ path: STORAGE_STATE });
 });
