@@ -8,7 +8,8 @@ import { useTheme } from '../contexts/ThemeContext';
 export const AuthWrapper = ({ children }) => {
   const { user, loading } = useAuth();
   const { colors } = useTheme();
-  const [showLogin, setShowLogin] = useState(true);
+  // Default to SignUp when the user came from a landing page pricing button
+  const [showLogin, setShowLogin] = useState(() => !localStorage.getItem('hm_pending_buy'));
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {

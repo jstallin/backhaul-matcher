@@ -23,11 +23,12 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const buy = params.get('buy');
+    const buy = params.get('buy') || localStorage.getItem('hm_pending_buy');
     if (buy && ['starter', 'pro', 'fleet'].includes(buy)) {
       setDefaultBuyPackage(buy);
       setShowBuyCredits(true);
-      window.history.replaceState({}, '', window.location.pathname);
+      localStorage.removeItem('hm_pending_buy');
+      if (params.get('buy')) window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 

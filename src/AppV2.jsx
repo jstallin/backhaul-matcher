@@ -521,6 +521,7 @@ function AppV2Inner() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [supportOpen, setSupportOpen] = useState(false);
   const [buyCreditsOpen, setBuyCreditsOpen] = useState(false);
+  const [defaultBuyPackage, setDefaultBuyPackage] = useState(null);
   const [org, setOrg] = useState(null);
   const [isOrgAdmin, setIsOrgAdmin] = useState(false);
   const { balance, openCheckout } = useCredits();
@@ -531,6 +532,19 @@ function AppV2Inner() {
     const params = new URLSearchParams(window.location.search);
     const view = params.get('view');
     if (view) setCurrentView(view);
+  }, []);
+
+  // Buy intent: handles both direct authenticated links (?buy=pro) and
+  // post-signup flows where intent was saved to localStorage by AppV2().
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const buy = params.get('buy') || localStorage.getItem('hm_pending_buy');
+    if (buy && ['starter', 'pro', 'fleet'].includes(buy)) {
+      setDefaultBuyPackage(buy);
+      setBuyCreditsOpen(true);
+      localStorage.removeItem('hm_pending_buy');
+      if (params.get('buy')) window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   // Check if Truckstop onboarding is needed on first load
@@ -576,8 +590,9 @@ function AppV2Inner() {
       )}
       {buyCreditsOpen && (
         <BuyCreditsModal
-          onClose={() => setBuyCreditsOpen(false)}
-          onPurchase={async (pkgId) => { await openCheckout(pkgId); setBuyCreditsOpen(false); }}
+          onClose={() => { setBuyCreditsOpen(false); setDefaultBuyPackage(null); }}
+          onPurchase={async (pkgId) => { await openCheckout(pkgId); setBuyCreditsOpen(false); setDefaultBuyPackage(null); }}
+          defaultPackage={defaultBuyPackage}
         />
       )}
     </Shell>
@@ -585,6 +600,16 @@ function AppV2Inner() {
 }
 
 export default function AppV2() {
+  // Persist buy intent through the auth flow before AuthWrapper renders.
+  // Unauthenticated users will be shown login/signup; after auth AppV2Inner
+  // picks this up from localStorage and opens the buy modal.
+  const _params = new URLSearchParams(window.location.search);
+  const _buy = _params.get('buy');
+  if (_buy && ['starter', 'pro', 'fleet'].includes(_buy)) {
+    localStorage.setItem('hm_pending_buy', _buy);
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   if (window.location.pathname === '/reset-password') return <ResetPassword />;
   if (window.location.pathname === '/accept-invite') return <AcceptInvite />;
 

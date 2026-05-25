@@ -171,6 +171,16 @@ function App() {
   const [onboardingOrg, setOnboardingOrg] = useState(null);
   const [onboardingIsAdmin, setOnboardingIsAdmin] = useState(false);
 
+  // Persist buy intent through auth flow (mirrors AppV2 behavior)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const buy = params.get('buy');
+    if (buy && ['starter', 'pro', 'fleet'].includes(buy)) {
+      localStorage.setItem('hm_pending_buy', buy);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Deep-link from extension: ?view=imported-loads
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
