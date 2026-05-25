@@ -1,53 +1,45 @@
 {
-  "runDate": "2026-05-24",
-  "runAt": "2026-05-24T20:22:57.579Z",
-  "totalLoads": 1243,
-  "previousTotal": 1335,
-  "netChange": -92,
-  "added": 296,
-  "removed": 388,
-  "avgPay": 2149,
-  "loadsWithPay": 439,
+  "runDate": "2026-05-25",
+  "runAt": "2026-05-25T09:23:19.587Z",
+  "totalLoads": 1189,
+  "previousTotal": 1243,
+  "netChange": -54,
+  "added": 933,
+  "removed": 987,
+  "avgPay": 1732,
+  "loadsWithPay": 472,
   "equipmentTypes": [
     [
       "Flatbed",
-      586
+      653
     ],
     [
       "Step Deck",
-      281
+      275
     ],
     [
       "Dry Van",
-      247
-    ],
-    [
-      "Refrigerated",
-      102
+      113
     ],
     [
       "Power Only",
-      8
+      83
     ],
     [
-      "Hotshot",
-      7
+      "Refrigerated",
+      51
     ],
     [
       "Lowboy",
       6
     ],
     [
+      "Hotshot",
+      4
+    ],
+    [
       "Container",
       3
-    ],
-    [
-      "Cargo Van",
-      1
-    ],
-    [
-      "Box Truck",
-      1
     ],
     [
       "Curtain Van",
@@ -56,84 +48,84 @@
   ],
   "topPickupStates": [
     [
-      "TX",
-      119
-    ],
-    [
       "AL",
-      84
+      124
     ],
     [
-      "WA",
-      80
-    ],
-    [
-      "SC",
-      77
+      "TX",
+      113
     ],
     [
       "OR",
-      72
+      98
     ],
     [
       "PA",
-      68
-    ],
-    [
-      "FL",
-      57
-    ],
-    [
-      "OK",
-      57
-    ],
-    [
-      "ID",
-      57
-    ],
-    [
-      "OH",
-      41
-    ],
-    [
-      "GA",
-      41
+      88
     ],
     [
       "AR",
-      34
+      67
+    ],
+    [
+      "WA",
+      56
+    ],
+    [
+      "OK",
+      52
+    ],
+    [
+      "SC",
+      48
     ],
     [
       "IL",
-      32
+      47
     ],
     [
-      "CA",
-      31
-    ],
-    [
-      "NJ",
-      26
-    ],
-    [
-      "MS",
-      25
-    ],
-    [
-      "CT",
-      25
+      "ID",
+      45
     ],
     [
       "MA",
-      24
+      34
     ],
     [
-      "IN",
-      21
+      "NJ",
+      29
+    ],
+    [
+      "OH",
+      24
     ],
     [
       "SD",
       21
+    ],
+    [
+      "GA",
+      20
+    ],
+    [
+      "FL",
+      20
+    ],
+    [
+      "WI",
+      18
+    ],
+    [
+      "CT",
+      18
+    ],
+    [
+      "MD",
+      18
+    ],
+    [
+      "MN",
+      18
     ]
   ]
 }
