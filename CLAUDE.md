@@ -23,7 +23,7 @@ Fleet operators post open requests and the app finds available loads along their
 | `api/pcmiler/route.js` | Server proxy: route reports (mileage) |
 | `api/pcmiler/routepath.js` | Server proxy: route geometry (GeoJSON) |
 | `api/pcmiler/tile.js` | Server proxy: map tiles (falls back to OSM) |
-| `src/components/OpenRequests.jsx` | Main workflow view — request results |
+| `src/components/OpenRequests.jsx` | Main workflow view — request results (v1) |
 | `src/components/BackhaulResults.jsx` | Results list + financials display |
 | `src/components/FleetSetup.jsx` | Fleet profile + rate config |
 | `src/components/RouteHomeMap.jsx` | Leaflet map with route corridor |
@@ -79,11 +79,28 @@ Any changes to shared logic, matching algorithm, or data layer must be validated
 
 ## Staging Environment
 
-A staging Supabase project exists with the current schema migrated. Full staging pipeline is in progress — configuration details will be added here once complete.
+A full staging pipeline is configured and active.
 
-- **Do not** treat the staging Supabase project as production
-- Staging environment variables will be documented here once the pipeline is established
-- Target workflow: feature branch → staging deploy → full test suite → promote to production
+| Item | Value |
+|------|-------|
+| Staging branch | `staging` |
+| Staging Vercel project | `backhaul-matcher-staging.vercel.app` |
+| Staging Supabase project | `haul-monitor-staging` |
+| Staging Supabase URL | `https://vdrkpitooqgmmlfrbphi.supabase.co` |
+| Staging Supabase project ID | `vdrkpitooqgmmlfrbphi` |
+
+**Promotion workflow:**
+```
+feature branch → PR to staging → CI runs → staging Vercel deploys → 
+manual smoke test → PR staging to main → production deploys
+```
+
+**Rules:**
+- Never commit directly to `main` — all changes go through `staging` first
+- Never use staging Supabase credentials in production and vice versa
+- CI (GitHub Actions) runs unit tests on all PRs to `staging` and `main`
+- Playwright E2E tests run on all PRs; target URL is dynamic based on branch
+- GitHub Actions secrets: `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`
 
 ---
 
@@ -101,7 +118,6 @@ Feature specs live in `docs/specs/`. Check there before building any new feature
 
 *This section should be kept current. Update when starting or completing significant work.*
 
-- Staging environment pipeline not yet configured (Vercel preview + env vars pending)
 - Test suite needs expansion — coverage for both v1 and v2 UX, user flows, and calculation accuracy
 - Map rendering: monitor for source duplication errors when plotting routes (known intermittent issue)
 - Notification system: change detection logic for initial page loads and manual refreshes needs review

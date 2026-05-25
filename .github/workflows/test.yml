@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 jobs:
   unit-tests:
@@ -22,12 +22,15 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
 
   playwright:
     name: Playwright cross-browser tests
     runs-on: ubuntu-latest
-    # Tests run against the live production site.
-    # On PRs this validates production health; PR-branch changes are covered by unit-tests.
+    # Tests run against the live staging or production site depending on target branch.
+    # PRs to main run against production; PRs to staging run against staging URL.
     # Set TEST_EMAIL + TEST_PASSWORD in repo secrets to also run authenticated tests.
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +61,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          TEST_BASE_URL: https://haulmonitor.cloud/app
+          TEST_BASE_URL: ${{ github.base_ref == 'main' && 'https://haulmonitor.cloud/app' || 'https://backhaul-matcher-staging.vercel.app' }}
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
