@@ -585,27 +585,29 @@ export const findRouteHomeBackhauls = async (
       formatted_revenue: `$${totalRevenue.toFixed(2)}`,
       formatted_rpm: `$${revenuePerMile.toFixed(2)}`,
 
-      // Resolved coordinates — centroid fallback ensures map markers render
-      // even when individual city coords are absent (common for DF scraped loads)
-      pickup_lat: resolvedPickupLat,
-      pickup_lng: resolvedPickupLng,
-      delivery_lat: resolvedDeliveryLat,
-      delivery_lng: resolvedDeliveryLng,
+      // Store raw coords from the load source (null when unavailable, e.g. Truckstop SOAP).
+      // State centroids are used above for distance math but must NOT be stored here —
+      // RouteMap geocodes from city/state strings when these are null, and non-null centroid
+      // coords would bypass that check and place markers at the wrong location.
+      pickup_lat: load.pickup_lat ?? null,
+      pickup_lng: load.pickup_lng ?? null,
+      delivery_lat: load.delivery_lat ?? null,
+      delivery_lng: load.delivery_lng ?? null,
 
       // For BackhaulResults component compatibility
       origin: {
         address: `${load.pickup_city}, ${load.pickup_state}`,
         city: load.pickup_city,
         state: load.pickup_state,
-        lat: resolvedPickupLat,
-        lng: resolvedPickupLng
+        lat: load.pickup_lat ?? null,
+        lng: load.pickup_lng ?? null
       },
       destination: {
         address: `${load.delivery_city}, ${load.delivery_state}`,
         city: load.delivery_city,
         state: load.delivery_state,
-        lat: resolvedDeliveryLat,
-        lng: resolvedDeliveryLng
+        lat: load.delivery_lat ?? null,
+        lng: load.delivery_lng ?? null
       },
 
       // Trailer type ranking
