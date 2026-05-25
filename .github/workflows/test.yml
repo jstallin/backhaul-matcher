@@ -30,7 +30,7 @@ jobs:
     name: Playwright cross-browser tests
     runs-on: ubuntu-latest
     # Tests run against the live staging or production site depending on target branch.
-    # PRs to main run against production; PRs to staging run against staging URL.
+    # Pushes/PRs targeting main → production URL. Everything else → staging URL.
     # Set TEST_EMAIL + TEST_PASSWORD in repo secrets to also run authenticated tests.
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          TEST_BASE_URL: ${{ github.base_ref == 'main' && 'https://haulmonitor.cloud/app' || 'https://backhaul-matcher-staging.vercel.app' }}
+          TEST_BASE_URL: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && 'https://haulmonitor.cloud/app' || 'https://backhaul-matcher-staging.vercel.app/app' }}
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
