@@ -62,8 +62,12 @@ jobs:
         run: npx playwright test
         env:
           TEST_BASE_URL: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && 'https://haulmonitor.cloud/app' || 'https://backhaul-matcher-staging.vercel.app/app' }}
-          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          # Only pass auth credentials when targeting production — staging Supabase has a
+          # separate user database and production credentials will not work there.
+          # TODO: add STAGING_TEST_EMAIL / STAGING_TEST_PASSWORD secrets + staging test user
+          # in Supabase dashboard to enable authenticated tests on staging as well.
+          TEST_EMAIL: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && secrets.TEST_EMAIL || '' }}
+          TEST_PASSWORD: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && secrets.TEST_PASSWORD || '' }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
