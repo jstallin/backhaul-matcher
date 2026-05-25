@@ -1,6 +1,7 @@
 import { test as setup, expect } from '@playwright/test';
 import { appPath, STORAGE_STATE } from './helpers.js';
 import fs from 'fs';
+import path from 'path';
 
 export { STORAGE_STATE };
 
@@ -11,6 +12,7 @@ setup('authenticate', async ({ page }) => {
   if (!email || !password) {
     console.log('TEST_EMAIL / TEST_PASSWORD not set — skipping auth setup.');
     // Write empty storage state so dependent tests can load it without errors
+    fs.mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
     fs.writeFileSync(STORAGE_STATE, JSON.stringify({ cookies: [], origins: [] }));
     setup.skip();
     return;
@@ -25,5 +27,6 @@ setup('authenticate', async ({ page }) => {
 
   await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 15_000 });
 
+  fs.mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
   await page.context().storageState({ path: STORAGE_STATE });
 });
