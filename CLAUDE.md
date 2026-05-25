@@ -89,18 +89,32 @@ A full staging pipeline is configured and active.
 | Staging Supabase URL | `https://vdrkpitooqgmmlfrbphi.supabase.co` |
 | Staging Supabase project ID | `vdrkpitooqgmmlfrbphi` |
 
-**Promotion workflow:**
+**Promotion workflow — step by step:**
+
+1. Do your work on the `staging` branch locally
+2. `git push origin staging` — your only terminal push command
+3. CI runs automatically (unit tests + Playwright); wait for green
+4. Smoke test the change on `https://backhaul-matcher-staging.vercel.app/app`
+5. In GitHub, click **"Compare & pull request"** → **"Create pull request"** (staging → main)
+6. Confirm the PR page shows tests passing
+7. Click **"Merge pull request"** — production deploys automatically
+8. Never `git push origin main` from the terminal — the PR merge does it
+
+**After merging, resync your local branches:**
+```bash
+git checkout main && git pull
+git checkout staging && git merge main
 ```
-feature branch → PR to staging → CI runs → staging Vercel deploys → 
-manual smoke test → PR staging to main → production deploys
-```
+This keeps staging caught up with main so your next push doesn't create conflicts.
 
 **Rules:**
 - Never commit directly to `main` — all changes go through `staging` first
 - Never use staging Supabase credentials in production and vice versa
 - CI (GitHub Actions) runs unit tests on all PRs to `staging` and `main`
-- Playwright E2E tests run on all PRs; target URL is dynamic based on branch
+- Playwright E2E tests run on pushes and PRs; target URL is dynamic based on branch
+- Authenticated Playwright tests only run against production (staging has a separate user DB)
 - GitHub Actions secrets: `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`
+- TODO: enable branch protection on `main` in GitHub to enforce the PR requirement
 
 ---
 

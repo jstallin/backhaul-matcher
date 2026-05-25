@@ -181,6 +181,36 @@ describe('calculateNetRevenue', () => {
     // 80% of $1500 = $1200, minus 2 stops × $50 = $1100
     expect(result.customer_net_credit).toBeCloseTo(1100);
   });
+
+  it('handles string revenue and miles input (coerces to number)', () => {
+    const result = calculateNetRevenue('1000', '50', RATE_CONFIG);
+    expect(result.carrier_revenue).toBeCloseTo(200);
+  });
+
+  it('handles null/undefined revenue as 0', () => {
+    const result = calculateNetRevenue(null, undefined, RATE_CONFIG);
+    expect(result.carrier_revenue).toBe(0);
+    expect(result.customer_share).toBe(0);
+  });
+
+  it('treats negative additional miles as 0', () => {
+    const result = calculateNetRevenue(1000, -50, RATE_CONFIG);
+    expect(result.mileage_expense).toBe(0);
+    expect(result.fuel_surcharge).toBe(0);
+  });
+
+  it('defaults fuelMpg to 6 when undefined', () => {
+    const config = { ...RATE_CONFIG, fuelMpg: undefined };
+    const result = calculateNetRevenue(1000, 100, config);
+    // FSC = (4.50 - 3.00) / 6 = 0.25
+    expect(result.fsc_per_mile).toBeCloseTo(0.25);
+  });
+
+  it('defaults carrier split to 20% when revenueSplitCarrier is undefined', () => {
+    const config = { ...RATE_CONFIG, revenueSplitCarrier: undefined };
+    const result = calculateNetRevenue(1000, 0, config);
+    expect(result.carrier_revenue).toBeCloseTo(200);
+  });
 });
 
 // ---------------------------------------------------------------------------
