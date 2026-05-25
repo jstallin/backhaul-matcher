@@ -6,7 +6,7 @@ Fleet operators post open requests and the app finds available loads along their
 
 - **Frontend:** React + Vite, no TypeScript, inline styles throughout, theme via `useTheme()` hook
 - **Backend:** Supabase (auth + Postgres), RLS enabled on all tables
-- **Routing:** PC*MILER (Trimble) — `pcmiler.alk.com/apis/rest/v1.0/` — trial key active, extension pending
+- **Routing:** PC*MILER (Trimble) — `pcmiler.alk.com/apis/rest/v1.0/` — agreement in principle, paying contract starts July 2026, first 3 months billed on actuals only
 - **Map:** Leaflet + React-Leaflet
 - **Deployment:** Vercel — serverless functions live in `/api/`
 - **Load sources:** DirectFreight scraper (testing/transitional), Truckstop via direct partnership agreement (active)
@@ -28,7 +28,10 @@ Fleet operators post open requests and the app finds available loads along their
 | `src/components/FleetSetup.jsx` | Fleet profile + rate config |
 | `src/components/RouteHomeMap.jsx` | Leaflet map with route corridor |
 | `src/components/Dashboard.jsx` | Net revenue hero stat + fleet overview |
-| `src/App.jsx` | Top-level, `currentView` state drives navigation |
+| `src/App.jsx` | Top-level (v1), `currentView` state drives navigation |
+| `src/AppV2.jsx` | Top-level (v2), handles routing, buy modal, credit state |
+| `src/components/v2/SearchView.jsx` | V2 main search + results view |
+| `src/components/v2/EstimatesView.jsx` | V2 estimates workflow |
 
 ## Coding Conventions
 
@@ -46,3 +49,59 @@ Fleet operators post open requests and the app finds available loads along their
 - `FleetSetup.jsx.bak`, `OpenRequests.jsx.backup`, `Fleets.jsx.backup` — backup files, do not edit or delete
 - `.env` / `.env.local` — never read or modify env files directly
 - Supabase service role key — never expose client-side
+
+---
+
+## UX Versions
+
+Two UX versions exist and **both must be supported** for the foreseeable future. Do not assume either is deprecated.
+
+- **v1** — original user experience; components in `src/components/` (root level)
+- **v2** — updated user experience, currently in parallel development; components in `src/components/v2/`
+
+Any changes to shared logic, matching algorithm, or data layer must be validated against both versions.
+
+---
+
+## Infrastructure & Partner Status
+
+| Service | Status |
+|---------|--------|
+| PC*MILER (Trimble) | Agreement in principle; paying contract starts July 2026, first 3 months on actuals |
+| Supabase | Free tier (production); paid upgrade pending — upgrade before pilot load increases |
+| Vercel | Hobby tier (production); paid upgrade pending — watch serverless function timeouts |
+| Truckstop | Production access active; valid while pilot customer org has a valid integration ID |
+| Resend | Free tier; sufficient for current pilot scale |
+
+**Pilots:** 1–2 pilot customers starting imminently (May/June 2026). Production stability is the top priority.
+
+---
+
+## Staging Environment
+
+A staging Supabase project exists with the current schema migrated. Full staging pipeline is in progress — configuration details will be added here once complete.
+
+- **Do not** treat the staging Supabase project as production
+- Staging environment variables will be documented here once the pipeline is established
+- Target workflow: feature branch → staging deploy → full test suite → promote to production
+
+---
+
+## Planned Features & Specs
+
+Feature specs live in `docs/specs/`. Check there before building any new feature.
+
+| Spec | File | Status |
+|------|------|--------|
+| Dedicated Fleet Backhaul Planning | `docs/specs/dedicated-fleet-planning.md` | Pending co-founder sign-off |
+
+---
+
+## Current Work & Known Issues
+
+*This section should be kept current. Update when starting or completing significant work.*
+
+- Staging environment pipeline not yet configured (Vercel preview + env vars pending)
+- Test suite needs expansion — coverage for both v1 and v2 UX, user flows, and calculation accuracy
+- Map rendering: monitor for source duplication errors when plotting routes (known intermittent issue)
+- Notification system: change detection logic for initial page loads and manual refreshes needs review
