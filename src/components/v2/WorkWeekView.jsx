@@ -905,14 +905,14 @@ export function WorkWeekView() {
                 <AlertCircle size={20} color={t.colors.accent.amber} style={{ flexShrink: 0, marginTop: '1px' }} />
                 <div>
                   <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '4px' }}>
-                    No 2-load chains matched your deadline and mile budget
+                    No plans found for this deadline and mile budget
                   </div>
                   <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted }}>
                     {planResult.meta.returnCandidatesFound === 0
                       ? 'No loads with deliveries near your home base were found. Try again later as new loads are posted.'
                       : planResult.meta.outboundCandidatesFound === 0
-                      ? 'Found return loads but no outbound loads starting near home. Consider running again or checking back when outbound options are available.'
-                      : 'Return loads were found but no viable outbound + return pairings fit within the weekly mile budget and deadline.'}
+                      ? 'Found return loads but no outbound loads starting near home. Try again later or extend your deadline.'
+                      : `Found ${planResult.meta.returnCandidatesFound} return and ${planResult.meta.outboundCandidatesFound} outbound candidates but no 2- or 3-load combinations fit the budget. Try extending your deadline or check back as new loads are posted.`}
                   </div>
                 </div>
               </div>

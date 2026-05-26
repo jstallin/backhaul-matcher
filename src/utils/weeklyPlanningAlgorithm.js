@@ -224,6 +224,7 @@ export const planWorkWeek = async ({
 }) => {
   const maxTotal   = Math.min(stringMiles * 1.2, PLAN_DEFAULTS.maxStringMiles);
   const available  = loads.filter(l => !l.status || l.status === 'available');
+  console.log(`[WWP] ${available.length} available loads, home=${fleetHome.city},${fleetHome.state}, homeRadius=${homeRadiusMiles}mi, maxTotal=${maxTotal}mi`);
 
   // ── 1. Pre-filter candidates (Haversine, no API calls) ─────────────────────
 
@@ -242,6 +243,8 @@ export const planWorkWeek = async ({
       return d == null || d <= homeRadiusMiles;
     })
     .slice(0, MAX_OUTBOUND_CANDIDATES);
+
+  console.log(`[WWP] Haversine pre-filter: ${returnCandidates.length} return candidates, ${outboundCandidates.length} outbound candidates`);
 
   // ── 2. Batch-fetch driving distances for both candidate groups ──────────────
 
@@ -267,14 +270,22 @@ export const planWorkWeek = async ({
 
   // ── 3. Score and filter return candidates ───────────────────────────────────
 
-  const scoredReturns = returnDistances
-    .filter(({ ptd, dth }) => ptd != null && dth != null)
+  const returnWithDistances = returnDistances.filter(({ ptd, dth }) => ptd != null && dth != null);
+  console.log(`[WWP] Returns after PC*MILER: ${returnWithDistances.length} got distances`);
+  console.log(`[WWP] Returns dth breakdown:`, returnWithDistances.map(r => `${r.load.delivery_city},${r.load.delivery_state} dth=${Math.round(r.dth)}mi`));
+
+  const scoredReturns = returnWithDistances
     // Strict 150mi cap on delivery-to-home — catches null-coord loads that bypassed Haversine
-    .filter(({ dth }) => dth <= homeRadiusMiles)
-    .filter(({ ptd, dth }) => {
+    .filter(({ dth }) => {
+      const pass = dth <= homeRadiusMiles;
+      if (!pass) console.log(`[WWP] Return REJECTED dth=${Math.round(dth)}mi > ${homeRadiusMiles}mi`);
+      return pass;
+    })
+    .filter(({ load, ptd, dth }) => {
       const legMiles = ptd + dth;
-      return legMiles >= PLAN_DEFAULTS.minTotalMiles
-          && legMiles <= PLAN_DEFAULTS.maxReturnLegMiles;
+      const pass = legMiles >= PLAN_DEFAULTS.minTotalMiles && legMiles <= PLAN_DEFAULTS.maxReturnLegMiles;
+      if (!pass) console.log(`[WWP] Return REJECTED legMiles=${Math.round(legMiles)}mi (min=${PLAN_DEFAULTS.minTotalMiles} max=${PLAN_DEFAULTS.maxReturnLegMiles}) ${load.pickup_city}→${load.delivery_city}`);
+      return pass;
     })
     .map(({ load, ptd, dth }) => scoreReturnLoad(load, ptd, dth))
     .sort((a, b) => b.revenuePerMile - a.revenuePerMile)
@@ -295,6 +306,20 @@ export const planWorkWeek = async ({
     }))
     .sort((a, b) => b.revPerMile - a.revPerMile)
     .slice(0, MAX_OUTBOUND_TOP);
+
+  console.log(`[WWP] scoredReturns: ${scoredReturns.length}, scoredOutbounds: ${scoredOutbounds.length}`);
+  if (scoredReturns.length > 0) console.log(`[WWP] Top return: ${scoredReturns[0].load.pickup_city} → ${scoredReturns[0].load.delivery_city} dth=${Math.round(scoredReturns[0].deliveryToHomeMiles)}mi $${scoredReturns[0].revenue}`);
+  if (scoredOutbounds.length > 0) console.log(`[WWP] Top outbound: ${scoredOutbounds[0].load.pickup_city} → ${scoredOutbounds[0].load.delivery_city} htp=${Math.round(scoredOutbounds[0].htp)}mi $${scoredOutbounds[0].load.total_revenue}`);
+
+  // Detailed outbound filter rejection logging (only if none pass)
+  if (scoredOutbounds.length === 0) {
+    const outWithDist = outboundDistances.filter(({ htp, ptd }) => htp != null && ptd != null);
+    console.log(`[WWP] Outbound filter details: ${outWithDist.length} had PC*MILER distances`);
+    outWithDist.forEach(({ load, htp, ptd }) => {
+      const d = haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
+      console.log(`[WWP]   out ${load.pickup_city}→${load.delivery_city} htp=${Math.round(htp)}mi ptd=${Math.round(ptd)}mi deliveryDistFromHome=${d != null ? Math.round(d) : 'no-coords'}mi`);
+    });
+  }
 
   // ── 4. Pair candidates + batch-fetch deadhead distances ────────────────────
 
@@ -320,6 +345,8 @@ export const planWorkWeek = async ({
     }
   }
 
+  console.log(`[WWP] Pair candidates after Haversine: ${pairCandidates.length}`);
+
   // Fetch deadhead distances for all viable pairs in parallel
   const pairsWithDeadhead = await Promise.all(
     pairCandidates.map(async ({ ret, out }) => {
@@ -330,6 +357,9 @@ export const planWorkWeek = async ({
       return { ret, out, deadhead };
     })
   );
+
+  const pairsGotDeadhead = pairsWithDeadhead.filter(({ deadhead }) => deadhead != null);
+  console.log(`[WWP] Pairs after deadhead fetch: ${pairsGotDeadhead.length} of ${pairCandidates.length} got distances`);
 
   // ── 5. Build, filter, and rank chains ──────────────────────────────────────
 
@@ -431,6 +461,8 @@ export const planWorkWeek = async ({
       });
     })
     .filter(Boolean);
+
+  console.log(`[WWP] chains2=${chains.length}, tripletCandidates=${tripletCandidates.length}, chains3=${chains3.length}`);
 
   // Combine 2-load and 3-load chains, sort by RPM, return top N
   const allChains = [...chains, ...chains3]
