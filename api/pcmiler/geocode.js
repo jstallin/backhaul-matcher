@@ -27,16 +27,59 @@ export default async function handler(req, res) {
     return { response: r, usedAddress: addr };
   };
 
+  // Extract the most likely "City, ST" from an address string.
+  // Strategy: find the first ", ST" pattern (two uppercase letters after a comma),
+  // then walk backwards through the preceding words to isolate the city name.
+  // Handles "City, ST", "Street, City, ST", "Street City, ST", "Street City, ST ZIP", etc.
+  const extractCityState = (addr) => {
+    // Prefer two-comma form first: "..., City, ST"
+    const two = addr.match(/,\s*([A-Za-z][A-Za-z\s]+?)\s*,\s*([A-Z]{2})\b/);
+    if (two) return `${two[1].trim()}, ${two[2]}`;
+
+    // Find the first ", ST" (state abbreviation after a comma)
+    const stateMatch = addr.match(/,\s*([A-Z]{2})\b/);
+    if (stateMatch) {
+      const state = stateMatch[1];
+      const beforeComma = addr.slice(0, addr.indexOf(stateMatch[0])).trim();
+      const words = beforeComma.split(/\s+/);
+      // Walk backwards, collecting city words until we hit a street suffix or number
+      const streetSuffixes = new Set([
+        'dr','st','ave','rd','blvd','ln','ct','pl','way','pkwy','hwy','fwy','cir','trl','ste','apt','unit','fl',
+      ]);
+      const cityWords = [];
+      for (let i = words.length - 1; i >= 0; i--) {
+        const w = words[i].toLowerCase().replace(/[.,]$/, '');
+        if (/\d/.test(w) || streetSuffixes.has(w)) break;
+        cityWords.unshift(words[i]);
+      }
+      if (cityWords.length > 0) return `${cityWords.join(' ')}, ${state}`;
+    }
+
+    return null;
+  };
+
+  // Extract a 5-digit ZIP from an address — used as last-resort PC*MILER input.
+  const extractZip = (addr) => {
+    const m = addr.match(/\b(\d{5})\b/);
+    return m ? m[1] : null;
+  };
+
   try {
     let { response, usedAddress } = await tryGeocode(address);
 
-    // On 400, try stripping to city/state (handles full street addresses)
+    // On 400, strip to city/state and retry; if that still fails, try ZIP alone
     if (response.status === 400) {
-      const cityStateMatch = address.match(/,\s*([A-Za-z\s]+),\s*([A-Z]{2})\b/);
-      if (cityStateMatch) {
-        const simplified = `${cityStateMatch[1].trim()}, ${cityStateMatch[2]}`;
+      const simplified = extractCityState(address);
+      if (simplified) {
         console.log(`PC Miler geocode: retrying "${address}" as "${simplified}"`);
         ({ response, usedAddress } = await tryGeocode(simplified));
+      }
+      if (!simplified || response.status === 400) {
+        const zip = extractZip(address);
+        if (zip) {
+          console.log(`PC Miler geocode: retrying "${address}" as ZIP "${zip}"`);
+          ({ response, usedAddress } = await tryGeocode(zip));
+        }
       }
     }
 
@@ -60,9 +103,13 @@ export default async function handler(req, res) {
     }
 
     // Fallback: Nominatim (OSM) — no key required, works for any city/address
-    const cityStateMatch = address.match(/,\s*([A-Za-z\s]+),\s*([A-Z]{2})\b/);
-    const nominatimQuery = cityStateMatch
-      ? `${cityStateMatch[1].trim()}, ${cityStateMatch[2]}, United States`
+    // Query with the cleanest form available: city/state > ZIP > full address
+    const cityState = extractCityState(address);
+    const zip = extractZip(address);
+    const nominatimQuery = cityState
+      ? `${cityState}, United States`
+      : zip
+      ? `${zip}, United States`
       : `${address}, United States`;
 
     console.log('Nominatim fallback for:', nominatimQuery);
