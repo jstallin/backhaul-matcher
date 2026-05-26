@@ -16,9 +16,11 @@ import { calculateDistance, calculateNetRevenue } from './routeHomeMatching';
 import { getDrivingDistance } from './pcMilerClient';
 import { calculateArrival, calculateLatestDeparture } from './hosCalculator';
 
-// Max candidates pre-filtered before PC*MILER calls
-const MAX_RETURN_CANDIDATES   = 20;
-const MAX_OUTBOUND_CANDIDATES = 20;
+// Max candidates pre-filtered before PC*MILER calls.
+// Raised to 30 because state-centroid pre-screening now eliminates clearly far loads
+// before we hit this cap, so the batch is smaller than the old "always 20" approach.
+const MAX_RETURN_CANDIDATES   = 30;
+const MAX_OUTBOUND_CANDIDATES = 30;
 const MAX_OUTBOUND_TOP        = 10; // top outbounds by rate/mile to pair against returns
 const MAX_CHAINS_RETURNED     = 10;
 
@@ -55,6 +57,35 @@ const passesEquipment = (load, profile) => {
 // Haversine distance between a load endpoint and a reference point — null when coords absent
 const haversineTo = (lat, lng, refLat, refLng) =>
   lat != null && lng != null ? calculateDistance(lat, lng, refLat, refLng) : null;
+
+// Approximate US state centroids — used to screen null-coord Truckstop loads
+const STATE_CENTROIDS = {
+  AL:{lat:32.8,lng:-86.9}, AR:{lat:35.0,lng:-92.5}, AZ:{lat:34.3,lng:-111.1},
+  CA:{lat:37.2,lng:-119.5}, CO:{lat:39.0,lng:-105.5}, CT:{lat:41.6,lng:-72.7},
+  DE:{lat:39.0,lng:-75.5}, FL:{lat:28.1,lng:-81.6}, GA:{lat:32.7,lng:-83.4},
+  IA:{lat:41.9,lng:-93.4}, ID:{lat:44.5,lng:-114.3}, IL:{lat:40.0,lng:-89.2},
+  IN:{lat:39.9,lng:-86.3}, KS:{lat:38.5,lng:-96.7}, KY:{lat:37.5,lng:-85.3},
+  LA:{lat:31.0,lng:-91.8}, MA:{lat:42.3,lng:-71.8}, MD:{lat:39.0,lng:-76.8},
+  ME:{lat:45.3,lng:-69.0}, MI:{lat:44.1,lng:-84.7}, MN:{lat:46.4,lng:-93.1},
+  MO:{lat:38.3,lng:-92.5}, MS:{lat:32.7,lng:-89.7}, MT:{lat:47.0,lng:-110.4},
+  NC:{lat:35.5,lng:-79.4}, ND:{lat:47.5,lng:-100.3}, NE:{lat:41.5,lng:-99.9},
+  NH:{lat:43.7,lng:-71.6}, NJ:{lat:40.1,lng:-74.5}, NM:{lat:34.3,lng:-106.0},
+  NV:{lat:39.3,lng:-116.6}, NY:{lat:42.2,lng:-74.9}, OH:{lat:40.4,lng:-82.8},
+  OK:{lat:35.6,lng:-96.9}, OR:{lat:44.6,lng:-122.1}, PA:{lat:40.9,lng:-77.8},
+  RI:{lat:41.7,lng:-71.5}, SC:{lat:33.9,lng:-80.9}, SD:{lat:44.4,lng:-100.2},
+  TN:{lat:35.9,lng:-86.7}, TX:{lat:31.1,lng:-97.6}, UT:{lat:39.3,lng:-111.1},
+  VA:{lat:37.7,lng:-78.2}, VT:{lat:44.1,lng:-72.7}, WA:{lat:47.4,lng:-120.5},
+  WI:{lat:44.5,lng:-89.6}, WV:{lat:38.5,lng:-80.7}, WY:{lat:43.0,lng:-107.6},
+};
+
+// Distance from a load endpoint to a reference point.
+// Uses exact coords when available; falls back to state centroid for null-coord loads.
+// Returns null only when neither coords nor state are available.
+const approxDistanceTo = (lat, lng, state, refLat, refLng) => {
+  if (lat != null && lng != null) return calculateDistance(lat, lng, refLat, refLng);
+  const c = STATE_CENTROIDS[state];
+  return c ? calculateDistance(c.lat, c.lng, refLat, refLng) : null;
+};
 
 // ── Pure scoring functions (exported for testing) ─────────────────────────────
 
@@ -228,19 +259,36 @@ export const planWorkWeek = async ({
 
   // ── 1. Pre-filter candidates (Haversine, no API calls) ─────────────────────
 
+  // 2.5x buffer when using state centroid (less precise than exact coords).
+  // Lets TN/KY/VA pass while clearly-far states (IL, MN, TX) are screened out.
+  const CENTROID_BUFFER = 2.5;
+
   const returnCandidates = available
     .filter(load => {
       if (!passesEquipment(load, fleetProfile)) return false;
-      const d = haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-      return d == null || d <= homeRadiusMiles; // include no-coord loads; PC*MILER decides
+      const d = approxDistanceTo(
+        load.delivery_lat, load.delivery_lng, load.delivery_state,
+        fleetHome.lat, fleetHome.lng
+      );
+      // null = no coords AND no state — include and let PC*MILER decide
+      // exact coord: must be within homeRadiusMiles
+      // state centroid: must be within homeRadiusMiles * CENTROID_BUFFER
+      if (d == null) return true;
+      const threshold = (load.delivery_lat != null) ? homeRadiusMiles : homeRadiusMiles * CENTROID_BUFFER;
+      return d <= threshold;
     })
     .slice(0, MAX_RETURN_CANDIDATES);
 
   const outboundCandidates = available
     .filter(load => {
       if (!passesEquipment(load, fleetProfile)) return false;
-      const d = haversineTo(load.pickup_lat, load.pickup_lng, fleetHome.lat, fleetHome.lng);
-      return d == null || d <= homeRadiusMiles;
+      const d = approxDistanceTo(
+        load.pickup_lat, load.pickup_lng, load.pickup_state,
+        fleetHome.lat, fleetHome.lng
+      );
+      if (d == null) return true;
+      const threshold = (load.pickup_lat != null) ? homeRadiusMiles : homeRadiusMiles * CENTROID_BUFFER;
+      return d <= threshold;
     })
     .slice(0, MAX_OUTBOUND_CANDIDATES);
 
