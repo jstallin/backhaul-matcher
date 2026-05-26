@@ -52,9 +52,11 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
   const avgOutOfRoute = completedRequests.length > 0 ? totalOutOfRoute / completedRequests.length : 0;
 
   const getGallonsSaved = (r) => {
-    const miles = parseFloat(r.load_distance_miles) || parseFloat(r.out_of_route_miles) || 0;
+    const loadMiles = parseFloat(r.load_distance_miles) || 0;
+    const oorMiles = parseFloat(r.out_of_route_miles) || 0;
     const mpg = parseFloat(r.fleets?.fuel_mpg) || 6;
-    return miles > 0 ? miles / mpg : 0;
+    const net = Math.max(0, loadMiles - oorMiles);
+    return net > 0 ? net / mpg : 0;
   };
   const totalGallonsSaved = completedRequests.reduce((sum, r) => sum + getGallonsSaved(r), 0);
 

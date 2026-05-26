@@ -1415,6 +1415,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         revenue_amount: mTotalRev(haulMatch),
         net_revenue: haulMatch.customer_net_credit ?? haulMatch.netRevenue ?? 0,
         out_of_route_miles: mAdditional(haulMatch),
+        load_distance_miles: mDistance(haulMatch) || null,
         completed_at: new Date().toISOString(),
         hauled_load_id: haulMatch.load_id || haulMatch.source_load_id || null,
         hauled_load_source: haulMatch.source || null,

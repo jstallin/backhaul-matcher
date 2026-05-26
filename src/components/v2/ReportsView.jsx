@@ -303,7 +303,13 @@ export function ReportsView() {
   const totalRevenue     = completed.reduce((s, r) => s + (Number(r.revenue_amount) || 0), 0);
   const totalNetRevenue  = completed.reduce((s, r) => s + (Number(r.net_revenue) || 0), 0);
   const totalOorMiles    = completed.reduce((s, r) => s + (Number(r.out_of_route_miles) || 0), 0);
-  const totalGallonsSaved = totalOorMiles / 6;
+  const totalGallonsSaved = completed.reduce((sum, r) => {
+    const loadMiles = parseFloat(r.load_distance_miles) || 0;
+    const oorMiles = parseFloat(r.out_of_route_miles) || 0;
+    const mpg = parseFloat(r.fleets?.fuel_mpg) || 6;
+    const net = Math.max(0, loadMiles - oorMiles);
+    return sum + (net > 0 ? net / mpg : 0);
+  }, 0);
 
   const monthlyRevenue  = getRevenueByMonth(completed, 6);
   const statusCounts    = getRequestsByStatus(requests);
