@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm';
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
+import { parseFleetHome } from '../../utils/parseFleetHome';
 
 const t = tokens;
 
@@ -47,13 +48,6 @@ const toTimeInputValue = (date) => {
   return `${h}:${min}`;
 };
 
-// Parse city and state from home_address ("City, ST" or "Street, City, ST")
-const parseHomeAddress = (fleet) => {
-  const parts = (fleet.home_address || '').split(',').map(s => s.trim()).filter(Boolean);
-  const state = parts.length >= 1 ? parts[parts.length - 1].slice(0, 2).toUpperCase() : '';
-  const city  = parts.length >= 2 ? parts[parts.length - 2] : '';
-  return { city, state };
-};
 
 const getLoadBoardUrl = (load) => {
   if (!load) return null;
@@ -722,7 +716,7 @@ export function WorkWeekView() {
         doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
       } : null;
 
-      const { city: homeCity, state: homeState } = parseHomeAddress(fleet);
+      const { city: homeCity, state: homeState } = parseFleetHome(fleet);
 
       const fleetHome = {
         lat: fleet.home_lat,

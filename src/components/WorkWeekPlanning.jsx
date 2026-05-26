@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/supabase';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../utils/weeklyPlanningAlgorithm';
+import { parseFleetHome } from '../utils/parseFleetHome';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
@@ -46,12 +47,6 @@ const toTimeInputValue = (date) => {
   return `${h}:${min}`;
 };
 
-const parseHomeAddress = (fleet) => {
-  const parts = (fleet.home_address || '').split(',').map(s => s.trim()).filter(Boolean);
-  const state = parts.length >= 1 ? parts[parts.length - 1].slice(0, 2).toUpperCase() : '';
-  const city  = parts.length >= 2 ? parts[parts.length - 2] : '';
-  return { city, state };
-};
 
 const getLoadBoardUrl = (load) => {
   if (!load) return null;
@@ -576,7 +571,7 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
         doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
       } : null;
 
-      const { city: homeCity, state: homeState } = parseHomeAddress(fleet);
+      const { city: homeCity, state: homeState } = parseFleetHome(fleet);
       const fleetHome = { lat: fleet.home_lat, lng: fleet.home_lng, city: homeCity, state: homeState };
       setFleetHomeName(fleet.home_address || `${homeCity}, ${homeState}` || 'Home Base');
 
