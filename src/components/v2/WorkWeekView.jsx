@@ -4,7 +4,7 @@ import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm';
-import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight } from '../../icons';
+import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
 
 const t = tokens;
 
@@ -53,6 +53,20 @@ const parseHomeAddress = (fleet) => {
   const state = parts.length >= 1 ? parts[parts.length - 1].slice(0, 2).toUpperCase() : '';
   const city  = parts.length >= 2 ? parts[parts.length - 2] : '';
   return { city, state };
+};
+
+const getLoadBoardUrl = (load) => {
+  if (!load) return null;
+  if (load.source === 'truckstop' && (load.source_load_id || load.load_id)) {
+    return `https://main.truckstop.com/PostingDetails/Loads/${load.source_load_id || load.load_id}`;
+  }
+  return null;
+};
+
+const getSourceLabel = (load) => {
+  if (!load?.source) return null;
+  const map = { truckstop: 'Truckstop', directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT' };
+  return map[load.source] || load.source;
 };
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
@@ -126,7 +140,6 @@ function StringBar({ totalMiles }) {
         </span>
       </div>
       <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'visible' }}>
-        {/* Optimal zone shading */}
         <div style={{
           position: 'absolute',
           left: `${(PLAN_DEFAULTS.minStringMiles / maxMiles) * 100}%`,
@@ -196,11 +209,115 @@ function Connector({ miles, type, revenue }) {
   );
 }
 
+// ─── Load mini card ───────────────────────────────────────────────────────────
+
+function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
+  const url = getLoadBoardUrl(load);
+  const sourceLabel = getSourceLabel(load);
+  const loadRef = load.df_load_number || load.source_load_id || load.load_id;
+
+  return (
+    <div style={{
+      border: `1px solid ${accentColor}30`,
+      borderLeft: `3px solid ${accentColor}`,
+      borderRadius: t.radius.lg,
+      padding: '12px 14px',
+      background: accentColor + '06',
+    }}>
+      {/* Step label */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+        <span style={{
+          fontSize: t.font.size.xs,
+          fontWeight: t.font.weight.bold,
+          color: accentColor,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}>
+          Step {stepNumber} — {stepLabel}
+        </span>
+        {sourceLabel && (
+          <span style={{
+            fontSize: '10px',
+            fontWeight: t.font.weight.semibold,
+            color: t.colors.text.muted,
+            background: '#f1f5f9',
+            borderRadius: t.radius.full,
+            padding: '2px 8px',
+          }}>
+            {sourceLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Route */}
+      <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '6px' }}>
+        {load.pickup_city}, {load.pickup_state} → {load.delivery_city}, {load.delivery_state}
+      </div>
+
+      {/* Details row */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+        {load.equipment_type && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+            {load.equipment_type}
+          </span>
+        )}
+        {load.weight_lbs && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+            {Number(load.weight_lbs).toLocaleString()} lbs
+          </span>
+        )}
+        {load.distance_miles && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+            {Math.round(load.distance_miles)} mi
+          </span>
+        )}
+        {load.company_name && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+            {load.company_name}
+          </span>
+        )}
+      </div>
+
+      {/* Revenue + link */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+        <span style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.accent.green }}>
+          {fmt$(Number(load.total_revenue))}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {loadRef && !url && (
+            <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>#{loadRef}</span>
+          )}
+          {url && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: t.font.size.xs,
+                fontWeight: t.font.weight.semibold,
+                color: t.colors.accent.blue,
+                textDecoration: 'none',
+                padding: '4px 10px',
+                border: `1px solid ${t.colors.accent.blue}40`,
+                borderRadius: t.radius.lg,
+                background: t.colors.accent.blueLight,
+              }}
+            >
+              View on {sourceLabel} ↗
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Chain card ───────────────────────────────────────────────────────────────
 
-function ChainCard({ chain, rank, fleetHomeName }) {
+function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving }) {
   const { outboundLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
-          departureTime, returnPickupTime, arrivalHome, withinOptimalBand } = chain;
+          departureTime, returnPickupTime, arrivalHome } = chain;
 
   const rpmColor = revenuePerTotalMile >= 3 ? t.colors.accent.green
     : revenuePerTotalMile >= 2 ? t.colors.accent.amber
@@ -244,8 +361,27 @@ function ChainCard({ chain, rank, fleetHomeName }) {
         </div>
       </div>
 
-      {/* Legs */}
-      <div style={{ padding: '16px 18px' }}>
+      {/* Load cards — return first (anchor), then outbound */}
+      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <LoadMiniCard
+          load={returnLoad}
+          stepNumber={1}
+          stepLabel="Book this first (anchor load)"
+          accentColor={t.colors.accent.blue}
+        />
+        <LoadMiniCard
+          load={outboundLoad}
+          stepNumber={2}
+          stepLabel="Then book this outbound"
+          accentColor={t.colors.accent.green}
+        />
+      </div>
+
+      {/* Timeline */}
+      <div style={{ padding: '0 18px 4px' }}>
+        <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+          Route
+        </div>
         <Stop city={fleetHomeName || 'Home Base'} isHome />
         {legs.homeToPickup > 0 && <>
           <Connector miles={legs.homeToPickup} type="deadhead" />
@@ -262,7 +398,6 @@ function ChainCard({ chain, rank, fleetHomeName }) {
         {legs.returnToHome > 0 && <Connector miles={legs.returnToHome} type="deadhead" />}
         <Stop city={fleetHomeName || 'Home Base'} isHome />
 
-        {/* Return pickup time callout */}
         <div style={{
           marginTop: '14px',
           padding: '8px 12px',
@@ -279,10 +414,80 @@ function ChainCard({ chain, rank, fleetHomeName }) {
       </div>
 
       {/* String bar */}
-      <div style={{ padding: '0 18px 16px' }}>
+      <div style={{ padding: '14px 18px' }}>
         <StringBar totalMiles={totalMiles} />
       </div>
+
+      {/* Select plan button */}
+      <div style={{ padding: '0 18px 18px', borderTop: `1px solid ${t.colors.page.cardBorder}`, paddingTop: '14px', marginTop: '4px' }}>
+        {isSelected ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.colors.accent.green, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold }}>
+            <CheckCircle size={16} color={t.colors.accent.green} />
+            This plan is active
+          </div>
+        ) : (
+          <PrimaryBtn onClick={() => onSelect(chain)} loading={saving} style={{ width: '100%', justifyContent: 'center', padding: '10px' }}>
+            {saving ? 'Saving…' : 'Select This Plan'}
+          </PrimaryBtn>
+        )}
+      </div>
     </Card>
+  );
+}
+
+// ─── Active plan banner ───────────────────────────────────────────────────────
+
+function ActivePlanBanner({ plan, onMarkComplete, completing }) {
+  const s = plan.chain_summary || {};
+  const outbound = plan.outbound_load || {};
+  const ret = plan.return_load || {};
+
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${t.colors.accent.green}18, ${t.colors.accent.green}08)`,
+      border: `1px solid ${t.colors.accent.green}40`,
+      borderRadius: t.radius['2xl'],
+      padding: '18px 22px',
+      marginBottom: '28px',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px',
+    }}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.colors.accent.green, animation: 'pulse 2s infinite' }} />
+          <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: t.colors.accent.green, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Active Plan
+          </span>
+        </div>
+        <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '4px' }}>
+          {outbound.pickup_city && ret.delivery_city
+            ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`
+            : 'Work Week Plan In Progress'}
+        </div>
+        <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+          {s.totalRevenue != null && `${fmt$(s.totalRevenue)} · `}
+          {s.totalMiles != null && `${fmtMiles(s.totalMiles)} · `}
+          Home by {fmtDateTime(plan.week_deadline)}
+        </div>
+      </div>
+      <button
+        onClick={onMarkComplete}
+        disabled={completing}
+        style={{
+          padding: '8px 16px',
+          borderRadius: t.radius.lg,
+          border: `1px solid ${t.colors.accent.green}60`,
+          background: '#fff',
+          color: t.colors.accent.green,
+          fontSize: t.font.size.sm,
+          fontWeight: t.font.weight.semibold,
+          cursor: completing ? 'not-allowed' : 'pointer',
+          flexShrink: 0,
+        }}
+      >
+        {completing ? 'Saving…' : 'Mark Complete'}
+      </button>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+    </div>
   );
 }
 
@@ -290,6 +495,9 @@ function ChainCard({ chain, rank, fleetHomeName }) {
 
 function ReturnOnlyCard({ option }) {
   const { load, pickupToDeliveryMiles, deliveryToHomeMiles, totalMiles, revenue, revenuePerMile } = option;
+  const url = getLoadBoardUrl(load);
+  const sourceLabel = getSourceLabel(load);
+
   return (
     <div style={{
       padding: '12px 16px',
@@ -298,21 +506,42 @@ function ReturnOnlyCard({ option }) {
       display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
       flexWrap: 'wrap',
     }}>
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>
           {load.pickup_city}, {load.pickup_state} → {load.delivery_city}, {load.delivery_state}
         </div>
         <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginTop: '2px' }}>
           {fmtMiles(pickupToDeliveryMiles)} loaded · {fmtMiles(deliveryToHomeMiles)} to home
+          {sourceLabel && ` · ${sourceLabel}`}
         </div>
       </div>
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: t.colors.accent.green }}>
-          {fmt$(revenue)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: t.colors.accent.green }}>
+            {fmt$(revenue)}
+          </div>
+          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+            {revenuePerMile.toFixed(2)}/mi · {fmtMiles(totalMiles)} total
+          </div>
         </div>
-        <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
-          {revenuePerMile.toFixed(2)}/mi · {fmtMiles(totalMiles)} total
-        </div>
+        {url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold,
+              color: t.colors.accent.blue,
+              textDecoration: 'none',
+              padding: '4px 10px',
+              border: `1px solid ${t.colors.accent.blue}40`,
+              borderRadius: t.radius.lg,
+              background: t.colors.accent.blueLight,
+            }}
+          >
+            View ↗
+          </a>
+        )}
       </div>
     </div>
   );
@@ -449,23 +678,32 @@ export function WorkWeekView() {
   const { user } = useAuth();
   const [fleets, setFleets] = useState([]);
   const [loadingFleets, setLoadingFleets] = useState(true);
+  const [activePlan, setActivePlan] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(true);
 
   const [planResult, setPlanResult] = useState(null);
+  const [currentFleet, setCurrentFleet] = useState(null);
   const [fleetHomeName, setFleetHomeName] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
+  const [savingPlanId, setSavingPlanId] = useState(null); // chain index being saved
+  const [completing, setCompleting] = useState(false);
+  const [selectedChainIndex, setSelectedChainIndex] = useState(null);
 
   useEffect(() => {
     if (!user) return;
-    db.fleets.getAll(user.id)
-      .then(f => setFleets(f || []))
-      .finally(() => setLoadingFleets(false));
+    Promise.all([
+      db.fleets.getAll(user.id).then(f => setFleets(f || [])).finally(() => setLoadingFleets(false)),
+      db.workWeekPlans.getActive(user.id).then(p => setActivePlan(p)).finally(() => setLoadingPlan(false)),
+    ]);
   }, [user]);
 
   const handleRun = async (fleet, deadline) => {
     setRunning(true);
     setError(null);
     setPlanResult(null);
+    setSelectedChainIndex(null);
+    setCurrentFleet(fleet);
 
     try {
       const rawProfile = Array.isArray(fleet.fleet_profiles)
@@ -517,6 +755,49 @@ export function WorkWeekView() {
     }
   };
 
+  const handleSelectPlan = async (chain, index) => {
+    if (!user || !currentFleet || !planResult) return;
+    setSavingPlanId(index);
+    try {
+      const saved = await db.workWeekPlans.save({
+        userId: user.id,
+        fleetId: currentFleet.id,
+        weekDeadline: chain.arrivalHome?.toISOString() || new Date().toISOString(),
+        outboundLoad: chain.outboundLoad,
+        returnLoad: chain.returnLoad,
+        chainSummary: {
+          totalMiles: chain.totalMiles,
+          totalRevenue: chain.totalRevenue,
+          revenuePerTotalMile: chain.revenuePerTotalMile,
+          departureTime: chain.departureTime,
+          arrivalHome: chain.arrivalHome,
+          returnPickupTime: chain.returnPickupTime,
+          legs: chain.legs,
+        },
+      });
+      setActivePlan(saved);
+      setSelectedChainIndex(index);
+    } catch (err) {
+      setError('Failed to save plan: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSavingPlanId(null);
+    }
+  };
+
+  const handleMarkComplete = async () => {
+    if (!activePlan) return;
+    setCompleting(true);
+    try {
+      await db.workWeekPlans.updateStatus(activePlan.id, 'completed');
+      setActivePlan(null);
+      setSelectedChainIndex(null);
+    } catch (err) {
+      setError('Failed to update plan: ' + (err.message || 'Unknown error'));
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   return (
     <div style={{ padding: '32px 24px', maxWidth: '720px', margin: '0 auto' }}>
       {/* Page header */}
@@ -529,6 +810,11 @@ export function WorkWeekView() {
       <p style={{ fontSize: t.font.size.base, color: t.colors.text.muted, marginBottom: '28px', marginTop: '4px' }}>
         Find the best return load first, then build your week forward from that anchor.
       </p>
+
+      {/* Active plan banner */}
+      {!loadingPlan && activePlan && (
+        <ActivePlanBanner plan={activePlan} onMarkComplete={handleMarkComplete} completing={completing} />
+      )}
 
       {/* Setup form */}
       {loadingFleets ? (
@@ -562,12 +848,20 @@ export function WorkWeekView() {
           {planResult.chains.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {planResult.chains.map((chain, i) => (
-                <ChainCard key={i} chain={chain} rank={i + 1} fleetHomeName={fleetHomeName} />
+                <ChainCard
+                  key={i}
+                  chain={chain}
+                  rank={i + 1}
+                  fleetHomeName={fleetHomeName}
+                  onSelect={(c) => handleSelectPlan(c, i)}
+                  isSelected={selectedChainIndex === i}
+                  saving={savingPlanId === i}
+                />
               ))}
             </div>
           )}
 
-          {/* No full chains — explain why and show return-only */}
+          {/* No full chains — explain and show return-only */}
           {planResult.chains.length === 0 && (
             <Card style={{ padding: '24px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>

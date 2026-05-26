@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, Truck, FileText, CheckCircle, Plus, DollarSign, MapPin, Leaf } from '../icons';
+import { TrendingUp, Truck, FileText, CheckCircle, Plus, DollarSign, MapPin, Leaf, Calendar } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { HamburgerMenu } from './HamburgerMenu';
@@ -17,6 +17,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [fleets, setFleets] = useState([]);
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
+  const [activePlan, setActivePlan] = useState(null);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [defaultBuyPackage, setDefaultBuyPackage] = useState(null);
   const { balance, loading: creditsLoading, openCheckout } = useCredits();
@@ -39,14 +40,16 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [fleetsData, requestsData, estimateData] = await Promise.all([
+      const [fleetsData, requestsData, estimateData, planData] = await Promise.all([
         db.fleets.getAll(user.id),
         db.requests.getAll(user.id),
-        db.estimateRequests.getAll(user.id)
+        db.estimateRequests.getAll(user.id),
+        db.workWeekPlans.getActive(user.id).catch(() => null),
       ]);
       setFleets(fleetsData || []);
       setRequests(requestsData || []);
       setEstimateRequests(estimateData || []);
+      setActivePlan(planData);
     } catch (err) {
       console.error('Dashboard load error:', err);
       setFleets([]);
@@ -366,6 +369,79 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                 ))}
               </div>
             </div>
+
+            {/* Work Week Planning widget */}
+            {(() => {
+              const fmt$ = (v) =>
+                new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v ?? 0);
+              const fmtMiles = (v) => `${Math.round(v).toLocaleString()} mi`;
+              const greenColor = colors.accent.success || '#10b981';
+
+              if (activePlan) {
+                const s = activePlan.chain_summary || {};
+                const outbound = activePlan.outbound_load || {};
+                const ret = activePlan.return_load || {};
+                const routeLabel = outbound.pickup_city && ret.delivery_city
+                  ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`
+                  : 'Work Week Plan In Progress';
+
+                return (
+                  <div
+                    onClick={() => onMenuNavigate('work-week-planning')}
+                    style={{
+                      background: `linear-gradient(135deg, ${greenColor}18, ${greenColor}06)`,
+                      border: `1px solid ${greenColor}40`,
+                      borderRadius: '12px', padding: '18px 20px', marginBottom: '24px',
+                      cursor: 'pointer',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `${greenColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Calendar size={16} color={greenColor} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: greenColor }} />
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: greenColor, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Active Work Week Plan</span>
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text.primary, marginBottom: '3px' }}>{routeLabel}</div>
+                        <div style={{ fontSize: '12px', color: colors.text.secondary }}>
+                          {s.totalRevenue != null && fmt$(s.totalRevenue)}
+                          {s.totalRevenue != null && s.totalMiles != null && ' · '}
+                          {s.totalMiles != null && fmtMiles(s.totalMiles)}
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: greenColor }}>View Plan →</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  onClick={() => onMenuNavigate('work-week-planning')}
+                  style={{
+                    background: colors.background.secondary,
+                    border: `1px solid ${colors.border.secondary}`,
+                    borderRadius: '12px', padding: '18px 20px', marginBottom: '24px',
+                    cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `${colors.accent.primary}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Calendar size={16} color={colors.accent.primary} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text.primary, marginBottom: '2px' }}>Work Week Planning</div>
+                      <div style={{ fontSize: '12px', color: colors.text.secondary }}>Find the best return load first, then build your week forward.</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: colors.accent.primary }}>Plan My Week →</span>
+                </div>
+              );
+            })()}
 
             {/* Recent Activity */}
             {recentActivity.length > 0 && (

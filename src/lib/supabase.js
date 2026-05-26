@@ -622,5 +622,57 @@ export const db = {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     }
+  },
+
+  // Work week plan operations
+  workWeekPlans: {
+    async getActive(userId) {
+      const { data, error } = await supabase
+        .from('work_week_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async save({ userId, fleetId, weekDeadline, outboundLoad, returnLoad, chainSummary }) {
+      // Deactivate any existing active plan first
+      await supabase
+        .from('work_week_plans')
+        .update({ status: 'superseded' })
+        .eq('user_id', userId)
+        .eq('status', 'active');
+
+      const { data, error } = await supabase
+        .from('work_week_plans')
+        .insert([{
+          user_id: userId,
+          fleet_id: fleetId || null,
+          status: 'active',
+          week_deadline: weekDeadline,
+          outbound_load: outboundLoad,
+          return_load: returnLoad,
+          chain_summary: chainSummary,
+        }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateStatus(planId, status) {
+      const { data, error } = await supabase
+        .from('work_week_plans')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', planId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
   }
 };
