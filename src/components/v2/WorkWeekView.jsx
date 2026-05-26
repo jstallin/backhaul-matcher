@@ -324,8 +324,8 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
 // ─── Chain card ───────────────────────────────────────────────────────────────
 
 function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving }) {
-  const { outboundLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
-          departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome } = chain;
+  const { outboundLoad, connectorLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
+          departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome, is3Load } = chain;
 
   const rpmColor = revenuePerTotalMile >= 3 ? t.colors.accent.green
     : revenuePerTotalMile >= 2 ? t.colors.accent.amber
@@ -369,7 +369,7 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
         </div>
       </div>
 
-      {/* Load cards — return first (anchor), then outbound */}
+      {/* Load cards — booking order: return first (anchor), connector, outbound */}
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <LoadMiniCard
           load={returnLoad}
@@ -377,10 +377,18 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
           stepLabel="Book this first (anchor load)"
           accentColor={t.colors.accent.blue}
         />
+        {is3Load && connectorLoad && (
+          <LoadMiniCard
+            load={connectorLoad}
+            stepNumber={2}
+            stepLabel="Then book this connector"
+            accentColor="#f59e0b"
+          />
+        )}
         <LoadMiniCard
           load={outboundLoad}
-          stepNumber={2}
-          stepLabel="Then book this outbound"
+          stepNumber={is3Load ? 3 : 2}
+          stepLabel={is3Load ? "Book this outbound last" : "Then book this outbound"}
           accentColor={t.colors.accent.green}
         />
       </div>
@@ -397,9 +405,18 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
         </>}
         <Connector miles={legs.outboundLoaded} type="loaded" revenue={Number(outboundLoad.total_revenue)} />
         <Stop city={`${outboundLoad.delivery_city}, ${outboundLoad.delivery_state}`} />
-        {legs.deadhead > 0 && <>
-          <Connector miles={legs.deadhead} type="deadhead" />
+        {is3Load && connectorLoad ? <>
+          {legs.deadhead1 > 0 && <Connector miles={legs.deadhead1} type="deadhead" />}
+          <Stop city={`${connectorLoad.pickup_city}, ${connectorLoad.pickup_state}`} />
+          <Connector miles={legs.connectorLoaded} type="loaded" revenue={Number(connectorLoad.total_revenue)} />
+          <Stop city={`${connectorLoad.delivery_city}, ${connectorLoad.delivery_state}`} />
+          {legs.deadhead2 > 0 && <Connector miles={legs.deadhead2} type="deadhead" />}
           <Stop city={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`} />
+        </> : <>
+          {legs.deadhead > 0 && <>
+            <Connector miles={legs.deadhead} type="deadhead" />
+            <Stop city={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`} />
+          </>}
         </>}
         <Connector miles={legs.returnLoaded} type="loaded" revenue={Number(returnLoad.total_revenue)} />
         <Stop city={`${returnLoad.delivery_city}, ${returnLoad.delivery_state}`} />
@@ -470,9 +487,15 @@ function ActivePlanBanner({ plan, onMarkComplete, completing }) {
           </span>
         </div>
         <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '4px' }}>
-          {outbound.pickup_city && ret.delivery_city
-            ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`
-            : 'Work Week Plan In Progress'}
+          {(() => {
+            const conn = s.connectorLoad;
+            if (outbound.pickup_city && ret.delivery_city) {
+              return conn?.delivery_city
+                ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${conn.delivery_city} → ${ret.delivery_city}`
+                : `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`;
+            }
+            return 'Work Week Plan In Progress';
+          })()}
         </div>
         <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
           {s.totalRevenue != null && `${fmt$(s.totalRevenue)} · `}

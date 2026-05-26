@@ -143,6 +143,59 @@ export const buildChain = ({
   };
 };
 
+/**
+ * Assemble a 3-load chain: outbound → connector → return.
+ * Same backwards-from-deadline timing as buildChain.
+ */
+export const buildChain3 = ({
+  outboundLoad, connectorLoad, returnLoad,
+  homeToOutboundPickupMiles, outboundLoadedMiles,
+  deadhead1Miles, connectorLoadedMiles, deadhead2Miles,
+  returnLoadedMiles, deliveryToHomeMiles,
+  weekDeadline, hosConfig = {}, rateConfig = null, maxRadiusFromHome = 0,
+}) => {
+  const totalMiles = homeToOutboundPickupMiles + outboundLoadedMiles
+                   + deadhead1Miles + connectorLoadedMiles + deadhead2Miles
+                   + returnLoadedMiles + deliveryToHomeMiles;
+  const totalRevenue = (Number(outboundLoad.total_revenue) || 0)
+                     + (Number(connectorLoad.total_revenue) || 0)
+                     + (Number(returnLoad.total_revenue) || 0);
+  const revenuePerTotalMile = totalMiles > 0 ? totalRevenue / totalMiles : 0;
+
+  const returnLegMiles  = returnLoadedMiles + deliveryToHomeMiles;
+  const returnPickupDeadline = calculateLatestDeparture(weekDeadline, returnLegMiles, hosConfig);
+
+  const preReturnMiles = homeToOutboundPickupMiles + outboundLoadedMiles
+                       + deadhead1Miles + connectorLoadedMiles + deadhead2Miles;
+  const departureTime  = calculateLatestDeparture(returnPickupDeadline, preReturnMiles, hosConfig);
+
+  const returnPickupTime = calculateArrival(departureTime, preReturnMiles, hosConfig);
+  const arrivalHome      = calculateArrival(returnPickupTime, returnLegMiles, hosConfig);
+
+  const netRevenue = rateConfig
+    ? calculateNetRevenue(totalRevenue, totalMiles, rateConfig)
+    : { has_rate_config: false };
+
+  return {
+    is3Load: true,
+    totalMiles, totalRevenue, revenuePerTotalMile, maxRadiusFromHome,
+    withinOptimalBand: totalMiles >= PLAN_DEFAULTS.minStringMiles
+                    && totalMiles <= PLAN_DEFAULTS.maxStringMiles,
+    departureTime, returnPickupTime, arrivalHome,
+    legs: {
+      homeToPickup:    homeToOutboundPickupMiles,
+      outboundLoaded:  outboundLoadedMiles,
+      deadhead1:       deadhead1Miles,
+      connectorLoaded: connectorLoadedMiles,
+      deadhead2:       deadhead2Miles,
+      returnLoaded:    returnLoadedMiles,
+      returnToHome:    deliveryToHomeMiles,
+    },
+    outboundLoad, connectorLoad, returnLoad,
+    ...netRevenue,
+  };
+};
+
 // ── Main async planner ────────────────────────────────────────────────────────
 
 /**
@@ -305,8 +358,87 @@ export const planWorkWeek = async ({
     .sort((a, b) => b.revenuePerTotalMile - a.revenuePerTotalMile)
     .slice(0, MAX_CHAINS_RETURNED);
 
+  // ── 6. 3-load chains (outbound → connector → return) ──────────────────────
+  // For each top return × top outbound pair, find a connector load that bridges
+  // outbound delivery → connector pickup → connector delivery → return pickup.
+  // Caps: top 3 each side × top 3 connectors = max 27 triplets × 2 PC*MILER calls.
+
+  const MAX_3LOAD_SIDE       = 3;
+  const MAX_CONNECTORS_PAIR  = 3;
+
+  const top3Returns   = scoredReturns.slice(0, MAX_3LOAD_SIDE);
+  const top3Outbounds = scoredOutbounds.slice(0, MAX_3LOAD_SIDE);
+
+  const tripletCandidates = [];
+  for (const ret of top3Returns) {
+    for (const out of top3Outbounds) {
+      if (out.load.load_id === ret.load.load_id) continue;
+      // Need at least 100mi of budget left for connector + its deadheads
+      const baseMiles = out.htp + out.ptd + ret.pickupToDeliveryMiles + ret.deliveryToHomeMiles;
+      if (maxTotal - baseMiles < 100) continue;
+
+      const connectors = available
+        .filter(l => {
+          if (l.load_id === out.load.load_id || l.load_id === ret.load.load_id) return false;
+          if (!passesEquipment(l, fleetProfile)) return false;
+          const d1 = haversineTo(l.pickup_lat,   l.pickup_lng,   out.load.delivery_lat, out.load.delivery_lng);
+          const d2 = haversineTo(l.delivery_lat, l.delivery_lng, ret.load.pickup_lat,   ret.load.pickup_lng);
+          return (d1 == null || d1 <= PLAN_DEFAULTS.connectionRadiusMiles)
+              && (d2 == null || d2 <= PLAN_DEFAULTS.connectionRadiusMiles);
+        })
+        .slice(0, MAX_CONNECTORS_PAIR);
+
+      for (const conn of connectors) {
+        tripletCandidates.push({ ret, out, conn });
+      }
+    }
+  }
+
+  // Fetch both deadheads for each triplet in parallel
+  const tripletResults = await Promise.all(
+    tripletCandidates.map(async ({ ret, out, conn }) => {
+      const [dh1, dh2] = await Promise.all([
+        getDrivingDistance([toStop(out.load, 'delivery'), toStop(conn, 'pickup')]).catch(() => null),
+        getDrivingDistance([toStop(conn, 'delivery'),     toStop(ret.load, 'pickup')]).catch(() => null),
+      ]);
+      const connPtd = conn.distance_miles
+        ?? (conn.pickup_lat != null
+          ? calculateDistance(conn.pickup_lat, conn.pickup_lng, conn.delivery_lat, conn.delivery_lng)
+          : null);
+      return { ret, out, conn, dh1, dh2, connPtd };
+    })
+  );
+
+  const chains3 = tripletResults
+    .filter(({ dh1, dh2, connPtd }) => dh1 != null && dh2 != null && connPtd != null)
+    .map(({ ret, out, conn, dh1, dh2, connPtd }) => {
+      const totalMiles = out.htp + out.ptd + dh1 + connPtd + dh2
+                       + ret.pickupToDeliveryMiles + ret.deliveryToHomeMiles;
+      if (totalMiles < PLAN_DEFAULTS.minTotalMiles || totalMiles > maxTotal) return null;
+      return buildChain3({
+        outboundLoad:              out.load,
+        connectorLoad:             conn,
+        returnLoad:                ret.load,
+        homeToOutboundPickupMiles: Math.round(out.htp),
+        outboundLoadedMiles:       Math.round(out.ptd),
+        deadhead1Miles:            Math.round(dh1),
+        connectorLoadedMiles:      Math.round(connPtd),
+        deadhead2Miles:            Math.round(dh2),
+        returnLoadedMiles:         Math.round(ret.pickupToDeliveryMiles),
+        deliveryToHomeMiles:       Math.round(ret.deliveryToHomeMiles),
+        weekDeadline, hosConfig, rateConfig,
+        maxRadiusFromHome: Math.round(out.deliveryToHomeHaversine || 0),
+      });
+    })
+    .filter(Boolean);
+
+  // Combine 2-load and 3-load chains, sort by RPM, return top N
+  const allChains = [...chains, ...chains3]
+    .sort((a, b) => b.revenuePerTotalMile - a.revenuePerTotalMile)
+    .slice(0, MAX_CHAINS_RETURNED);
+
   return {
-    chains,
+    chains: allChains,
     returnOnlyOptions: scoredReturns.slice(0, 5).map(s => ({
       load:                   s.load,
       pickupToDeliveryMiles:  s.pickupToDeliveryMiles,
@@ -321,7 +453,9 @@ export const planWorkWeek = async ({
       outboundCandidatesFound: outboundCandidates.length,
       outboundScoredTop:       scoredOutbounds.length,
       pairsEvaluated:          pairCandidates.length,
-      chainsReturned:          chains.length,
+      chainsReturned:          allChains.length,
+      chains2Found:            chains.length,
+      chains3Found:            chains3.length,
     },
   };
 };
