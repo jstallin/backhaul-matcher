@@ -206,7 +206,6 @@ function Connector({ miles, type, revenue }) {
 // ─── Load mini card ───────────────────────────────────────────────────────────
 
 function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
-  const url = getLoadBoardUrl(load);
   const sourceLabel = getSourceLabel(load);
   const loadRef = load.df_load_number || load.source_load_id || load.load_id;
 
@@ -229,7 +228,9 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
         }}>
           Step {stepNumber} — {stepLabel}
         </span>
-        {sourceLabel && (
+        {load.source === 'truckstop' ? (
+          <img src="/Waypoint%20Default.png" alt="Truckstop load" title="Truckstop load" style={{ height: '18px', display: 'block', opacity: 0.9 }} />
+        ) : sourceLabel ? (
           <span style={{
             fontSize: '10px',
             fontWeight: t.font.weight.semibold,
@@ -240,7 +241,7 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
           }}>
             {sourceLabel}
           </span>
-        )}
+        ) : null}
       </div>
 
       {/* Route */}
@@ -272,36 +273,14 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
         )}
       </div>
 
-      {/* Revenue + link */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+      {/* Revenue */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.accent.green }}>
           {fmt$(Number(load.total_revenue))}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {loadRef && !url && (
-            <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>#{loadRef}</span>
-          )}
-          {url && (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '4px',
-                fontSize: t.font.size.xs,
-                fontWeight: t.font.weight.semibold,
-                color: t.colors.accent.blue,
-                textDecoration: 'none',
-                padding: '4px 10px',
-                border: `1px solid ${t.colors.accent.blue}40`,
-                borderRadius: t.radius.lg,
-                background: t.colors.accent.blueLight,
-              }}
-            >
-              View on {sourceLabel} ↗
-            </a>
-          )}
-        </div>
+        {loadRef && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>#{loadRef}</span>
+        )}
       </div>
     </div>
   );
@@ -593,11 +572,14 @@ function SetupForm({ fleets, onRun, loading, error }) {
               Home base not geocoded. Go to Fleets → Profile to set the home address.
             </div>
           )}
-          {selectedFleet && hasHome && (
-            <div style={{ marginTop: '4px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
-              Home: {selectedFleet.home_address}
-            </div>
-          )}
+          {selectedFleet && hasHome && (() => {
+            const { city, state } = parseFleetHome(selectedFleet);
+            return (
+              <div style={{ marginTop: '4px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                Home: {city && state ? `${city}, ${state}` : selectedFleet.home_address}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Deadline */}
@@ -724,7 +706,7 @@ export function WorkWeekView() {
         city: homeCity,
         state: homeState,
       };
-      setFleetHomeName(fleet.home_address || `${homeCity}, ${homeState}` || 'Home Base');
+      setFleetHomeName((homeCity && homeState) ? `${homeCity}, ${homeState}` : fleet.home_address || 'Home Base');
 
       const requestContext = {
         datumCity: homeCity,
