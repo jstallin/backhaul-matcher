@@ -31,27 +31,41 @@ export default async function handler(req, res) {
   // Strategy: find the first ", ST" pattern (two uppercase letters after a comma),
   // then walk backwards through the preceding words to isolate the city name.
   // Handles "City, ST", "Street, City, ST", "Street City, ST", "Street City, ST ZIP", etc.
+  const STREET_SUFFIXES = new Set([
+    'dr','st','ave','rd','blvd','ln','ct','pl','way','pkwy','hwy','fwy','cir','trl','ste','apt','unit','fl',
+  ]);
+
+  // Walk words backwards, collecting city name words until a street suffix or digit is hit.
+  const walkBackCity = (words) => {
+    const cityWords = [];
+    for (let i = words.length - 1; i >= 0; i--) {
+      const w = words[i].toLowerCase().replace(/[.,]$/, '');
+      if (/\d/.test(w) || STREET_SUFFIXES.has(w)) break;
+      cityWords.unshift(words[i]);
+    }
+    return cityWords;
+  };
+
   const extractCityState = (addr) => {
-    // Prefer two-comma form first: "..., City, ST"
+    // Prefer two-comma form: "..., City, ST"
     const two = addr.match(/,\s*([A-Za-z][A-Za-z\s]+?)\s*,\s*([A-Z]{2})\b/);
     if (two) return `${two[1].trim()}, ${two[2]}`;
 
-    // Find the first ", ST" (state abbreviation after a comma)
-    const stateMatch = addr.match(/,\s*([A-Z]{2})\b/);
-    if (stateMatch) {
-      const state = stateMatch[1];
-      const beforeComma = addr.slice(0, addr.indexOf(stateMatch[0])).trim();
-      const words = beforeComma.split(/\s+/);
-      // Walk backwards, collecting city words until we hit a street suffix or number
-      const streetSuffixes = new Set([
-        'dr','st','ave','rd','blvd','ln','ct','pl','way','pkwy','hwy','fwy','cir','trl','ste','apt','unit','fl',
-      ]);
-      const cityWords = [];
-      for (let i = words.length - 1; i >= 0; i--) {
-        const w = words[i].toLowerCase().replace(/[.,]$/, '');
-        if (/\d/.test(w) || streetSuffixes.has(w)) break;
-        cityWords.unshift(words[i]);
-      }
+    // One-comma form: find ", ST" then walk back for city
+    const commaState = addr.match(/,\s*([A-Z]{2})\b/);
+    if (commaState) {
+      const state = commaState[1];
+      const beforeComma = addr.slice(0, addr.indexOf(commaState[0])).trim();
+      const cityWords = walkBackCity(beforeComma.split(/\s+/));
+      if (cityWords.length > 0) return `${cityWords.join(' ')}, ${state}`;
+    }
+
+    // No-comma form: state abbreviation at end, e.g. "12524 Robert Walker Dr Davidson NC"
+    const noCommaState = addr.match(/\b([A-Z]{2})\s*(?:\d{5})?\s*$/);
+    if (noCommaState) {
+      const state = noCommaState[1];
+      const beforeState = addr.slice(0, addr.lastIndexOf(noCommaState[0])).trim();
+      const cityWords = walkBackCity(beforeState.split(/\s+/));
       if (cityWords.length > 0) return `${cityWords.join(' ')}, ${state}`;
     }
 
@@ -103,20 +117,24 @@ export default async function handler(req, res) {
     }
 
     // Fallback: Nominatim (OSM) — no key required, works for any city/address
-    // Query with the cleanest form available: city/state > ZIP > full address
+    // Use structured params for city/state to avoid matching counties over cities.
     const cityState = extractCityState(address);
     const zip = extractZip(address);
-    const nominatimQuery = cityState
-      ? `${cityState}, United States`
-      : zip
-      ? `${zip}, United States`
-      : `${address}, United States`;
 
-    console.log('Nominatim fallback for:', nominatimQuery);
-    const nomRes = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nominatimQuery)}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'HaulMonitor/1.0' } }
-    );
+    let nominatimUrl;
+    if (cityState) {
+      const [nomCity, nomState] = cityState.split(',').map(s => s.trim());
+      nominatimUrl = `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(nomCity)}&state=${encodeURIComponent(nomState)}&countrycodes=us&format=json&limit=1`;
+      console.log('Nominatim fallback (structured):', cityState);
+    } else if (zip) {
+      nominatimUrl = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(zip)}&countrycodes=us&format=json&limit=1`;
+      console.log('Nominatim fallback (ZIP):', zip);
+    } else {
+      nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', United States')}&format=json&limit=1`;
+      console.log('Nominatim fallback (full address):', address);
+    }
+
+    const nomRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'HaulMonitor/1.0' } });
     if (nomRes.ok) {
       const nomData = await nomRes.json();
       if (nomData[0]?.lat && nomData[0]?.lon) {
@@ -124,7 +142,7 @@ export default async function handler(req, res) {
         return res.status(200).json({
           lat: parseFloat(nomData[0].lat),
           lng: parseFloat(nomData[0].lon),
-          label: nomData[0].display_name || address,
+          label: cityState || address,
           source: 'nominatim'
         });
       }
