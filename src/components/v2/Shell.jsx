@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
-import { Search, Truck, Package, BarChart2, FileText, Settings } from '../../icons';
+import { Search, Truck, Package, BarChart2, FileText, Settings, Calendar } from '../../icons';
 
 const t = tokens;
 
@@ -21,7 +21,8 @@ const MOBILE_NAV = [
   { id: 'dashboard', label: 'Home',      Icon: LayoutGrid },
   { id: 'search',    label: 'Requests',  Icon: Search },
   { id: 'loads',     label: 'Loads',     Icon: Package },
-  { id: 'fleets',    label: 'Fleets',    Icon: Truck },
+  { id: 'fleets',     label: 'Fleets',   Icon: Truck },
+  { id: 'work-week', label: 'Work Week', Icon: Calendar },
   { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
   { id: 'estimates', label: 'Estimates', Icon: FileText },
   { id: 'settings',  label: 'Settings',  Icon: Settings },
@@ -224,7 +225,7 @@ function AvatarMenu({ onNavigate, inline = false }) {
 
 // ─── BottomNav (mobile only) ──────────────────────────────────────────────────
 
-function BottomNav({ currentView, onNavigate }) {
+function BottomNav({ currentView, onNavigate, isAdmin }) {
   return (
     <>
       <style>{`
@@ -246,7 +247,7 @@ function BottomNav({ currentView, onNavigate }) {
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {MOBILE_NAV.map(({ id, label, Icon }) => {
+        {MOBILE_NAV.filter(({ id }) => id !== 'work-week' || isAdmin).map(({ id, label, Icon }) => {
           const active = currentView === id;
           return (
             <button
@@ -336,6 +337,7 @@ function MobileHeader({ onNavigate }) {
 
 export function Shell({ currentView, onNavigate, creditBalance, children }) {
   const isMobile = useMobile();
+  const { isAdmin } = useAuth();
 
   return (
     <div
@@ -384,7 +386,7 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
         </main>
 
         {isMobile && (
-          <BottomNav currentView={currentView} onNavigate={onNavigate} />
+          <BottomNav currentView={currentView} onNavigate={onNavigate} isAdmin={isAdmin} />
         )}
       </div>
     </div>

@@ -10,6 +10,7 @@ import { SearchView } from './components/v2/SearchView';
 import { LoadsView } from './components/v2/LoadsView';
 import { ReportsView } from './components/v2/ReportsView';
 import { EstimatesView } from './components/v2/EstimatesView';
+import { WorkWeekView } from './components/v2/WorkWeekView';
 import { SettingsView } from './components/v2/SettingsView';
 import { HelpView } from './components/v2/HelpView';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -24,7 +25,7 @@ import { useMobile } from './hooks/useMobile';
 import { db, supabase } from './lib/supabase';
 import {
   Search, Truck, Package, BarChart2, FileText,
-  TrendingUp, DollarSign, Navigation, Plus, CheckCircle, MapPin,
+  TrendingUp, DollarSign, Navigation, Plus, CheckCircle, MapPin, Calendar,
 } from './icons';
 
 const t = tokens;
@@ -238,28 +239,116 @@ function StatCard({ label, value, sub, Icon, accentColor, loading, onClick }) {
   );
 }
 
+// ─── Work week planning widget ────────────────────────────────────────────────
+
+function WorkWeekWidget({ activePlan, loading, onNavigate }) {
+  const fmt$ = (v) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v ?? 0);
+
+  const fmtMiles = (v) => `${Math.round(v).toLocaleString()} mi`;
+
+  if (loading) return null;
+
+  if (activePlan) {
+    const s = activePlan.chain_summary || {};
+    const outbound = activePlan.outbound_load || {};
+    const ret = activePlan.return_load || {};
+    const routeLabel = outbound.pickup_city && ret.delivery_city
+      ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`
+      : 'Week plan in progress';
+
+    return (
+      <Card
+        style={{
+          padding: '20px 24px',
+          cursor: 'pointer',
+          background: `linear-gradient(135deg, ${t.colors.accent.green}14, ${t.colors.accent.green}06)`,
+          border: `1px solid ${t.colors.accent.green}40`,
+        }}
+        onClick={() => onNavigate('work-week')}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: t.radius.lg, background: `${t.colors.accent.green}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Calendar size={18} color={t.colors.accent.green} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: t.colors.accent.green }} />
+                <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: t.colors.accent.green, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Active Work Week Plan
+                </span>
+              </div>
+              <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '3px' }}>
+                {routeLabel}
+              </div>
+              <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                {s.totalRevenue != null && fmt$(s.totalRevenue)}
+                {s.totalRevenue != null && s.totalMiles != null && ' · '}
+                {s.totalMiles != null && fmtMiles(s.totalMiles)}
+              </div>
+            </div>
+          </div>
+          <span style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.accent.green }}>
+            View Plan →
+          </span>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      style={{ padding: '20px 24px', cursor: 'pointer' }}
+      onClick={() => onNavigate('work-week')}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: t.radius.lg, background: `${t.colors.accent.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Calendar size={18} color={t.colors.accent.blue} />
+          </div>
+          <div>
+            <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '2px' }}>
+              Work Week Planning
+            </div>
+            <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+              Find the best return load first, then build your week forward.
+            </div>
+          </div>
+        </div>
+        <span style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.accent.blue, flexShrink: 0 }}>
+          Plan My Week →
+        </span>
+      </div>
+    </Card>
+  );
+}
+
 // ─── Dashboard view ───────────────────────────────────────────────────────────
 
 function DashboardView({ onNavigate }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const isMobile = useMobile();
   const [loading, setLoading] = useState(true);
   const [fleets, setFleets] = useState([]);
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
+  const [activePlan, setActivePlan] = useState(null);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [f, r, e] = await Promise.all([
+        const [f, r, e, plan] = await Promise.all([
           db.fleets.getAll(user.id),
           db.requests.getAll(user.id),
           db.estimateRequests.getAll(user.id),
+          db.workWeekPlans.getActive(user.id).catch(() => null),
         ]);
         setFleets(f || []);
         setRequests(r || []);
         setEstimateRequests(e || []);
+        setActivePlan(plan);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -387,6 +476,9 @@ function DashboardView({ onNavigate }) {
             </div>
           </Card>
 
+          {/* Work Week Planning widget — HM admins only during beta */}
+          {isAdmin && <WorkWeekWidget activePlan={activePlan} loading={loading} onNavigate={onNavigate} />}
+
           {/* Bottom two-column */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', alignItems: 'start' }}>
 
@@ -503,8 +595,9 @@ function renderView(currentView, onNavigate, onboardingProps = {}, callbacks = {
     case 'dashboard': return <DashboardView onNavigate={onNavigate} />;
     case 'search':    return <SearchView />;
     case 'loads':     return <LoadsView />;
-    case 'fleets':    return <FleetsView />;
-    case 'reports':   return <ReportsView />;
+    case 'fleets':     return <FleetsView />;
+    case 'work-week':  return <WorkWeekView />;
+    case 'reports':    return <ReportsView />;
     case 'estimates': return <EstimatesView />;
     case 'settings':        return <SettingsView />;
     case 'help':            return <HelpView onOpenCoDriver={callbacks.onOpenCoDriver} />;

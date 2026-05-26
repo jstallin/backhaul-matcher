@@ -4,6 +4,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { geocodeAddress } from '../utils/pcMilerClient';
+import { parseFleetHome } from '../utils/parseFleetHome';
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -63,11 +64,14 @@ export const FleetSetup = ({ fleet, onComplete }) => {
 
   useEffect(() => {
     if (fleet) {
-      // home_city/home_state don't exist as columns; parse from home_address ("City, ST" or "Street, City, ST")
-      const addrParts = (fleet.home_address || '').split(',').map(s => s.trim()).filter(Boolean);
-      const parsedState = addrParts.length >= 1 ? addrParts[addrParts.length - 1].slice(0, 2).toUpperCase() : '';
-      const parsedCity  = addrParts.length >= 2 ? addrParts[addrParts.length - 2] : '';
-      const parsedStreet = addrParts.length >= 3 ? addrParts.slice(0, addrParts.length - 2).join(', ') : '';
+      // home_city/home_state don't exist as columns; parse from home_address
+      // Use parseFleetHome to handle both clean ("City, ST") and verbose Nominatim formats
+      const { city: parsedCity, state: parsedState } = parseFleetHome(fleet);
+      // Extract street: anything before the city in the address, if it looks like a street
+      const addrStr = fleet.home_address || '';
+      const cityIdx = parsedCity ? addrStr.toLowerCase().indexOf(parsedCity.toLowerCase()) : -1;
+      const beforeCity = cityIdx > 0 ? addrStr.slice(0, cityIdx).replace(/,\s*$/, '').trim() : '';
+      const parsedStreet = /^\d/.test(beforeCity) ? beforeCity : '';
 
       setFormData({
         name: fleet.name || '',

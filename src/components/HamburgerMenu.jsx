@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield, HelpCircle } from '../icons';
+import { Menu, X, Truck, Plus, FileText, TrendingUp, DollarSign, Package, Shield, HelpCircle, Calendar } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -68,6 +68,12 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       icon: FileText,
       description: 'View active estimate requests'
     },
+    ...(isAdmin ? [{
+      id: 'work-week-planning',
+      label: 'Work Week Planning',
+      icon: Calendar,
+      description: 'Plan your optimal work week'
+    }] : []),
     {
       id: 'fleet-reports',
       label: 'Fleet Reports',
