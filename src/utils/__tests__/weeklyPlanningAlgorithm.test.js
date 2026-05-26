@@ -87,7 +87,7 @@ describe('PLAN_DEFAULTS', () => {
     expect(PLAN_DEFAULTS.stringMiles).toBe(2500);
     expect(PLAN_DEFAULTS.minStringMiles).toBe(2000);
     expect(PLAN_DEFAULTS.maxStringMiles).toBe(3000);
-    expect(PLAN_DEFAULTS.homeRadiusMiles).toBe(100);
+    expect(PLAN_DEFAULTS.homeRadiusMiles).toBe(150);
     expect(PLAN_DEFAULTS.connectionRadiusMiles).toBe(150);
     expect(PLAN_DEFAULTS.minTotalMiles).toBe(500);
     expect(PLAN_DEFAULTS.maxReturnLegMiles).toBe(1250);

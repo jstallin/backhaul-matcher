@@ -6,6 +6,7 @@ import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm';
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
 import { parseFleetHome } from '../../utils/parseFleetHome';
+import { ChainRouteMap } from './ChainRouteMap';
 
 const t = tokens;
 
@@ -153,6 +154,41 @@ function StringBar({ totalMiles }) {
   );
 }
 
+// ─── Radius bar ───────────────────────────────────────────────────────────────
+
+function RadiusBar({ maxRadiusFromHome }) {
+  const maxMiles = PLAN_DEFAULTS.maxRadiusFromHomeMiles; // 1000
+  const pct = Math.min(100, (maxRadiusFromHome / maxMiles) * 100);
+
+  const color = maxRadiusFromHome > maxMiles
+    ? t.colors.accent.red
+    : maxRadiusFromHome >= 700
+    ? t.colors.accent.amber
+    : t.colors.accent.green;
+
+  const label = maxRadiusFromHome > maxMiles ? 'Over limit'
+    : maxRadiusFromHome >= 700 ? 'Far reach'
+    : 'Within range';
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>Max radius from home</span>
+        <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color }}>
+          {fmtMiles(maxRadiusFromHome)} / {fmtMiles(maxMiles)} — {label}
+        </span>
+      </div>
+      <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'visible' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px', transition: 'width 0.4s ease' }} />
+      </div>
+      <div style={{ position: 'relative', height: '14px', marginTop: '3px' }}>
+        <span style={{ position: 'absolute', left: '70%', fontSize: '10px', color: t.colors.text.muted, transform: 'translateX(-50%)' }}>700</span>
+        <span style={{ position: 'absolute', right: 0, fontSize: '10px', color: t.colors.text.muted }}>1k mi</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Timeline primitives ─────────────────────────────────────────────────────
 
 function Stop({ city, isHome }) {
@@ -288,9 +324,9 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
 
 // ─── Chain card ───────────────────────────────────────────────────────────────
 
-function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving }) {
-  const { outboundLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
-          departureTime, returnPickupTime, arrivalHome } = chain;
+function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, isSelected, saving }) {
+  const { outboundLoad, connectorLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
+          departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome, is3Load } = chain;
 
   const rpmColor = revenuePerTotalMile >= 3 ? t.colors.accent.green
     : revenuePerTotalMile >= 2 ? t.colors.accent.amber
@@ -298,6 +334,16 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
 
   return (
     <Card style={{ overflow: 'hidden' }}>
+      {/* Route map */}
+      {fleetHome && (
+        <ChainRouteMap
+          chain={chain}
+          fleetHome={fleetHome}
+          height={rank === 1 ? 200 : 150}
+          eager={rank === 1}
+        />
+      )}
+
       {/* Header */}
       <div style={{
         padding: '14px 18px',
@@ -334,7 +380,7 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
         </div>
       </div>
 
-      {/* Load cards — return first (anchor), then outbound */}
+      {/* Load cards — booking order: return first (anchor), connector, outbound */}
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <LoadMiniCard
           load={returnLoad}
@@ -342,10 +388,18 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
           stepLabel="Book this first (anchor load)"
           accentColor={t.colors.accent.blue}
         />
+        {is3Load && connectorLoad && (
+          <LoadMiniCard
+            load={connectorLoad}
+            stepNumber={2}
+            stepLabel="Then book this connector"
+            accentColor="#f59e0b"
+          />
+        )}
         <LoadMiniCard
           load={outboundLoad}
-          stepNumber={2}
-          stepLabel="Then book this outbound"
+          stepNumber={is3Load ? 3 : 2}
+          stepLabel={is3Load ? "Book this outbound last" : "Then book this outbound"}
           accentColor={t.colors.accent.green}
         />
       </div>
@@ -362,9 +416,18 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
         </>}
         <Connector miles={legs.outboundLoaded} type="loaded" revenue={Number(outboundLoad.total_revenue)} />
         <Stop city={`${outboundLoad.delivery_city}, ${outboundLoad.delivery_state}`} />
-        {legs.deadhead > 0 && <>
-          <Connector miles={legs.deadhead} type="deadhead" />
+        {is3Load && connectorLoad ? <>
+          {legs.deadhead1 > 0 && <Connector miles={legs.deadhead1} type="deadhead" />}
+          <Stop city={`${connectorLoad.pickup_city}, ${connectorLoad.pickup_state}`} />
+          <Connector miles={legs.connectorLoaded} type="loaded" revenue={Number(connectorLoad.total_revenue)} />
+          <Stop city={`${connectorLoad.delivery_city}, ${connectorLoad.delivery_state}`} />
+          {legs.deadhead2 > 0 && <Connector miles={legs.deadhead2} type="deadhead" />}
           <Stop city={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`} />
+        </> : <>
+          {legs.deadhead > 0 && <>
+            <Connector miles={legs.deadhead} type="deadhead" />
+            <Stop city={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`} />
+          </>}
         </>}
         <Connector miles={legs.returnLoaded} type="loaded" revenue={Number(returnLoad.total_revenue)} />
         <Stop city={`${returnLoad.delivery_city}, ${returnLoad.delivery_state}`} />
@@ -389,6 +452,9 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
       {/* String bar */}
       <div style={{ padding: '14px 18px' }}>
         <StringBar totalMiles={totalMiles} />
+        <div style={{ marginTop: '12px' }}>
+          <RadiusBar maxRadiusFromHome={maxRadiusFromHome || 0} />
+        </div>
       </div>
 
       {/* Select plan button */}
@@ -432,9 +498,15 @@ function ActivePlanBanner({ plan, onMarkComplete, completing }) {
           </span>
         </div>
         <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '4px' }}>
-          {outbound.pickup_city && ret.delivery_city
-            ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`
-            : 'Work Week Plan In Progress'}
+          {(() => {
+            const conn = s.connectorLoad;
+            if (outbound.pickup_city && ret.delivery_city) {
+              return conn?.delivery_city
+                ? `${outbound.pickup_city} → ${outbound.delivery_city} → ${conn.delivery_city} → ${ret.delivery_city}`
+                : `${outbound.pickup_city} → ${outbound.delivery_city} → ${ret.delivery_city}`;
+            }
+            return 'Work Week Plan In Progress';
+          })()}
         </div>
         <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
           {s.totalRevenue != null && `${fmt$(s.totalRevenue)} · `}
@@ -659,6 +731,7 @@ export function WorkWeekView() {
 
   const [planResult, setPlanResult] = useState(null);
   const [currentFleet, setCurrentFleet] = useState(null);
+  const [currentFleetHome, setCurrentFleetHome] = useState(null);
   const [fleetHomeName, setFleetHomeName] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
@@ -707,6 +780,7 @@ export function WorkWeekView() {
         state: homeState,
       };
       setFleetHomeName((homeCity && homeState) ? `${homeCity}, ${homeState}` : fleet.home_address || 'Home Base');
+      setCurrentFleetHome(fleetHome);
 
       const requestContext = {
         datumCity: homeCity,
@@ -828,6 +902,7 @@ export function WorkWeekView() {
                   key={i}
                   chain={chain}
                   rank={i + 1}
+                  fleetHome={currentFleetHome}
                   fleetHomeName={fleetHomeName}
                   onSelect={(c) => handleSelectPlan(c, i)}
                   isSelected={selectedChainIndex === i}
@@ -844,14 +919,14 @@ export function WorkWeekView() {
                 <AlertCircle size={20} color={t.colors.accent.amber} style={{ flexShrink: 0, marginTop: '1px' }} />
                 <div>
                   <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '4px' }}>
-                    No 2-load chains matched your deadline and mile budget
+                    No plans found for this deadline and mile budget
                   </div>
                   <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted }}>
                     {planResult.meta.returnCandidatesFound === 0
                       ? 'No loads with deliveries near your home base were found. Try again later as new loads are posted.'
                       : planResult.meta.outboundCandidatesFound === 0
-                      ? 'Found return loads but no outbound loads starting near home. Consider running again or checking back when outbound options are available.'
-                      : 'Return loads were found but no viable outbound + return pairings fit within the weekly mile budget and deadline.'}
+                      ? 'Found return loads but no outbound loads starting near home. Try again later or extend your deadline.'
+                      : `Found ${planResult.meta.returnCandidatesFound} return and ${planResult.meta.outboundCandidatesFound} outbound candidates but no 2- or 3-load combinations fit the budget. Try extending your deadline or check back as new loads are posted.`}
                   </div>
                 </div>
               </div>
