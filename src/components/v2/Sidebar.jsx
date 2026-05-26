@@ -77,8 +77,9 @@ function NavItem({ id, label, Icon, active, onClick }) {
 }
 
 export function Sidebar({ currentView, onNavigate, creditBalance = null }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const emailInitial = user?.email ? user.email[0].toUpperCase() : '?';
+  const navItems = NAV_ITEMS.filter(({ id }) => id !== 'work-week' || isAdmin);
 
   return (
     <aside
@@ -126,7 +127,7 @@ export function Sidebar({ currentView, onNavigate, creditBalance = null }) {
 
       {/* Primary nav */}
       <nav style={{ flex: 1, padding: '4px 8px', overflowY: 'auto' }}>
-        {NAV_ITEMS.map(({ id, label, Icon }) => (
+        {navItems.map(({ id, label, Icon }) => (
           <NavItem
             key={id}
             id={id}
