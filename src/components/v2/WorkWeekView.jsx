@@ -47,6 +47,14 @@ const toTimeInputValue = (date) => {
   return `${h}:${min}`;
 };
 
+// Parse city and state from home_address ("City, ST" or "Street, City, ST")
+const parseHomeAddress = (fleet) => {
+  const parts = (fleet.home_address || '').split(',').map(s => s.trim()).filter(Boolean);
+  const state = parts.length >= 1 ? parts[parts.length - 1].slice(0, 2).toUpperCase() : '';
+  const city  = parts.length >= 2 ? parts[parts.length - 2] : '';
+  return { city, state };
+};
+
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 function Card({ children, style = {} }) {
@@ -382,7 +390,7 @@ function SetupForm({ fleets, onRun, loading, error }) {
           )}
           {selectedFleet && hasHome && (
             <div style={{ marginTop: '4px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
-              Home: {selectedFleet.home_city}, {selectedFleet.home_state}
+              Home: {selectedFleet.home_address}
             </div>
           )}
         </div>
@@ -494,21 +502,23 @@ export function WorkWeekView() {
         doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
       } : null;
 
+      const { city: homeCity, state: homeState } = parseHomeAddress(fleet);
+
       const fleetHome = {
         lat: fleet.home_lat,
         lng: fleet.home_lng,
-        city: fleet.home_city,
-        state: fleet.home_state,
+        city: homeCity,
+        state: homeState,
       };
-      setFleetHomeName(`${fleet.home_city}, ${fleet.home_state}`);
+      setFleetHomeName(fleet.home_address || `${homeCity}, ${homeState}` || 'Home Base');
 
       const requestContext = {
-        datumCity: fleet.home_city || '',
-        datumState: fleet.home_state || '',
+        datumCity: homeCity,
+        datumState: homeState,
         datumLat: fleet.home_lat,
         datumLng: fleet.home_lng,
-        homeCity: fleet.home_city || '',
-        homeState: fleet.home_state || '',
+        homeCity,
+        homeState,
         homeLat: fleet.home_lat,
         homeLng: fleet.home_lng,
         equipmentType: fleetProfile.trailerType || 'Dry Van',
