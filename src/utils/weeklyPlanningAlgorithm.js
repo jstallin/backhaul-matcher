@@ -344,15 +344,22 @@ export const planWorkWeek = async ({
   // Score outbounds by their own rate/mile so the best outbounds pair with best returns.
   // Also enforce max radius from home — outbound delivery must be within 1000mi.
   const scoredOutbounds = outboundDistances
-    .filter(({ htp, ptd }) => htp != null && ptd != null)
+    .filter(({ htp, ptd }) => htp != null && ptd != null && ptd > 0)
     .filter(({ load }) => {
-      const d = haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
+      const d = approxDistanceTo(
+        load.delivery_lat, load.delivery_lng, load.delivery_state,
+        fleetHome.lat, fleetHome.lng
+      );
       return d == null || d <= PLAN_DEFAULTS.maxRadiusFromHomeMiles;
     })
     .map(({ load, htp, ptd }) => ({
       load, htp, ptd,
       revPerMile: Number(load.total_revenue) / Math.max(1, htp + ptd),
-      deliveryToHomeHaversine: haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng) ?? 0,
+      // Use approxDistanceTo so state centroid fills in when load has no delivery coords
+      deliveryToHomeHaversine: approxDistanceTo(
+        load.delivery_lat, load.delivery_lng, load.delivery_state,
+        fleetHome.lat, fleetHome.lng
+      ) ?? 0,
     }))
     .sort((a, b) => b.revPerMile - a.revPerMile)
     .slice(0, MAX_OUTBOUND_TOP);
