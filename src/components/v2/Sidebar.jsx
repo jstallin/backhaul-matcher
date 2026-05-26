@@ -1,5 +1,5 @@
 import { tokens } from '../../styles/tokens.v2';
-import { Search, Truck, Package, BarChart2, FileText, Settings, HelpCircle, LogOut } from '../../icons';
+import { Search, Truck, Package, BarChart2, FileText, Settings, HelpCircle, LogOut, Calendar } from '../../icons';
 import { useAuth } from '../../contexts/AuthContext';
 
 const t = tokens;
@@ -17,8 +17,9 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', Icon: LayoutGrid },
   { id: 'search',    label: 'Backhaul Requests', Icon: Search },
   { id: 'loads',     label: 'Loads',     Icon: Package },
-  { id: 'fleets',    label: 'Fleets',    Icon: Truck },
-  { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
+  { id: 'fleets',     label: 'Fleets',             Icon: Truck },
+  { id: 'work-week', label: 'Work Week Planning', Icon: Calendar },
+  { id: 'reports',   label: 'Reports',            Icon: BarChart2 },
   { id: 'estimates', label: 'Estimates', Icon: FileText },
 ];
 

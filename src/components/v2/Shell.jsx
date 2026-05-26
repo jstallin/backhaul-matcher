@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
-import { Search, Truck, Package, BarChart2, FileText, Settings } from '../../icons';
+import { Search, Truck, Package, BarChart2, FileText, Settings, Calendar } from '../../icons';
 
 const t = tokens;
 
@@ -21,7 +21,8 @@ const MOBILE_NAV = [
   { id: 'dashboard', label: 'Home',      Icon: LayoutGrid },
   { id: 'search',    label: 'Requests',  Icon: Search },
   { id: 'loads',     label: 'Loads',     Icon: Package },
-  { id: 'fleets',    label: 'Fleets',    Icon: Truck },
+  { id: 'fleets',     label: 'Fleets',   Icon: Truck },
+  { id: 'work-week', label: 'Work Week', Icon: Calendar },
   { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
   { id: 'estimates', label: 'Estimates', Icon: FileText },
   { id: 'settings',  label: 'Settings',  Icon: Settings },
