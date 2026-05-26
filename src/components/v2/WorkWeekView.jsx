@@ -146,40 +146,50 @@ function StringBar({ totalMiles }) {
   );
 }
 
-// ─── Leg row ─────────────────────────────────────────────────────────────────
+// ─── Timeline primitives ─────────────────────────────────────────────────────
 
-function LegRow({ label, from, to, miles, revenue, type }) {
-  const isDeadhead = type === 'deadhead';
-  const isHome = type === 'home';
+function Stop({ city, isHome }) {
   return (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-        <div style={{
-          width: '10px', height: '10px', borderRadius: '50%', marginTop: '3px',
-          background: isHome ? t.colors.accent.blue : isDeadhead ? '#cbd5e0' : t.colors.accent.green,
-          border: `2px solid ${isHome ? t.colors.accent.blue : isDeadhead ? '#94a3b8' : t.colors.accent.green}`,
-        }} />
-        {!isHome && <div style={{ width: '2px', flex: 1, minHeight: '20px', background: '#e2e8f0', margin: '3px 0' }} />}
-      </div>
-      <div style={{ flex: 1, paddingBottom: isHome ? 0 : '10px' }}>
-        <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.medium, color: t.colors.text.primary }}>
-          {from}
-        </div>
-        {!isHome && (
-          <div style={{ display: 'flex', gap: '10px', marginTop: '2px', alignItems: 'center' }}>
-            <span style={{
-              fontSize: t.font.size.xs,
-              color: isDeadhead ? t.colors.text.muted : t.colors.text.secondary,
-              fontStyle: isDeadhead ? 'italic' : 'normal',
-            }}>
-              {isDeadhead ? `${fmtMiles(miles)} deadhead` : `${fmtMiles(miles)} loaded`}
-            </span>
-            {revenue != null && !isDeadhead && (
-              <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.accent.green }}>
-                {fmt$(revenue)}
-              </span>
-            )}
-          </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{
+        width: isHome ? '12px' : '10px',
+        height: isHome ? '12px' : '10px',
+        borderRadius: '50%', flexShrink: 0,
+        background: isHome ? t.colors.accent.blue : '#fff',
+        border: `2px solid ${isHome ? t.colors.accent.blue : t.colors.border.strong}`,
+      }} />
+      <span style={{
+        fontSize: t.font.size.sm,
+        fontWeight: isHome ? t.font.weight.semibold : t.font.weight.medium,
+        color: t.colors.text.primary,
+      }}>
+        {city}
+      </span>
+    </div>
+  );
+}
+
+function Connector({ miles, type, revenue }) {
+  const isDeadhead = type === 'deadhead';
+  return (
+    <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+      <div style={{
+        width: '2px', minHeight: '22px', margin: '2px 5px',
+        background: isDeadhead ? '#cbd5e0' : t.colors.accent.green,
+        flexShrink: 0,
+      }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+        <span style={{
+          fontSize: t.font.size.xs,
+          color: isDeadhead ? t.colors.text.muted : t.colors.text.secondary,
+          fontStyle: isDeadhead ? 'italic' : 'normal',
+        }}>
+          {fmtMiles(miles)} {isDeadhead ? 'deadhead' : 'loaded'}
+        </span>
+        {revenue != null && !isDeadhead && (
+          <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.accent.green }}>
+            {fmt$(revenue)}
+          </span>
         )}
       </div>
     </div>
@@ -236,49 +246,21 @@ function ChainCard({ chain, rank, fleetHomeName }) {
 
       {/* Legs */}
       <div style={{ padding: '16px 18px' }}>
-        <LegRow
-          type="home"
-          from={fleetHomeName || 'Home Base'}
-        />
-        {legs.homeToPickup > 0 && (
-          <LegRow
-            type="deadhead"
-            from={`${outboundLoad.pickup_city}, ${outboundLoad.pickup_state}`}
-            miles={legs.homeToPickup}
-          />
-        )}
-        <LegRow
-          type="loaded"
-          from={`${outboundLoad.pickup_city}, ${outboundLoad.pickup_state}`}
-          to={`${outboundLoad.delivery_city}, ${outboundLoad.delivery_state}`}
-          miles={legs.outboundLoaded}
-          revenue={Number(outboundLoad.total_revenue)}
-        />
-        {legs.deadhead > 0 && (
-          <LegRow
-            type="deadhead"
-            from={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`}
-            miles={legs.deadhead}
-          />
-        )}
-        <LegRow
-          type="loaded"
-          from={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`}
-          to={`${returnLoad.delivery_city}, ${returnLoad.delivery_state}`}
-          miles={legs.returnLoaded}
-          revenue={Number(returnLoad.total_revenue)}
-        />
-        {legs.returnToHome > 0 && (
-          <LegRow
-            type="deadhead"
-            from={fleetHomeName || 'Home Base'}
-            miles={legs.returnToHome}
-          />
-        )}
-        <LegRow
-          type="home"
-          from={fleetHomeName || 'Home Base'}
-        />
+        <Stop city={fleetHomeName || 'Home Base'} isHome />
+        {legs.homeToPickup > 0 && <>
+          <Connector miles={legs.homeToPickup} type="deadhead" />
+          <Stop city={`${outboundLoad.pickup_city}, ${outboundLoad.pickup_state}`} />
+        </>}
+        <Connector miles={legs.outboundLoaded} type="loaded" revenue={Number(outboundLoad.total_revenue)} />
+        <Stop city={`${outboundLoad.delivery_city}, ${outboundLoad.delivery_state}`} />
+        {legs.deadhead > 0 && <>
+          <Connector miles={legs.deadhead} type="deadhead" />
+          <Stop city={`${returnLoad.pickup_city}, ${returnLoad.pickup_state}`} />
+        </>}
+        <Connector miles={legs.returnLoaded} type="loaded" revenue={Number(returnLoad.total_revenue)} />
+        <Stop city={`${returnLoad.delivery_city}, ${returnLoad.delivery_state}`} />
+        {legs.returnToHome > 0 && <Connector miles={legs.returnToHome} type="deadhead" />}
+        <Stop city={fleetHomeName || 'Home Base'} isHome />
 
         {/* Return pickup time callout */}
         <div style={{
