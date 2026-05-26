@@ -5,6 +5,7 @@ import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useCredits } from '../hooks/useCredits';
 import { db } from '../lib/supabase';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../utils/weeklyPlanningAlgorithm';
@@ -511,9 +512,23 @@ function SetupForm({ fleets, colors, onRun, loading, error }) {
               Finding optimal week…
             </>
           ) : (
-            <><Calendar size={15} />Run Week Plan</>
+            <>
+              <Calendar size={15} />Run Week Plan
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                marginLeft: '6px', paddingLeft: '8px',
+                borderLeft: '1px solid rgba(255,255,255,0.28)',
+                fontSize: '11px', fontWeight: 700, opacity: 0.9, whiteSpace: 'nowrap',
+              }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(135deg, #fcd34d, #f59e0b)', boxShadow: '0 1px 3px rgba(0,0,0,0.25)', display: 'inline-block', flexShrink: 0 }} />
+                5 credits
+              </span>
+            </>
           )}
         </button>
+        <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
+          5 credits per run
+        </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -525,6 +540,7 @@ function SetupForm({ fleets, colors, onRun, loading, error }) {
 export const WorkWeekPlanning = ({ onMenuNavigate }) => {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { deductCredit } = useCredits();
   const [fleets, setFleets] = useState([]);
   const [loadingFleets, setLoadingFleets] = useState(true);
   const [activePlan, setActivePlan] = useState(null);
@@ -535,6 +551,7 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
   const [fleetHomeName, setFleetHomeName] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
+  const [noCredits, setNoCredits] = useState(false);
   const [savingPlanId, setSavingPlanId] = useState(null);
   const [completing, setCompleting] = useState(false);
   const [selectedChainIndex, setSelectedChainIndex] = useState(null);
@@ -550,6 +567,7 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
   const handleRun = async (fleet, deadline) => {
     setRunning(true);
     setError(null);
+    setNoCredits(false);
     setPlanResult(null);
     setSelectedChainIndex(null);
     setCurrentFleet(fleet);
@@ -581,7 +599,17 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
         equipmentType: fleetProfile.trailerType || 'Dry Van', pickupDate: '',
       };
 
-      const { loads } = await getLoadsForMatching(user.id, fleet.id, requestContext);
+      const [creditResult, loadsResult] = await Promise.all([
+        deductCredit('Work week plan', 5).catch(err => ({ success: false, error: err.message })),
+        getLoadsForMatching(user.id, fleet.id, requestContext),
+      ]);
+
+      if (!creditResult.success) {
+        setNoCredits(true);
+        return;
+      }
+
+      const { loads } = loadsResult;
       const result = await planWorkWeek({ fleetHome, fleetProfile, weekDeadline: deadline, loads, rateConfig });
       setPlanResult(result);
     } catch (err) {
@@ -679,6 +707,16 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
           </div>
         ) : (
           <SetupForm fleets={fleets} colors={colors} onRun={handleRun} loading={running} error={error} />
+        )}
+
+        {noCredits && (
+          <div style={{ marginTop: '16px', padding: '14px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1, fontSize: '13px', color: '#991b1b' }}>
+              <strong>Insufficient credits.</strong> Work Week Planning costs 5 credits per run. Purchase more to continue.
+            </div>
+            <button onClick={() => setNoCredits(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', padding: '2px' }}>✕</button>
+          </div>
         )}
 
         {/* Results */}

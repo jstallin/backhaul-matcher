@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCredits } from '../../hooks/useCredits';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm';
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
@@ -106,6 +107,49 @@ function PrimaryBtn({ children, onClick, disabled, loading, style = {} }) {
     >
       {children}
     </button>
+  );
+}
+
+// ─── Credit UI primitives ─────────────────────────────────────────────────────
+
+const WWP_CREDIT_COST = 5;
+
+function CreditBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+      marginLeft: '6px', paddingLeft: '8px',
+      borderLeft: '1px solid rgba(255,255,255,0.28)',
+      fontSize: '11px', fontWeight: 700, opacity: 0.9, whiteSpace: 'nowrap',
+    }}>
+      <span style={{
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        background: 'linear-gradient(135deg, #fcd34d, #f59e0b)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        display: 'inline-block',
+      }} />
+      {WWP_CREDIT_COST} credits
+    </span>
+  );
+}
+
+function NoCreditsBanner({ onDismiss }) {
+  return (
+    <div style={{
+      padding: '14px 16px',
+      background: '#fef2f2',
+      border: '1px solid #fecaca',
+      borderRadius: t.radius.xl,
+      display: 'flex', alignItems: 'center', gap: '10px',
+    }}>
+      <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+      <div style={{ flex: 1, fontSize: t.font.size.sm, color: '#991b1b' }}>
+        <strong>Insufficient credits.</strong> Work Week Planning costs {WWP_CREDIT_COST} credits per run. Purchase more to continue.
+      </div>
+      <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', padding: '2px', display: 'flex', alignItems: 'center' }}>
+        ✕
+      </button>
+    </div>
   );
 }
 
@@ -709,9 +753,13 @@ function SetupForm({ fleets, onRun, loading, error }) {
               <>
                 <Calendar size={15} />
                 Run Week Plan
+                <CreditBadge />
               </>
             )}
           </PrimaryBtn>
+          <div style={{ textAlign: 'center', marginTop: '8px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+            {WWP_CREDIT_COST} credits per run
+          </div>
         </div>
       </div>
 
@@ -724,6 +772,7 @@ function SetupForm({ fleets, onRun, loading, error }) {
 
 export function WorkWeekView() {
   const { user } = useAuth();
+  const { deductCredit } = useCredits();
   const [fleets, setFleets] = useState([]);
   const [loadingFleets, setLoadingFleets] = useState(true);
   const [activePlan, setActivePlan] = useState(null);
@@ -735,6 +784,7 @@ export function WorkWeekView() {
   const [fleetHomeName, setFleetHomeName] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
+  const [noCredits, setNoCredits] = useState(false);
   const [savingPlanId, setSavingPlanId] = useState(null); // chain index being saved
   const [completing, setCompleting] = useState(false);
   const [selectedChainIndex, setSelectedChainIndex] = useState(null);
@@ -750,6 +800,7 @@ export function WorkWeekView() {
   const handleRun = async (fleet, deadline) => {
     setRunning(true);
     setError(null);
+    setNoCredits(false);
     setPlanResult(null);
     setSelectedChainIndex(null);
     setCurrentFleet(fleet);
@@ -795,7 +846,17 @@ export function WorkWeekView() {
         pickupDate: '',
       };
 
-      const { loads } = await getLoadsForMatching(user.id, fleet.id, requestContext);
+      const [creditResult, loadsResult] = await Promise.all([
+        deductCredit('Work week plan', WWP_CREDIT_COST).catch(err => ({ success: false, error: err.message })),
+        getLoadsForMatching(user.id, fleet.id, requestContext),
+      ]);
+
+      if (!creditResult.success) {
+        setNoCredits(true);
+        return;
+      }
+
+      const { loads } = loadsResult;
       const result = await planWorkWeek({ fleetHome, fleetProfile, weekDeadline: deadline, loads, rateConfig });
       setPlanResult(result);
     } catch (err) {
@@ -877,6 +938,12 @@ export function WorkWeekView() {
         </Card>
       ) : (
         <SetupForm fleets={fleets} onRun={handleRun} loading={running} error={error} />
+      )}
+
+      {noCredits && (
+        <div style={{ marginTop: '16px' }}>
+          <NoCreditsBanner onDismiss={() => setNoCredits(false)} />
+        </div>
       )}
 
       {/* Results */}

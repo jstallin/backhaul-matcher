@@ -121,11 +121,12 @@ export default async function handler(req, res) {
     }
 
     const rawBody = await readRawBody(req);
-    const { description = 'Backhaul search' } = JSON.parse(rawBody || '{}');
+    const { description = 'Backhaul search', amount = 1 } = JSON.parse(rawBody || '{}');
+    const p_amount = Math.max(1, Math.floor(amount));
 
     const { data: ok, error } = await supabaseAdmin.rpc('deduct_credit', {
       p_user_id: userId,
-      p_amount: 1,
+      p_amount,
       p_description: description,
     });
 
