@@ -153,6 +153,41 @@ function StringBar({ totalMiles }) {
   );
 }
 
+// ─── Radius bar ───────────────────────────────────────────────────────────────
+
+function RadiusBar({ maxRadiusFromHome }) {
+  const maxMiles = PLAN_DEFAULTS.maxRadiusFromHomeMiles; // 1000
+  const pct = Math.min(100, (maxRadiusFromHome / maxMiles) * 100);
+
+  const color = maxRadiusFromHome > maxMiles
+    ? t.colors.accent.red
+    : maxRadiusFromHome >= 700
+    ? t.colors.accent.amber
+    : t.colors.accent.green;
+
+  const label = maxRadiusFromHome > maxMiles ? 'Over limit'
+    : maxRadiusFromHome >= 700 ? 'Far reach'
+    : 'Within range';
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>Max radius from home</span>
+        <span style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color }}>
+          {fmtMiles(maxRadiusFromHome)} / {fmtMiles(maxMiles)} — {label}
+        </span>
+      </div>
+      <div style={{ position: 'relative', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'visible' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px', transition: 'width 0.4s ease' }} />
+      </div>
+      <div style={{ position: 'relative', height: '14px', marginTop: '3px' }}>
+        <span style={{ position: 'absolute', left: '70%', fontSize: '10px', color: t.colors.text.muted, transform: 'translateX(-50%)' }}>700</span>
+        <span style={{ position: 'absolute', right: 0, fontSize: '10px', color: t.colors.text.muted }}>1k mi</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Timeline primitives ─────────────────────────────────────────────────────
 
 function Stop({ city, isHome }) {
@@ -290,7 +325,7 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
 
 function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving }) {
   const { outboundLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
-          departureTime, returnPickupTime, arrivalHome } = chain;
+          departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome } = chain;
 
   const rpmColor = revenuePerTotalMile >= 3 ? t.colors.accent.green
     : revenuePerTotalMile >= 2 ? t.colors.accent.amber
@@ -389,6 +424,9 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
       {/* String bar */}
       <div style={{ padding: '14px 18px' }}>
         <StringBar totalMiles={totalMiles} />
+        <div style={{ marginTop: '12px' }}>
+          <RadiusBar maxRadiusFromHome={maxRadiusFromHome || 0} />
+        </div>
       </div>
 
       {/* Select plan button */}

@@ -17,18 +17,20 @@ import { getDrivingDistance } from './pcMilerClient';
 import { calculateArrival, calculateLatestDeparture } from './hosCalculator';
 
 // Max candidates pre-filtered before PC*MILER calls
-const MAX_RETURN_CANDIDATES  = 15;
-const MAX_OUTBOUND_CANDIDATES = 15;
-const MAX_CHAINS_RETURNED    = 10;
+const MAX_RETURN_CANDIDATES   = 20;
+const MAX_OUTBOUND_CANDIDATES = 20;
+const MAX_OUTBOUND_TOP        = 10; // top outbounds by rate/mile to pair against returns
+const MAX_CHAINS_RETURNED     = 10;
 
 export const PLAN_DEFAULTS = {
   stringMiles:           2500,
   minStringMiles:        2000,
   maxStringMiles:        3000,
-  homeRadiusMiles:        100, // pickup/delivery must start or end within this of home
+  homeRadiusMiles:        150, // return delivery must be within this of home (enforced strictly)
   connectionRadiusMiles:  150, // outbound delivery must be within this of return pickup
   minTotalMiles:          500,
   maxReturnLegMiles:     1250, // spec: max single return leg
+  maxRadiusFromHomeMiles: 1000, // outbound delivery must be within this of home
 };
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -93,6 +95,7 @@ export const buildChain = ({
   weekDeadline,
   hosConfig = {},
   rateConfig = null,
+  maxRadiusFromHome = 0,
 }) => {
   const totalMiles   = homeToOutboundPickupMiles + outboundLoadedMiles + deadheadMiles
                      + returnLoadedMiles + deliveryToHomeMiles;
@@ -121,6 +124,7 @@ export const buildChain = ({
     totalMiles,
     totalRevenue,
     revenuePerTotalMile,
+    maxRadiusFromHome,
     withinOptimalBand: totalMiles >= PLAN_DEFAULTS.minStringMiles
                     && totalMiles <= PLAN_DEFAULTS.maxStringMiles,
     departureTime,
@@ -212,6 +216,8 @@ export const planWorkWeek = async ({
 
   const scoredReturns = returnDistances
     .filter(({ ptd, dth }) => ptd != null && dth != null)
+    // Strict 150mi cap on delivery-to-home — catches null-coord loads that bypassed Haversine
+    .filter(({ dth }) => dth <= homeRadiusMiles)
     .filter(({ ptd, dth }) => {
       const legMiles = ptd + dth;
       return legMiles >= PLAN_DEFAULTS.minTotalMiles
@@ -221,14 +227,29 @@ export const planWorkWeek = async ({
     .sort((a, b) => b.revenuePerMile - a.revenuePerMile)
     .slice(0, 10);
 
-  const validOutbounds = outboundDistances.filter(({ htp, ptd }) => htp != null && ptd != null);
+  // Score outbounds by their own rate/mile so the best outbounds pair with best returns.
+  // Also enforce max radius from home — outbound delivery must be within 1000mi.
+  const scoredOutbounds = outboundDistances
+    .filter(({ htp, ptd }) => htp != null && ptd != null)
+    .filter(({ load }) => {
+      const d = haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
+      return d == null || d <= PLAN_DEFAULTS.maxRadiusFromHomeMiles;
+    })
+    .map(({ load, htp, ptd }) => ({
+      load, htp, ptd,
+      revPerMile: Number(load.total_revenue) / Math.max(1, htp + ptd),
+      deliveryToHomeHaversine: haversineTo(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng) ?? 0,
+    }))
+    .sort((a, b) => b.revPerMile - a.revPerMile)
+    .slice(0, MAX_OUTBOUND_TOP);
 
   // ── 4. Pair candidates + batch-fetch deadhead distances ────────────────────
 
-  // Collect viable pairs via Haversine connection check before hitting PC*MILER
+  // Iterate returns (by return rate/mile) × outbounds (by outbound rate/mile)
+  // so highest-value combinations are evaluated first
   const pairCandidates = [];
   for (const ret of scoredReturns) {
-    for (const out of validOutbounds) {
+    for (const out of scoredOutbounds) {
       if (out.load.load_id === ret.load.load_id) continue;
 
       // Quick total-miles sanity check before deadhead call
@@ -277,6 +298,7 @@ export const planWorkWeek = async ({
         weekDeadline,
         hosConfig,
         rateConfig,
+        maxRadiusFromHome:         Math.round(out.deliveryToHomeHaversine || 0),
       });
     })
     .filter(Boolean)
@@ -297,6 +319,7 @@ export const planWorkWeek = async ({
       totalLoadsSearched:      loads.length,
       returnCandidatesFound:   returnCandidates.length,
       outboundCandidatesFound: outboundCandidates.length,
+      outboundScoredTop:       scoredOutbounds.length,
       pairsEvaluated:          pairCandidates.length,
       chainsReturned:          chains.length,
     },
