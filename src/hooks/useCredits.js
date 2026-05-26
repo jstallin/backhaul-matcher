@@ -28,7 +28,7 @@ export const useCredits = () => {
 
   useEffect(() => { fetchBalance(); }, [fetchBalance]);
 
-  const deductCredit = async (description = 'Backhaul search') => {
+  const deductCredit = async (description = 'Backhaul search', amount = 1) => {
     if (isAdmin && localStorage.getItem('hm_credits_bypass') === 'true') {
       return { success: true, balance: balance ?? 999 };
     }
@@ -40,7 +40,7 @@ export const useCredits = () => {
         Authorization: `Bearer ${session.access_token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ description })
+      body: JSON.stringify({ description, amount })
     });
     const d = await res.json();
     if (d.success && typeof d.balance === 'number') setBalance(d.balance);
