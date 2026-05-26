@@ -19,8 +19,8 @@
 | 1 | Claude sync (Claude.ai ↔ Claude Code) | ✅ Done |
 | 2 | Staging environment | ✅ Done |
 | 3 | Test suite expansion | ✅ Done (initial pass) |
-| 4 | Chip's dedicated fleet feature | 🔶 Spec complete, awaiting Chip sign-off |
-| 5 | Claude efficiency / multi-agent | 🔶 In progress — STATUS.md workflow being established |
+| 4 | Chip's dedicated fleet feature | 🔶 First cut built and deployed to feature/work-week-planning |
+| 5 | Claude efficiency / multi-agent | ✅ Done — STATUS.md workflow established |
 | 6 | Infrastructure paid tiers | ⏳ Blocked — awaiting corporate card |
 
 ---
@@ -34,13 +34,14 @@
 - Fixed `auth.setup.js` to gracefully skip when TEST_EMAIL/TEST_PASSWORD not set
 - Added Vitest unit tests for `calculateDistance` and `calculateNetRevenue` (32 tests)
 - Updated `CLAUDE.md` with staging details, UX version clarification, infrastructure status
-- Created `docs/specs/dedicated-fleet-planning.md` (Draft 2, pending Chip sign-off)
+- Created `docs/specs/dedicated-fleet-planning.md`
 - Established STATUS.md workflow as Claude.ai ↔ Claude Code sync bridge
+- Staging custom domain (`staging.haulmonitor.cloud`) created
 
 ---
 
 ## In Progress / Next Up
-- Waiting on Chip sign-off on dedicated fleet spec before starting #4 implementation
+- Initial coding of Work Week Planning done and deployed to feature/work-week-planning
 - Corporate card arriving soon — upgrade Supabase + Vercel to paid tiers before pilots go live
 - Pilots starting this week or next (1-2 customers)
 
@@ -57,9 +58,7 @@
 ---
 
 ## Open Questions / Blockers
-- Chip sign-off on dedicated fleet spec
 - Corporate card for Supabase Pro + Vercel Pro upgrades
-- Staging custom domain (`staging.haulmonitor.cloud`) — deferred, not urgent
 - Authenticated Playwright tests need proper auth flow implementation
 
 ---
@@ -73,7 +72,7 @@
 
 ## Quick Reference — Key URLs
 - Production: `https://haulmonitor.cloud/app`
-- Staging: `https://backhaul-matcher-staging.vercel.app`
+- Staging: `https://staging.haulmonitor.cloud/app`
 - Repo: `https://github.com/jstallin/backhaul-matcher`
 - Staging Supabase: `https://vdrkpitooqgmmlfrbphi.supabase.co`
 

@@ -366,9 +366,11 @@ function DashboardView({ onNavigate }) {
     .filter((r) => r.completed_at && new Date(r.completed_at) >= thisMonthStart)
     .reduce((sum, r) => sum + (parseFloat(r.net_revenue) || 0), 0);
   const totalGallonsSaved = completedRequests.reduce((sum, r) => {
-    const miles = parseFloat(r.out_of_route_miles) || 0;
+    const loadMiles = parseFloat(r.load_distance_miles) || 0;
+    const oorMiles = parseFloat(r.out_of_route_miles) || 0;
     const mpg = parseFloat(r.fleets?.fuel_mpg) || 6;
-    return sum + (miles > 0 ? miles / mpg : 0);
+    const net = Math.max(0, loadMiles - oorMiles);
+    return sum + (net > 0 ? net / mpg : 0);
   }, 0);
 
   const recentActivity = [...requests, ...estimateRequests]
