@@ -6,6 +6,7 @@ import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm';
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
 import { parseFleetHome } from '../../utils/parseFleetHome';
+import { ChainRouteMap } from './ChainRouteMap';
 
 const t = tokens;
 
@@ -323,7 +324,7 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
 
 // ─── Chain card ───────────────────────────────────────────────────────────────
 
-function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving }) {
+function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, isSelected, saving }) {
   const { outboundLoad, connectorLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
           departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome, is3Load } = chain;
 
@@ -333,6 +334,16 @@ function ChainCard({ chain, rank, fleetHomeName, onSelect, isSelected, saving })
 
   return (
     <Card style={{ overflow: 'hidden' }}>
+      {/* Route map */}
+      {fleetHome && (
+        <ChainRouteMap
+          chain={chain}
+          fleetHome={fleetHome}
+          height={rank === 1 ? 200 : 150}
+          eager={rank === 1}
+        />
+      )}
+
       {/* Header */}
       <div style={{
         padding: '14px 18px',
@@ -720,6 +731,7 @@ export function WorkWeekView() {
 
   const [planResult, setPlanResult] = useState(null);
   const [currentFleet, setCurrentFleet] = useState(null);
+  const [currentFleetHome, setCurrentFleetHome] = useState(null);
   const [fleetHomeName, setFleetHomeName] = useState('');
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
@@ -768,6 +780,7 @@ export function WorkWeekView() {
         state: homeState,
       };
       setFleetHomeName((homeCity && homeState) ? `${homeCity}, ${homeState}` : fleet.home_address || 'Home Base');
+      setCurrentFleetHome(fleetHome);
 
       const requestContext = {
         datumCity: homeCity,
@@ -889,6 +902,7 @@ export function WorkWeekView() {
                   key={i}
                   chain={chain}
                   rank={i + 1}
+                  fleetHome={currentFleetHome}
                   fleetHomeName={fleetHomeName}
                   onSelect={(c) => handleSelectPlan(c, i)}
                   isSelected={selectedChainIndex === i}
