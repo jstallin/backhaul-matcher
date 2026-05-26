@@ -135,3 +135,6 @@ Feature specs live in `docs/specs/`. Check there before building any new feature
 - Test suite needs expansion — coverage for both v1 and v2 UX, user flows, and calculation accuracy
 - Map rendering: monitor for source duplication errors when plotting routes (known intermittent issue)
 - Notification system: change detection logic for initial page loads and manual refreshes needs review
+
+## Current Status
+See `STATUS.md` in the repo root for current work state, roadmap progress, and session handoff notes.
