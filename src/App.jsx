@@ -20,6 +20,7 @@ import { StartEstimateRequest } from './components/StartEstimateRequest';
 import { OpenEstimateRequests } from './components/OpenEstimateRequests';
 import { OpenRequests } from './components/OpenRequests';
 import { FleetReports } from './components/FleetReports';
+import { WorkWeekPlanning } from './components/WorkWeekPlanning';
 import { Dashboard } from './components/Dashboard';
 import { CoDriver } from './components/CoDriver';
 import { ImportedLoads } from './components/ImportedLoads';
@@ -549,6 +550,10 @@ function App() {
         <OpenEstimateRequests
           onMenuNavigate={handleMenuNavigation}
           onNavigateToSettings={handleNavigateToSettings}
+        />
+      ) : currentView === 'work-week-planning' ? (
+        <WorkWeekPlanning
+          onMenuNavigate={handleMenuNavigation}
         />
       ) : currentView === 'fleet-reports' ? (
         <FleetReports
