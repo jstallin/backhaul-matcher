@@ -12,7 +12,7 @@ import { BuyCreditsModal } from './BuyCreditsModal';
 
 export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [fleets, setFleets] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -370,8 +370,8 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
             </div>
 
-            {/* Work Week Planning widget */}
-            {(() => {
+            {/* Work Week Planning widget — HM admins only during beta */}
+            {isAdmin && (() => {
               const fmt$ = (v) =>
                 new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v ?? 0);
               const fmtMiles = (v) => `${Math.round(v).toLocaleString()} mi`;
@@ -444,6 +444,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             })()}
 
             {/* Recent Activity */}
+
             {recentActivity.length > 0 && (
               <div style={{
                 background: colors.background.secondary,

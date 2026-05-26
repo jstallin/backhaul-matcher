@@ -68,12 +68,12 @@ export const HamburgerMenu = ({ currentView, onNavigate }) => {
       icon: FileText,
       description: 'View active estimate requests'
     },
-    {
+    ...(isAdmin ? [{
       id: 'work-week-planning',
       label: 'Work Week Planning',
       icon: Calendar,
       description: 'Plan your optimal work week'
-    },
+    }] : []),
     {
       id: 'fleet-reports',
       label: 'Fleet Reports',

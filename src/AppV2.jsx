@@ -327,7 +327,7 @@ function WorkWeekWidget({ activePlan, loading, onNavigate }) {
 // ─── Dashboard view ───────────────────────────────────────────────────────────
 
 function DashboardView({ onNavigate }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const isMobile = useMobile();
   const [loading, setLoading] = useState(true);
   const [fleets, setFleets] = useState([]);
@@ -476,8 +476,8 @@ function DashboardView({ onNavigate }) {
             </div>
           </Card>
 
-          {/* Work Week Planning widget */}
-          <WorkWeekWidget activePlan={activePlan} loading={loading} onNavigate={onNavigate} />
+          {/* Work Week Planning widget — HM admins only during beta */}
+          {isAdmin && <WorkWeekWidget activePlan={activePlan} loading={loading} onNavigate={onNavigate} />}
 
           {/* Bottom two-column */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', alignItems: 'start' }}>
