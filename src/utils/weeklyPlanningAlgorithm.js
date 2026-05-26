@@ -330,9 +330,11 @@ export const planWorkWeek = async ({
       return pass;
     })
     .filter(({ load, ptd, dth }) => {
+      // Only cap the max leg length — min total is enforced at the chain level, not per leg.
+      // A short return leg (e.g. Charlotte→Davidson 60mi) is fine if the outbound was 500mi.
       const legMiles = ptd + dth;
-      const pass = legMiles >= PLAN_DEFAULTS.minTotalMiles && legMiles <= PLAN_DEFAULTS.maxReturnLegMiles;
-      if (!pass) console.log(`[WWP] Return REJECTED legMiles=${Math.round(legMiles)}mi (min=${PLAN_DEFAULTS.minTotalMiles} max=${PLAN_DEFAULTS.maxReturnLegMiles}) ${load.pickup_city}→${load.delivery_city}`);
+      const pass = legMiles <= PLAN_DEFAULTS.maxReturnLegMiles;
+      if (!pass) console.log(`[WWP] Return REJECTED legMiles=${Math.round(legMiles)}mi > max=${PLAN_DEFAULTS.maxReturnLegMiles} ${load.pickup_city}→${load.delivery_city}`);
       return pass;
     })
     .map(({ load, ptd, dth }) => scoreReturnLoad(load, ptd, dth))
