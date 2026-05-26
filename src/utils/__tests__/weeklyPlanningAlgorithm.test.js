@@ -293,8 +293,9 @@ describe('planWorkWeek', () => {
 
   it('returns the expected shape', async () => {
     getDrivingDistance
-      .mockResolvedValueOnce(15)   // delivery→home for returnLoad
-      .mockResolvedValueOnce(5)    // home→pickup for outboundLoad
+      .mockResolvedValueOnce(15)   // returnLoad delivery→home (passes 150mi cap)
+      .mockResolvedValueOnce(200)  // outboundLoad delivery→home as return candidate (fails 150mi cap, rejected)
+      .mockResolvedValueOnce(5)    // outboundLoad home→pickup
       .mockResolvedValueOnce(60);  // deadhead: outbound delivery → return pickup
 
     const result = await planWorkWeek(baseParams);
@@ -307,9 +308,10 @@ describe('planWorkWeek', () => {
 
   it('meta reflects searched load counts', async () => {
     getDrivingDistance
-      .mockResolvedValueOnce(15)
-      .mockResolvedValueOnce(5)
-      .mockResolvedValueOnce(60);
+      .mockResolvedValueOnce(15)   // returnLoad delivery→home
+      .mockResolvedValueOnce(200)  // outboundLoad delivery→home as return candidate (rejected >150mi)
+      .mockResolvedValueOnce(5)    // outboundLoad home→pickup
+      .mockResolvedValueOnce(60);  // deadhead
 
     const result = await planWorkWeek(baseParams);
     expect(result.meta.totalLoadsSearched).toBe(2);
