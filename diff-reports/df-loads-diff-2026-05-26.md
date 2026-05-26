@@ -4,48 +4,155 @@
 
 | | Count |
 |---|---|
-| Previous total | 1270 |
-| New total | 1121 |
-| Net change | -149 |
-| Added | +952 |
-| Removed | -1101 |
-| Avg pay (new file) | $1,599 |
+| Previous total | 1121 |
+| New total | 1251 |
+| Net change | +130 |
+| Added | +1251 |
+| Removed | -1121 |
+| Avg pay (new file) | $2,233 |
 
 ## Equipment Types (new file)
 
 | Type | Count |
 |---|---|
-| Flatbed | 681 |
-| Step Deck | 228 |
-| Power Only | 86 |
-| Dry Van | 83 |
-| Refrigerated | 29 |
-| Lowboy | 5 |
-| Container | 4 |
-| Hotshot | 4 |
-| Curtain Van | 1 |
+| Flatbed | 605 |
+| Step Deck | 321 |
+| Dry Van | 171 |
+| Refrigerated | 80 |
+| Other | 49 |
+| Hotshot | 13 |
+| Box Truck | 4 |
+| Curtain Van | 3 |
+| Power Only | 3 |
+| Cargo Van | 2 |
 
 ## Pickup States (new file, top 15)
 
 | State | Count |
 |---|---|
-| OR | 108 |
-| AL | 89 |
-| TX | 87 |
-| WA | 77 |
-| PA | 60 |
-| OK | 54 |
-| AR | 45 |
-| IL | 43 |
-| SC | 43 |
-| ID | 37 |
-| MA | 35 |
-| NJ | 33 |
-| FL | 28 |
-| CT | 27 |
-| OH | 27 |
+| AL | 218 |
+| PA | 82 |
+| AR | 67 |
+| TX | 60 |
+| IL | 51 |
+| CA | 48 |
+| MT | 47 |
+| NJ | 45 |
+| MI | 42 |
+| ND | 42 |
+| IN | 40 |
+| MS | 39 |
+| ID | 39 |
+| LA | 38 |
+| WI | 38 |
 
-## Added Loads (+952)
+## Added Loads (+1251)
+
+| Route | Equip | Pay | Miles |
+|---|---|---|---|
+| Belmond, IA → Dalhart, TX | Dry Van | $5,500 | 806 |
+| Marion, IL → Westphalia, MO | Flatbed | $1,800 | 244 |
+| Marion, IL → Westphalia, MO | Step Deck | $1,800 | 244 |
+| Bristol, IN → Franksville, WI | Dry Van | $1,150 | 191 |
+| East Chicago, IN → Rhome, TX | Flatbed | $3,800 | 948 |
+| East Chicago, IN → Rhome, TX | Step Deck | $3,800 | 948 |
+| East Chicago, IN → Rhome, TX | Flatbed | $3,300 | 948 |
+| East Chicago, IN → Rhome, TX | Step Deck | $3,300 | 948 |
+| South Bend, IN → Manitowoc, WI | Flatbed | $2,700 | 261 |
+| South Bend, IN → Manitowoc, WI | Step Deck | $2,700 | 261 |
+| Atchison, KS → Maryville, MO | Refrigerated | $0 | 65 |
+| Atchison, KS → Maryville, MO | Dry Van | $0 | 65 |
+| Bay City, MI → Litchfield, CT | Flatbed | $3,800 | 688 |
+| Bay City, MI → Litchfield, CT | Step Deck | $3,800 | 688 |
+| Bay City, MI → Litchfield, CT | Flatbed | $5,200 | 688 |
+| Bay City, MI → Litchfield, CT | Step Deck | $5,200 | 688 |
+| Bay City, MI → Old Saybrook, CT | Flatbed | $5,675 | 755 |
+| Bay City, MI → Old Saybrook, CT | Step Deck | $5,675 | 755 |
+| Bay City, MI → Old Saybrook, CT | Flatbed | $4,150 | 755 |
+| Bay City, MI → Old Saybrook, CT | Step Deck | $4,150 | 755 |
+| Bay City, MI → Putnam, CT | Flatbed | $5,100 | 735 |
+| Bay City, MI → Putnam, CT | Step Deck | $5,100 | 735 |
+| Bay City, MI → Putnam, CT | Flatbed | $4,000 | 735 |
+| Bay City, MI → Putnam, CT | Step Deck | $4,000 | 735 |
+| Bay City, MI → Stafford Springs, CT | Flatbed | $4,500 | 709 |
+| Bay City, MI → Stafford Springs, CT | Step Deck | $4,500 | 709 |
+| Bay City, MI → Stafford Springs, CT | Flatbed | $5,300 | 709 |
+| Bay City, MI → Stafford Springs, CT | Step Deck | $5,300 | 709 |
+| Bay City, MI → Greenfield, MA | Flatbed | $4,975 | 718 |
+| Bay City, MI → Greenfield, MA | Step Deck | $4,975 | 718 |
+| Bay City, MI → Greenfield, MA | Flatbed | $5,500 | 718 |
+| Bay City, MI → Greenfield, MA | Step Deck | $5,500 | 718 |
+| Bay City, MI → Southwick, MA | Flatbed | $4,000 | 684 |
+| Bay City, MI → Southwick, MA | Step Deck | $4,000 | 684 |
+| Bay City, MI → Southwick, MA | Flatbed | $5,750 | 684 |
+| Bay City, MI → Southwick, MA | Step Deck | $5,750 | 684 |
+| Bay City, MI → Taunton, MA | Flatbed | $4,550 | 781 |
+| Bay City, MI → Taunton, MA | Step Deck | $4,550 | 781 |
+| Maple Lake, MN → Linn Creek, MO | Flatbed | $1,700 | 611 |
+| Saint Charles, MO → Pratt, KS | Dry Van | $3,200 | 496 |
+| Coshocton, OH → Elkhart, IN | Flatbed | $1,500 | 294 |
+| Coshocton, OH → Elkhart, IN | Step Deck | $1,500 | 294 |
+| Groveport, OH → Aurora, IL | Dry Van | $1,700 | 397 |
+| Jefferson, OH → Chippewa Falls, WI | Dry Van | $3,000 | 728 |
+| Sandusky, OH → Terre Haute, IN | Dry Van | $1,500 | 346 |
+| Bloomfield, CT → Londonderry, NH | Dry Van | $0 | 136 |
+| Newark, DE → Kansas City, KS | Dry Van | $2,100 | 1107 |
+| Camden, NJ → Lancaster, PA | Flatbed | $1,025 | 84 |
+| Camden, NJ → Lancaster, PA | Step Deck | $1,025 | 84 |
+| Wayne, NJ → Wheeling, WV | Flatbed | $1,200 | 403 |
+| Hadley, PA → Chesapeake, VA | Flatbed | $0 | 512 |
+| Hadley, PA → Chesapeake, VA | Step Deck | $0 | 512 |
+| Leetsdale, PA → Waterbury, CT | Flatbed | $4,100 | 457 |
+| Leetsdale, PA → Waterbury, CT | Step Deck | $4,100 | 457 |
+| Leetsdale, PA → Waterbury, CT | Flatbed | $3,100 | 457 |
+| Leetsdale, PA → Waterbury, CT | Step Deck | $3,100 | 457 |
+| Leetsdale, PA → Topsham, ME | Flatbed | $4,700 | 714 |
+| Leetsdale, PA → Topsham, ME | Step Deck | $4,700 | 714 |
+| Leetsdale, PA → Topsham, ME | Flatbed | $4,000 | 714 |
+| Leetsdale, PA → Topsham, ME | Step Deck | $4,000 | 714 |
+| Leetsdale, PA → Rocky Mount, VA | Flatbed | $2,000 | 356 |
+| Leetsdale, PA → Rocky Mount, VA | Step Deck | $2,000 | 356 |
+| Leetsdale, PA → Rocky Mount, VA | Flatbed | $2,200 | 356 |
+| Leetsdale, PA → Rocky Mount, VA | Step Deck | $2,200 | 356 |
+| Hamburg, AR → Mount Calm, TX | Flatbed | $2,500 | 367 |
+| Hamburg, AR → Mount Calm, TX | Step Deck | $2,500 | 367 |
+| Hamburg, AR → Mount Calm, TX | Flatbed | $2,900 | 367 |
+| Hamburg, AR → Mount Calm, TX | Step Deck | $2,900 | 367 |
+| West Memphis, AR → Lockbourne, OH | Dry Van | $0 | 591 |
+| West Memphis, AR → Lockbourne, OH | Dry Van | $0 | 591 |
+| Golden Valley, AZ → North Las Vegas, NV | Flatbed | $0 | 104 |
+| Surprise, AZ → Prescott Valley, AZ | Flatbed | $600 | 91 |
+| Surprise, AZ → Prescott Valley, AZ | Step Deck | $600 | 91 |
+| Surprise, AZ → Prescott Valley, AZ | Flatbed | $800 | 91 |
+| Surprise, AZ → Prescott Valley, AZ | Step Deck | $800 | 91 |
+| Surprise, AZ → Prescott Valley, AZ | Flatbed | $800 | 91 |
+| Surprise, AZ → Prescott Valley, AZ | Step Deck | $800 | 91 |
+| Fontana, CA → Bend, OR | Flatbed | $4,400 | 861 |
+| Ontario, CA → Modesto, CA | Dry Van | $2,500 | 352 |
+| Paso Robles, CA → Compton, CA | Refrigerated | $1,300 | 223 |
+| Rancho Cucamonga, CA → Medicine Hat, AB | Dry Van | $4,800 | 1462 |
+| Stockton, CA → Denver, CO | Dry Van | $5,800 | 1211 |
+| Fountain, CO → Glenwood Springs, CO | Flatbed | $1,700 | 239 |
+| Fountain, CO → Glenwood Springs, CO | Step Deck | $1,700 | 239 |
+| Chopin, LA → Saint Louis, MO | Flatbed | $4,100 | 668 |
+| Chopin, LA → Saint Louis, MO | Step Deck | $4,100 | 668 |
+| Chopin, LA → Saint Louis, MO | Flatbed | $2,700 | 668 |
+| Chopin, LA → Saint Louis, MO | Step Deck | $2,700 | 668 |
+| Chopin, LA → Saint Louis, MO | Flatbed | $3,900 | 668 |
+| Chopin, LA → Saint Louis, MO | Step Deck | $3,900 | 668 |
+| Denham Springs, LA → Pensacola, FL | Flatbed | $1,410 | 242 |
+| Denham Springs, LA → Pensacola, FL | Flatbed | $1,550 | 242 |
+| Rayville, LA → Summer Shade, KY | Flatbed | $4,000 | 559 |
+| Rayville, LA → Summer Shade, KY | Step Deck | $4,000 | 559 |
+| Cherokee, AL → Verona, MS | Dry Van | $0 | 86 |
+| Cottonton, AL → Shannon, GA | Flatbed | $1,200 | 176 |
+| Cottonton, AL → Shannon, GA | Step Deck | $1,200 | 176 |
+| Cottonton, AL → Shannon, GA | Flatbed | $1,600 | 176 |
+| Cottonton, AL → Shannon, GA | Step Deck | $1,600 | 176 |
+| Cottonton, AL → Shannon, GA | Flatbed | $1,100 | 176 |
+| … and 1151 more | | | |
+
+## Removed Loads (-1121)
 
 | Route | Equip | Pay | Miles |
 |---|---|---|---|
@@ -149,110 +256,4 @@
 | Madill, OK → Bernalillo, NM | Step Deck | $0 | 675 |
 | Madill, OK → Hobbs, NM | Flatbed | $0 | 432 |
 | Madill, OK → Elko, NV | Flatbed | $0 | 1542 |
-| … and 852 more | | | |
-
-## Removed Loads (-1101)
-
-| Route | Equip | Pay | Miles |
-|---|---|---|---|
-| Cedar Rapids, IA → Clinton, TN | Power Only | $0 | 732 |
-| Fort Madison, IA → Greensburg, IN | Power Only | $0 | 377 |
-| Arcola, IL → Lincoln, AL | Power Only | $0 | 572 |
-| Arcola, IL → London, KY | Power Only | $0 | 423 |
-| Arcola, IL → Upton, KY | Power Only | $0 | 335 |
-| Arcola, IL → Marysville, OH | Power Only | $0 | 322 |
-| Bartlett, IL → Elyria, OH | Power Only | $0 | 354 |
-| Edwardsville, IL → Owatonna, MN | Power Only | $0 | 536 |
-| Eldorado, IL → Elk Grove Village, IL | Power Only | $0 | 346 |
-| Granite City, IL → Big Island, VA | Power Only | $0 | 721 |
-| Riverdale, IL → Medina, OH | Power Only | $0 | 335 |
-| Columbia City, IN → Vandalia, OH | Power Only | $0 | 154 |
-| Gary, IN → Owatonna, MN | Power Only | $0 | 421 |
-| Indianapolis, IN → Louisville, KY | Power Only | $0 | 120 |
-| Lafayette, IN → Lincoln, AL | Power Only | $0 | 583 |
-| Lafayette, IN → Alexander, AR | Power Only | $0 | 634 |
-| Lafayette, IN → London, KY | Power Only | $0 | 329 |
-| Lafayette, IN → Upton, KY | Power Only | $0 | 241 |
-| Seymour, IN → Big Island, VA | Power Only | $0 | 509 |
-| Liberal, KS → Oklahoma City, OK | Power Only | $0 | 256 |
-| Westfield, MA → Greensburg, IN | Power Only | $0 | 844 |
-| Hagerstown, MD → Chicago, IL | Power Only | $0 | 630 |
-| Plattsburgh, NY → Woolwich Township, NJ | Power Only | $0 | 402 |
-| Syracuse, NY → Richmond, VA | Power Only | $0 | 473 |
-| Bradford, PA → Chicago, IL | Power Only | $0 | 537 |
-| Carlisle, PA → Chicago, IL | Power Only | $0 | 644 |
-| Hanover, PA → Chicago, IL | Power Only | $0 | 654 |
-| Noblestown, PA → Gary, IN | Power Only | $0 | 432 |
-| Jonesboro, AR → Crossett, AR | Power Only | $0 | 260 |
-| Jonesboro, AR → Waxahachie, TX | Power Only | $0 | 482 |
-| West Memphis, AR → Gary, IN | Power Only | $0 | 523 |
-| West Memphis, AR → Saint Peters, MO | Power Only | $1,000 | 292 |
-| Glendale, AZ → Perris, CA | Power Only | $0 | 318 |
-| Red Bluff, CA → Jurupa Valley, CA | Power Only | $0 | 559 |
-| Robert, LA → Atlanta, GA | Power Only | $0 | 480 |
-| Sparks, NV → Phoenix, AZ | Power Only | $0 | 720 |
-| Ochelata, OK → Dallas, TX | Power Only | $0 | 291 |
-| Oklahoma City, OK → Chicago, IL | Power Only | $0 | 791 |
-| Oklahoma City, OK → Chicago, IL | Power Only | $0 | 791 |
-| Oklahoma City, OK → Dallas, TX | Power Only | $0 | 204 |
-| Tulsa, OK → Olive Branch, MS | Power Only | $0 | 422 |
-| Amarillo, TX → Laredo, TX | Power Only | $0 | 659 |
-| Amarillo, TX → Laredo, TX | Power Only | $0 | 659 |
-| El Paso, TX → Phoenix, AZ | Power Only | $0 | 440 |
-| El Paso, TX → Dallas, TX | Power Only | $0 | 633 |
-| Laredo, TX → Port Allen, LA | Power Only | $0 | 617 |
-| Plainview, TX → El Paso, TX | Power Only | $0 | 464 |
-| Plainview, TX → Laredo, TX | Power Only | $0 | 586 |
-| Lakeland, FL → Mount Juliet, TN | Power Only | $0 | 702 |
-| Orlando, FL → Bloomingdale, GA | Power Only | $0 | 281 |
-| Tampa, FL → Bowling Green, KY | Power Only | $0 | 765 |
-| Tampa, FL → Mount Juliet, TN | Power Only | $0 | 708 |
-| Atlanta, GA → Raeford, NC | Power Only | $0 | 378 |
-| Forest Park, GA → Sikeston, MO | Power Only | $0 | 455 |
-| Glenwood, GA → Greer, SC | Power Only | $0 | 240 |
-| Kennesaw, GA → Hutchins, TX | Power Only | $0 | 779 |
-| Newnan, GA → Hutchins, TX | Power Only | $0 | 765 |
-| Port Wentworth, GA → Loudon, TN | Power Only | $0 | 423 |
-| Savannah, GA → Big Island, VA | Power Only | $0 | 449 |
-| Bowling Green, KY → Big Island, VA | Power Only | $0 | 508 |
-| Hebron, KY → Owatonna, MN | Power Only | $0 | 673 |
-| Hopkinsville, KY → Crossett, AR | Power Only | $0 | 443 |
-| Hopkinsville, KY → Houston, TX | Power Only | $0 | 808 |
-| Lexington, KY → Big Island, VA | Power Only | $0 | 385 |
-| Murray, KY → Louisville, KY | Power Only | $0 | 224 |
-| Walton, KY → Gary, IN | Power Only | $0 | 269 |
-| Horn Lake, MS → Owatonna, MN | Power Only | $0 | 782 |
-| New Albany, MS → Port Allen, LA | Power Only | $0 | 384 |
-| Shelton, WA → Riverside, CA | Flatbed | $3,500 | 1149 |
-| Brookville, PA → Ballston Spa, NY | Refrigerated | $3,200 | 410 |
-| Brookville, PA → Ballston Spa, NY | Dry Van | $3,200 | 410 |
-| Chambersburg, PA → Niagara Falls, NY | Dry Van | $0 | 318 |
-| Chambersburg, PA → Watertown, NY | Dry Van | $0 | 381 |
-| Uxbridge, MA → Mechanicsburg, PA | Power Only | $900 | 369 |
-| Uxbridge, MA → Tunkhannock, PA | Power Only | $0 | 287 |
-| Hermiston, OR → Fontana, CA | Power Only | $2,000 | 1019 |
-| Hermiston, OR → Ontario, CA | Power Only | $2,625 | 1028 |
-| Shrewsbury, MA → Mechanicsburg, PA | Power Only | $1,200 | 362 |
-| San Bernardino, CA → Laredo, TX | Power Only | $4,400 | 1387 |
-| Shafter, CA → Fontana, CA | Power Only | $925 | 175 |
-| Henderson, CO → Wilmer, TX | Power Only | $1,500 | 895 |
-| Odessa, TX → Hutchins, TX | Power Only | $800 | 361 |
-| Plainview, TX → Laredo, TX | Power Only | $1,800 | 586 |
-| Salt Lake City, UT → Fontana, CA | Power Only | $0 | 643 |
-| Bradford, PA → Lima, OH | Power Only | $800 | 359 |
-| Bradford, PA → Tunkhannock, PA | Power Only | $700 | 206 |
-| Carlisle, PA → Bethlehem, PA | Power Only | $400 | 106 |
-| Carlisle, PA → Philadelphia, PA | Power Only | $800 | 122 |
-| Woonsocket, SD → Mountain Lake, MN | Dry Van | $1,400 | 201 |
-| Ellwood City, PA → Princeton, IL | Dry Van | $1,700 | 518 |
-| Amarillo, TX → Oklahoma City, OK | Power Only | $700 | 258 |
-| Amarillo, TX → Laredo, TX | Power Only | $1,800 | 659 |
-| Amarillo, TX → Laredo, TX | Power Only | $0 | 659 |
-| Dumas, TX → Laredo, TX | Refrigerated | $2,600 | 709 |
-| Greenwood, IN → Marion, IN | Dry Van | $900 | 95 |
-| Greenwood, IN → Delaware, OH | Dry Van | $1,075 | 193 |
-| Ballston Spa, NY → New Bedford, MA | Dry Van | $1,591 | 218 |
-| Irving, TX → Norman, OK | Refrigerated | $1,230 | 184 |
-| Irving, TX → Norman, OK | Dry Van | $1,230 | 184 |
-| Sunnyvale, TX → Keller, TX | Refrigerated | $917 | 50 |
-| … and 1001 more | | | |
+| … and 1021 more | | | |
