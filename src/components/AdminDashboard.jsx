@@ -612,7 +612,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         <SectionHeader title="Trimble Actuals — This Month" />
         {(() => {
           const tier = getBillingTier(trimbleBillingStart);
-          const count = trimbleLoads?.count ?? 0;
+          const count = trimbleLoads?.loads ? trimbleLoads.loads.filter(l => !l.excluded_from_billing).length : (trimbleLoads?.count ?? 0);
           const rawCost = count * 0.10;
           const minCost = tier ? Math.max(rawCost, tier.minimum) : rawCost;
           const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -660,28 +660,29 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                             {load.revenue_amount != null ? `$${Number(load.revenue_amount).toLocaleString()}` : '—'}
                           </td>
                           <td style={{ padding: '11px 16px' }}>
-                            {load.type === 'wwp' ? (
-                              <span style={{ padding: '3px 10px', background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.md, color: t.colors.text.muted, fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, whiteSpace: 'nowrap' }}>WWP</span>
-                            ) : (
-                              <button
-                                onClick={async () => {
-                                  const next = !excluded;
-                                  await fetch('/api/orgs/trimble-actuals', {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ id: load.id, excluded_from_billing: next }),
-                                  });
-                                  setTrimbleLoads(prev => ({
-                                    ...prev,
-                                    count: prev.loads.filter(l => l.id !== load.id && !l.excluded_from_billing).length + (next ? 0 : 1),
-                                    loads: prev.loads.map(l => l.id === load.id ? { ...l, excluded_from_billing: next } : l),
-                                  }));
-                                }}
-                                style={{ padding: '3px 10px', background: excluded ? t.colors.accent.blueLight : '#fee2e2', border: `1px solid ${excluded ? t.colors.accent.blue : '#fca5a5'}`, borderRadius: t.radius.md, color: excluded ? t.colors.accent.blue : '#dc2626', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                              >
-                                {excluded ? 'Restore' : 'Exclude'}
-                              </button>
-                            )}
+                            <button
+                              onClick={async () => {
+                                const next = !excluded;
+                                await fetch('/api/orgs/trimble-actuals', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                                  body: JSON.stringify({ id: load.id, excluded_from_billing: next, type: load.type }),
+                                });
+                                // For WWP rows, flip both outbound and return together (same plan)
+                                const planId = load.type === 'wwp' ? load.id.replace(/_outbound$|_return$/, '') : null;
+                                setTrimbleLoads(prev => ({
+                                  ...prev,
+                                  loads: prev.loads.map(l => {
+                                    if (planId && l.type === 'wwp' && l.id.startsWith(planId)) return { ...l, excluded_from_billing: next };
+                                    if (!planId && l.id === load.id) return { ...l, excluded_from_billing: next };
+                                    return l;
+                                  }),
+                                }));
+                              }}
+                              style={{ padding: '3px 10px', background: excluded ? t.colors.accent.blueLight : '#fee2e2', border: `1px solid ${excluded ? t.colors.accent.blue : '#fca5a5'}`, borderRadius: t.radius.md, color: excluded ? t.colors.accent.blue : '#dc2626', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            >
+                              {excluded ? 'Restore' : 'Exclude'}
+                            </button>
                           </td>
                         </tr>
                       );

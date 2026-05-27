@@ -50,7 +50,7 @@ async function sendEmail(to, subject, html) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -642,14 +642,17 @@ async function handleTrimbleActuals(req, res, supabase, user) {
 
   // PATCH — toggle excluded_from_billing on a single record
   if (req.method === 'PATCH') {
-    const { id, excluded_from_billing } = req.body || {};
+    const { id, excluded_from_billing, type } = req.body || {};
     if (!id || typeof excluded_from_billing !== 'boolean') {
       return res.status(400).json({ error: 'id and excluded_from_billing required' });
     }
+    // WWP row IDs are composite strings like "uuid_outbound" — extract the plan UUID
+    const table = type === 'wwp' ? 'work_week_plans' : 'backhaul_requests';
+    const planId = type === 'wwp' ? id.replace(/_outbound$|_return$/, '') : id;
     const { error } = await supabase
-      .from('backhaul_requests')
+      .from(table)
       .update({ excluded_from_billing })
-      .eq('id', id);
+      .eq('id', planId);
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ ok: true });
   }
@@ -687,7 +690,7 @@ async function handleTrimbleActuals(req, res, supabase, user) {
       .order('completed_at', { ascending: true }),
     supabase
       .from('work_week_plans')
-      .select('id, fleet_id, outbound_load, return_load, outbound_status, return_status, updated_at, fleets ( name )')
+      .select('id, fleet_id, outbound_load, return_load, outbound_status, return_status, excluded_from_billing, updated_at, fleets ( name )')
       .or('outbound_status.eq.hauled,return_status.eq.hauled')
       .gte('updated_at', start.toISOString())
       .lt('updated_at', end.toISOString())
@@ -719,6 +722,7 @@ async function handleTrimbleActuals(req, res, supabase, user) {
   // Expand each WWP plan into individual hauled load rows
   const wwpMapped = [];
   for (const plan of (wwpRows || [])) {
+    const planExcluded = plan.excluded_from_billing ?? false;
     if (plan.outbound_status === 'hauled' && plan.outbound_load) {
       const load = plan.outbound_load;
       wwpMapped.push({
@@ -732,7 +736,7 @@ async function handleTrimbleActuals(req, res, supabase, user) {
         source: load.source || null,
         revenue_amount: load.total_revenue ? parseFloat(load.total_revenue) : null,
         net_revenue: load.net_revenue != null ? parseFloat(load.net_revenue) : (load.carrier_revenue != null ? parseFloat(load.carrier_revenue) : null),
-        excluded_from_billing: false,
+        excluded_from_billing: planExcluded,
       });
     }
     if (plan.return_status === 'hauled' && plan.return_load) {
@@ -748,7 +752,7 @@ async function handleTrimbleActuals(req, res, supabase, user) {
         source: load.source || null,
         revenue_amount: load.total_revenue ? parseFloat(load.total_revenue) : null,
         net_revenue: load.net_revenue != null ? parseFloat(load.net_revenue) : (load.carrier_revenue != null ? parseFloat(load.carrier_revenue) : null),
-        excluded_from_billing: false,
+        excluded_from_billing: planExcluded,
       });
     }
   }
