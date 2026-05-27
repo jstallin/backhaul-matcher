@@ -503,6 +503,8 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div><strong>Broker:</strong> {match.broker}</div>
                   <div><strong>Shipper:</strong> {match.shipper}</div>
                   <div><strong>Freight:</strong> {match.freightType}</div>
+                  {match.credit && <div><strong>Credit:</strong> {match.credit}</div>}
+                  {match.experience_factor && <div><strong>Rating:</strong> {match.experience_factor}</div>}
                 </div>
                 {match.contactPhone && (
                   <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -510,6 +512,12 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                     <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Call</a>
                     <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Text</a>
                     <span style={{ color: colors.text.secondary }}>{match.contactPhone}</span>
+                    {match.companyEmail && <a href={`mailto:${match.companyEmail}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Email</a>}
+                  </div>
+                )}
+                {match.special_info && (
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.border.secondary}`, fontStyle: 'italic', color: colors.text.primary }}>
+                    <strong style={{ fontStyle: 'normal', color: colors.text.tertiary }}>Special Instructions: </strong>{match.special_info}
                   </div>
                 )}
               </div>
@@ -818,11 +826,11 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                       )}
                       <div>
                         <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Pickup Date</div>
-                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.pickupDate)}</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.pickupDate)}{m.pickup_time ? <span style={{ fontWeight: 400, color: colors.text.secondary }}> · {m.pickup_time}</span> : null}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Delivery Date</div>
-                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.deliveryDate)}</div>
+                        <div style={{ fontWeight: 600, color: colors.text.primary }}>{formatDate(m.deliveryDate)}{m.delivery_time ? <span style={{ fontWeight: 400, color: colors.text.secondary }}> · {m.delivery_time}</span> : null}</div>
                       </div>
                       <div>
                         <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker</div>
@@ -872,6 +880,12 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           <div style={{ fontWeight: 700, color: m.experience_factor === 'A' ? colors.accent.success : colors.text.primary }}>{m.experience_factor}</div>
                         </div>
                       )}
+                      {m.credit && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker Credit</div>
+                          <div style={{ fontWeight: 700, color: colors.text.primary }}>{m.credit}</div>
+                        </div>
+                      )}
                       {m.equipment_options && (
                         <div>
                           <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Equip. Options</div>
@@ -888,7 +902,19 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                           </div>
                         </div>
                       )}
+                      {m.companyEmail && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '2px' }}>Broker Email</div>
+                          <a href={`mailto:${m.companyEmail}`} onClick={e => e.stopPropagation()} style={{ fontWeight: 600, color: colors.accent.primary, fontSize: '12px', textDecoration: 'none', wordBreak: 'break-all' }}>{m.companyEmail}</a>
+                        </div>
+                      )}
                     </div>
+                    {m.special_info && (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${colors.border.secondary}` }}>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary, marginBottom: '4px' }}>Special Instructions</div>
+                        <div style={{ fontSize: '12px', color: colors.text.primary, fontStyle: 'italic' }}>{m.special_info}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

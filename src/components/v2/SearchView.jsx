@@ -939,14 +939,25 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           <div><strong style={{ color: t.colors.text.primary }}>Broker:</strong> {match.broker || '—'}</div>
           <div><strong style={{ color: t.colors.text.primary }}>Shipper:</strong> {match.shipper || '—'}</div>
           <div><strong style={{ color: t.colors.text.primary }}>Freight:</strong> {mFreight(match) || '—'}</div>
+          {match.credit && <div><strong style={{ color: t.colors.text.primary }}>Credit:</strong> {match.credit}</div>}
+          {match.experience_factor && <div><strong style={{ color: t.colors.text.primary }}>Rating:</strong> {match.experience_factor}</div>}
         </div>
       )}
-      {match.contactPhone && (
+      {(match.contactPhone || match.companyEmail) && (
         <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}`, background: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: t.font.size.xs }}>
           <span style={{ color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>Contact Broker:</span>
-          <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Call</a>
-          <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Text</a>
-          <span style={{ color: t.colors.text.secondary }}>{match.contactPhone}</span>
+          {match.contactPhone && <>
+            <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Call</a>
+            <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Text</a>
+            <span style={{ color: t.colors.text.secondary }}>{match.contactPhone}</span>
+          </>}
+          {match.companyEmail && <a href={`mailto:${match.companyEmail}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Email</a>}
+        </div>
+      )}
+      {match.special_info && (
+        <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}`, background: 'rgba(255,255,255,0.5)', fontSize: t.font.size.xs }}>
+          <span style={{ color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>Special Instructions: </span>
+          <span style={{ color: t.colors.text.primary, fontStyle: 'italic' }}>{match.special_info}</span>
         </div>
       )}
 
@@ -1230,8 +1241,8 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                 {[
                   match.source && { label: 'Load Source', value: match.source === 'truckstop' ? <img src="/Waypoint%20Default.png" alt="Truckstop Waypoint" title="Truckstop load" style={{ height: '16px', display: 'block' }} /> : ({ directfreight: 'DirectFreight', truckerpath: 'TruckerPath', dat: 'DAT', imported: 'Imported' }[match.source] || match.source) },
                   (match.df_load_number || match.source_load_id || match.load_id) && { label: 'Load Number', value: match.df_load_number || match.source_load_id || match.load_id, mono: true },
-                  { label: 'Pickup Date', value: fmtDate(mPickupDate(match)) },
-                  { label: 'Delivery Date', value: fmtDate(mDeliveryDate(match)) },
+                  { label: 'Pickup Date', value: match.pickup_time ? `${fmtDate(mPickupDate(match))} · ${match.pickup_time}` : fmtDate(mPickupDate(match)) },
+                  { label: 'Delivery Date', value: match.delivery_time ? `${fmtDate(mDeliveryDate(match))} · ${match.delivery_time}` : fmtDate(mDeliveryDate(match)) },
                   { label: 'Broker', value: match.broker || '—' },
                   { label: 'Shipper', value: match.shipper || '—' },
                   { label: 'Freight', value: mFreight(match) || '—' },
@@ -1241,6 +1252,7 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                   match.age_hours > 0 && { label: 'Posted', value: match.age_hours < 24 ? `${match.age_hours}h ago` : `${Math.floor(match.age_hours / 24)}d ago`, color: match.age_hours > 48 ? '#dc2626' : undefined },
                   match.fuel_cost != null && { label: 'Est. Fuel Cost', value: `$${match.fuel_cost.toFixed(2)}` },
                   match.experience_factor && { label: 'Broker Rating', value: match.experience_factor, color: match.experience_factor === 'A' ? '#16a34a' : undefined },
+                  match.credit && { label: 'Broker Credit', value: match.credit },
                   match.equipment_options && { label: 'Equip. Options', value: match.equipment_options, color: t.colors.accent.blue },
                   match.contactPhone && {
                     label: 'Contact Broker',
@@ -1252,10 +1264,15 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
                       </span>
                     )
                   },
-                ].filter(Boolean).map(({ label, value, mono, color }) => (
-                  <div key={label}>
+                  match.companyEmail && {
+                    label: 'Broker Email',
+                    value: <a href={`mailto:${match.companyEmail}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, textDecoration: 'none', wordBreak: 'break-all' }}>{match.companyEmail}</a>
+                  },
+                  match.special_info && { label: 'Special Instructions', value: match.special_info, span: true },
+                ].filter(Boolean).map(({ label, value, mono, color, span }) => (
+                  <div key={label} style={span ? { gridColumn: '1 / -1' } : {}}>
                     <div style={{ fontSize: '10px', color: t.colors.text.muted, marginBottom: '2px' }}>{label}</div>
-                    <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: color || t.colors.text.primary, fontFamily: mono ? 'monospace' : 'inherit', wordBreak: 'break-all' }}>
+                    <div style={{ fontSize: t.font.size.sm, fontWeight: span ? t.font.weight.normal : t.font.weight.semibold, color: color || t.colors.text.primary, fontFamily: mono ? 'monospace' : 'inherit', wordBreak: 'break-all', fontStyle: span ? 'italic' : 'normal' }}>
                       {value}
                     </div>
                   </div>
