@@ -688,10 +688,6 @@ function AppV2Inner() {
   }, [user]);
 
   const handleNavigate = (view) => {
-    if (view === 'help') {
-      window.$crisp?.push(['do', 'chat:open']);
-      return;
-    }
     if (view === 'buy-credits') {
       setBuyCreditsOpen(true);
       return;

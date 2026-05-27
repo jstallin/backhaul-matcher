@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
-import { Search, Truck, Package, BarChart2, FileText, Settings, Calendar, HelpCircle } from '../../icons';
+import { Search, Truck, Package, BarChart2, FileText, Settings, Calendar } from '../../icons';
 
 const t = tokens;
 
@@ -26,7 +26,6 @@ const MOBILE_NAV = [
   { id: 'reports',   label: 'Reports',   Icon: BarChart2 },
   { id: 'estimates', label: 'Estimates', Icon: FileText },
   { id: 'settings',  label: 'Settings',  Icon: Settings },
-  { id: 'help',      label: 'Support',   Icon: HelpCircle },
 ];
 
 // ─── Avatar menu (top-right of content area) ─────────────────────────────────
@@ -248,7 +247,7 @@ function BottomNav({ currentView, onNavigate, isAdmin }) {
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {MOBILE_NAV.filter(({ id }) => (id !== 'work-week' || isAdmin) && (id !== 'help' || !isAdmin)).map(({ id, label, Icon }) => {
+        {MOBILE_NAV.filter(({ id }) => id !== 'work-week' || isAdmin).map(({ id, label, Icon }) => {
           const active = currentView === id;
           return (
             <button
