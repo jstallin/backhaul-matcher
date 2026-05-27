@@ -734,7 +734,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               />
             </>
           )
-        ) : requests.length === 0 ? (
+        ) : (() => {
+          const activeRequests = requests.filter(r => r.status === 'active' || r.status === 'paused');
+          return activeRequests.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
             <FileText size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
             <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: colors.text.primary }}>No Backhaul Requests Yet</h3>
@@ -750,7 +752,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
           <>
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>
-                Your Backhaul Requests ({requests.length})
+                Your Backhaul Requests ({activeRequests.length})
               </h3>
               <p style={{ margin: 0, color: colors.text.secondary, fontSize: '14px' }}>
                 Click a backhaul request card to view matching opportunities
@@ -758,7 +760,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-              {requests.filter(r => r.status === 'active' || r.status === 'paused').map((request) => (
+              {activeRequests.map((request) => (
                 <div key={request.id} onClick={() => handleSelectRequest(request)} style={{ background: colors.background.card, border: `2px solid ${request.status === 'active' ? colors.accent.success + '40' : colors.border.primary}`, borderRadius: '16px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${colors.accent.primary}30`; e.currentTarget.style.borderColor = colors.accent.primary; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = request.status === 'active' ? colors.accent.success + '40' : colors.border.primary; }}>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
@@ -839,7 +841,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               ))}
             </div>
           </>
-        )}
+        );
+        })()}
       </div>
 
       {showBuyCredits && (
