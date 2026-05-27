@@ -36,7 +36,7 @@ const getLegKey = (origin, dest) => `${getStopKey(origin)}->${getStopKey(dest)}`
 // Approximate geographic centroids for US states.
 // Used as a fallback when a load has no pickup/delivery coordinates,
 // so the corridor filter can still reject loads from the wrong region.
-const STATE_CENTROIDS = {
+export const STATE_CENTROIDS = {
   AL: { lat: 32.7,  lng: -86.7  }, AK: { lat: 64.2,  lng: -153.4 },
   AZ: { lat: 34.3,  lng: -111.1 }, AR: { lat: 34.9,  lng: -92.4  },
   CA: { lat: 36.8,  lng: -119.7 }, CO: { lat: 39.0,  lng: -105.5 },

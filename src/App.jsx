@@ -30,6 +30,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { db, supabase } from './lib/supabase';
 import { TruckstopOnboarding } from './components/TruckstopOnboarding';
 import { HelpPage } from './components/HelpPage';
+// import { CrispChat } from './components/CrispChat';
 import backhaulLoadsData from './data/backhaul_loads_data.json';
 
 // Calculate distance between two points (Haversine formula)
@@ -506,6 +507,7 @@ function App() {
 
   return (
     <AuthWrapper>
+      {/* <CrispChat /> */}
       {currentView === 'onboarding' ? (
         <TruckstopOnboarding org={onboardingOrg} isOrgAdmin={onboardingIsAdmin} onComplete={(view) => setCurrentView(view || 'dashboard')} />
       ) : currentView === 'settings' ? (

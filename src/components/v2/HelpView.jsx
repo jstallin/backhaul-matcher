@@ -91,6 +91,16 @@ function MailIcon({ size = 18 }) {
   );
 }
 
+function HeadsetIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 18v-6a9 9 0 0118 0v6" />
+      <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3z" />
+      <path d="M3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z" />
+    </svg>
+  );
+}
+
 function BookIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -287,6 +297,28 @@ export function HelpView({ onOpenCoDriver }) {
             <MailIcon size={15} />
             support@haulmonitor.cloud
           </a>
+          {/* Get Help Live (Crisp) — disabled until ready to launch
+          <button
+            onClick={() => window.$crisp?.push(['do', 'chat:open'])}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '9px 18px',
+              background: '#16a34a',
+              color: '#fff',
+              border: 'none',
+              borderRadius: t.radius.lg,
+              fontSize: t.font.size.sm,
+              fontWeight: t.font.weight.semibold,
+              cursor: 'pointer',
+              fontFamily: t.font.family,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#15803d'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#16a34a'; }}
+          >
+            <HeadsetIcon size={15} />
+            Get Help Live
+          </button>
+          */}
         </div>
       </div>
     </div>
