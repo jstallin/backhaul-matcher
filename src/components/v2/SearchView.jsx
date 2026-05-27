@@ -1409,13 +1409,15 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const handleHaulConfirm = async () => {
     if (!haulMatch) return;
     setCompleting(true);
+    // NaN is not caught by ??, so coerce all numeric fields explicitly
+    const safeNum = (v, fallback = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fallback; };
     try {
       await db.requests.update(request.id, {
         status: 'completed',
-        revenue_amount: mTotalRev(haulMatch),
-        net_revenue: haulMatch.customer_net_credit ?? haulMatch.netRevenue ?? 0,
-        out_of_route_miles: mAdditional(haulMatch),
-        load_distance_miles: mDistance(haulMatch) || null,
+        revenue_amount: safeNum(mTotalRev(haulMatch)),
+        net_revenue: safeNum(haulMatch.customer_net_credit ?? haulMatch.netRevenue),
+        out_of_route_miles: safeNum(mAdditional(haulMatch)),
+        load_distance_miles: safeNum(mDistance(haulMatch)) || null,
         completed_at: new Date().toISOString(),
         hauled_load_id: haulMatch.load_id || haulMatch.source_load_id || null,
         hauled_load_source: haulMatch.source || null,
@@ -1425,7 +1427,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
       setHaulMatch(null);
       if (onComplete) onComplete();
     } catch (err) {
-      console.error('Error recording haul:', err);
+      console.error('Error recording haul:', err?.message || err, err?.details || '');
     } finally {
       setCompleting(false);
     }
