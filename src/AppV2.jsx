@@ -19,7 +19,7 @@ import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { BuyCreditsModal } from './components/BuyCreditsModal';
 import { TruckstopOnboarding } from './components/TruckstopOnboarding';
 import { PlanDetailModal } from './components/v2/PlanDetailModal';
-import { CrispChat } from './components/CrispChat';
+// import { CrispChat } from './components/CrispChat';
 import { tokens } from './styles/tokens.v2';
 import { useAuth } from './contexts/AuthContext';
 import { useCredits } from './hooks/useCredits';
@@ -697,7 +697,7 @@ function AppV2Inner() {
 
   return (
     <Shell currentView={currentView} onNavigate={handleNavigate} creditBalance={balance}>
-      <CrispChat />
+      {/* <CrispChat /> */}
       {renderView(currentView, handleNavigate, { org, isOrgAdmin }, { onOpenCoDriver: () => setSupportOpen(true) })}
       {supportOpen && (
         <CoDriverV2

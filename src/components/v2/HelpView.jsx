@@ -297,6 +297,7 @@ export function HelpView({ onOpenCoDriver }) {
             <MailIcon size={15} />
             support@haulmonitor.cloud
           </a>
+          {/* Get Help Live (Crisp) — disabled until ready to launch
           <button
             onClick={() => window.$crisp?.push(['do', 'chat:open'])}
             style={{
@@ -317,6 +318,7 @@ export function HelpView({ onOpenCoDriver }) {
             <HeadsetIcon size={15} />
             Get Help Live
           </button>
+          */}
         </div>
       </div>
     </div>
