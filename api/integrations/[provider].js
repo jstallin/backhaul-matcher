@@ -628,7 +628,7 @@ function getDestStates(homeState) {
 }
 
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, destStates, equipmentType, radiusMiles, pickupDate }) {
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pickupDate }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
   const pickupDateTime = pickupDate
@@ -654,7 +654,6 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationLatitude>0</web1:DestinationLatitude>
           <web1:DestinationLongitude>0</web1:DestinationLongitude>
           <web1:DestinationRange>300</web1:DestinationRange>
-          ${destStates ? `<web1:DestinationState>${escapeXml(destStates)}</web1:DestinationState>` : ''}
           <web1:EquipmentType>${equip}</web1:EquipmentType>
           <web1:HoursOld>0</web1:HoursOld>
           <web1:LoadType>Full</web1:LoadType>
@@ -694,10 +693,7 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
     return [];
   }
 
-  const destStates = getDestStates(destState);
-  console.log(`[Truckstop] Destination states filter: ${destStates || '(none)'}`);
-
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, destStates, equipmentType, radiusMiles, pickupDate });
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pickupDate });
   const sanitized = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
   console.log('Truckstop SOAP envelope:\n', sanitized);
 
@@ -725,7 +721,12 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   const errors = result?.Errors;
   if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
     console.error('[Truckstop] API errors in response:', JSON.stringify(errors));
-    const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
+    const errMsg = JSON.stringify(errors).toLowerCase();
+    if (errMsg.includes('unauthorized') || errMsg.includes('invalid integration') || errMsg.includes('authentication')) {
+      const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
+    }
+    // Non-auth errors (e.g. no results, search warnings) — log and return empty
+    return [];
   }
 
   const rawLoads = toArray(result?.DetailResults?.MultipleLoadDetailResult);
