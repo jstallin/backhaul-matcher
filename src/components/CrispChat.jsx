@@ -9,6 +9,7 @@ export function CrispChat() {
   useEffect(() => {
     if (window.$crisp) return; // already loaded
     window.$crisp = [];
+    window.$crisp.push(['config', 'position:reverse', [true]]); // bottom-left, CoDriver is bottom-right
     window.CRISP_WEBSITE_ID = CRISP_WEBSITE_ID;
     const s = document.createElement('script');
     s.src = 'https://client.crisp.chat/l.js';
