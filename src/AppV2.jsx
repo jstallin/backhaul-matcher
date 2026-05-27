@@ -337,21 +337,24 @@ function DashboardView({ onNavigate }) {
   const [estimateRequests, setEstimateRequests] = useState([]);
   const [activePlan, setActivePlan] = useState(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [wwpPlans, setWwpPlans] = useState([]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [f, r, e, plan] = await Promise.all([
+        const [f, r, e, plan, hauledPlans] = await Promise.all([
           db.fleets.getAll(user.id),
           db.requests.getAll(user.id),
           db.estimateRequests.getAll(user.id),
           db.workWeekPlans.getActive(user.id).catch(() => null),
+          db.workWeekPlans.getHauled(user.id).catch(() => []),
         ]);
         setFleets(f || []);
         setRequests(r || []);
         setEstimateRequests(e || []);
         setActivePlan(plan);
+        setWwpPlans(hauledPlans || []);
       } catch (err) {
         console.error('Dashboard load error:', err);
       } finally {
@@ -368,6 +371,26 @@ function DashboardView({ onNavigate }) {
   const netRevenueThisMonth = completedRequests
     .filter((r) => r.completed_at && new Date(r.completed_at) >= thisMonthStart)
     .reduce((sum, r) => sum + (parseFloat(r.net_revenue) || 0), 0);
+
+  // WWP hauled load stats (outbound and return counted individually)
+  let wwpHaulCount = 0, wwpNetRevenueThisMonth = 0;
+  for (const plan of wwpPlans) {
+    if (plan.outbound_status === 'hauled' && plan.outbound_load) {
+      wwpHaulCount++;
+      if (plan.updated_at && new Date(plan.updated_at) >= thisMonthStart) {
+        wwpNetRevenueThisMonth += parseFloat(plan.outbound_load.net_revenue ?? plan.outbound_load.carrier_revenue ?? 0) || 0;
+      }
+    }
+    if (plan.return_status === 'hauled' && plan.return_load) {
+      wwpHaulCount++;
+      if (plan.updated_at && new Date(plan.updated_at) >= thisMonthStart) {
+        wwpNetRevenueThisMonth += parseFloat(plan.return_load.net_revenue ?? plan.return_load.carrier_revenue ?? 0) || 0;
+      }
+    }
+  }
+  const combinedHaulCount = completedRequests.length + wwpHaulCount;
+  const combinedNetRevenueThisMonth = netRevenueThisMonth + wwpNetRevenueThisMonth;
+
   const totalGallonsSaved = completedRequests.reduce((sum, r) => {
     const loadMiles = parseFloat(r.load_distance_miles) || 0;
     const oorMiles = parseFloat(r.out_of_route_miles) || 0;
@@ -441,8 +464,8 @@ function DashboardView({ onNavigate }) {
           {/* KPI cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             <StatCard label="Active Requests" value={loading ? null : activeRequests.length} sub="Currently open" Icon={Search} accentColor={t.colors.accent.blue} loading={loading} onClick={() => onNavigate('search')} />
-            <StatCard label="Net Revenue" value={loading ? null : `$${Math.round(netRevenueThisMonth).toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
-            <StatCard label="Completed Hauls" value={loading ? null : completedRequests.length} sub="All time" Icon={CheckCircle} accentColor={t.colors.accent.purple} loading={loading} onClick={() => onNavigate('loads')} />
+            <StatCard label="Net Revenue" value={loading ? null : `$${Math.round(combinedNetRevenueThisMonth).toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
+            <StatCard label="Completed Hauls" value={loading ? null : combinedHaulCount} sub="All time" Icon={CheckCircle} accentColor={t.colors.accent.purple} loading={loading} onClick={() => onNavigate('loads')} />
             <StatCard label="Gallons Conserved" value={loading ? null : Math.round(totalGallonsSaved).toLocaleString()} sub="All time" Icon={TrendingUp} accentColor={t.colors.accent.amber} loading={loading} onClick={() => onNavigate('reports')} />
           </div>
 

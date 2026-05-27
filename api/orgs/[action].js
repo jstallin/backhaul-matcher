@@ -666,32 +666,45 @@ async function handleTrimbleActuals(req, res, supabase, user) {
   }
   const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
 
-  const { data: loads, error } = await supabase
-    .from('backhaul_requests')
-    .select(`
-      id,
-      request_name,
-      datum_point,
-      completed_at,
-      hauled_load_id,
-      hauled_load_source,
-      revenue_amount,
-      net_revenue,
-      excluded_from_billing,
-      fleets ( name )
-    `)
-    .eq('status', 'completed')
-    .gte('completed_at', start.toISOString())
-    .lt('completed_at', end.toISOString())
-    .order('completed_at', { ascending: true });
+  const [{ data: loads, error }, { data: wwpRows, error: wwpError }] = await Promise.all([
+    supabase
+      .from('backhaul_requests')
+      .select(`
+        id,
+        request_name,
+        datum_point,
+        completed_at,
+        hauled_load_id,
+        hauled_load_source,
+        revenue_amount,
+        net_revenue,
+        excluded_from_billing,
+        fleets ( name )
+      `)
+      .eq('status', 'completed')
+      .gte('completed_at', start.toISOString())
+      .lt('completed_at', end.toISOString())
+      .order('completed_at', { ascending: true }),
+    supabase
+      .from('work_week_plans')
+      .select('id, fleet_id, outbound_load, return_load, outbound_status, return_status, updated_at, fleets ( name )')
+      .or('outbound_status.eq.hauled,return_status.eq.hauled')
+      .gte('updated_at', start.toISOString())
+      .lt('updated_at', end.toISOString())
+      .order('updated_at', { ascending: true }),
+  ]);
 
   if (error) {
-    console.error('[trimble-actuals] query error:', error.message);
+    console.error('[trimble-actuals] backhaul query error:', error.message);
     return res.status(500).json({ error: 'Failed to query loads' });
+  }
+  if (wwpError) {
+    console.error('[trimble-actuals] wwp query error:', wwpError.message);
   }
 
   const mapped = loads.map(r => ({
     id: r.id,
+    type: 'backhaul',
     completed_at: r.completed_at,
     request_name: r.request_name || null,
     datum_point: r.datum_point || null,
@@ -703,12 +716,50 @@ async function handleTrimbleActuals(req, res, supabase, user) {
     excluded_from_billing: r.excluded_from_billing ?? false,
   }));
 
-  const billableCount = mapped.filter(r => !r.excluded_from_billing).length;
+  // Expand each WWP plan into individual hauled load rows
+  const wwpMapped = [];
+  for (const plan of (wwpRows || [])) {
+    if (plan.outbound_status === 'hauled' && plan.outbound_load) {
+      const load = plan.outbound_load;
+      wwpMapped.push({
+        id: `${plan.id}_outbound`,
+        type: 'wwp',
+        completed_at: plan.updated_at,
+        request_name: 'Work Week Plan — Outbound',
+        datum_point: load.pickup_city && load.pickup_state ? `${load.pickup_city}, ${load.pickup_state}` : null,
+        fleet_name: plan.fleets?.name || null,
+        load_id: load.load_id || null,
+        source: load.source || null,
+        revenue_amount: load.total_revenue ? parseFloat(load.total_revenue) : null,
+        net_revenue: load.net_revenue != null ? parseFloat(load.net_revenue) : (load.carrier_revenue != null ? parseFloat(load.carrier_revenue) : null),
+        excluded_from_billing: false,
+      });
+    }
+    if (plan.return_status === 'hauled' && plan.return_load) {
+      const load = plan.return_load;
+      wwpMapped.push({
+        id: `${plan.id}_return`,
+        type: 'wwp',
+        completed_at: plan.updated_at,
+        request_name: 'Work Week Plan — Return',
+        datum_point: load.pickup_city && load.pickup_state ? `${load.pickup_city}, ${load.pickup_state}` : null,
+        fleet_name: plan.fleets?.name || null,
+        load_id: load.load_id || null,
+        source: load.source || null,
+        revenue_amount: load.total_revenue ? parseFloat(load.total_revenue) : null,
+        net_revenue: load.net_revenue != null ? parseFloat(load.net_revenue) : (load.carrier_revenue != null ? parseFloat(load.carrier_revenue) : null),
+        excluded_from_billing: false,
+      });
+    }
+  }
+
+  const allLoads = [...mapped, ...wwpMapped].sort((a, b) => new Date(a.completed_at) - new Date(b.completed_at));
+  const billableCount = allLoads.filter(r => !r.excluded_from_billing).length;
 
   return res.status(200).json({
     month: start.toISOString().slice(0, 7),
     count: billableCount,
-    loads: mapped,
+    loads: allLoads,
   });
 }
 

@@ -660,24 +660,28 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                             {load.revenue_amount != null ? `$${Number(load.revenue_amount).toLocaleString()}` : '—'}
                           </td>
                           <td style={{ padding: '11px 16px' }}>
-                            <button
-                              onClick={async () => {
-                                const next = !excluded;
-                                await fetch('/api/orgs/trimble-actuals', {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ id: load.id, excluded_from_billing: next }),
-                                });
-                                setTrimbleLoads(prev => ({
-                                  ...prev,
-                                  count: prev.loads.filter(l => l.id !== load.id && !l.excluded_from_billing).length + (next ? 0 : 1),
-                                  loads: prev.loads.map(l => l.id === load.id ? { ...l, excluded_from_billing: next } : l),
-                                }));
-                              }}
-                              style={{ padding: '3px 10px', background: excluded ? t.colors.accent.blueLight : '#fee2e2', border: `1px solid ${excluded ? t.colors.accent.blue : '#fca5a5'}`, borderRadius: t.radius.md, color: excluded ? t.colors.accent.blue : '#dc2626', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                            >
-                              {excluded ? 'Restore' : 'Exclude'}
-                            </button>
+                            {load.type === 'wwp' ? (
+                              <span style={{ padding: '3px 10px', background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.md, color: t.colors.text.muted, fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, whiteSpace: 'nowrap' }}>WWP</span>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  const next = !excluded;
+                                  await fetch('/api/orgs/trimble-actuals', {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: load.id, excluded_from_billing: next }),
+                                  });
+                                  setTrimbleLoads(prev => ({
+                                    ...prev,
+                                    count: prev.loads.filter(l => l.id !== load.id && !l.excluded_from_billing).length + (next ? 0 : 1),
+                                    loads: prev.loads.map(l => l.id === load.id ? { ...l, excluded_from_billing: next } : l),
+                                  }));
+                                }}
+                                style={{ padding: '3px 10px', background: excluded ? t.colors.accent.blueLight : '#fee2e2', border: `1px solid ${excluded ? t.colors.accent.blue : '#fca5a5'}`, borderRadius: t.radius.md, color: excluded ? t.colors.accent.blue : '#dc2626', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                              >
+                                {excluded ? 'Restore' : 'Exclude'}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );

@@ -18,6 +18,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
   const [activePlan, setActivePlan] = useState(null);
+  const [wwpPlans, setWwpPlans] = useState([]);
   const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [defaultBuyPackage, setDefaultBuyPackage] = useState(null);
   const { balance, loading: creditsLoading, openCheckout } = useCredits();
@@ -40,16 +41,18 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [fleetsData, requestsData, estimateData, planData] = await Promise.all([
+      const [fleetsData, requestsData, estimateData, planData, hauledPlans] = await Promise.all([
         db.fleets.getAll(user.id),
         db.requests.getAll(user.id),
         db.estimateRequests.getAll(user.id),
         db.workWeekPlans.getActive(user.id).catch(() => null),
+        db.workWeekPlans.getHauled(user.id).catch(() => []),
       ]);
       setFleets(fleetsData || []);
       setRequests(requestsData || []);
       setEstimateRequests(estimateData || []);
       setActivePlan(planData);
+      setWwpPlans(hauledPlans || []);
     } catch (err) {
       console.error('Dashboard load error:', err);
       setFleets([]);
@@ -66,6 +69,22 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const openEstimates = estimateRequests.filter(r => r.status === 'active' || r.status === 'open' || r.status === 'pending');
   const totalRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.revenue_amount) || 0), 0);
   const totalNetRevenue = completedRequests.reduce((sum, r) => sum + (parseFloat(r.net_revenue) || 0), 0);
+
+  // WWP hauled load stats (outbound and return counted individually)
+  let wwpHaulCount = 0, wwpNetRevenue = 0;
+  for (const plan of wwpPlans) {
+    if (plan.outbound_status === 'hauled' && plan.outbound_load) {
+      wwpHaulCount++;
+      wwpNetRevenue += parseFloat(plan.outbound_load.net_revenue ?? plan.outbound_load.carrier_revenue ?? 0) || 0;
+    }
+    if (plan.return_status === 'hauled' && plan.return_load) {
+      wwpHaulCount++;
+      wwpNetRevenue += parseFloat(plan.return_load.net_revenue ?? plan.return_load.carrier_revenue ?? 0) || 0;
+    }
+  }
+  const combinedHaulCount = completedRequests.length + wwpHaulCount;
+  const combinedNetRevenue = totalNetRevenue + wwpNetRevenue;
+
   const totalGallonsSaved = completedRequests.reduce((sum, r) => {
     const loadMiles = parseFloat(r.load_distance_miles) || 0;
     const oorMiles = parseFloat(r.out_of_route_miles) || 0;
@@ -104,7 +123,7 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
     },
     {
       label: 'Completed Hauls',
-      value: loading ? '—' : completedRequests.length,
+      value: loading ? '—' : combinedHaulCount,
       icon: CheckCircle,
       color: '#10b981',
       action: () => onMenuNavigate('fleet-reports')
@@ -192,17 +211,17 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         </div>
 
         {/* Hero Banners */}
-        {!loading && (totalNetRevenue > 0 || totalGallonsSaved > 0) && (
+        {!loading && (combinedNetRevenue > 0 || totalGallonsSaved > 0) && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-            {totalNetRevenue > 0 && (
+            {combinedNetRevenue > 0 && (
               <div onClick={() => onMenuNavigate('fleet-reports')} style={{ background: `linear-gradient(135deg, ${colors.accent.success}18, ${colors.accent.success}08)`, border: `1px solid ${colors.accent.success}40`, borderRadius: '16px', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer' }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `${colors.accent.success}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <DollarSign size={26} color={colors.accent.success} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: colors.accent.success, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Net Revenue Earned</div>
-                  <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>${Math.round(totalNetRevenue).toLocaleString()}</div>
-                  <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>across {completedRequests.length} completed haul{completedRequests.length !== 1 ? 's' : ''}</div>
+                  <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, lineHeight: 1 }}>${Math.round(combinedNetRevenue).toLocaleString()}</div>
+                  <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '4px' }}>across {combinedHaulCount} completed haul{combinedHaulCount !== 1 ? 's' : ''}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <TrendingUp size={32} color={`${colors.accent.success}60`} />

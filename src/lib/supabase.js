@@ -700,5 +700,16 @@ export const db = {
       if (error) throw error;
       return data;
     },
+
+    async getHauled(userId) {
+      const { data, error } = await supabase
+        .from('work_week_plans')
+        .select('id, fleet_id, outbound_load, return_load, outbound_status, return_status, chain_summary, updated_at')
+        .eq('user_id', userId)
+        .or('outbound_status.eq.hauled,return_status.eq.hauled')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   }
 };
