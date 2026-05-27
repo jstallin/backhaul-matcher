@@ -460,13 +460,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const handleCompleteRequest = async (match) => {
+    const safeNum = (v, fallback = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fallback; };
     try {
       await db.requests.update(selectedRequest.id, {
         status: 'completed',
-        revenue_amount: match.totalRevenue,
-        net_revenue: match.customer_net_credit ?? match.netRevenue ?? null,
-        out_of_route_miles: match.additionalMiles,
-        load_distance_miles: match.distance ?? null,
+        revenue_amount: safeNum(match.totalRevenue),
+        net_revenue: safeNum(match.customer_net_credit ?? match.netRevenue),
+        out_of_route_miles: safeNum(match.additionalMiles),
+        load_distance_miles: safeNum(match.distance) || null,
         hauled_load_id: match.load_id || null,
         hauled_load_source: match.source || null,
         completed_at: new Date().toISOString()
@@ -474,7 +475,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       setSelectedRequest(null);
       loadRequests();
     } catch (error) {
-      console.error('Error completing request:', error);
+      console.error('Error completing request:', error?.message || error, error?.details || '');
       throw error;
     }
   };
