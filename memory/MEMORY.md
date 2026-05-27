@@ -8,3 +8,4 @@
 - [Vercel SPA routes need explicit rewrites](feedback_vercel_spa_routes.md) — every new client-side route needs an entry in vercel.json rewrites
 - [Trimble Actuals Report](project_trimble_actuals_report.md) — monthly hauled-load report for PC*MILER billing; Admin Dashboard live view + 1st-of-month Resend email to admins; currently at 12-function Vercel limit
 - [Staging First Rule](feedback_staging_first.md) — always target staging Supabase before production, even for benign ops like schema cache reloads
+- [Credential Encryption Plan](project_credential_encryption.md) — Truckstop creds plaintext in pilot; Supabase Vault on Pro upgrade; must fix before scaling beyond pilot
