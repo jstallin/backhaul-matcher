@@ -725,7 +725,12 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   const errors = result?.Errors;
   if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
     console.error('[Truckstop] API errors in response:', JSON.stringify(errors));
-    const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
+    const errMsg = JSON.stringify(errors).toLowerCase();
+    if (errMsg.includes('unauthorized') || errMsg.includes('invalid integration') || errMsg.includes('authentication')) {
+      const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
+    }
+    // Non-auth errors (e.g. no results, search warnings) — log and return empty
+    return [];
   }
 
   const rawLoads = toArray(result?.DetailResults?.MultipleLoadDetailResult);
