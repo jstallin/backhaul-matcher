@@ -25,10 +25,35 @@
 
 ---
 
-## What Was Just Completed (May 27, 2026)
+## What Was Just Completed (May 27, 2026, session 2)
+
+### Bug fixes and polish — all shipped to production
+
+**Crisp live chat integration (disabled for now):**
+- `CrispChat.jsx` built and wired into v1 + v2 — loads Crisp, identifies user by email, hidden for admins.
+- "Get Help Live" button added to `HelpView.jsx` (Help & Support page), green, opens Crisp chat.
+- Disabled by default (commented out) pending Chip sign-off. Easy 3-line uncomment to re-enable.
+- Decision: no floating launcher — Crisp opens only via the Help page button.
+
+**Backhaul request results map — numbered load markers restored (v2):**
+- Markers were missing for Truckstop loads (which have no coordinates) after a prior fix stored `null` coords on match objects.
+- `RouteHomeMap` now falls back to state centroids for display when exact coords are null.
+- `STATE_CENTROIDS` exported from `routeHomeMatching.js` for reuse.
+- Some markers may appear outside the corridor blob (state centroid ≠ exact city) — accepted tradeoff vs. empty map.
+
+**v1 request list count/empty state fix:**
+- Count in "Your Backhaul Requests (N)" was using `requests.length` (all statuses including completed), but cards only rendered active/paused — causing misleading "(1) with no cards" display.
+- Now filters first, counts what's shown, and shows empty state when nothing is displayable.
+
+**Truckstop integration ID encryption — deferred:**
+- Clarified: only the per-org **integration ID** is stored in `user_integrations.metadata` (not username/password — those are Haul Monitor's own env vars).
+- Encryption deferred to Supabase Vault after Pro upgrade. Accepted risk for pilot phase.
+
+---
+
+## What Was Completed (May 27, 2026, session 1)
 
 ### WWP Plan Lifecycle — Production
-All of the following shipped to production via staging → PR → merge:
 
 **Plan detail modal (`PlanDetailModal.jsx`):**
 - Slide-in panel (560px desktop, full-screen mobile) accessible from both the dashboard widget and the WorkWeekView active plan banner.
@@ -51,10 +76,10 @@ All of the following shipped to production via staging → PR → merge:
 - `getActive` now returns both `active` and `in_progress` plans.
 - New `updateLoadStatus(planId, loadKey, loadStatus)` DB helper auto-computes plan status.
 
-**Other fixes this session:**
-- "Confirm Haul" 400 error fixed in v1 + v2: NaN guard (`Number.isFinite`) on all numeric fields before Supabase write; improved error logging to show `err.message` + `err.details`.
-- Net revenue on dashboard stat cards rounded to whole dollars (was showing e.g. `$284.764`).
-- Migration history reconciled: local file timestamps now match what production's `schema_migrations` table recorded. Staging schemas brought in sync (added `is_pilot`, pilot dates, `excluded_from_billing`). Prevents "Remote migration versions not found" CI error on future PRs.
+**Other fixes:**
+- "Confirm Haul" 400 error fixed in v1 + v2: NaN guard (`Number.isFinite`) on all numeric fields before Supabase write.
+- Net revenue on dashboard stat cards rounded to whole dollars.
+- Migration history reconciled; prevents "Remote migration versions not found" CI error.
 
 ---
 
@@ -63,50 +88,45 @@ All of the following shipped to production via staging → PR → merge:
 ### Work Week Planning — Production
 
 **Algorithm fixes (was returning 0 results):**
-- State centroid pre-screening: Truckstop loads have no coordinates, so all null-coord loads were passing the Haversine filter and filling the 20-candidate cap with loads delivering to IL/MN/TX. Now uses US state centroids (2.5x radius buffer) to screen out clearly-far states before PC*MILER is called.
-- Removed per-leg `minTotalMiles: 500` filter that was rejecting valid short regional returns (e.g. Charlotte→Davidson at 200mi total leg). Minimum is now only enforced at the full chain level.
-- Outbound delivery radius display: falls back to state centroid when load has no delivery coordinates (was showing "0 mi / 1,000 mi").
-- Filters out outbounds where `distance_miles = 0` (bogus Truckstop data).
+- State centroid pre-screening for Truckstop loads (no coordinates).
+- Removed per-leg `minTotalMiles: 500` filter.
+- Outbound delivery radius display falls back to state centroid.
+- Filters out outbounds where `distance_miles = 0`.
 
-**Route maps on chain cards:**
-- Top match card: 200px map, eager-loaded immediately on results render.
-- All other cards: 150px, lazy-loaded via IntersectionObserver when card scrolls into view.
-- Nominatim geocodes stops that lack coordinates (Truckstop loads); results cached in a module-level Map.
-- New file: `src/components/v2/ChainRouteMap.jsx`
+**Route maps on chain cards:** OSM tiles, lazy-loaded via IntersectionObserver.
 
-**5-credit cost per run (v1 + v2):**
-- `api/stripe/index.js`: deduct endpoint accepts optional `amount` in request body.
-- `src/hooks/useCredits.js`: `deductCredit()` accepts an `amount` param (default 1).
-- v2 `WorkWeekView` + v1 `WorkWeekPlanning`: gold coin badge, "5 credits per run" strip, insufficient credits banner.
+**5-credit cost per run (v1 + v2).**
 
 ---
 
 ## In Progress / Next Up
-- **Waiting on Chip's feedback** on Work Week Planning results quality — algorithm is finding plans, Chip validating route logic and revenue numbers.
-- **WWP plan lifecycle UX refinement** — pending Chip input on what additional detail or workflow changes are needed after he tests.
-- **Remove `[WWP]` debug logging** from algorithm once Chip validates results.
-- **Truckstop datum issue in production** — some fleets have a stale/unparseable `home_address` in DB causing datum city/state to be empty, which causes Truckstop to skip the search and fall back to DirectFreight. Fix: re-verify the address in Fleet Setup to overwrite with a clean `home_address`.
-- Corporate card arriving soon — upgrade Supabase + Vercel to paid tiers before pilots scale.
+- **Waiting on Chip's feedback** on Work Week Planning results quality.
+- **Remove `[WWP]` debug logging** from algorithm once Chip validates.
+- **Crisp chat** — uncomment `CrispChat` in App.jsx + AppV2.jsx and the button in HelpView.jsx when ready to launch.
+- **Truckstop datum issue** — some fleets have stale `home_address` causing empty datum city/state; fix: re-verify in Fleet Setup.
+- **Corporate card** → Supabase Pro + Vercel Pro upgrades → Supabase Vault for integration ID encryption.
 
 ---
 
 ## Key Decisions Made
 - Work Week Planning costs 5 credits per run (not 1 like search/estimate).
-- Return load delivery radius strictly enforced at 150mi (PC*MILER driving distance, not just Haversine).
+- Return load delivery radius strictly enforced at 150mi (PC*MILER driving distance).
 - Minimum miles (500) applies to the full chain, not individual legs.
-- State centroid threshold: 2.5× homeRadius (~375mi for 150mi radius) — lets TN/KY/VA pass while IL/MN/TX fail.
-- Route maps use OSM tiles (not PC*MILER tiles) — simpler, no auth needed for display-only maps.
+- State centroid threshold: 2.5× homeRadius — lets TN/KY/VA pass while IL/MN/TX fail.
+- Route maps use OSM tiles (not PC*MILER tiles).
 - Load statuses: `pending` → `booked` → `hauled`. Plan statuses: `active` → `in_progress` → `completed`.
 - 3-load chains: connector load not tracked separately — outbound + return status only.
 - Both v1 and v2 must always be kept in sync on shared features.
+- Truckstop username/password are Haul Monitor env vars (not per-org). Only the org's **integration ID** is stored in the DB.
+- Crisp live chat: no floating launcher — opens only via Help & Support page button.
 
 ---
 
 ## Open Questions / Blockers
 - Corporate card for Supabase Pro + Vercel Pro upgrades.
 - Authenticated Playwright tests need proper auth flow implementation.
-- Truckstop credentials stored in plaintext in `user_integrations.metadata` — must encrypt before real carrier credentials go in (pre-production blocker).
-- WWP algorithm quality — pending Chip validation of route logic and revenue numbers.
+- Truckstop integration ID stored in plaintext — encrypt via Supabase Vault after Pro upgrade (accepted risk for pilot).
+- WWP algorithm quality — pending Chip validation.
 
 ---
 

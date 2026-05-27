@@ -541,6 +541,8 @@ async function handleTruckstop(req, res, supabase, user) {
         integrationId, username, password,
         originCity: origin_city,
         originState: origin_state,
+        destState: dest_state,
+        pickupDate: pickup_date,
         equipmentType: equipment_type || null,
         radiusMiles: parseInt(radius_miles, 10),
       });
@@ -564,7 +566,7 @@ async function handleTruckstop(req, res, supabase, user) {
 // Set TRUCKSTOP_BASE_URL=https://webservices.truckstop.com in production Vercel env
 const TS_BASE_URL = process.env.TRUCKSTOP_BASE_URL || 'https://testws.truckstop.com';
 const TS_ENDPOINT = `${TS_BASE_URL}/v13/Searching/LoadSearch.svc`;
-const TS_SOAP_ACTION = 'http://webservices.truckstop.com/v12/ILoadSearch/GetLoadSearchResults';
+const TS_SOAP_ACTION = 'http://webservices.truckstop.com/v12/ILoadSearch/GetMultipleLoadDetailResults';
 
 // App equipment type names → Truckstop codes
 const EQUIP_TO_TS = {
@@ -590,14 +592,48 @@ const TS_TO_EQUIP = {
 // All major equipment codes sent when no specific type is requested
 const ALL_MAJOR_EQUIP = 'V F R SD LB';
 
+// US state adjacency — used to build destination state filter
+const STATE_ADJACENCY = {
+  AL:['FL','GA','MS','TN'],         AK:[],
+  AZ:['CA','CO','NM','NV','UT'],    AR:['LA','MO','MS','OK','TN','TX'],
+  CA:['AZ','NV','OR'],              CO:['AZ','KS','NE','NM','OK','UT','WY'],
+  CT:['MA','NY','RI'],              DE:['MD','NJ','PA'],
+  FL:['AL','GA'],                   GA:['AL','FL','NC','SC','TN'],
+  HI:[],                            ID:['MT','NV','OR','UT','WA','WY'],
+  IL:['IN','IA','KY','MI','MO','WI'], IN:['IL','KY','MI','OH'],
+  IA:['IL','MN','MO','NE','SD','WI'], KS:['CO','MO','NE','OK'],
+  KY:['IL','IN','MO','OH','TN','VA','WV'], LA:['AR','MS','TX'],
+  ME:['NH'],                        MD:['DE','PA','VA','WV'],
+  MA:['CT','NH','NY','RI','VT'],    MI:['IN','OH','WI'],
+  MN:['IA','ND','SD','WI'],         MS:['AL','AR','LA','TN'],
+  MO:['AR','IL','IA','KS','KY','NE','OK','TN'], MT:['ID','ND','SD','WY'],
+  NE:['CO','IA','KS','MO','SD','WY'], NV:['AZ','CA','ID','OR','UT'],
+  NH:['MA','ME','VT'],              NJ:['DE','NY','PA'],
+  NM:['AZ','CO','OK','TX','UT'],    NY:['CT','MA','NJ','PA','VT'],
+  NC:['GA','SC','TN','VA'],         ND:['MN','MT','SD'],
+  OH:['IN','KY','MI','PA','WV'],    OK:['AR','CO','KS','MO','NM','TX'],
+  OR:['CA','ID','NV','WA'],         PA:['DE','MD','NJ','NY','OH','WV'],
+  RI:['CT','MA'],                   SC:['GA','NC'],
+  SD:['IA','MN','MT','ND','NE','WY'], TN:['AL','AR','GA','KY','MS','MO','NC','VA'],
+  TX:['AR','LA','NM','OK'],         UT:['AZ','CO','ID','NV','NM','WY'],
+  VT:['MA','NH','NY'],              VA:['KY','MD','NC','TN','WV'],
+  WA:['ID','OR'],                   WV:['KY','MD','OH','PA','VA'],
+  WI:['IL','IA','MI','MN'],         WY:['CO','ID','MT','NE','SD','UT'],
+};
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber = 1 }) {
+function getDestStates(homeState) {
+  if (!homeState) return '';
+  const st = homeState.toUpperCase();
+  return [st, ...(STATE_ADJACENCY[st] || [])].slice(0, 15).join(' ');
+}
+
+
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, destStates, equipmentType, radiusMiles, pickupDate }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
-
-  // Clean city/state from potentially full PC*MILER strings or street addresses:
-  // "Dallas, Dallas County, Texas, United States" → { city:"Dallas", state:"tx" }
-  // "7663 sw 170th St Palmetto Bay, fl"           → { city:"Palmetto Bay", state:"fl" }
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
+  const pickupDateTime = pickupDate
+    ? `${pickupDate}T00:00:00`
+    : `${new Date().toISOString().split('T')[0]}T00:00:00`;
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope
@@ -608,16 +644,19 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
   xmlns:arr="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
   <soapenv:Header/>
   <soapenv:Body>
-    <v12:GetLoadSearchResults>
+    <v12:GetMultipleLoadDetailResults>
       <v12:searchRequest>
         <web:IntegrationId>${integrationId}</web:IntegrationId>
         <web:Password>${escapeXml(password)}</web:Password>
         <web:UserName>${escapeXml(username)}</web:UserName>
         <web1:Criteria>
+          <web1:DestinationCountry>usa</web1:DestinationCountry>
           <web1:DestinationLatitude>0</web1:DestinationLatitude>
           <web1:DestinationLongitude>0</web1:DestinationLongitude>
-          <web1:DestinationRange>0</web1:DestinationRange>
+          <web1:DestinationRange>300</web1:DestinationRange>
+          ${destStates ? `<web1:DestinationState>${escapeXml(destStates)}</web1:DestinationState>` : ''}
           <web1:EquipmentType>${equip}</web1:EquipmentType>
+          <web1:HoursOld>0</web1:HoursOld>
           <web1:LoadType>Full</web1:LoadType>
           ${cleanCity ? `<web1:OriginCity>${escapeXml(cleanCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
@@ -625,12 +664,15 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:OriginLongitude>0</web1:OriginLongitude>
           <web1:OriginRange>${radiusMiles}</web1:OriginRange>
           ${cleanState ? `<web1:OriginState>${cleanState}</web1:OriginState>` : ''}
-          <web1:PageNumber>${pageNumber}</web1:PageNumber>
-          <web1:PageSize>100</web1:PageSize>
+          <web1:PageNumber>0</web1:PageNumber>
+          <web1:PageSize>200</web1:PageSize>
+          <web1:PickupDates>
+            <arr:dateTime>${pickupDateTime}</arr:dateTime>
+          </web1:PickupDates>
           <web1:SortDescending>false</web1:SortDescending>
         </web1:Criteria>
       </v12:searchRequest>
-    </v12:GetLoadSearchResults>
+    </v12:GetMultipleLoadDetailResults>
   </soapenv:Body>
 </soapenv:Envelope>`;
 }
@@ -645,14 +687,19 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-// Fetch a single page from Truckstop and return { loads, pageCount }
-async function fetchTruckstopPage({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber }) {
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pageNumber });
-
-  if (pageNumber === 1) {
-    const sanitizedEnvelope = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
-    console.log('Truckstop SOAP envelope (page 1):\n', sanitizedEnvelope);
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, radiusMiles = 150, pickupDate }) {
+  const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
+  if (!cleanState || /^\d{5}$/.test(cleanCity)) {
+    console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
+    return [];
   }
+
+  const destStates = getDestStates(destState);
+  console.log(`[Truckstop] Destination states filter: ${destStates || '(none)'}`);
+
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, destStates, equipmentType, radiusMiles, pickupDate });
+  const sanitized = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
+  console.log('Truckstop SOAP envelope:\n', sanitized);
 
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
@@ -660,7 +707,7 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
     body: envelope,
   });
 
-  console.log(`Truckstop SOAP response: HTTP ${tsRes.status} (page ${pageNumber})`);
+  console.log(`Truckstop SOAP response: HTTP ${tsRes.status}`);
   const responseText = await tsRes.text();
 
   if (!tsRes.ok) {
@@ -673,7 +720,7 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
 
   const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
   const parsed = parser.parse(responseText);
-  const result = parsed?.Envelope?.Body?.GetLoadSearchResultsResponse?.GetLoadSearchResultsResult;
+  const result = parsed?.Envelope?.Body?.GetMultipleLoadDetailResultsResponse?.GetMultipleLoadDetailResultsResult;
 
   const errors = result?.Errors;
   if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
@@ -681,56 +728,17 @@ async function fetchTruckstopPage({ integrationId, username, password, originCit
     const err = new Error('Truckstop API returned errors'); err.code = 'UNAUTHORIZED'; throw err;
   }
 
-  const rawLoads = toArray(result?.SearchResults?.LoadSearchItem);
-  return { loads: rawLoads, pageCount: rawLoads.length };
-}
+  const rawLoads = toArray(result?.DetailResults?.MultipleLoadDetailResult);
 
-// Fetch up to MAX_PAGES pages in parallel, deduplicate, and return normalized loads.
-const TS_PAGE_SIZE = 100;
-const TS_MAX_PAGES = 5;
-
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles = 150 }) {
-  // Validate city/state before making any SOAP calls.
-  // ZIP-only datum points ("27215") and missing states can't be searched by city name.
-  const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
-  if (!cleanState || /^\d{5}$/.test(cleanCity)) {
-    console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
-    return [];
-  }
-
-  const args = { integrationId, username, password, originCity, originState, equipmentType, radiusMiles };
-
-  // Fetch page 1 first to check if there's anything at all, then fan out to remaining pages
-  const page1 = await fetchTruckstopPage({ ...args, pageNumber: 1 });
-  if (page1.pageCount < TS_PAGE_SIZE) {
-    // Fewer than a full page — no more pages exist
-    const loads = page1.loads.map(normalizeTsLoad).filter(Boolean);
-    console.log(`[Truckstop] ${loads.length} loads from 1 page`);
-    return loads;
-  }
-
-  // Full first page — fetch remaining pages in parallel
-  const pageNumbers = Array.from({ length: TS_MAX_PAGES - 1 }, (_, i) => i + 2);
-  const remaining = await Promise.allSettled(
-    pageNumbers.map(p => fetchTruckstopPage({ ...args, pageNumber: p }))
-  );
-
-  const allRaw = [...page1.loads];
-  for (const r of remaining) {
-    if (r.status === 'fulfilled') allRaw.push(...r.value.loads);
-  }
-
-  // Deduplicate by load ID
   const seen = new Set();
-  const deduped = allRaw.filter(l => {
+  const deduped = rawLoads.filter(l => {
     const id = l?.ID;
     if (!id || seen.has(id)) return false;
-    seen.add(id);
-    return true;
+    seen.add(id); return true;
   });
 
   const loads = deduped.map(normalizeTsLoad).filter(Boolean);
-  console.log(`[Truckstop] ${loads.length} loads from ${TS_MAX_PAGES} pages (${allRaw.length} raw, ${allRaw.length - deduped.length} dupes removed)`);
+  console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)`);
   return loads;
 }
 
@@ -757,53 +765,58 @@ function normalizeTsLoad(load) {
     const originState = load.OriginState ?? '';
     if (!originCity && !originState) return null;
 
-    const equipCode = load.Equipment ?? '';
-    const payment   = parseFloat(String(load.Payment  ?? '0').replace(/[^0-9.]/g, '')) || 0;
-    const miles     = parseInt(load.Miles ?? 0, 10);
+    // MultipleLoadDetailResult uses PaymentAmount + Mileage (vs Payment + Miles in search results)
+    const equipCode = load.Equipment ?? load.EquipmentTypes?.Code ?? '';
+    const payment   = parseFloat(String(load.PaymentAmount ?? load.Payment ?? '0').replace(/[^0-9.]/g, '')) || 0;
+    const miles     = parseInt(load.Mileage ?? load.Miles ?? 0, 10);
     const rpm       = miles > 0 ? Math.round((payment / miles) * 100) / 100 : 0;
 
-    // Days2Pay comes as "----" when unknown
-    const days2PayRaw = String(load.Days2Pay ?? '');
-    const daysToPay   = /^\d+$/.test(days2PayRaw) ? parseInt(days2PayRaw, 10) : null;
-
-    // FuelCost comes as "$812.33" — strip currency symbol
     const fuelCostRaw = String(load.FuelCost ?? '');
     const fuelCost    = parseFloat(fuelCostRaw.replace(/[^0-9.]/g, '')) || null;
 
-    // EquipmentOptions can be empty or contain modifiers like "TEAM"
-    const equipOptions = load.EquipmentOptions ? String(load.EquipmentOptions).trim() : null;
+    const ageRaw   = String(load.Age ?? '0').replace('+', '').trim();
+    const ageHours = parseInt(ageRaw, 10) || 0;
 
     return {
-      load_id:            String(load.ID),
-      source:             'truckstop',
-      broker:             load.CompanyName ?? 'Truckstop',
-      freight_type:       'General',
-      equipment_type:     TS_TO_EQUIP[equipCode] ?? equipCode,
-      equipment_code:     equipCode,
-      equipment_options:  equipOptions || null,
-      load_type:          load.LoadType ?? null,
-      pickup_city:        originCity,
-      pickup_state:       originState,
-      pickup_lat:         null,
-      pickup_lng:         null,
-      pickup_date:        parseTsDate(load.PickUpDate),
-      delivery_city:      load.DestinationCity  ?? '',
-      delivery_state:     load.DestinationState ?? '',
-      delivery_lat:       null,
-      delivery_lng:       null,
-      delivery_date:      null,
-      distance_miles:     miles,
-      weight_lbs:         parseInt(load.Weight ?? 0, 10),
-      trailer_length:     parseFloat(load.Length ?? 53),
-      total_revenue:      payment,
-      revenue_per_mile:   rpm,
-      days_to_pay:        daysToPay,
-      phone:              load.PointOfContactPhone ?? null,
-      age_hours:          parseInt(load.Age ?? 0, 10),
-      fuel_cost:          fuelCost,
-      experience_factor:  load.ExperienceFactor ?? null,
-      status:             'available',
-      posted_date:        new Date().toISOString(),
+      load_id:          String(load.ID),
+      source:           'truckstop',
+      broker:           load.TruckCompanyName ?? load.CompanyName ?? 'Truckstop',
+      contact_name:     load.PointOfContact ?? null,
+      contact_phone:    load.PointOfContactPhone ?? null,
+      company_phone:    load.TruckCompanyPhone ?? null,
+      company_email:    load.TruckCompanyEmail ?? null,
+      mc_number:        load.MCNumber || null,
+      freight_type:     'General',
+      equipment_type:   TS_TO_EQUIP[equipCode] ?? equipCode,
+      equipment_code:   equipCode,
+      load_type:        load.LoadType ?? null,
+      pickup_city:      originCity,
+      pickup_state:     originState,
+      pickup_zip:       load.OriginZip || null,
+      pickup_lat:       null,
+      pickup_lng:       null,
+      pickup_date:      parseTsDate(load.PickupDate ?? load.PickUpDate),
+      pickup_time:      load.PickupTime ?? null,
+      delivery_city:    load.DestinationCity  ?? '',
+      delivery_state:   load.DestinationState ?? '',
+      delivery_zip:     load.DestinationZip || null,
+      delivery_lat:     null,
+      delivery_lng:     null,
+      delivery_date:    parseTsDate(load.DeliveryDate),
+      delivery_time:    load.DeliveryTime ?? null,
+      distance_miles:   miles,
+      weight_lbs:       parseInt(load.Weight ?? 0, 10),
+      trailer_length:   parseFloat(load.Length ?? 53),
+      total_revenue:    payment,
+      revenue_per_mile: rpm,
+      phone:            load.PointOfContactPhone ?? load.TruckCompanyPhone ?? null,
+      age_hours:        ageHours,
+      fuel_cost:        fuelCost,
+      special_info:     load.SpecInfo || null,
+      credit:           load.Credit || null,
+      experience_factor: load.ExperienceFactor ?? null,
+      status:           'available',
+      posted_date:      load.Entered ? new Date(load.Entered).toISOString() : new Date().toISOString(),
     };
   } catch (err) {
     console.warn('Failed to normalize Truckstop load:', err);
