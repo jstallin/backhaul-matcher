@@ -18,6 +18,7 @@ import { ImportedLoads } from './components/ImportedLoads';
 import { CoDriverV2 } from './components/v2/CoDriverV2';
 import { BuyCreditsModal } from './components/BuyCreditsModal';
 import { TruckstopOnboarding } from './components/TruckstopOnboarding';
+import { PlanDetailModal } from './components/v2/PlanDetailModal';
 import { tokens } from './styles/tokens.v2';
 import { useAuth } from './contexts/AuthContext';
 import { useCredits } from './hooks/useCredits';
@@ -241,7 +242,7 @@ function StatCard({ label, value, sub, Icon, accentColor, loading, onClick }) {
 
 // ─── Work week planning widget ────────────────────────────────────────────────
 
-function WorkWeekWidget({ activePlan, loading, onNavigate }) {
+function WorkWeekWidget({ activePlan, loading, onNavigate, onOpenPlan }) {
   const fmt$ = (v) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v ?? 0);
 
@@ -265,7 +266,7 @@ function WorkWeekWidget({ activePlan, loading, onNavigate }) {
           background: `linear-gradient(135deg, ${t.colors.accent.green}14, ${t.colors.accent.green}06)`,
           border: `1px solid ${t.colors.accent.green}40`,
         }}
-        onClick={() => onNavigate('work-week')}
+        onClick={() => onOpenPlan ? onOpenPlan() : onNavigate('work-week')}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
@@ -334,6 +335,7 @@ function DashboardView({ onNavigate }) {
   const [requests, setRequests] = useState([]);
   const [estimateRequests, setEstimateRequests] = useState([]);
   const [activePlan, setActivePlan] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -438,7 +440,7 @@ function DashboardView({ onNavigate }) {
           {/* KPI cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             <StatCard label="Active Requests" value={loading ? null : activeRequests.length} sub="Currently open" Icon={Search} accentColor={t.colors.accent.blue} loading={loading} onClick={() => onNavigate('search')} />
-            <StatCard label="Net Revenue" value={loading ? null : `$${netRevenueThisMonth.toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
+            <StatCard label="Net Revenue" value={loading ? null : `$${Math.round(netRevenueThisMonth).toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
             <StatCard label="Completed Hauls" value={loading ? null : completedRequests.length} sub="All time" Icon={CheckCircle} accentColor={t.colors.accent.purple} loading={loading} onClick={() => onNavigate('loads')} />
             <StatCard label="Gallons Conserved" value={loading ? null : Math.round(totalGallonsSaved).toLocaleString()} sub="All time" Icon={TrendingUp} accentColor={t.colors.accent.amber} loading={loading} onClick={() => onNavigate('reports')} />
           </div>
@@ -479,7 +481,26 @@ function DashboardView({ onNavigate }) {
           </Card>
 
           {/* Work Week Planning widget — HM admins only during beta */}
-          {isAdmin && <WorkWeekWidget activePlan={activePlan} loading={loading} onNavigate={onNavigate} />}
+          {isAdmin && (
+            <>
+              <WorkWeekWidget
+                activePlan={activePlan}
+                loading={loading}
+                onNavigate={onNavigate}
+                onOpenPlan={activePlan ? () => setShowPlanModal(true) : undefined}
+              />
+              {showPlanModal && activePlan && (
+                <PlanDetailModal
+                  plan={activePlan}
+                  onClose={() => setShowPlanModal(false)}
+                  onPlanUpdated={(updated) => {
+                    setActivePlan(updated.status === 'completed' ? null : updated);
+                    if (updated.status === 'completed') setShowPlanModal(false);
+                  }}
+                />
+              )}
+            </>
+          )}
 
           {/* Bottom two-column */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', alignItems: 'start' }}>
