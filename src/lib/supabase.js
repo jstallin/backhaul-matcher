@@ -631,10 +631,36 @@ export const db = {
         .from('work_week_plans')
         .select('*')
         .eq('user_id', userId)
-        .eq('status', 'active')
+        .in('status', ['active', 'in_progress'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateLoadStatus(planId, loadKey, loadStatus) {
+      const { data: current, error: fetchErr } = await supabase
+        .from('work_week_plans')
+        .select('outbound_status, return_status')
+        .eq('id', planId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const merged = { ...current, [loadKey]: loadStatus };
+      let planStatus = 'active';
+      if (merged.outbound_status === 'hauled' && merged.return_status === 'hauled') {
+        planStatus = 'completed';
+      } else if (merged.outbound_status !== 'pending' || merged.return_status !== 'pending') {
+        planStatus = 'in_progress';
+      }
+
+      const { data, error } = await supabase
+        .from('work_week_plans')
+        .update({ [loadKey]: loadStatus, status: planStatus, updated_at: new Date().toISOString() })
+        .eq('id', planId)
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },

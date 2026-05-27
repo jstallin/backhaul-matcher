@@ -8,6 +8,7 @@ import { planWorkWeek, PLAN_DEFAULTS } from '../../utils/weeklyPlanningAlgorithm
 import { Calendar, TrendingUp, AlertCircle, Clock, ChevronRight, CheckCircle } from '../../icons';
 import { parseFleetHome } from '../../utils/parseFleetHome';
 import { ChainRouteMap } from './ChainRouteMap';
+import { PlanDetailModal } from './PlanDetailModal';
 
 const t = tokens;
 
@@ -362,13 +363,34 @@ function LoadMiniCard({ load, stepNumber, stepLabel, accentColor }) {
           <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>#{loadRef}</span>
         )}
       </div>
+
+      {/* Broker / contact */}
+      {(load.broker || load.company_name || load.shipper) && (
+        <div style={{ marginTop: '8px', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+          <strong style={{ color: t.colors.text.primary }}>Broker:</strong>{' '}
+          {load.broker || load.company_name || load.shipper || '—'}
+          {load.shipper && load.broker && load.shipper !== load.broker && (
+            <span style={{ marginLeft: '8px' }}>
+              <strong style={{ color: t.colors.text.primary }}>Shipper:</strong> {load.shipper}
+            </span>
+          )}
+        </div>
+      )}
+      {(load.contactPhone || load.contact_phone) && (
+        <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>Contact:</span>
+          <a href={`tel:${load.contactPhone || load.contact_phone}`} style={{ fontSize: t.font.size.xs, color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 8px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md }}>Call</a>
+          <a href={`sms:${load.contactPhone || load.contact_phone}`} style={{ fontSize: t.font.size.xs, color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 8px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md }}>Text</a>
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.secondary }}>{load.contactPhone || load.contact_phone}</span>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Chain card ───────────────────────────────────────────────────────────────
 
-function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, isSelected, saving }) {
+function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, onViewDetails, isSelected, saving }) {
   const { outboundLoad, connectorLoad, returnLoad, legs, totalMiles, totalRevenue, revenuePerTotalMile,
           departureTime, returnPickupTime, arrivalHome, maxRadiusFromHome, is3Load } = chain;
 
@@ -504,9 +526,19 @@ function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, isSelected
       {/* Select plan button */}
       <div style={{ padding: '0 18px 18px', borderTop: `1px solid ${t.colors.page.cardBorder}`, paddingTop: '14px', marginTop: '4px' }}>
         {isSelected ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.colors.accent.green, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold }}>
-            <CheckCircle size={16} color={t.colors.accent.green} />
-            This plan is active
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.colors.accent.green, fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold }}>
+              <CheckCircle size={16} color={t.colors.accent.green} />
+              This plan is active
+            </div>
+            {onViewDetails && (
+              <button
+                onClick={onViewDetails}
+                style={{ padding: '6px 14px', background: 'none', border: `1px solid ${t.colors.accent.green}60`, borderRadius: t.radius.md, color: t.colors.accent.green, fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer' }}
+              >
+                View Details →
+              </button>
+            )}
           </div>
         ) : (
           <PrimaryBtn onClick={() => onSelect(chain)} loading={saving} style={{ width: '100%', justifyContent: 'center', padding: '10px' }}>
@@ -520,7 +552,7 @@ function ChainCard({ chain, rank, fleetHome, fleetHomeName, onSelect, isSelected
 
 // ─── Active plan banner ───────────────────────────────────────────────────────
 
-function ActivePlanBanner({ plan, onMarkComplete, completing }) {
+function ActivePlanBanner({ plan, onViewDetails }) {
   const s = plan.chain_summary || {};
   const outbound = plan.outbound_load || {};
   const ret = plan.return_load || {};
@@ -559,8 +591,7 @@ function ActivePlanBanner({ plan, onMarkComplete, completing }) {
         </div>
       </div>
       <button
-        onClick={onMarkComplete}
-        disabled={completing}
+        onClick={onViewDetails}
         style={{
           padding: '8px 16px',
           borderRadius: t.radius.lg,
@@ -569,11 +600,11 @@ function ActivePlanBanner({ plan, onMarkComplete, completing }) {
           color: t.colors.accent.green,
           fontSize: t.font.size.sm,
           fontWeight: t.font.weight.semibold,
-          cursor: completing ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           flexShrink: 0,
         }}
       >
-        {completing ? 'Saving…' : 'Mark Complete'}
+        View Plan →
       </button>
       <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
@@ -788,6 +819,7 @@ export function WorkWeekView() {
   const [savingPlanId, setSavingPlanId] = useState(null); // chain index being saved
   const [completing, setCompleting] = useState(false);
   const [selectedChainIndex, setSelectedChainIndex] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -924,7 +956,7 @@ export function WorkWeekView() {
 
       {/* Active plan banner */}
       {!loadingPlan && activePlan && (
-        <ActivePlanBanner plan={activePlan} onMarkComplete={handleMarkComplete} completing={completing} />
+        <ActivePlanBanner plan={activePlan} onViewDetails={() => setShowPlanModal(true)} />
       )}
 
       {/* Setup form */}
@@ -972,6 +1004,7 @@ export function WorkWeekView() {
                   fleetHome={currentFleetHome}
                   fleetHomeName={fleetHomeName}
                   onSelect={(c) => handleSelectPlan(c, i)}
+                  onViewDetails={selectedChainIndex === i ? () => setShowPlanModal(true) : undefined}
                   isSelected={selectedChainIndex === i}
                   saving={savingPlanId === i}
                 />
@@ -1017,6 +1050,17 @@ export function WorkWeekView() {
             </div>
           )}
         </div>
+      )}
+
+      {showPlanModal && activePlan && (
+        <PlanDetailModal
+          plan={activePlan}
+          onClose={() => setShowPlanModal(false)}
+          onPlanUpdated={(updated) => {
+            setActivePlan(updated.status === 'completed' ? null : updated);
+            if (updated.status === 'completed') setShowPlanModal(false);
+          }}
+        />
       )}
     </div>
   );
