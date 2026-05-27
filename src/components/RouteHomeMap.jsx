@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getRouteGeometry } from '../utils/pcMilerClient';
+import { STATE_CENTROIDS } from '../utils/routeHomeMatching';
 
 // Create a colored circle icon for markers
 const createCircleIcon = (color, label, size = 36) => L.divIcon({
@@ -82,8 +83,12 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
     if (fleetHome) points.push([fleetHome.lat, fleetHome.lng]);
     const top10 = (backhauls || []).slice(0, 10);
     top10.forEach(load => {
-      if (load.pickup_lat && load.pickup_lng) points.push([load.pickup_lat, load.pickup_lng]);
-      if (load.delivery_lat && load.delivery_lng) points.push([load.delivery_lat, load.delivery_lng]);
+      const pLat = load.pickup_lat ?? STATE_CENTROIDS[load.pickup_state]?.lat;
+      const pLng = load.pickup_lng ?? STATE_CENTROIDS[load.pickup_state]?.lng;
+      const dLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat;
+      const dLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng;
+      if (pLat && pLng) points.push([pLat, pLng]);
+      if (dLat && dLng) points.push([dLat, dLng]);
     });
     return points;
   }, [datumPoint, fleetHome, backhauls]);
@@ -203,11 +208,16 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
           const pickupSize = isSelected ? 32 : 28;
           const deliverySize = isSelected ? 28 : 24;
 
+          const pLat = load.pickup_lat ?? STATE_CENTROIDS[load.pickup_state]?.lat ?? null;
+          const pLng = load.pickup_lng ?? STATE_CENTROIDS[load.pickup_state]?.lng ?? null;
+          const dLat = load.delivery_lat ?? STATE_CENTROIDS[load.delivery_state]?.lat ?? null;
+          const dLng = load.delivery_lng ?? STATE_CENTROIDS[load.delivery_state]?.lng ?? null;
+
           return (
             <span key={`backhaul-${load.load_id}`}>
-              {load.pickup_lat != null && load.pickup_lng != null && (
+              {pLat != null && pLng != null && (
                 <Marker
-                  position={[load.pickup_lat, load.pickup_lng]}
+                  position={[pLat, pLng]}
                   icon={createCircleIcon(
                     isSelected ? '#00a300' : '#008b00',
                     String(loadNum),
@@ -226,9 +236,9 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
                 </Marker>
               )}
 
-              {load.delivery_lat != null && load.delivery_lng != null && (
+              {dLat != null && dLng != null && (
                 <Marker
-                  position={[load.delivery_lat, load.delivery_lng]}
+                  position={[dLat, dLng]}
                   icon={createCircleIcon(
                     isSelected ? '#3B82F6' : '#5EA0DB',
                     String(loadNum),
