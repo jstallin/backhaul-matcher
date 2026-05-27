@@ -665,7 +665,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                                 const next = !excluded;
                                 await fetch('/api/orgs/trimble-actuals', {
                                   method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
                                   body: JSON.stringify({ id: load.id, excluded_from_billing: next, type: load.type }),
                                 });
                                 // For WWP rows, flip both outbound and return together (same plan)
