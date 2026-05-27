@@ -438,7 +438,7 @@ function DashboardView({ onNavigate }) {
           {/* KPI cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             <StatCard label="Active Requests" value={loading ? null : activeRequests.length} sub="Currently open" Icon={Search} accentColor={t.colors.accent.blue} loading={loading} onClick={() => onNavigate('search')} />
-            <StatCard label="Net Revenue" value={loading ? null : `$${netRevenueThisMonth.toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
+            <StatCard label="Net Revenue" value={loading ? null : `$${Math.round(netRevenueThisMonth).toLocaleString()}`} sub="This month" Icon={DollarSign} accentColor={t.colors.accent.green} loading={loading} onClick={() => onNavigate('reports')} />
             <StatCard label="Completed Hauls" value={loading ? null : completedRequests.length} sub="All time" Icon={CheckCircle} accentColor={t.colors.accent.purple} loading={loading} onClick={() => onNavigate('loads')} />
             <StatCard label="Gallons Conserved" value={loading ? null : Math.round(totalGallonsSaved).toLocaleString()} sub="All time" Icon={TrendingUp} accentColor={t.colors.accent.amber} loading={loading} onClick={() => onNavigate('reports')} />
           </div>
