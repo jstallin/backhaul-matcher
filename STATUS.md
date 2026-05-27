@@ -8,7 +8,7 @@
 ## Last Updated
 - **Date:** May 27, 2026
 - **Session type:** Claude Code (build + debug)
-- **Updated by:** Claude Code
+- **Updated by:** Claude Code (session 3)
 
 ---
 
@@ -25,7 +25,44 @@
 
 ---
 
-## What Was Just Completed (May 27, 2026, session 2)
+## What Was Just Completed (May 27, 2026, session 3)
+
+### Truckstop API upgrade + load card enrichment — all shipped to production
+
+**Switched to `GetMultipleLoadDetailResults` endpoint:**
+- Richer data than old `GetLoadSearchResults` — captures 10+ additional fields.
+- Single SOAP call returns all results (`PageNumber: 0`) — eliminated 5-page parallel fetch.
+- Removed invalid `DestinationState` multi-state filter (API only accepts single state; was silently breaking all searches). Corridor algorithm handles destination filtering.
+- Fixed non-auth SOAP errors being thrown as `UNAUTHORIZED` — was causing WWP searches to fail with "credentials invalid" console error.
+
+**New fields surfaced on load cards (v1 + v2):**
+- **Broker Credit** (CreditStop rating) — compact broker row + expanded detail grid.
+- **Broker Email** — "Email" button in contact row; full mailto link in expanded detail.
+- **Appointment times** — pickup and delivery dates now include time when available (e.g. "5/27 · 7:00 PM").
+- **Special Instructions** (SpecInfo) — displayed when present, italic, full-width in expanded detail.
+- All new fields wired through `routeHomeMatching.js` so they flow to all consumers (v1, v2, WWP cards).
+
+**Truckstop field audit (CSV):**
+- Reviewed all 53 fields in `MultipleLoadDetailResult` against actual app usage.
+- Updated CSV with accurate "App Status" column (Displayed / Captured-not-shown / Not captured / Skipped).
+- Delivered to Jason for Chip review. Key action items: Credit rating, Email, appointment times, SpecInfo — all now done.
+
+**WWP hauled loads in dashboard + Trimble actuals:**
+- `db.workWeekPlans.getHauled()` helper added.
+- Dashboard (v1 + v2): Completed Hauls count and Net Revenue now include WWP outbound + return loads individually.
+- Trimble actuals report: WWP hauled loads appear as separate rows ("Work Week Plan — Outbound/Return"), labeled by type.
+- `excluded_from_billing` column added to `work_week_plans` (migration applied to staging + production).
+- Exclude/Restore toggle works for WWP rows — plan-level exclusion (both outbound + return flip together).
+
+**Trimble actuals exclude persistence bug fixed:**
+- PATCH requests had no `Authorization` header — API was silently returning 401.
+- Optimistic UI update made it appear to work. Affected both BH and WWP excludes since the feature was built.
+- Fixed: added `Authorization: Bearer ${session.access_token}` to PATCH fetch; added PATCH to `Access-Control-Allow-Methods`.
+- Billable count now derived live from loads array (not stale API `count`), updates instantly on toggle.
+
+---
+
+## What Was Completed (May 27, 2026, session 2)
 
 ### Bug fixes and polish — all shipped to production
 
@@ -100,10 +137,11 @@
 ---
 
 ## In Progress / Next Up
-- **Waiting on Chip's feedback** on Work Week Planning results quality.
+- **Waiting on Chip's feedback** on Work Week Planning results quality + new load card fields (credit, email, appt times, special instructions).
 - **Remove `[WWP]` debug logging** from algorithm once Chip validates.
 - **Crisp chat** — uncomment `CrispChat` in App.jsx + AppV2.jsx and the button in HelpView.jsx when ready to launch.
 - **Truckstop datum issue** — some fleets have stale `home_address` causing empty datum city/state; fix: re-verify in Fleet Setup.
+- **Zip-code geocoding** — `pickup_zip` and `delivery_zip` are now captured; could replace state-centroid map markers with more accurate positions.
 - **Corporate card** → Supabase Pro + Vercel Pro upgrades → Supabase Vault for integration ID encryption.
 
 ---
@@ -119,6 +157,9 @@
 - Both v1 and v2 must always be kept in sync on shared features.
 - Truckstop username/password are Haul Monitor env vars (not per-org). Only the org's **integration ID** is stored in the DB.
 - Crisp live chat: no floating launcher — opens only via Help & Support page button.
+- Truckstop `DestinationState` filter dropped — API only accepts a single state; corridor algorithm handles destination filtering.
+- WWP Trimble billing: plan-level exclusion (outbound + return excluded together, not individually).
+- No "Book This Load" button on Truckstop — their platform is also lookup-only. Haul Monitor value = smarter filter + net revenue calc + all broker data in one place.
 
 ---
 
