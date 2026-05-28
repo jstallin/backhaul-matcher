@@ -6,10 +6,10 @@ Fleet operators post open requests and the app finds available loads along their
 
 - **Frontend:** React + Vite, no TypeScript, inline styles throughout, theme via `useTheme()` hook
 - **Backend:** Supabase (auth + Postgres), RLS enabled on all tables
-- **Routing:** PC*MILER (Trimble) — `pcmiler.alk.com/apis/rest/v1.0/` — agreement in principle, paying contract starts July 2026, first 3 months billed on actuals only
+- **Routing:** PC*MILER (Trimble) — `pcmiler.alk.com/apis/rest/v1.0/` — agreement in principle, paying contract starts July 2026, first 3 months billed on actuals only, next 3 months actuals but $250 minimum monthly spend, following 3 months actuals but $500 minimum monthly spend.
 - **Map:** Leaflet + React-Leaflet
 - **Deployment:** Vercel — serverless functions live in `/api/`
-- **Load sources:** DirectFreight scraper (testing/transitional), Truckstop via direct partnership agreement (active)
+- **Load sources:** DirectFreight scraper (disabled), Truckstop via direct partnership agreement (active)
 
 ## Key Files
 
