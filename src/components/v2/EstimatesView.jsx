@@ -1328,13 +1328,18 @@ export function EstimatesView() {
       const homeRadiusMiles = geocodeFailed ? 200 : 100;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
+      const [datumCityParsed = '', datumStateParsed = ''] = (estimate.datum_point || '').split(',').map(s => s.trim());
       const requestContext = {
-        datumCity: datumPoint.address || estimate.datum_point,
-        datumState: '',
-        homeCity: fleetData.home_address,
-        homeState: '',
+        datumCity:     datumCityParsed || datumPoint.address || estimate.datum_point,
+        datumState:    datumStateParsed,
+        datumLat:      datumPoint.lat || 0,
+        datumLng:      datumPoint.lng || 0,
+        homeCity:      fleetData.home_city || fleetData.home_address || '',
+        homeState:     fleetData.home_state || '',
+        homeLat:       fleetData.home_lat || 0,
+        homeLng:       fleetData.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
-        pickupDate: estimate.equipment_available_date || '',
+        pickupDate:    estimate.equipment_available_date || '',
       };
 
       const loadsResult = await getLoadsForMatching(user.id, estimate.fleet_id, requestContext);
