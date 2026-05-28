@@ -15,7 +15,8 @@ export function buildFleetPayload(form) {
 
   const profileData = {
     trailer_type:              form.trailerType || null,
-    revenue_split_carrier:     Number(form.revenueSplitCarrier) || 70,
+    equipment_variation:       form.equipmentVariation || null,
+    revenue_split_carrier:     Number(form.revenueSplitCarrier) || 20,
     mileage_rate:              Number(form.mileageRate) || null,
     stop_rate:                 Number(form.stopRate) || null,
     fuel_peg:                  Number(form.fuelPeg) || null,
