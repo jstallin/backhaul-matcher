@@ -280,12 +280,19 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
               RELAY MODE
             </div>
           )}
-          {!hasRates && (
+          {!hasRates && filteredMatches.length > 0 && (
             <div style={{ fontSize: '13px', color: colors.accent.warning ?? colors.text.tertiary, fontWeight: 600 }}>
               ⚠ Fleet rate config not set — financial calculations unavailable
             </div>
           )}
         </div>
+
+        {filteredMatches.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: colors.text.tertiary }}>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: colors.text.secondary, marginBottom: '8px' }}>No matching opportunities found</div>
+            <div style={{ fontSize: '14px' }}>No available loads match this corridor right now. Try again later or adjust your request parameters.</div>
+          </div>
+        )}
 
         {metrics && hasRates ? (
           <>

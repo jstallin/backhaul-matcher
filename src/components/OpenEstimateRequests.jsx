@@ -110,7 +110,15 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
       const homeRadiusMiles   = geocodeFailed ? 200 : 50;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
-      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id);
+      const requestContext = {
+        datumCity: datumPoint.address || request.datum_point,
+        datumState: '',
+        homeCity: fleet.home_address,
+        homeState: '',
+        equipmentType: fleetProfile.trailerType || 'Dry Van',
+        pickupDate: request.equipment_available_date || '',
+      };
+      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
       if (isLive) {
         console.log(`Using ${loadsForMatching.length} live imported loads for matching`);
       } else {
