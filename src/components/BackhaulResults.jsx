@@ -79,80 +79,16 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [cancelling, setCancelling] = useState(false);
   const [haulMatch, setHaulMatch] = useState(null); // load selected for "haul this" confirmation
   const [completing, setCompleting] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState({}); // keyed by load_id
-  const [aiLoading, setAiLoading] = useState({});   // keyed by load_id
-  const [aiFeedback, setAiFeedback] = useState({}); // keyed by load_id: { rating, comment, showInput, submitted }
+  // const [aiAnalysis, setAiAnalysis] = useState({});
+  // const [aiLoading, setAiLoading] = useState({});
+  // const [aiFeedback, setAiFeedback] = useState({});
   const [pendingLoads, setPendingLoads] = useState(new Set());
   const [toastLoad, setToastLoad] = useState(null);
   const toastTimerRef = useRef(null);
 
-  const handleAiAnalyze = async (match) => {
-    const id = match.load_id || match.id;
-    if (aiAnalysis[id] || aiLoading[id]) return;
-    setAiLoading(prev => ({ ...prev, [id]: true }));
-    try {
-      const response = await fetch('/api/ai/analyze-load', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ match: { ...match, rank: matches.indexOf(match) }, fleet, request })
-      });
-      let data;
-      try { data = await response.json(); } catch { data = {}; }
-      if (!response.ok || data.error) {
-        console.error('AI analyze-load error:', data.error || response.status);
-        setAiAnalysis(prev => ({ ...prev, [id]: data.error || `Service unavailable (${response.status})` }));
-        return;
-      }
-      setAiAnalysis(prev => ({ ...prev, [id]: data.analysis || 'No analysis returned.' }));
-    } catch (err) {
-      console.error('AI analyze-load fetch error:', err);
-      setAiAnalysis(prev => ({ ...prev, [id]: 'Unable to reach AI service.' }));
-    } finally {
-      setAiLoading(prev => ({ ...prev, [id]: false }));
-    }
-  };
-
-  const handleAiFeedback = async (match, rating) => {
-    const id = match.load_id || match.id;
-    setAiFeedback(prev => ({
-      ...prev,
-      [id]: { rating, comment: prev[id]?.comment || '', showInput: rating === 'down', submitted: false }
-    }));
-    if (rating === 'up') {
-      await submitAiFeedback(match, rating, '');
-    }
-  };
-
-  const submitAiFeedback = async (match, rating, comment) => {
-    const id = match.load_id || match.id;
-    try {
-      await fetch('/api/ai/analyze-load', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feedback: true,
-          fleet_id: fleet?.id,
-          user_id: fleet?.user_id,
-          load_id: id,
-          rating,
-          comment: comment?.trim() || null,
-          analysis: aiAnalysis[id] || null,
-          load_data: {
-            origin: match.origin?.address,
-            destination: match.destination?.address,
-            equipment_type: match.equipmentType,
-            additional_miles: match.additionalMiles,
-            net_revenue: match.netRevenue,
-            revenue_per_mile: match.revenuePerMile,
-          }
-        })
-      });
-    } catch {
-      // Fail silently — feedback is non-critical
-    } finally {
-      setAiFeedback(prev => ({ ...prev, [id]: { ...prev[id], submitted: true } }));
-    }
-  };
+  // const handleAiAnalyze = async (match) => { ... };
+  // const handleAiFeedback = async (match, rating) => { ... };
+  // const submitAiFeedback = async (match, rating, comment) => { ... };
 
   const handleCancelRequest = async () => {
     if (!cancelReason.trim()) {
@@ -522,80 +458,34 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                 )}
               </div>
 
-              {/* AI Analysis */}
+              {/* Financial Summary */}
               {(() => {
-                const id = match.load_id || match.id;
-                const analysis = aiAnalysis[id];
-                const loading = aiLoading[id];
-                const verdict = analysis?.match(/^(TAKE IT|PASS|NEGOTIATE)/i)?.[0]?.toUpperCase();
-                const verdictColor = verdict === 'TAKE IT' ? colors.accent.success : verdict === 'NEGOTIATE' ? colors.accent.primary : verdict === 'PASS' ? colors.accent.danger : colors.text.secondary;
-                return (
-                  <div style={{ marginTop: '12px' }}>
-                    {!analysis && !loading && (
-                      <button
-                        onClick={() => handleAiAnalyze(match)}
-                        style={{ width: '100%', padding: '10px', background: 'transparent', border: `1px dashed ${colors.border.accent}`, borderRadius: '8px', color: colors.text.secondary, fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                      >
-                        ✦ Ask AI: Should I take this load?
-                      </button>
-                    )}
-                    {loading && (
-                      <div style={{ padding: '12px', background: colors.background.secondary, borderRadius: '8px', fontSize: '13px', color: colors.text.tertiary, textAlign: 'center' }}>
-                        Analyzing load...
-                      </div>
-                    )}
-                    {analysis && (() => {
-                      const fb = aiFeedback[id] || {};
-                      return (
-                        <div style={{ padding: '14px', background: `${verdictColor}0d`, border: `1px solid ${verdictColor}40`, borderRadius: '8px' }}>
-                          {verdict && (
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: verdictColor, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                              ✦ {verdict}
-                            </div>
-                          )}
-                          <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: '1.6' }}>
-                            {analysis.replace(/^(TAKE IT|PASS|NEGOTIATE)[.:—\s]*/i, '')}
-                          </div>
+                const gross = Number(match.total_revenue ?? match.totalRevenue ?? 0);
+                const carrier = Number(match.carrier_revenue ?? 0);
+                const netCredit = match.has_rate_config ? Number(match.customer_net_credit ?? 0) : null;
+                const rpm = Number(match.revenue_per_mile ?? match.revenuePerMile ?? 0);
+                const fmt = (n) => Math.abs(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-                          {/* Feedback row */}
-                          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${verdictColor}30` }}>
-                            {fb.submitted ? (
-                              <div style={{ fontSize: '12px', color: colors.text.tertiary }}>Thanks for the feedback.</div>
-                            ) : (
-                              <>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontSize: '12px', color: colors.text.tertiary }}>Was this helpful?</span>
-                                  <button
-                                    onClick={() => handleAiFeedback(match, 'up')}
-                                    style={{ background: fb.rating === 'up' ? `${colors.accent.success}20` : 'transparent', border: `1px solid ${fb.rating === 'up' ? colors.accent.success : colors.border.secondary}`, borderRadius: '6px', padding: '3px 8px', cursor: 'pointer', fontSize: '14px', lineHeight: 1 }}
-                                    title="Yes, helpful"
-                                  >👍</button>
-                                  <button
-                                    onClick={() => handleAiFeedback(match, 'down')}
-                                    style={{ background: fb.rating === 'down' ? `${colors.accent.danger}20` : 'transparent', border: `1px solid ${fb.rating === 'down' ? colors.accent.danger : colors.border.secondary}`, borderRadius: '6px', padding: '3px 8px', cursor: 'pointer', fontSize: '14px', lineHeight: 1 }}
-                                    title="Not helpful"
-                                  >👎</button>
-                                </div>
-                                {fb.showInput && (
-                                  <div style={{ marginTop: '8px' }}>
-                                    <textarea
-                                      placeholder="What would have been more helpful? (optional)"
-                                      value={fb.comment || ''}
-                                      onChange={(e) => setAiFeedback(prev => ({ ...prev, [id]: { ...prev[id], comment: e.target.value } }))}
-                                      style={{ width: '100%', padding: '8px 10px', background: colors.background.primary, border: `1px solid ${colors.border.secondary}`, borderRadius: '6px', color: colors.text.primary, fontSize: '12px', lineHeight: '1.5', resize: 'vertical', minHeight: '60px', outline: 'none', fontFamily: 'inherit' }}
-                                    />
-                                    <button
-                                      onClick={() => submitAiFeedback(match, 'down', fb.comment)}
-                                      style={{ marginTop: '6px', padding: '6px 14px', background: colors.accent.primary, border: 'none', borderRadius: '6px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-                                    >Submit</button>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                let summary;
+                if (match.has_rate_config && netCredit !== null) {
+                  const outcome = netCredit >= 0
+                    ? `Your customer nets ${fmt(netCredit)} after route charges — this load works for both parties.`
+                    : `Your customer is ${fmt(netCredit)} short after route charges — consider negotiating a higher rate.`;
+                  summary = `This load grosses ${fmt(gross)}. Your carrier earns ${fmt(carrier)} off the top. ${outcome}`;
+                } else if (gross > 0) {
+                  summary = `This load grosses ${fmt(gross)}${rpm > 0 ? ` at $${rpm.toFixed(2)}/mi` : ''}. Add rate configuration in Fleet Setup to see the full financial picture.`;
+                } else {
+                  return null;
+                }
+
+                return (
+                  <div style={{ marginTop: '12px', padding: '16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Financial Summary
+                    </div>
+                    <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: 1.6 }}>
+                      {summary}
+                    </div>
                   </div>
                 );
               })()}

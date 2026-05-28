@@ -707,72 +707,13 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
     ? boardCfg.url(match.source_load_id || match.load_id, match)
     : null;
 
-  // AI state (self-contained per card)
-  const loadId = match.load_id || match.id;
-  const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState(null);
-
-  const handleAiAnalyze = async () => {
-    if (aiAnalysis || aiLoading) return;
-    setAiLoading(true);
-    try {
-      const res = await fetch('/api/ai/analyze-load', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ match: { ...match, rank }, fleet, request }),
-      });
-      let data;
-      try { data = await res.json(); } catch { data = {}; }
-      if (!res.ok || data.error) {
-        console.error('AI analyze-load error:', data.error || res.status);
-        setAiAnalysis(data.error || `Service unavailable (${res.status})`);
-        return;
-      }
-      setAiAnalysis(data.analysis || 'No analysis returned.');
-    } catch (err) {
-      console.error('AI analyze-load fetch error:', err);
-      setAiAnalysis('Unable to reach AI service. Check that the app is deployed.');
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const handleAiFeedback = async (rating) => {
-    setAiFeedback({ rating, comment: '', showInput: rating === 'down', submitted: false });
-    if (rating === 'up') submitAiFeedback(rating, '');
-  };
-
-  const submitAiFeedback = async (rating, comment) => {
-    try {
-      await fetch('/api/ai/analyze-load', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feedback: true,
-          fleet_id: fleet?.id,
-          user_id: fleet?.user_id,
-          load_id: loadId,
-          rating,
-          comment: comment?.trim() || null,
-          analysis: aiAnalysis || null,
-          load_data: {
-            origin: mOriginAddr(match),
-            destination: mDestAddr(match),
-            equipment_type: mEquipType(match),
-            additional_miles: mAdditional(match),
-            net_revenue: match.customer_net_credit,
-            revenue_per_mile: mRevPerMile(match),
-          },
-        }),
-      });
-    } catch { /* non-critical */ } finally {
-      setAiFeedback(f => f ? { ...f, submitted: true } : f);
-    }
-  };
-
-  const verdict = aiAnalysis?.match(/^(TAKE IT|PASS|NEGOTIATE)/i)?.[0]?.toUpperCase();
-  const verdictColor = verdict === 'TAKE IT' ? '#16a34a' : verdict === 'NEGOTIATE' ? '#2563eb' : verdict === 'PASS' ? '#dc2626' : t.colors.text.muted;
+  // const loadId = match.load_id || match.id;
+  // const [aiAnalysis, setAiAnalysis] = useState(null);
+  // const [aiLoading, setAiLoading] = useState(false);
+  // const [aiFeedback, setAiFeedback] = useState(null);
+  // const handleAiAnalyze = async () => { ... };
+  // const handleAiFeedback = async (rating) => { ... };
+  // const submitAiFeedback = async (rating, comment) => { ... };
 
   return (
     <div style={{
@@ -961,75 +902,37 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
         </div>
       )}
 
-      {/* ── AI Analysis ── */}
-      <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}` }}>
-        {!aiAnalysis && !aiLoading && (
-          <button
-            onClick={handleAiAnalyze}
-            style={{
-              width: '100%', padding: '9px',
-              background: 'transparent',
-              border: `1px dashed ${t.colors.border.default}`,
-              borderRadius: t.radius.lg,
-              color: t.colors.text.muted,
-              fontSize: t.font.size.xs,
-              fontWeight: t.font.weight.semibold,
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            }}
-          >
-            ✦ Ask AI: Should I take this load?
-          </button>
-        )}
-        {aiLoading && (
-          <div style={{ padding: '10px', background: '#f8fafc', borderRadius: t.radius.lg, fontSize: t.font.size.xs, color: t.colors.text.muted, textAlign: 'center' }}>
-            Analyzing load…
-          </div>
-        )}
-        {aiAnalysis && (
-          <div style={{ padding: '12px', background: `${verdictColor}0d`, border: `1px solid ${verdictColor}40`, borderRadius: t.radius.lg }}>
-            {verdict && (
-              <div style={{ fontSize: '10px', fontWeight: t.font.weight.bold, color: verdictColor, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
-                ✦ {verdict}
-              </div>
-            )}
+      {/* ── Financial Summary ── */}
+      {(() => {
+        const gross = Number(match.total_revenue ?? match.totalRevenue ?? 0);
+        const carrier = Number(match.carrier_revenue ?? 0);
+        const netCredit = match.has_rate_config ? Number(match.customer_net_credit ?? 0) : null;
+        const rpm = Number(match.revenue_per_mile ?? match.revenuePerMile ?? 0);
+        const fmt = (n) => Math.abs(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+        let summary;
+        if (match.has_rate_config && netCredit !== null) {
+          const outcome = netCredit >= 0
+            ? `Your customer nets ${fmt(netCredit)} after route charges — this load works for both parties.`
+            : `Your customer is ${fmt(netCredit)} short after route charges — consider negotiating a higher rate.`;
+          summary = `This load grosses ${fmt(gross)}. Your carrier earns ${fmt(carrier)} off the top. ${outcome}`;
+        } else if (gross > 0) {
+          summary = `This load grosses ${fmt(gross)}${rpm > 0 ? ` at $${rpm.toFixed(2)}/mi` : ''}. Add rate configuration in Fleet Setup to see the full financial picture.`;
+        } else {
+          return null;
+        }
+
+        return (
+          <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}` }}>
+            <div style={{ fontSize: '10px', fontWeight: t.font.weight.bold, color: t.colors.accent.blue, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+              Financial Summary
+            </div>
             <div style={{ fontSize: t.font.size.xs, color: t.colors.text.primary, lineHeight: 1.6 }}>
-              {aiAnalysis.replace(/^(TAKE IT|PASS|NEGOTIATE)[.:—\s]*/i, '')}
-            </div>
-            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${verdictColor}30` }}>
-              {aiFeedback?.submitted ? (
-                <div style={{ fontSize: '11px', color: t.colors.text.muted }}>Thanks for the feedback.</div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: t.colors.text.muted }}>Was this helpful?</span>
-                  <button
-                    onClick={() => handleAiFeedback('up')}
-                    style={{ background: aiFeedback?.rating === 'up' ? '#dcfce7' : 'transparent', border: `1px solid ${aiFeedback?.rating === 'up' ? '#16a34a' : '#e2e8f0'}`, borderRadius: '6px', padding: '2px 7px', cursor: 'pointer', fontSize: '13px', lineHeight: 1 }}
-                  >👍</button>
-                  <button
-                    onClick={() => handleAiFeedback('down')}
-                    style={{ background: aiFeedback?.rating === 'down' ? '#fee2e2' : 'transparent', border: `1px solid ${aiFeedback?.rating === 'down' ? '#dc2626' : '#e2e8f0'}`, borderRadius: '6px', padding: '2px 7px', cursor: 'pointer', fontSize: '13px', lineHeight: 1 }}
-                  >👎</button>
-                  {aiFeedback?.showInput && (
-                    <div style={{ width: '100%', marginTop: '6px' }}>
-                      <textarea
-                        placeholder="What would have been more helpful? (optional)"
-                        value={aiFeedback.comment || ''}
-                        onChange={e => setAiFeedback(f => ({ ...f, comment: e.target.value }))}
-                        style={{ width: '100%', padding: '6px 8px', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.md, fontSize: '11px', lineHeight: 1.5, resize: 'vertical', minHeight: '50px', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-                      />
-                      <button
-                        onClick={() => submitAiFeedback('down', aiFeedback.comment)}
-                        style={{ marginTop: '4px', padding: '5px 12px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.md, color: '#fff', fontSize: '11px', fontWeight: t.font.weight.bold, cursor: 'pointer' }}
-                      >Submit</button>
-                    </div>
-                  )}
-                </div>
-              )}
+              {summary}
             </div>
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* ── Action buttons ── */}
       <div style={{ padding: '10px 16px 14px', borderTop: `1px solid ${rc.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
