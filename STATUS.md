@@ -8,7 +8,7 @@
 ## Last Updated
 - **Date:** May 27, 2026
 - **Session type:** Claude Code (build + debug)
-- **Updated by:** Claude Code (session 3)
+- **Updated by:** Claude Code (session 4)
 
 ---
 
@@ -22,6 +22,31 @@
 | 4 | Work Week Planning (dedicated fleet feature) | ✅ Shipped — plan lifecycle complete, pending Chip feedback on quality |
 | 5 | Claude efficiency / multi-agent | ✅ Done — STATUS.md workflow established |
 | 6 | Infrastructure paid tiers | ⏳ Blocked — awaiting corporate card |
+
+---
+
+## What Was Just Completed (May 27, 2026, session 4)
+
+### Estimate Truckstop fix + v2 fleet form parity — all shipped to production
+
+**Estimates now hit Truckstop (v1 + v2):**
+- Root cause: both estimate components passed `datumState: ''` to `getLoadsForMatching`, causing `fetchTruckstopLoads` to bail out immediately ("no usable city/state") and fall through to scraped DirectFreight data.
+- Fix: split `datum_point` ("City, ST") on comma to get separate city and state — same pattern searches have always used. Also pass lat/lng coords. Applied to both `OpenEstimateRequests.jsx` (v1) and `EstimatesView.jsx` (v2).
+
+**v1 estimate aligned with v2:**
+- `OpenEstimateRequests` was not passing `requestContext` to `getLoadsForMatching` at all, so Truckstop was never attempted — it fell back to demo/imported data, found matches, then showed spurious "Fleet rate config not set" warning.
+- Fix: pass `requestContext` (mirrors v2 behavior).
+- Added `matches.length > 0` guard on the rate config warning — now only shows when there are actual matches but no config (matches v2).
+- Added "No matching opportunities found" empty state to `EstimateResults.jsx` when 0 results (matches v2 messaging).
+
+**v2 fleet form parity with v1:**
+- Added Equipment Variation dropdown (Conestoga, Tanker, Curtain Side, Extendable, Lowboy).
+- Added DOE PADD Rate input — was in form state and `buildFleetPayload` but never rendered in JSX.
+- Added Customer % read-only display (auto-complement to Carrier %).
+- Added FSC Preview live calculation: (DOE Rate − PEG) / MPG, appears when all three fields are filled.
+- Split Fuel Surcharge into its own labeled section with formula visible.
+- Fixed Carrier % default from 70 → 20 (matches v1 and algorithm fallback).
+- `buildFleetPayload` now saves `equipment_variation`.
 
 ---
 
@@ -140,7 +165,6 @@
 - **Waiting on Chip's feedback** on Work Week Planning results quality + new load card fields (credit, email, appt times, special instructions).
 - **Remove `[WWP]` debug logging** from algorithm once Chip validates.
 - **Crisp chat** — uncomment `CrispChat` in App.jsx + AppV2.jsx and the button in HelpView.jsx when ready to launch.
-- **Truckstop datum issue** — some fleets have stale `home_address` causing empty datum city/state; fix: re-verify in Fleet Setup.
 - **Zip-code geocoding** — `pickup_zip` and `delivery_zip` are now captured; could replace state-centroid map markers with more accurate positions.
 - **Corporate card** → Supabase Pro + Vercel Pro upgrades → Supabase Vault for integration ID encryption.
 
