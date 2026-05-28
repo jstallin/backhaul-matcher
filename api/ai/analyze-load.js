@@ -519,17 +519,23 @@ export default async function handler(req, res) {
 
   const financialSection = hasRateConfig
     ? `FINANCIAL BREAKDOWN (fleet rate config applied):
+
+CRITICAL — understand this model before reasoning about the numbers:
+- The carrier (fleet) always earns their revenue split off the top of gross. They cannot lose money on a backhaul — their mileage, stop, and fuel charges are billed TO the customer, not absorbed by the carrier.
+- Mileage expense, stop expense, and fuel surcharge are charges the carrier BILLS TO the customer for out-of-route miles. They are not carrier costs.
+- Customer Net Credit is the number that determines whether the load is a good deal. Positive = customer makes money after paying carrier charges. Negative = customer is paying more in carrier charges than they receive in load revenue.
+
+Numbers:
 - Gross revenue: $${revenue.toFixed(2)}
-- Customer net credit: $${netCredit.toFixed(2)} (positive = profitable for customer)
-- Carrier revenue: $${carrierRev.toFixed(2)}
-- Mileage expense: $${mileageExp.toFixed(2)} (${oorMiles} OOR mi × fleet rate)
-- Fuel surcharge: $${fuelSurch.toFixed(2)}
-- Fleet cost/mile: $${Number(fleet.cost_per_mile ?? 0).toFixed(3)}/mi
-- Fleet target RPM: $${Number(fleet.target_rpm ?? 0).toFixed(3)}/mi`
+- Carrier revenue: $${carrierRev.toFixed(2)} (carrier's split of gross — guaranteed, always positive)
+- Customer share of gross: $${(revenue - carrierRev).toFixed(2)}
+- Mileage expense billed to customer: $${mileageExp.toFixed(2)} (${oorMiles} OOR mi × fleet mileage rate)
+- Fuel surcharge billed to customer: $${fuelSurch.toFixed(2)}
+- Customer net credit: $${netCredit.toFixed(2)} ${netCredit >= 0 ? '✓ customer makes money' : '✗ customer is underwater — consider negotiating'}`
     : `RATE INFO:
 - Gross revenue: $${revenue.toFixed(2)}
 - Revenue per backhaul mile (total route): $${rpm.toFixed(3)}/mi${postedRpm ? `\n- Shipper posted rate (load miles only): $${Number(postedRpm).toFixed(2)}/mi` : ''}
-- No fleet cost config — evaluate against typical market rate for ${equipment || 'this equipment type'}`;
+- No fleet rate config set — evaluate against typical market rate for ${equipment || 'this equipment type'}`;
 
   const typeMismatchNote = isTypeMismatch
     ? `\nEQUIPMENT NOTE: This load requires ${equipment} but the fleet runs ${fleetTrailerType}. Factor in whether the driver can legally and practically haul this load type. If it's incompatible (e.g., reefer load on a dry van), that's a hard PASS. If it's adjacent (e.g., flatbed load on a step deck), note the constraint and let the dispatcher decide.`
@@ -560,10 +566,13 @@ ROUTE CONTEXT:
 - Miles from delivery to home: ${toHome} mi
 - Rank among all matches: #${(match.rank ?? 0) + 1}
 ${typeMismatchNote}
-Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Only say PASS if the OOR miles are excessive, the rate is genuinely below cost, there's a clear red flag, or the equipment type is incompatible.`;
+Lead with TAKE IT, PASS, or NEGOTIATE. Then 2–3 sentences on the key factors. Remember: this is a backhaul — the bar is lower than a primary load. Base your verdict on Customer Net Credit, not carrier revenue:
+- Customer Net Credit positive → load works for both parties, lean TAKE IT
+- Customer Net Credit negative → customer is underwater, lean NEGOTIATE or PASS
+- Never say PASS because "costs exceed revenue" for the carrier — the carrier's revenue is always protected. Only say PASS if OOR miles are excessive, customer net credit is deeply negative with no negotiation path, or there is an equipment incompatibility.`;
 
   const systemPrompt = [
-    'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. Focus on: does this cover cost and make meaningful money relative to the OOR miles added? If there is an equipment type mismatch, flag it clearly — a reefer load on a dry van is a hard no, but adjacent types (flatbed/step deck, dry van/power only) are judgment calls worth flagging. Be direct. Never use bullet points. 2–3 sentences after your verdict.',
+    'You are a practical freight dispatching advisor. You give short, direct backhaul recommendations. The truck is already out and needs to get home — deadheading is the alternative. The carrier (fleet) always earns their revenue split and cannot lose money on a backhaul — their charges are billed to the customer. Your verdict turns on Customer Net Credit: positive means the load works for both parties; negative means the customer is underwater and you should recommend negotiating or passing. Never cite carrier costs as a reason to pass — focus on whether the customer net credit is positive and whether OOR miles are reasonable. If there is an equipment type mismatch, flag it clearly — a reefer load on a dry van is a hard no, but adjacent types (flatbed/step deck, dry van/power only) are judgment calls worth flagging. Be direct. Never use bullet points. 2–3 sentences after your verdict.',
     orgHistory ? `\nORG HISTORY — use this to calibrate your recommendation to what this fleet has actually accepted and what they\'ve pushed back on:\n${orgHistory}` : null,
   ].filter(Boolean).join('\n');
 
