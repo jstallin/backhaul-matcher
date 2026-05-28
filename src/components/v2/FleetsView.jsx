@@ -154,6 +154,7 @@ const US_STATES = [
 ];
 
 const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
+const EQUIPMENT_VARIATIONS = ['Conestoga', 'Tanker', 'Curtain Side', 'Extendable', 'Lowboy'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
 const DRIVER_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }, { value: 'on_leave', label: 'On Leave' }];
@@ -170,8 +171,8 @@ const PADD_REGIONS = [
 
 const emptyProfileForm = () => ({
   name: '', mcNumber: '', dotNumber: '', phoneNumber: '', email: '', homeAddress: '',
-  homeLat: null, homeLng: null, trailerType: '',
-  revenueSplitCarrier: 70, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: 6.0,
+  homeLat: null, homeLng: null, trailerType: '', equipmentVariation: '',
+  revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: 6.0,
   doePaddRegion: 'national', doePaddRate: '',
   otherCharge1Name: '', otherCharge1Description: '', otherCharge1Amount: '',
   otherCharge2Name: '', otherCharge2Description: '', otherCharge2Amount: '',
@@ -199,7 +200,8 @@ function ProfileTab({ fleet, onSaved }) {
       homeLat: fleet.home_lat ?? null,
       homeLng: fleet.home_lng ?? null,
       trailerType: fp?.trailer_type ?? '',
-      revenueSplitCarrier: fp?.revenue_split_carrier ?? 70,
+      equipmentVariation: fp?.equipment_variation ?? '',
+      revenueSplitCarrier: fp?.revenue_split_carrier ?? 20,
       mileageRate: fp?.mileage_rate ?? '',
       stopRate: fp?.stop_rate ?? '',
       fuelPeg: fp?.fuel_peg ?? '',
@@ -261,6 +263,10 @@ function ProfileTab({ fleet, onSaved }) {
   };
 
   const carrierPct = Number(form.revenueSplitCarrier) || 0;
+  const customerPct = 100 - carrierPct;
+  const fscPreview = form.doePaddRate && form.fuelPeg && form.fuelMpg
+    ? ((parseFloat(form.doePaddRate) - parseFloat(form.fuelPeg)) / parseFloat(form.fuelMpg)).toFixed(3)
+    : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -307,34 +313,58 @@ function ProfileTab({ fleet, onSaved }) {
           )}
         </Field>
       </FormGrid>
-      <FormGrid cols={2} style={{ marginTop: '14px' }}>
+      <FormGrid cols={2}>
         <Field label="Default Trailer Type">
           <SelectInput value={form.trailerType} onChange={set('trailerType')} options={FLEET_TRAILER_TYPES} />
+        </Field>
+        <Field label="Equipment Variation" hint="Optional — Conestoga, Tanker, etc.">
+          <SelectInput value={form.equipmentVariation} onChange={set('equipmentVariation')} options={EQUIPMENT_VARIATIONS} />
         </Field>
       </FormGrid>
 
       {/* Rate Configuration */}
       <SectionLabel>Rate Configuration</SectionLabel>
       <FormGrid>
-        <Field label="Carrier Revenue Split" hint={`Carrier: ${carrierPct}%  ·  Customer: ${100 - carrierPct}%`}>
-          <Input value={form.revenueSplitCarrier} onChange={set('revenueSplitCarrier')} type="number" min={1} max={99} placeholder="70" />
+        <Field label="Carrier %" hint="Percentage of gross backhaul revenue allocated to the carrier">
+          <Input value={form.revenueSplitCarrier} onChange={set('revenueSplitCarrier')} type="number" min={1} max={99} placeholder="20" />
         </Field>
-        <Field label="Mileage Rate ($/mile)">
-          <Input value={form.mileageRate} onChange={set('mileageRate')} type="number" step="0.01" placeholder="2.50" />
+        <Field label="Customer %">
+          <div style={{ ...inputBase, background: t.colors.page.bg, color: t.colors.text.secondary, fontWeight: t.font.weight.semibold, cursor: 'not-allowed', display: 'flex', alignItems: 'center' }}>
+            {carrierPct > 0 && carrierPct < 100 ? customerPct : '—'}%
+          </div>
         </Field>
-        <Field label="Stop Rate ($/stop)">
-          <Input value={form.stopRate} onChange={set('stopRate')} type="number" step="0.01" placeholder="75.00" />
+        <Field label="Mileage Rate ($/mile)" hint="Rate per mile, loaded and empty">
+          <Input value={form.mileageRate} onChange={set('mileageRate')} type="number" step="0.01" placeholder="2.00" />
         </Field>
-        <Field label="Fuel Peg ($/gal)">
-          <Input value={form.fuelPeg} onChange={set('fuelPeg')} type="number" step="0.01" placeholder="3.00" />
-        </Field>
-        <Field label="Fuel Economy (MPG)">
-          <Input value={form.fuelMpg} onChange={set('fuelMpg')} type="number" step="0.1" placeholder="6.0" />
-        </Field>
-        <Field label="DOE PADD Region">
-          <SelectInput value={form.doePaddRegion} onChange={set('doePaddRegion')} options={PADD_REGIONS} />
+        <Field label="Stop Rate ($/stop)" hint="Rate per stop on the backhaul route">
+          <Input value={form.stopRate} onChange={set('stopRate')} type="number" step="0.01" placeholder="50.00" />
         </Field>
       </FormGrid>
+
+      <SectionLabel>Fuel Surcharge</SectionLabel>
+      <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '12px' }}>FSC per mile = (DOE PADD Rate − PEG) / MPG</div>
+      <FormGrid>
+        <Field label="PEG ($/gal)" hint="Fuel cost per gallon already included in your mileage rate">
+          <Input value={form.fuelPeg} onChange={set('fuelPeg')} type="number" step="0.001" placeholder="1.200" />
+        </Field>
+        <Field label="MPG" hint="Contractual miles per gallon (typically 6–8)">
+          <Input value={form.fuelMpg} onChange={set('fuelMpg')} type="number" step="0.1" min={1} max={15} placeholder="6.0" />
+        </Field>
+        <Field label="PADD Region">
+          <SelectInput value={form.doePaddRegion} onChange={set('doePaddRegion')} options={PADD_REGIONS} />
+        </Field>
+        <Field label="DOE PADD Rate ($/gal)" hint="Current diesel price from EIA.gov">
+          <Input value={form.doePaddRate} onChange={set('doePaddRate')} type="number" step="0.001" placeholder="3.736" />
+        </Field>
+      </FormGrid>
+      {fscPreview && parseFloat(fscPreview) > 0 && (
+        <div style={{ marginTop: '10px', padding: '10px 14px', background: t.colors.accent.blueLight, border: `1px solid ${t.colors.accent.blue}30`, borderRadius: t.radius.lg, fontSize: t.font.size.sm, color: t.colors.text.primary }}>
+          <strong>Fuel Surcharge Rate: ${fscPreview}/mi</strong>
+          <span style={{ color: t.colors.text.muted, marginLeft: '10px' }}>
+            (DOE ${form.doePaddRate} − PEG ${form.fuelPeg}) / {form.fuelMpg} MPG × OOR Miles
+          </span>
+        </div>
+      )}
 
       <SectionLabel>Other Charges</SectionLabel>
       <FormGrid cols={3}>
