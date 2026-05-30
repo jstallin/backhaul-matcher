@@ -4,6 +4,7 @@ import {
   calculateNetRevenue,
   findRouteHomeBackhauls,
   clearDistanceCache,
+  evaluatePickupDateFit,
 } from '../routeHomeMatching.js';
 
 // Mock external dependencies so tests are self-contained and don't hit APIs
@@ -513,5 +514,76 @@ describe('findRouteHomeBackhauls — net revenue with rate config', () => {
       [makeLoad({ load_id: 'load-no-rate', total_revenue: 2000 })]
     );
     expect(opportunities[0].has_rate_config).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// evaluatePickupDateFit — pure date-window logic
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('evaluatePickupDateFit', () => {
+  it('flags exact same-day match', () => {
+    const r = evaluatePickupDateFit('2026-06-01', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'exact', offsetDays: 0 });
+  });
+
+  it('flags a load one day late as within window', () => {
+    const r = evaluatePickupDateFit('2026-06-02', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'late', offsetDays: 1 });
+  });
+
+  it('flags a load one day early as within window', () => {
+    const r = evaluatePickupDateFit('2026-05-31', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'early', offsetDays: -1 });
+  });
+
+  it('rejects loads more than one day outside the window', () => {
+    expect(evaluatePickupDateFit('2026-06-03', '2026-06-01').withinWindow).toBe(false);
+    expect(evaluatePickupDateFit('2026-05-29', '2026-06-01').withinWindow).toBe(false);
+  });
+
+  it('keeps loads unflagged when there is no requested date or no load date', () => {
+    expect(evaluatePickupDateFit('2026-06-01', null)).toEqual({ withinWindow: true, fit: null, offsetDays: null });
+    expect(evaluatePickupDateFit(null, '2026-06-01')).toEqual({ withinWindow: true, fit: null, offsetDays: null });
+  });
+
+  it('tolerates ISO timestamps by comparing the date portion', () => {
+    const r = evaluatePickupDateFit('2026-06-01T14:00:00', '2026-06-01');
+    expect(r.fit).toBe('exact');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// findRouteHomeBackhauls — pickup-date hard filter (item 004)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('findRouteHomeBackhauls — pickup-date filter', () => {
+  beforeEach(() => clearDistanceCache());
+
+  it('drops loads outside the ±1 day window and tags the survivors', async () => {
+    const loads = [
+      makeLoad({ load_id: 'on-date',  pickup_date: '2026-06-01' }),
+      makeLoad({ load_id: 'next-day', pickup_date: '2026-06-02' }),
+      makeLoad({ load_id: 'too-late', pickup_date: '2026-06-05' }),
+    ];
+    const { opportunities } = await findRouteHomeBackhauls(
+      STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET, loads,
+      50, 50, null, false, '2026-06-01'
+    );
+    const ids = opportunities.map(o => o.load_id);
+    expect(ids).toContain('on-date');
+    expect(ids).toContain('next-day');
+    expect(ids).not.toContain('too-late');
+    expect(opportunities.find(o => o.load_id === 'on-date').date_fit.fit).toBe('exact');
+    expect(opportunities.find(o => o.load_id === 'next-day').date_fit.fit).toBe('late');
+  });
+
+  it('applies no date filter when no requested date is passed (back-compat)', async () => {
+    const loads = [makeLoad({ load_id: 'far-out', pickup_date: '2026-12-25' })];
+    const { opportunities } = await findRouteHomeBackhauls(
+      STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET, loads
+    );
+    expect(opportunities.map(o => o.load_id)).toContain('far-out');
+    expect(opportunities[0].date_fit.fit).toBeNull();
   });
 });

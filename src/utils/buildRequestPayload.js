@@ -17,8 +17,9 @@ export function buildRequestPayload(form, userId) {
     is_relay:                 form.isRelay,
     auto_refresh:             form.autoRefresh,
     auto_refresh_interval:    form.autoRefresh ? Math.round(form.autoRefreshInterval * 60) : null,
-    notification_enabled:     form.notificationEnabled,
-    notification_method:      form.notificationEnabled ? form.notificationMethod : null,
+    // Auto-refresh mandates notifications — persist them on even if the toggle state lagged.
+    notification_enabled:     form.notificationEnabled || form.autoRefresh,
+    notification_method:      (form.notificationEnabled || form.autoRefresh) ? (form.notificationMethod || 'email') : null,
     status:                   'active',
     user_id:                  userId,
   };

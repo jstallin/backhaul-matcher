@@ -262,7 +262,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeRadiusMiles,
         corridorWidthMiles,
         rateConfig,
-        request.is_relay || false
+        request.is_relay || false,
+        request.equipment_available_date || null
       );
 
       const matches = result.opportunities;

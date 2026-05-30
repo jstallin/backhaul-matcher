@@ -305,8 +305,14 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ fontSize: '16px', fontWeight: 700, color: colors.text.primary }}>
                     {match.origin.address}
                   </div>
-                  <div style={{ fontSize: '13px', color: colors.text.secondary }}>
+                  <div style={{ fontSize: '13px', color: colors.text.secondary, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     {formatDate(match.pickupDate)}
+                    {match.date_fit?.fit === 'late' && (
+                      <span title="Picks up a day after your requested date" style={{ fontSize: '11px', fontWeight: 700, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '6px', padding: '1px 6px', whiteSpace: 'nowrap' }}>▲ +1 day</span>
+                    )}
+                    {match.date_fit?.fit === 'early' && (
+                      <span title="Picks up a day before your requested date" style={{ fontSize: '11px', fontWeight: 700, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '6px', padding: '1px 6px', whiteSpace: 'nowrap' }}>▼ −1 day</span>
+                    )}
                   </div>
                 </div>
 

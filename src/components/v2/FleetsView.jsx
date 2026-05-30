@@ -178,13 +178,15 @@ const emptyProfileForm = () => ({
   otherCharge2Name: '', otherCharge2Description: '', otherCharge2Amount: '',
 });
 
-function ProfileTab({ fleet, onSaved }) {
+function ProfileTab({ fleet, onSaved, onDeleted }) {
   const { user } = useAuth();
   const [form, setForm] = useState(emptyProfileForm());
   const [geocoded, setGeocoded] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Populate form when fleet changes
   useEffect(() => {
@@ -259,6 +261,23 @@ function ProfileTab({ fleet, onSaved }) {
       setError(err.message || 'Failed to save. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!fleet) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await db.fleets.delete(fleet.id);
+      setConfirmDelete(false);
+      onDeleted?.();
+    } catch (err) {
+      console.error('Delete fleet error:', err);
+      setError(err.message || 'Failed to delete fleet. Please try again.');
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -376,11 +395,24 @@ function ProfileTab({ fleet, onSaved }) {
         <Field label="Amount ($)"><Input value={form.otherCharge2Amount} onChange={set('otherCharge2Amount')} type="number" step="0.01" placeholder="300.00" /></Field>
       </FormGrid>
 
-      <div style={{ marginTop: '24px', display: 'flex', gap: '10px' }}>
+      <div style={{ marginTop: '24px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <PrimaryBtn onClick={handleSave} loading={saving}>
           <Save size={15} />{saving ? 'Saving…' : 'Save Profile'}
         </PrimaryBtn>
+        {fleet && (
+          <GhostBtn onClick={() => setConfirmDelete(true)} danger style={{ marginLeft: 'auto' }}>
+            <Trash2 size={14} /> Delete Fleet
+          </GhostBtn>
+        )}
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          message={`Delete ${fleet?.name || 'this fleet'}? This also removes its trucks, drivers, and rate config, and cannot be undone.`}
+          onConfirm={deleting ? () => {} : handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   );
 }
@@ -686,7 +718,7 @@ const TABS = [
   { id: 'drivers', label: 'Drivers' },
 ];
 
-function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onChanged }) {
+function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onChanged, onDeleted }) {
   const isMobile = useMobile();
 
   if (!fleet && !isNew) {
@@ -730,7 +762,7 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
       </div>
 
       {/* Tab content */}
-      {activeTab === 'profile' && <ProfileTab fleet={fleet} onSaved={onSaved} />}
+      {activeTab === 'profile' && <ProfileTab fleet={fleet} onSaved={onSaved} onDeleted={onDeleted} />}
       {activeTab === 'trucks'  && !isNew && <TrucksTab fleet={fleet} onChanged={onChanged} />}
       {activeTab === 'drivers' && !isNew && <DriversTab fleet={fleet} onChanged={onChanged} />}
     </div>
@@ -826,6 +858,7 @@ export function FleetsView() {
   const handleNew = () => { setSelectedId(null); setIsNew(true); setActiveTab('profile'); };
   const handleSaved = () => { setIsNew(false); loadFleets(); };
   const handleChanged = () => { loadFleets(); };
+  const handleDeleted = () => { setSelectedId(null); setIsNew(false); setActiveTab('profile'); loadFleets(); };
 
   const selectedFleet = fleets.find((f) => f.id === selectedId) ?? null;
   const showingDetail = isMobile && (selectedId || isNew);
@@ -886,6 +919,7 @@ export function FleetsView() {
             setActiveTab={setActiveTab}
             onSaved={handleSaved}
             onChanged={handleChanged}
+            onDeleted={handleDeleted}
           />
         </div>
       )}

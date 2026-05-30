@@ -154,7 +154,16 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      // Auto-refresh is only useful if the user gets notified of material changes,
+      // so notifications are mandatory whenever auto-refresh is enabled.
+      if (field === 'autoRefresh' && value) {
+        next.notificationEnabled = true;
+        if (!next.notificationMethod) next.notificationMethod = 'both';
+      }
+      return next;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
@@ -212,8 +221,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         is_relay: formData.isRelay,
         auto_refresh: formData.autoRefresh,
         auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null, // Store as MINUTES
-        notification_enabled: formData.notificationEnabled,
-        notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
+        notification_enabled: formData.notificationEnabled || formData.autoRefresh,
+        notification_method: (formData.notificationEnabled || formData.autoRefresh) ? (formData.notificationMethod || 'both') : null,
         status: 'active'
       };
 
@@ -407,11 +416,11 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '32px' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={20} color={colors.accent.primary} />Notifications</h3>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
-                  <input type="checkbox" checked={formData.notificationEnabled} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
-                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Get notified when auto-refresh finds changes in top result</div></div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: formData.autoRefresh ? 'default' : 'pointer', marginBottom: '16px' }}>
+                  <input type="checkbox" checked={formData.notificationEnabled || formData.autoRefresh} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving || formData.autoRefresh} style={{ width: '20px', height: '20px', cursor: formData.autoRefresh ? 'not-allowed' : 'pointer', marginTop: '2px' }} />
+                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>{formData.autoRefresh ? 'Required while auto-refresh is on — you\'ll be alerted when the top result changes' : 'Get notified when auto-refresh finds changes in top result'}</div></div>
                 </label>
-                {formData.notificationEnabled && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
+                {(formData.notificationEnabled || formData.autoRefresh) && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
               </div>
 
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>

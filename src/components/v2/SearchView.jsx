@@ -95,6 +95,21 @@ const mLength       = m => m.trailerLength ?? m.trailer_length;
 const mEquipType    = m => m.equipmentType ?? m.equipment_type ?? 'Dry Van';
 const mFreight      = m => m.freightType ?? m.freight_type;
 
+// Amber pill flagging a load whose pickup is ±1 day off the requested date.
+// Renders nothing for an exact match or when there's no requested/load date.
+function DateFitBadge({ dateFit }) {
+  if (!dateFit || dateFit.fit === 'exact' || dateFit.fit == null) return null;
+  const late = dateFit.fit === 'late';
+  return (
+    <span
+      title={late ? 'Picks up a day after your requested date' : 'Picks up a day before your requested date'}
+      style={{ fontSize: '10px', fontWeight: 700, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '5px', padding: '0 5px', whiteSpace: 'nowrap', lineHeight: '15px' }}
+    >
+      {late ? '▲ +1 day' : '▼ −1 day'}
+    </span>
+  );
+}
+
 // ─── Shared primitives ───────────────────────────────────────────────────────
 
 function Card({ children, style = {} }) {
@@ -299,11 +314,11 @@ function ErrorMsg({ msg }) {
   );
 }
 
-function Toggle({ checked, onChange, label }) {
+function Toggle({ checked, onChange, label, disabled }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.65 : 1 }}>
       <div
-        onClick={() => onChange(!checked)}
+        onClick={() => { if (!disabled) onChange(!checked); }}
         style={{
           width: '36px', height: '20px',
           borderRadius: '10px',
@@ -311,7 +326,7 @@ function Toggle({ checked, onChange, label }) {
           position: 'relative',
           flexShrink: 0,
           transition: 'background 0.15s',
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         }}
       >
         <div style={{
@@ -370,7 +385,15 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key, val) => setForm(f => {
+    const next = { ...f, [key]: val };
+    // Auto-refresh is only useful with notifications, so force them on when it's enabled.
+    if (key === 'autoRefresh' && val) {
+      next.notificationEnabled = true;
+      if (!next.notificationMethod) next.notificationMethod = 'email';
+    }
+    return next;
+  });
 
   const handleDatumBlur = async () => {
     const city = form.datumCity.trim();
@@ -505,8 +528,13 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           </div>
 
           <div>
-            <Toggle checked={form.notificationEnabled} onChange={v => set('notificationEnabled', v)} label="Notify me when top loads change" />
-            {form.notificationEnabled && (
+            <Toggle checked={form.notificationEnabled || form.autoRefresh} onChange={v => set('notificationEnabled', v)} disabled={form.autoRefresh} label="Notify me when top loads change" />
+            {form.autoRefresh && (
+              <div style={{ marginTop: '4px', marginLeft: '46px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                Required while auto-refresh is on.
+              </div>
+            )}
+            {(form.notificationEnabled || form.autoRefresh) && (
               <div style={{ marginTop: '10px', marginLeft: '46px' }}>
                 <Field label="Notification method">
                   <SelectInput value={form.notificationMethod} onChange={e => set('notificationMethod', e.target.value)} style={{ width: '180px' }}>
@@ -795,8 +823,9 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, lineHeight: 1.3 }}>
             {mOriginAddr(match)}
           </div>
-          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
             {fmtDate(mPickupDate(match))}
+            <DateFitBadge dateFit={match.date_fit} />
           </div>
         </div>
 
@@ -1754,7 +1783,8 @@ export function SearchView() {
         homeRadiusMiles,
         corridorWidthMiles,
         rateConfig,
-        request.is_relay || false
+        request.is_relay || false,
+        request.equipment_available_date || null
       );
 
       const opportunities = result.opportunities || [];
