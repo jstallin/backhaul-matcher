@@ -40,6 +40,7 @@ Fleet operators post open requests and the app finds available loads along their
 - **Styling:** inline styles only, no CSS files or CSS-in-JS libraries
 - **API calls:** all PC*MILER calls go through Vercel serverless proxies — never call PC*MILER directly from the client
 - **Keys:** Supabase anon key is client-safe; service role key and `PCMILER_API_KEY` are server-only env vars
+- **Serverless function limit:** Vercel Hobby caps `/api/` functions at **12, and we are AT the cap** (each `*.js` under `api/` except `__tests__` counts). Adding a 13th file fails the build. Until the Vercel Pro upgrade, **do not add new files under `api/`** — piggyback new endpoints on an existing function via a query param or sub-route (e.g. `geocode.js?suggest=1`, `[provider].js`, `[action].js`). Verify with `find api -name "*.js" -not -path "*__tests__*" | wc -l`. Remove this note once on Vercel Pro.
 - **Matching algorithm:** 2 API calls per load (datum→pickup + delivery→home); `load.distance_miles` used for pickup→delivery
 - **Session cache:** module-level Map in `routeHomeMatching.js`, keyed by datum+home+relay; persists across tab switches
 - **Relay mode:** when `is_relay=true`, measure from home→pickup (not datum→pickup); `additionalMiles` = full relay driver loop
@@ -69,7 +70,7 @@ Any changes to shared logic, matching algorithm, or data layer must be validated
 |---------|--------|
 | PC*MILER (Trimble) | Agreement in principle; paying contract starts July 2026, first 3 months on actuals |
 | Supabase | Free tier (production); paid upgrade pending — upgrade before pilot load increases |
-| Vercel | Hobby tier (production); paid upgrade pending — watch serverless function timeouts |
+| Vercel | Hobby tier (production); paid upgrade pending — watch serverless function timeouts. **At the 12-function limit** (see Coding Conventions). |
 | Truckstop | Production access active; valid while pilot customer org has a valid integration ID |
 | Resend | Free tier; sufficient for current pilot scale |
 
