@@ -264,6 +264,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     if (result) {
       setFormData(prev => ({ ...prev, homeLat: result.lat, homeLng: result.lng }));
       setGeocodeStatus({ ok: true, label: result.label });
+      setError(''); // clear any stale save-time verify error now that it resolves
     } else {
       setGeocodeStatus({ ok: false, label: 'Could not verify — check city and state spelling' });
     }

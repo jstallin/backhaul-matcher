@@ -230,6 +230,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
     if (result?.lat && result?.lng) {
       setForm((f) => ({ ...f, homeLat: result.lat, homeLng: result.lng, homeAddress: result.label || f.homeAddress }));
       setGeocoded(true);
+      setError(''); // clear any stale verify error now that it resolves
     } else {
       setError('Could not verify that address. Check the spelling and try again.');
     }
