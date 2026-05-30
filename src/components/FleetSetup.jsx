@@ -172,7 +172,12 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           setFormData(prev => ({ ...prev, homeLat, homeLng }));
           setGeocodeStatus({ ok: true, label: result.label });
         } else {
+          // Don't persist a fleet with no home coords — a typo'd city/state would
+          // break route matching. Block the save and prompt a correction (item 002).
           setGeocodeStatus({ ok: false, label: 'Could not verify — check city and state spelling' });
+          setError("We couldn't verify that home address — check the city and state spelling before saving.");
+          setSaving(false);
+          return;
         }
       }
 

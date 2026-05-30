@@ -157,6 +157,7 @@ export const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) =
 
   return {
     fsc_per_mile: fscPerMile,
+    customer_pct: customerPct,
     customer_share: customerShare,
     carrier_revenue: carrierRevenue,
     mileage_expense: mileageExpense,
@@ -168,6 +169,54 @@ export const calculateNetRevenue = (totalRevenue, additionalMiles, rateConfig) =
     has_rate_config: true
   };
 };
+
+// ─── Negotiation helper (item 005) ────────────────────────────────────────────
+// For $0 / no-rate loads: suggest a gross to lead with. Deterministic so Chip
+// can hand-verify. All numbers derive from the route charges already computed by
+// calculateNetRevenue (which are independent of gross revenue).
+
+// Target sits this fraction above the breakeven gross. Tunable per Chip's review.
+// NOTE: an alternative basis ("match the current #1 result") is on the table for
+// after Chip reviews — see project memory.
+export const NEGOTIATION_TARGET_MARGIN = 0.15;
+
+// Sum of the route charges the customer net credit must clear (independent of gross).
+export const routeChargesOf = (match) =>
+  (Number(match?.mileage_expense) || 0) +
+  (Number(match?.stop_expense)    || 0) +
+  (Number(match?.fuel_surcharge)  || 0) +
+  (Number(match?.other_charges)   || 0);
+
+// Customer net credit if the load grossed `gross`.
+export const netCreditAtGross = (gross, routeCharges, customerPct) =>
+  (Number(gross) || 0) * (Number(customerPct) || 0) - (Number(routeCharges) || 0);
+
+/**
+ * Negotiation guidance for a scored match. Returns null unless rate config was
+ * applied (without it there's no split/charges to compute a floor from).
+ *
+ * @returns {{ routeCharges, customerPct, breakevenGross, targetGross, margin } | null}
+ *   breakevenGross — walk-away floor (customer net credit = 0)
+ *   targetGross    — suggested number to lead with (breakeven + margin)
+ */
+export const computeNegotiation = (match, margin = NEGOTIATION_TARGET_MARGIN) => {
+  if (!match || !match.has_rate_config) return null;
+  const customerPct = Number(match.customer_pct);
+  if (!isFinite(customerPct) || customerPct <= 0) return null;
+  const routeCharges = routeChargesOf(match);
+  const breakevenGross = routeCharges / customerPct;
+  return {
+    routeCharges,
+    customerPct,
+    breakevenGross,
+    targetGross: breakevenGross * (1 + margin),
+    margin,
+  };
+};
+
+// True when a load has no usable posted rate — the negotiation case.
+export const isNoRateLoad = (match) =>
+  (Number(match?.totalRevenue ?? match?.total_revenue) || 0) <= 0;
 
 // How many days a load's pickup date may differ from the requested date and still match.
 // Within the window, loads are kept but flagged (early/late) so the user can judge the fit.
@@ -194,6 +243,22 @@ export const evaluatePickupDateFit = (loadDateStr, requestedDateStr) => {
 
 // Pull the best available pickup-date string off a normalized load (Truckstop: pickup_date, DF: ship_date).
 const loadPickupDate = (load) => load.ship_date || load.pickup_date || null;
+
+/**
+ * Clamp a requested pickup date up to today. Loads can't be picked up in the past
+ * and the load board rejects past dates, so a stale request's available date is
+ * treated as "available now". Keeps the API search and the ±1-day filter aligned.
+ *
+ * @param {string|null} dateStr - 'YYYY-MM-DD' (or ISO); null/empty → today
+ * @param {Date} [today] - injectable for testing
+ * @returns {string} 'YYYY-MM-DD'
+ */
+export const effectivePickupDate = (dateStr, today = new Date()) => {
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  if (!dateStr) return todayStr;
+  const d = String(dateStr).slice(0, 10);
+  return d >= todayStr ? d : todayStr;
+};
 
 /**
  * Find backhaul opportunities along the route home

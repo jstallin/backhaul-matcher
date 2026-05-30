@@ -631,9 +631,13 @@ function getDestStates(homeState) {
 function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pickupDate }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
-  const pickupDateTime = pickupDate
-    ? `${pickupDate}T00:00:00`
-    : `${new Date().toISOString().split('T')[0]}T00:00:00`;
+  // Truckstop rejects past pickup dates. Clamp anything earlier than today (and the
+  // empty case) up to today so a stale request's available date doesn't fail the search.
+  const todayStr = new Date().toISOString().split('T')[0];
+  const effectivePickup = (pickupDate && String(pickupDate).slice(0, 10) >= todayStr)
+    ? String(pickupDate).slice(0, 10)
+    : todayStr;
+  const pickupDateTime = `${effectivePickup}T00:00:00`;
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope

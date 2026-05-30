@@ -8,7 +8,7 @@ import { RouteHomeMap } from './RouteHomeMap';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
-import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
@@ -230,6 +230,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Build request context for live load board fetch
       // datum_point is stored as "City, ST" — split to give SOAP API separate city and state
       const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+      // A past available date is treated as "available now" — the load board rejects
+      // past pickup dates, and we keep the search + ±1-day filter on the same date.
+      const effPickupDate = effectivePickupDate(request.equipment_available_date);
       const requestContext = {
         datumCity:     datumCityParsed,
         datumState:    datumStateParsed,
@@ -240,7 +243,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: rawProfile?.trailer_type || 'Dry Van',
-        pickupDate:    request.equipment_available_date || ''
+        pickupDate:    effPickupDate
       };
 
       // Parallel: credit deduction + load fetching are independent of each other
@@ -263,7 +266,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         corridorWidthMiles,
         rateConfig,
         request.is_relay || false,
-        request.equipment_available_date || null
+        effPickupDate
       );
 
       const matches = result.opportunities;

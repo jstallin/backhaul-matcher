@@ -6,9 +6,35 @@
 ---
 
 ## Last Updated
-- **Date:** May 27, 2026
-- **Session type:** Claude Code (build + debug)
-- **Updated by:** Claude Code (session 4)
+- **Date:** May 30, 2026
+- **Session type:** Claude Code (Ryder pilot kickoff follow-ups)
+- **Updated by:** Claude Code (session 5)
+
+---
+
+## What Was Just Completed (May 30, 2026, session 5) — Ryder pilot kickoff items
+
+Great Ryder kickoff (ran an hour over, they're excited to start). Items 001–008 captured; 007/008 held for Chip. Built and tested 001, 003, 004, 005, 002.
+
+**Batch 1 — shipped to staging (commit 66d1018):**
+- **001 (FIX):** v2 fleet delete — added delete-fleet to `FleetsView` ProfileTab (confirm dialog → `db.fleets.delete` → clears selection/reloads). Parity with v1.
+- **003 (ENHANCE):** auto-refresh now forces notifications on + locks the toggle (v1 `StartRequest`, v2 `SearchView`); enforced in `buildRequestPayload` + v1 save payload.
+- **004 (FIX):** hard ±1-day pickup-date window in `findRouteHomeBackhauls` (drops out-of-window loads before PC*MILER calls); survivors carry `date_fit`, rendered as a ▲ +1 / ▼ −1 day badge on cards (v1 + v2). Requested date threaded from `equipment_available_date`.
+- Fixed stale `buildFleetPayload` test (carrier split default 20, 80/20 customer/carrier).
+
+**Batch 2 — local, not yet pushed:**
+- **005 (FIX/ENHANCE):** $0-load negotiation helper. Confirmed $0 is real Truckstop data (broker posts no rate to invite a call), not an API bug. Cards show "Call for rate" + a Negotiate button. Dialog shows itemized route charges, **walk-away floor** (breakeven) + **lead-with target** (breakeven +15%, tunable `NEGOTIATION_TARGET_MARGIN`), and "if you land $X this load ranks #N of M". Deterministic math (`computeNegotiation`/`netCreditAtGross`), unit-tested for Chip. v1 + v2.
+  - **OPEN (per Jason):** rate basis is option 2 (breakeven + margin). Option 3 ("match the current #1 result") is a possible revisit after Chip reviews — may come back to this.
+- **002 (FIX):** city/state typo handling. New `api/pcmiler/suggest.js` (reuses PC*MILER locations + Nominatim fallback, cached) + `searchCityState` client helper + reusable permissive `<CityStateInput>` typeahead (suggestions + free text, geocode-on-blur validates, can't save on confirmed typo). Wired into datum entry (v1 `StartRequest`, v2 `SearchView`). Fleet home (street address, not city/state): v1 `FleetSetup` now blocks save on geocode failure; v2 `ProfileTab` already gated + now clears stale coords on edit.
+  - **Needs staging smoke test:** suggest endpoint needs the live `PCMILER_API_KEY` (server-only) — not exercisable locally.
+
+**Batch 2 also folds in two fixes from staging testing of batch 1:**
+- **Pickup date displayed off by one day** (e.g. a 6/1 load showing "May 31"): date-only `YYYY-MM-DD` strings were parsed as UTC midnight and rendered a day earlier in US timezones. Anchored to local noon in `fmtDate` (v2) + `formatDate` (v1). This was also why the ±1-day badge "looked" wrong — the load was actually an exact match; the label lied.
+- **Past available date failed the Truckstop call:** `buildSoapEnvelope` now clamps a past (or empty) pickup date up to today. Client mirrors it via `effectivePickupDate` so the search and the ±1-day filter stay aligned (a stale request is treated as "available now"). Applied in v1 `OpenRequests` + v2 `SearchView`.
+
+**Held for Chip:**
+- **007 (Mode field / partial loads):** Truckstop modes captured — Truck Load, LTL, Intermodal, Partial, Drayage, Parcel, Air, Water, Ocean (multi-select). Ryder wants Partial. Likely lives at Fleet setup; threads into the SOAP envelope (currently equipment-only).
+- **008 (Haul + keep searching):** add a "finalized vs. keep searching" checkbox during Haul This Load. Maps onto an intermediate status — reuse the WWP `pending→booked→hauled` pattern.
 
 ---
 

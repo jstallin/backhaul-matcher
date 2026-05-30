@@ -313,7 +313,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
             <div style={{ flex: 1 }}>
               <Input
                 value={form.homeAddress}
-                onChange={(v) => { set('homeAddress')(v); setGeocoded(false); }}
+                onChange={(v) => { setForm((f) => ({ ...f, homeAddress: v, homeLat: null, homeLng: null })); setGeocoded(false); }}
                 placeholder="Davidson, NC"
               />
             </div>

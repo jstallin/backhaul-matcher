@@ -5,6 +5,12 @@ import {
   findRouteHomeBackhauls,
   clearDistanceCache,
   evaluatePickupDateFit,
+  effectivePickupDate,
+  computeNegotiation,
+  netCreditAtGross,
+  routeChargesOf,
+  isNoRateLoad,
+  NEGOTIATION_TARGET_MARGIN,
 } from '../routeHomeMatching.js';
 
 // Mock external dependencies so tests are self-contained and don't hit APIs
@@ -553,6 +559,31 @@ describe('evaluatePickupDateFit', () => {
   });
 });
 
+describe('effectivePickupDate', () => {
+  const today = new Date(2026, 4, 30); // May 30, 2026 (month is 0-indexed)
+
+  it('keeps a future date as-is', () => {
+    expect(effectivePickupDate('2026-06-15', today)).toBe('2026-06-15');
+  });
+
+  it("keeps today's date", () => {
+    expect(effectivePickupDate('2026-05-30', today)).toBe('2026-05-30');
+  });
+
+  it('clamps a past date up to today', () => {
+    expect(effectivePickupDate('2026-05-01', today)).toBe('2026-05-30');
+  });
+
+  it('returns today for null/empty', () => {
+    expect(effectivePickupDate('', today)).toBe('2026-05-30');
+    expect(effectivePickupDate(null, today)).toBe('2026-05-30');
+  });
+
+  it('handles ISO timestamps by date portion', () => {
+    expect(effectivePickupDate('2026-05-01T08:00:00', today)).toBe('2026-05-30');
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // findRouteHomeBackhauls — pickup-date hard filter (item 004)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -585,5 +616,58 @@ describe('findRouteHomeBackhauls — pickup-date filter', () => {
     );
     expect(opportunities.map(o => o.load_id)).toContain('far-out');
     expect(opportunities[0].date_fit.fit).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negotiation helper (item 005) — deterministic, hand-verifiable
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('negotiation helper', () => {
+  // Mirrors the Watco $0 screenshot: only a $130 stop charge, 80/20 customer/carrier.
+  const zeroRateMatch = {
+    has_rate_config: true,
+    customer_pct: 0.80,
+    mileage_expense: 0,
+    stop_expense: 130,
+    fuel_surcharge: 0,
+    other_charges: 0,
+    total_revenue: 0,
+  };
+
+  it('isNoRateLoad detects $0 / missing rate', () => {
+    expect(isNoRateLoad({ total_revenue: 0 })).toBe(true);
+    expect(isNoRateLoad({ totalRevenue: 1500 })).toBe(false);
+    expect(isNoRateLoad({})).toBe(true);
+  });
+
+  it('routeChargesOf sums the four expense components', () => {
+    expect(routeChargesOf({ mileage_expense: 100, stop_expense: 130, fuel_surcharge: 20, other_charges: 50 })).toBe(300);
+  });
+
+  it('breakeven gross clears route charges at the customer split', () => {
+    const n = computeNegotiation(zeroRateMatch);
+    // 130 / 0.80 = 162.50
+    expect(n.breakevenGross).toBeCloseTo(162.5, 2);
+    // net credit is exactly zero at breakeven
+    expect(netCreditAtGross(n.breakevenGross, n.routeCharges, n.customerPct)).toBeCloseTo(0, 6);
+  });
+
+  it('target gross sits a margin above breakeven', () => {
+    const n = computeNegotiation(zeroRateMatch);
+    expect(n.margin).toBe(NEGOTIATION_TARGET_MARGIN);
+    expect(n.targetGross).toBeCloseTo(162.5 * (1 + NEGOTIATION_TARGET_MARGIN), 2);
+    expect(n.targetGross).toBeGreaterThan(n.breakevenGross);
+  });
+
+  it('returns null without rate config or a usable split', () => {
+    expect(computeNegotiation({ has_rate_config: false })).toBeNull();
+    expect(computeNegotiation({ has_rate_config: true, customer_pct: 0 })).toBeNull();
+    expect(computeNegotiation(null)).toBeNull();
+  });
+
+  it('netCreditAtGross is linear in gross', () => {
+    // 80% of 1000 minus 130 charges = 670
+    expect(netCreditAtGross(1000, 130, 0.80)).toBeCloseTo(670, 6);
   });
 });

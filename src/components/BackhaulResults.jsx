@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { generateTop10Report } from '../utils/generateReport';
+import { computeNegotiation, netCreditAtGross, isNoRateLoad } from '../utils/routeHomeMatching';
 
 // Equipment type → DirectFreight path segment
 const DF_EQUIP_PATH = {
@@ -79,6 +80,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [cancelling, setCancelling] = useState(false);
   const [haulMatch, setHaulMatch] = useState(null); // load selected for "haul this" confirmation
   const [completing, setCompleting] = useState(false);
+  const [negotiateMatch, setNegotiateMatch] = useState(null); // $0 load opened in the negotiation helper
   // const [aiAnalysis, setAiAnalysis] = useState({});
   // const [aiLoading, setAiLoading] = useState({});
   // const [aiFeedback, setAiFeedback] = useState({});
@@ -153,7 +155,11 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+    // A date-only 'YYYY-MM-DD' parses as UTC midnight, which renders as the
+    // previous day in US timezones. Anchor to local noon to keep the calendar day.
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(dateString).trim())
+      ? new Date(`${dateString}T12:00:00`)
+      : new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -270,7 +276,22 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   })()}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  {match.has_rate_config ? (
+                  {isNoRateLoad(match) ? (
+                    <>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: colors.accent.warning || '#d97706' }}>
+                        Call for rate
+                      </div>
+                      <div style={{ fontSize: '12px', color: colors.text.tertiary, marginBottom: '6px' }}>
+                        No posted rate
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setNegotiateMatch(match); }}
+                        style={{ padding: '5px 12px', background: 'none', border: `1px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.accent.primary, fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <TrendingUp size={13} /> Negotiate
+                      </button>
+                    </>
+                  ) : match.has_rate_config ? (
                     <>
                       <div style={{ fontSize: '24px', fontWeight: 900, color: match.customer_net_credit >= 0 ? colors.accent.success : colors.accent.danger }}>
                         {formatCurrency(match.customer_net_credit)}
@@ -885,6 +906,73 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           </div>
         </div>
       )}
+
+      {/* Negotiation Helper Dialog (item 005) */}
+      {negotiateMatch && (() => {
+        const neg = computeNegotiation(negotiateMatch);
+        const fmt = formatCurrency;
+        // Rank this load against the others if its gross landed at `gross`.
+        const others = matches.filter(m => m !== negotiateMatch);
+        const rankAt = (gross) => {
+          if (!neg) return null;
+          const nc = netCreditAtGross(gross, neg.routeCharges, neg.customerPct);
+          return others.filter(m => (m.customer_net_credit ?? -Infinity) > nc).length + 1;
+        };
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setNegotiateMatch(null)}>
+            <div style={{ background: colors.background.overlay, borderRadius: '16px', padding: '28px', maxWidth: '500px', width: '100%', border: `1px solid ${colors.border.primary}`, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+              <h3 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>Negotiate this load</h3>
+              <div style={{ fontSize: '14px', color: colors.text.secondary, marginBottom: '16px' }}>{negotiateMatch.origin.address} → {negotiateMatch.destination.address}</div>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, background: `${colors.accent.warning}15`, border: `1px solid ${colors.accent.warning}40`, borderRadius: '10px', padding: '12px', marginBottom: '20px' }}>
+                The broker posted <strong>no rate</strong> — often an invitation to call and negotiate. Here's a number to lead with.
+              </div>
+
+              {neg ? (
+                <>
+                  {/* Route charges */}
+                  <div style={{ background: colors.background.secondary, borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '12px', textTransform: 'uppercase', fontWeight: 700, color: colors.text.tertiary, marginBottom: '8px' }}>Route charges to cover ({negotiateMatch.additionalMiles} OOR mi)</div>
+                    {[['Mileage', negotiateMatch.mileage_expense], ['Stops', negotiateMatch.stop_expense], ['Fuel surcharge', negotiateMatch.fuel_surcharge], ['Other charges', negotiateMatch.other_charges]].map(([label, val]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: colors.text.secondary, marginBottom: '4px' }}>
+                        <span>{label}</span><span>{fmt(val || 0)}</span>
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 800, color: colors.text.primary, borderTop: `1px solid ${colors.border.secondary}`, marginTop: '6px', paddingTop: '6px' }}>
+                      <span>Total to clear</span><span>{fmt(neg.routeCharges)}</span>
+                    </div>
+                  </div>
+
+                  {/* Floor + Target */}
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ flex: 1, background: colors.background.secondary, borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: colors.text.tertiary }}>Walk-away floor</div>
+                      <div style={{ fontSize: '22px', fontWeight: 900, color: colors.text.primary }}>{fmt(neg.breakevenGross)}</div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary }}>covers charges (net $0)</div>
+                    </div>
+                    <div style={{ flex: 1, background: `${colors.accent.success}15`, border: `1px solid ${colors.accent.success}40`, borderRadius: '10px', padding: '14px' }}>
+                      <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: colors.accent.success }}>Lead with</div>
+                      <div style={{ fontSize: '22px', fontWeight: 900, color: colors.accent.success }}>{fmt(neg.targetGross)}</div>
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary }}>breakeven +{Math.round(neg.margin * 100)}%</div>
+                    </div>
+                  </div>
+
+                  {/* Rank if agreed */}
+                  <div style={{ fontSize: '13px', color: colors.text.secondary, lineHeight: 1.5 }}>
+                    If you land <strong style={{ color: colors.text.primary }}>{fmt(neg.targetGross)}</strong>, this load would rank <strong style={{ color: colors.accent.success }}>#{rankAt(neg.targetGross)}</strong> of {matches.length} by customer net credit.
+                    <br />At the floor of <strong style={{ color: colors.text.primary }}>{fmt(neg.breakevenGross)}</strong> it would rank #{rankAt(neg.breakevenGross)}.
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: '14px', color: colors.text.secondary }}>
+                  Set your fleet rate config (cost per mile, fuel surcharge, stop rate) to get a suggested number to negotiate.
+                </div>
+              )}
+
+              <button onClick={() => setNegotiateMatch(null)} style={{ marginTop: '20px', width: '100%', padding: '12px', background: 'none', border: `1px solid ${colors.border.accent}`, borderRadius: '10px', color: colors.text.secondary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Close</button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Map Modal */}
       {mapMatch && (

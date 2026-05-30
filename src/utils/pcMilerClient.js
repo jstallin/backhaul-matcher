@@ -151,6 +151,27 @@ export const geocodeAddress = async (address) => {
 };
 
 /**
+ * City/State typeahead suggestions for a typed query (item 002).
+ * Returns [] for short/empty queries or on error — callers debounce.
+ *
+ * @param {string} query
+ * @returns {Promise<Array<{ city, state, zip, lat, lng, label }>>}
+ */
+export const searchCityState = async (query) => {
+  const q = (query || '').trim();
+  if (q.length < 3) return [];
+  try {
+    const response = await fetch(`/api/pcmiler/suggest?q=${encodeURIComponent(q)}`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data?.suggestions) ? data.suggestions : [];
+  } catch (error) {
+    console.error('Error fetching city/state suggestions:', error);
+    return [];
+  }
+};
+
+/**
  * Get both driving distance and route geometry in parallel.
  *
  * @param {Array<{lat: number, lng: number}>} points - 2+ points

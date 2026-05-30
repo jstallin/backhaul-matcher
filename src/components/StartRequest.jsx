@@ -6,6 +6,7 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { CityStateInput } from './CityStateInput';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -16,6 +17,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [saving, setSaving] = useState(false);
   const [fleets, setFleets] = useState([]);
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+  // Datum typo guard (item 002): null = unchecked, true = geocoded ok, false = couldn't resolve.
+  const [datumResolved, setDatumResolved] = useState(null);
   const hasLoadedEditingRequest = useRef(false);
 
   const [formData, setFormData] = useState({
@@ -173,6 +176,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     const newErrors = {};
     if (!formData.requestName.trim()) newErrors.requestName = 'Request name is required';
     if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Datum point is required';
+    else if (datumResolved === false) newErrors.datumPoint = "We couldn't find that location — check the spelling.";
     if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
     if (!formData.equipmentNeededDate) newErrors.equipmentNeededDate = 'Equipment needed date is required';
@@ -353,7 +357,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
-                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                <CityStateInput
+                  value={formData.datumPoint}
+                  onChange={(v) => { handleChange('datumPoint', v); setDatumResolved(null); }}
+                  onResolve={(r) => setDatumResolved(r ? true : false)}
+                  disabled={saving}
+                  placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)"
+                  accentColor={colors.accent.primary}
+                  inputStyle={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
+                />
                 {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.datumPoint}</div>}
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return from</div>
               </div>
