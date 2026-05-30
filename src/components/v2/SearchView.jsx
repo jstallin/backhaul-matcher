@@ -386,7 +386,10 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   } : { ...BLANK_FORM, selectedFleetId: fleets.length === 1 ? fleets[0].id : '' });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [datumVerified, setDatumVerified] = useState(!!(initialValues?.datum_lat));
+  // An already-saved request has a validated datum (datum_point is always set on save,
+  // even for v1-created rows that never stored coords) — treat it as verified on load so
+  // editing an unrelated field doesn't falsely fail. Editing the datum flips this off.
+  const [datumVerified, setDatumVerified] = useState(!!(initialValues?.datum_lat || initialValues?.datum_point));
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
 

@@ -22,7 +22,9 @@ Continued smoke-testing batch 2 on staging. 001, 003, 004, 005 all verified good
 - **006-P1 (ENHANCE — auto-refresh cadence + cap):** Added a **15-minute** interval option (0.25h; 4 credits/hr) and an optional **"Stop after N refreshes"** cap that self-disables auto-refresh. New columns `max_auto_refreshes` (null = unlimited) + `auto_refresh_count` on `backhaul_requests` (migration `20260530000001`, applied to staging; prod applies on promotion). Wired through v1 (`StartRequest` form/save, `OpenRequests` polling) and v2 (`SearchView` form/polling, shared `buildRequestPayload`) plus the server cron (`refresh-requests.js` increments count + flips `auto_refresh=false` at the cap). Counter resets to 0 on every save. 5 new unit tests on the cap logic.
   - **⚠️ Vercel Pro dependency:** true *server-side* 15-min cadence needs Vercel Pro — Hobby crons run at most daily, and the periodic refresh isn't even scheduled in `vercel.json` yet. Today auto-refresh only fires client-side while the tab is open. The cap logic is in the cron and ready for when Pro lands.
 
-All 159 unit tests pass; production build clean. Still on `staging`, not yet promoted to main.
+- **002 (FIX — edit-request false typo error, follow-up):** Editing an existing v2 backhaul request and changing only another field (e.g. the new "Stop after") failed validation with "We couldn't find that location," even though the saved city/state was valid. Cause: v2 `SearchView` seeded `datumVerified` from `datum_lat`, which is null for any request created in v1 (v1's save never stored coords) or predating that column — so a valid saved datum started "unverified." Fix: also seed from `datum_point` (always set on save). Untouched datum passes on edit; editing the field still flips it off and re-verifies on blur. v2-only (v1's `datumResolved` already starts lenient/null).
+
+All 159 unit tests pass; production build clean. PR #17 (001–006, 009-P2 + 002 fixes) merged to main; migration `20260530000001` applied to production. The edit-request fix above is the only item still ahead of main on `staging`.
 
 ---
 
