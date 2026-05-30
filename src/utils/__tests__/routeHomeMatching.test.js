@@ -4,6 +4,13 @@ import {
   calculateNetRevenue,
   findRouteHomeBackhauls,
   clearDistanceCache,
+  evaluatePickupDateFit,
+  effectivePickupDate,
+  computeNegotiation,
+  netCreditAtGross,
+  routeChargesOf,
+  isNoRateLoad,
+  NEGOTIATION_TARGET_MARGIN,
 } from '../routeHomeMatching.js';
 
 // Mock external dependencies so tests are self-contained and don't hit APIs
@@ -513,5 +520,154 @@ describe('findRouteHomeBackhauls — net revenue with rate config', () => {
       [makeLoad({ load_id: 'load-no-rate', total_revenue: 2000 })]
     );
     expect(opportunities[0].has_rate_config).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// evaluatePickupDateFit — pure date-window logic
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('evaluatePickupDateFit', () => {
+  it('flags exact same-day match', () => {
+    const r = evaluatePickupDateFit('2026-06-01', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'exact', offsetDays: 0 });
+  });
+
+  it('flags a load one day late as within window', () => {
+    const r = evaluatePickupDateFit('2026-06-02', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'late', offsetDays: 1 });
+  });
+
+  it('flags a load one day early as within window', () => {
+    const r = evaluatePickupDateFit('2026-05-31', '2026-06-01');
+    expect(r).toEqual({ withinWindow: true, fit: 'early', offsetDays: -1 });
+  });
+
+  it('rejects loads more than one day outside the window', () => {
+    expect(evaluatePickupDateFit('2026-06-03', '2026-06-01').withinWindow).toBe(false);
+    expect(evaluatePickupDateFit('2026-05-29', '2026-06-01').withinWindow).toBe(false);
+  });
+
+  it('keeps loads unflagged when there is no requested date or no load date', () => {
+    expect(evaluatePickupDateFit('2026-06-01', null)).toEqual({ withinWindow: true, fit: null, offsetDays: null });
+    expect(evaluatePickupDateFit(null, '2026-06-01')).toEqual({ withinWindow: true, fit: null, offsetDays: null });
+  });
+
+  it('tolerates ISO timestamps by comparing the date portion', () => {
+    const r = evaluatePickupDateFit('2026-06-01T14:00:00', '2026-06-01');
+    expect(r.fit).toBe('exact');
+  });
+});
+
+describe('effectivePickupDate', () => {
+  const today = new Date(2026, 4, 30); // May 30, 2026 (month is 0-indexed)
+
+  it('keeps a future date as-is', () => {
+    expect(effectivePickupDate('2026-06-15', today)).toBe('2026-06-15');
+  });
+
+  it("keeps today's date", () => {
+    expect(effectivePickupDate('2026-05-30', today)).toBe('2026-05-30');
+  });
+
+  it('clamps a past date up to today', () => {
+    expect(effectivePickupDate('2026-05-01', today)).toBe('2026-05-30');
+  });
+
+  it('returns today for null/empty', () => {
+    expect(effectivePickupDate('', today)).toBe('2026-05-30');
+    expect(effectivePickupDate(null, today)).toBe('2026-05-30');
+  });
+
+  it('handles ISO timestamps by date portion', () => {
+    expect(effectivePickupDate('2026-05-01T08:00:00', today)).toBe('2026-05-30');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// findRouteHomeBackhauls — pickup-date hard filter (item 004)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('findRouteHomeBackhauls — pickup-date filter', () => {
+  beforeEach(() => clearDistanceCache());
+
+  it('drops loads outside the ±1 day window and tags the survivors', async () => {
+    const loads = [
+      makeLoad({ load_id: 'on-date',  pickup_date: '2026-06-01' }),
+      makeLoad({ load_id: 'next-day', pickup_date: '2026-06-02' }),
+      makeLoad({ load_id: 'too-late', pickup_date: '2026-06-05' }),
+    ];
+    const { opportunities } = await findRouteHomeBackhauls(
+      STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET, loads,
+      50, 50, null, false, '2026-06-01'
+    );
+    const ids = opportunities.map(o => o.load_id);
+    expect(ids).toContain('on-date');
+    expect(ids).toContain('next-day');
+    expect(ids).not.toContain('too-late');
+    expect(opportunities.find(o => o.load_id === 'on-date').date_fit.fit).toBe('exact');
+    expect(opportunities.find(o => o.load_id === 'next-day').date_fit.fit).toBe('late');
+  });
+
+  it('applies no date filter when no requested date is passed (back-compat)', async () => {
+    const loads = [makeLoad({ load_id: 'far-out', pickup_date: '2026-12-25' })];
+    const { opportunities } = await findRouteHomeBackhauls(
+      STOCKTON_GA, HOLLYWOOD_FL, DRY_VAN_FLEET, loads
+    );
+    expect(opportunities.map(o => o.load_id)).toContain('far-out');
+    expect(opportunities[0].date_fit.fit).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Negotiation helper (item 005) — deterministic, hand-verifiable
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('negotiation helper', () => {
+  // Mirrors the Watco $0 screenshot: only a $130 stop charge, 80/20 customer/carrier.
+  const zeroRateMatch = {
+    has_rate_config: true,
+    customer_pct: 0.80,
+    mileage_expense: 0,
+    stop_expense: 130,
+    fuel_surcharge: 0,
+    other_charges: 0,
+    total_revenue: 0,
+  };
+
+  it('isNoRateLoad detects $0 / missing rate', () => {
+    expect(isNoRateLoad({ total_revenue: 0 })).toBe(true);
+    expect(isNoRateLoad({ totalRevenue: 1500 })).toBe(false);
+    expect(isNoRateLoad({})).toBe(true);
+  });
+
+  it('routeChargesOf sums the four expense components', () => {
+    expect(routeChargesOf({ mileage_expense: 100, stop_expense: 130, fuel_surcharge: 20, other_charges: 50 })).toBe(300);
+  });
+
+  it('breakeven gross clears route charges at the customer split', () => {
+    const n = computeNegotiation(zeroRateMatch);
+    // 130 / 0.80 = 162.50
+    expect(n.breakevenGross).toBeCloseTo(162.5, 2);
+    // net credit is exactly zero at breakeven
+    expect(netCreditAtGross(n.breakevenGross, n.routeCharges, n.customerPct)).toBeCloseTo(0, 6);
+  });
+
+  it('target gross sits a margin above breakeven', () => {
+    const n = computeNegotiation(zeroRateMatch);
+    expect(n.margin).toBe(NEGOTIATION_TARGET_MARGIN);
+    expect(n.targetGross).toBeCloseTo(162.5 * (1 + NEGOTIATION_TARGET_MARGIN), 2);
+    expect(n.targetGross).toBeGreaterThan(n.breakevenGross);
+  });
+
+  it('returns null without rate config or a usable split', () => {
+    expect(computeNegotiation({ has_rate_config: false })).toBeNull();
+    expect(computeNegotiation({ has_rate_config: true, customer_pct: 0 })).toBeNull();
+    expect(computeNegotiation(null)).toBeNull();
+  });
+
+  it('netCreditAtGross is linear in gross', () => {
+    // 80% of 1000 minus 130 charges = 670
+    expect(netCreditAtGross(1000, 130, 0.80)).toBeCloseTo(670, 6);
   });
 });

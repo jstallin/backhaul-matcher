@@ -6,7 +6,8 @@ import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildRequestPayload } from '../../utils/buildRequestPayload';
-import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, computeNegotiation, netCreditAtGross, isNoRateLoad, effectivePickupDate } from '../../utils/routeHomeMatching';
+import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
@@ -94,6 +95,21 @@ const mWeight       = m => m.weight ?? m.loadWeight;
 const mLength       = m => m.trailerLength ?? m.trailer_length;
 const mEquipType    = m => m.equipmentType ?? m.equipment_type ?? 'Dry Van';
 const mFreight      = m => m.freightType ?? m.freight_type;
+
+// Amber pill flagging a load whose pickup is ±1 day off the requested date.
+// Renders nothing for an exact match or when there's no requested/load date.
+function DateFitBadge({ dateFit }) {
+  if (!dateFit || dateFit.fit === 'exact' || dateFit.fit == null) return null;
+  const late = dateFit.fit === 'late';
+  return (
+    <span
+      title={late ? 'Picks up a day after your requested date' : 'Picks up a day before your requested date'}
+      style={{ fontSize: '10px', fontWeight: 700, color: '#92400e', background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '5px', padding: '0 5px', whiteSpace: 'nowrap', lineHeight: '15px' }}
+    >
+      {late ? '▲ +1 day' : '▼ −1 day'}
+    </span>
+  );
+}
 
 // ─── Shared primitives ───────────────────────────────────────────────────────
 
@@ -299,11 +315,11 @@ function ErrorMsg({ msg }) {
   );
 }
 
-function Toggle({ checked, onChange, label }) {
+function Toggle({ checked, onChange, label, disabled }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.65 : 1 }}>
       <div
-        onClick={() => onChange(!checked)}
+        onClick={() => { if (!disabled) onChange(!checked); }}
         style={{
           width: '36px', height: '20px',
           borderRadius: '10px',
@@ -311,7 +327,7 @@ function Toggle({ checked, onChange, label }) {
           position: 'relative',
           flexShrink: 0,
           transition: 'background 0.15s',
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         }}
       >
         <div style={{
@@ -334,6 +350,7 @@ function Toggle({ checked, onChange, label }) {
 
 const BLANK_FORM = {
   requestName: '',
+  datumText: '',
   datumCity: '',
   datumState: '',
   datumLat: null,
@@ -344,6 +361,7 @@ const BLANK_FORM = {
   isRelay: false,
   autoRefresh: false,
   autoRefreshInterval: 1,
+  maxAutoRefreshes: '',
   notificationEnabled: false,
   notificationMethod: 'email',
 };
@@ -351,6 +369,7 @@ const BLANK_FORM = {
 function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [form, setForm] = useState(() => initialValues ? {
     requestName: initialValues.request_name || '',
+    datumText: initialValues.datum_point || [initialValues.datum_city, initialValues.datum_state].filter(Boolean).join(', '),
     datumCity: initialValues.datum_city || '',
     datumState: initialValues.datum_state || '',
     datumLat: initialValues.datum_lat || null,
@@ -361,6 +380,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     isRelay: initialValues.is_relay || false,
     autoRefresh: initialValues.auto_refresh || false,
     autoRefreshInterval: initialValues.auto_refresh_interval ? initialValues.auto_refresh_interval / 60 : 1,
+    maxAutoRefreshes: initialValues.max_auto_refreshes != null ? String(initialValues.max_auto_refreshes) : '',
     notificationEnabled: initialValues.notification_enabled || false,
     notificationMethod: initialValues.notification_method || 'email',
   } : { ...BLANK_FORM, selectedFleetId: fleets.length === 1 ? fleets[0].id : '' });
@@ -370,33 +390,40 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key, val) => setForm(f => {
+    const next = { ...f, [key]: val };
+    // Auto-refresh is only useful with notifications, so force them on when it's enabled.
+    if (key === 'autoRefresh' && val) {
+      next.notificationEnabled = true;
+      if (!next.notificationMethod) next.notificationMethod = 'email';
+    }
+    return next;
+  });
 
-  const handleDatumBlur = async () => {
-    const city = form.datumCity.trim();
-    const state = form.datumState.trim();
-    if (!city || !state) return;
-    setDatumVerified(false);
-    try {
-      const result = await geocodeAddress(`${city}, ${state}`);
-      if (result?.lat && result?.lng) {
-        setForm(f => ({ ...f, datumLat: result.lat, datumLng: result.lng }));
-        setDatumVerified(true);
-      }
-    } catch { /* geocode failure is non-fatal */ }
+  // CityStateInput resolution (item 002): suggestion pick or blur-geocode.
+  const handleDatumResolve = (r) => {
+    if (r && r.lat != null && r.lng != null) {
+      setForm(f => ({ ...f, datumText: r.label, datumCity: r.city, datumState: r.state, datumLat: r.lat, datumLng: r.lng }));
+      setDatumVerified(true);
+      setErrors(e => ({ ...e, datumText: null })); // clear stale typo error once verify succeeds
+    } else {
+      setForm(f => ({ ...f, datumLat: null, datumLng: null }));
+      setDatumVerified(false);
+    }
   };
 
   const validate = () => {
     const e = {};
     if (!form.requestName.trim()) e.requestName = 'Required';
-    if (!form.datumCity.trim()) e.datumCity = 'Required';
-    if (!form.datumState.trim() || form.datumState.trim().length !== 2) e.datumState = '2-letter state required';
+    if (!form.datumText.trim()) e.datumText = 'Required';
+    else if (!datumVerified) e.datumText = "We couldn't find that location — check the spelling.";
     if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const refreshCreditLabel = (intervalHours) => {
+    if (intervalHours === 0.25) return { interval: 'every 15 minutes', cost: '4 credits per hour' };
     if (intervalHours === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
     if (intervalHours === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
     if (intervalHours === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
@@ -443,25 +470,16 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
             <ErrorMsg msg={errors.requestName} />
           </Field>
 
-          <Field label="Datum City">
-            <Input
-              value={form.datumCity}
-              onChange={e => { set('datumCity', e.target.value); setDatumVerified(false); }}
-              onBlur={handleDatumBlur}
-              placeholder="e.g. Burlington"
+          <Field label="Datum (Return Location)" style={{ gridColumn: '1 / -1' }}>
+            <CityStateInput
+              value={form.datumText}
+              onChange={(v) => { set('datumText', v); setDatumVerified(false); }}
+              onResolve={handleDatumResolve}
+              placeholder="City, ST (e.g. Burlington, NC)"
+              accentColor={t.colors.accent.blue}
+              inputStyle={{ width: '100%', padding: '8px 10px', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.lg, fontSize: t.font.size.sm, color: t.colors.text.primary, background: '#fff', outline: 'none', boxSizing: 'border-box' }}
             />
-            <ErrorMsg msg={errors.datumCity} />
-          </Field>
-          <Field label="Datum State">
-            <Input
-              value={form.datumState}
-              onChange={e => { set('datumState', e.target.value.toUpperCase().slice(0, 2)); setDatumVerified(false); }}
-              onBlur={handleDatumBlur}
-              placeholder="NC"
-              maxLength={2}
-              style={{ textTransform: 'uppercase' }}
-            />
-            <ErrorMsg msg={errors.datumState} />
+            <ErrorMsg msg={errors.datumText} />
             {datumVerified && (
               <span style={{ fontSize: '11px', color: '#22c55e', marginTop: '4px', display: 'block' }}>
                 ✓ Location verified
@@ -495,18 +513,38 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
               <div style={{ marginTop: '10px', marginLeft: '46px' }}>
                 <Field label="Refresh interval">
                   <SelectInput value={form.autoRefreshInterval} onChange={e => set('autoRefreshInterval', parseFloat(e.target.value))} style={{ width: '180px' }}>
+                    <option value={0.25}>Every 15 minutes</option>
                     <option value={0.5}>Every 30 minutes</option>
                     <option value={1}>Every 1 hour</option>
                     <option value={4}>Every 4 hours</option>
                   </SelectInput>
                 </Field>
+                <div style={{ marginTop: '10px' }}>
+                  <Field label="Stop after (refreshes)">
+                    <Input
+                      type="number"
+                      value={form.maxAutoRefreshes}
+                      onChange={e => set('maxAutoRefreshes', e.target.value)}
+                      placeholder="Unlimited"
+                      style={{ width: '180px' }}
+                    />
+                  </Field>
+                  <div style={{ marginTop: '4px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                    Leave blank for unlimited. Auto-refresh turns itself off once this many refreshes have run.
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
           <div>
-            <Toggle checked={form.notificationEnabled} onChange={v => set('notificationEnabled', v)} label="Notify me when top loads change" />
-            {form.notificationEnabled && (
+            <Toggle checked={form.notificationEnabled || form.autoRefresh} onChange={v => set('notificationEnabled', v)} disabled={form.autoRefresh} label="Notify me when top loads change" />
+            {form.autoRefresh && (
+              <div style={{ marginTop: '4px', marginLeft: '46px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                Required while auto-refresh is on.
+              </div>
+            )}
+            {(form.notificationEnabled || form.autoRefresh) && (
               <div style={{ marginTop: '10px', marginLeft: '46px' }}>
                 <Field label="Notification method">
                   <SelectInput value={form.notificationMethod} onChange={e => set('notificationMethod', e.target.value)} style={{ width: '180px' }}>
@@ -678,7 +716,12 @@ function fmtMoney(val) {
 function fmtDate(dateStr) {
   if (!dateStr) return '—';
   try {
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // A date-only 'YYYY-MM-DD' parses as UTC midnight, which renders as the
+    // previous day in US timezones. Anchor to local noon to keep the calendar day.
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr).trim())
+      ? new Date(`${dateStr}T12:00:00`)
+      : new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   } catch { return dateStr; }
 }
 
@@ -687,7 +730,7 @@ function fmtNum(n, decimals = 1) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: decimals }).format(n);
 }
 
-function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis, onTruckstopClick, isPending }) {
+function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis, onNegotiate, onTruckstopClick, isPending }) {
   const rc = RANK_COLORS[rank] || DEFAULT_RANK_COLORS;
 
   const hasRateConfig = match.has_rate_config;
@@ -773,14 +816,29 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           ))}
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: t.font.size.xl, fontWeight: t.font.weight.bold, color: rc.text }}>
-            {fmtMoney(primaryRevenue)}
-          </div>
-          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{revenueLabel}</div>
-          {hasRateConfig && (
-            <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
-              Gross: {fmtMoney(mTotalRev(match))} · {fmtMoney(mRevPerMile(match))}/mi
-            </div>
+          {isNoRateLoad(match) ? (
+            <>
+              <div style={{ fontSize: t.font.size.md, fontWeight: t.font.weight.bold, color: t.colors.accent.amber }}>Call for rate</div>
+              <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '5px' }}>No posted rate</div>
+              <button
+                onClick={e => { e.stopPropagation(); onNegotiate(match); }}
+                style={{ padding: '4px 10px', background: 'none', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, color: t.colors.accent.blue, fontSize: '11px', fontWeight: t.font.weight.bold, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+              >
+                <TrendingUp size={12} /> Negotiate
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: t.font.size.xl, fontWeight: t.font.weight.bold, color: rc.text }}>
+                {fmtMoney(primaryRevenue)}
+              </div>
+              <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{revenueLabel}</div>
+              {hasRateConfig && (
+                <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                  Gross: {fmtMoney(mTotalRev(match))} · {fmtMoney(mRevPerMile(match))}/mi
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -795,8 +853,9 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, lineHeight: 1.3 }}>
             {mOriginAddr(match)}
           </div>
-          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
             {fmtDate(mPickupDate(match))}
+            <DateFitBadge dateFit={match.date_fit} />
           </div>
         </div>
 
@@ -1306,6 +1365,74 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
   );
 }
 
+// Negotiation helper for $0 / no-rate loads (item 005).
+function NegotiationDialog({ match, matches, onClose }) {
+  if (!match) return null;
+  const neg = computeNegotiation(match);
+  const others = (matches || []).filter(m => m !== match);
+  const rankAt = (gross) => {
+    if (!neg) return null;
+    const nc = netCreditAtGross(gross, neg.routeCharges, neg.customerPct);
+    return others.filter(m => (m.customer_net_credit ?? -Infinity) > nc).length + 1;
+  };
+  const total = (matches || []).length;
+  const charges = neg ? [
+    ['Mileage', match.mileage_expense], ['Stops', match.stop_expense],
+    ['Fuel surcharge', match.fuel_surcharge], ['Other charges', match.other_charges],
+  ] : [];
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 2200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: t.radius['2xl'], padding: '28px', maxWidth: '480px', width: '100%', boxShadow: t.shadow.lg, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ fontSize: t.font.size.xl, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '4px' }}>Negotiate this load</div>
+        <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, marginBottom: '16px' }}>{mOriginAddr(match)} → {mDestAddr(match)}</div>
+        <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary, background: t.colors.accent.amberLight, border: `1px solid ${t.colors.accent.amber}40`, borderRadius: t.radius.lg, padding: '12px', marginBottom: '20px' }}>
+          The broker posted <strong>no rate</strong> — often an invitation to call and negotiate. Here's a number to lead with.
+        </div>
+
+        {neg ? (
+          <>
+            <div style={{ background: '#f8fafc', borderRadius: t.radius.xl, padding: '14px 16px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: t.font.weight.bold, color: t.colors.text.muted, marginBottom: '8px' }}>Route charges to cover ({fmtNum(mAdditional(match), 0)} OOR mi)</div>
+              {charges.map(([label, val]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: t.font.size.sm, color: t.colors.text.secondary, marginBottom: '4px' }}>
+                  <span>{label}</span><span>{fmtMoney(val || 0)}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.primary, borderTop: `1px solid ${t.colors.border.default}`, marginTop: '6px', paddingTop: '6px' }}>
+                <span>Total to clear</span><span>{fmtMoney(neg.routeCharges)}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, background: '#f8fafc', borderRadius: t.radius.xl, padding: '14px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: t.font.weight.bold, color: t.colors.text.muted }}>Walk-away floor</div>
+                <div style={{ fontSize: t.font.size['2xl'], fontWeight: t.font.weight.black, color: t.colors.text.primary }}>{fmtMoney(neg.breakevenGross)}</div>
+                <div style={{ fontSize: '10px', color: t.colors.text.muted }}>covers charges (net $0)</div>
+              </div>
+              <div style={{ flex: 1, background: t.colors.accent.greenLight, border: `1px solid ${t.colors.status.active}40`, borderRadius: t.radius.xl, padding: '14px' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: t.font.weight.bold, color: t.colors.status.active }}>Lead with</div>
+                <div style={{ fontSize: t.font.size['2xl'], fontWeight: t.font.weight.black, color: t.colors.status.active }}>{fmtMoney(neg.targetGross)}</div>
+                <div style={{ fontSize: '10px', color: t.colors.text.muted }}>breakeven +{Math.round(neg.margin * 100)}%</div>
+              </div>
+            </div>
+
+            <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary, lineHeight: 1.5 }}>
+              If you land <strong style={{ color: t.colors.text.primary }}>{fmtMoney(neg.targetGross)}</strong>, this load would rank <strong style={{ color: t.colors.status.active }}>#{rankAt(neg.targetGross)}</strong> of {total} by customer net credit.
+              <br />At the floor of <strong style={{ color: t.colors.text.primary }}>{fmtMoney(neg.breakevenGross)}</strong> it would rank #{rankAt(neg.breakevenGross)}.
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary }}>
+            Set your fleet rate config (cost per mile, fuel surcharge, stop rate) to get a suggested number to negotiate.
+          </div>
+        )}
+
+        <button onClick={onClose} style={{ marginTop: '20px', width: '100%', padding: '11px', background: 'transparent', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.xl, color: t.colors.text.muted, fontSize: t.font.size.sm, fontWeight: t.font.weight.medium, cursor: 'pointer' }}>Close</button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Results panel (right side when request selected) ────────────────────────
 
 function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoading, error, onRun, onEdit, onComplete, timeUntilRefresh }) {
@@ -1317,6 +1444,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [mapMatch, setMapMatch] = useState(null);
   const [haulMatch, setHaulMatch] = useState(null);
+  const [negotiateMatch, setNegotiateMatch] = useState(null);
   const [completing, setCompleting] = useState(false);
 
   // Pending / nudge state
@@ -1501,6 +1629,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
                 onViewDetails={m => setSelectedMatch(m)}
                 onMapClick={m => { setMapFocusLoad(m); setMapMatch(m); }}
                 onHaulThis={m => setHaulMatch(m)}
+                onNegotiate={m => setNegotiateMatch(m)}
                 onTruckstopClick={handleTruckstopClick}
                 isPending={pendingLoads.has(match.load_id || match.id)}
               />
@@ -1534,6 +1663,11 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         completing={completing}
         onConfirm={handleHaulConfirm}
         onClose={() => setHaulMatch(null)}
+      />
+      <NegotiationDialog
+        match={negotiateMatch}
+        matches={matches}
+        onClose={() => setNegotiateMatch(null)}
       />
 
       {/* Truckstop nudge toast */}
@@ -1729,7 +1863,8 @@ export function SearchView() {
         homeLat: fleet.home_lat || 0,
         homeLng: fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
-        pickupDate: request.equipment_available_date || '',
+        // Past available date → treat as "available now" (load board rejects past dates).
+        pickupDate: effectivePickupDate(request.equipment_available_date),
       };
 
       const [creditResult, loadsResult] = await Promise.all([
@@ -1754,7 +1889,8 @@ export function SearchView() {
         homeRadiusMiles,
         corridorWidthMiles,
         rateConfig,
-        request.is_relay || false
+        request.is_relay || false,
+        effectivePickupDate(request.equipment_available_date)
       );
 
       const opportunities = result.opportunities || [];
@@ -1794,13 +1930,30 @@ export function SearchView() {
     }
     const intervalMinutes = selectedRequest.auto_refresh_interval || 240;
     const intervalMs = intervalMinutes * 60 * 1000;
+    const maxRefreshes = selectedRequest.max_auto_refreshes; // null = unlimited
+    let count = selectedRequest.auto_refresh_count || 0;
     setNextRefreshTime(new Date(Date.now() + intervalMs));
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       runMatching(selectedRequest);
+      count += 1;
+      // Persist the running count; self-disable once the cap is reached.
+      const reachedLimit = maxRefreshes != null && count >= maxRefreshes;
+      const updates = { auto_refresh_count: count, ...(reachedLimit ? { auto_refresh: false } : {}) };
+      try {
+        const updated = await db.requests.update(selectedRequest.id, updates);
+        if (reachedLimit) {
+          clearInterval(timer);
+          setNextRefreshTime(null);
+          setSelectedRequest(prev => (prev?.id === selectedRequest.id ? { ...prev, ...(updated || updates) } : prev));
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to update auto-refresh count:', err?.message || err);
+      }
       setNextRefreshTime(new Date(Date.now() + intervalMs));
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, runMatching]);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, selectedRequest?.max_auto_refreshes, runMatching]);
 
   // Countdown display
   useEffect(() => {

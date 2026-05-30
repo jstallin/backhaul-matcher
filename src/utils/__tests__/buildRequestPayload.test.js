@@ -75,6 +75,35 @@ describe('buildRequestPayload', () => {
     });
   });
 
+  describe('max_auto_refreshes cap (item 006)', () => {
+    it('is null when no limit is given (unlimited)', () => {
+      const p = buildRequestPayload({ ...baseForm, autoRefresh: true, maxAutoRefreshes: '' }, USER_ID);
+      expect(p.max_auto_refreshes).toBeNull();
+    });
+
+    it('parses a positive integer limit', () => {
+      const p = buildRequestPayload({ ...baseForm, autoRefresh: true, maxAutoRefreshes: '5' }, USER_ID);
+      expect(p.max_auto_refreshes).toBe(5);
+    });
+
+    it('is null when autoRefresh is off even if a limit was typed', () => {
+      const p = buildRequestPayload({ ...baseForm, autoRefresh: false, maxAutoRefreshes: '5' }, USER_ID);
+      expect(p.max_auto_refreshes).toBeNull();
+    });
+
+    it('ignores zero, negative, and non-numeric limits', () => {
+      for (const bad of ['0', '-3', 'abc']) {
+        const p = buildRequestPayload({ ...baseForm, autoRefresh: true, maxAutoRefreshes: bad }, USER_ID);
+        expect(p.max_auto_refreshes).toBeNull();
+      }
+    });
+
+    it('always resets auto_refresh_count to 0 on save', () => {
+      const p = buildRequestPayload({ ...baseForm, autoRefresh: true, maxAutoRefreshes: '5' }, USER_ID);
+      expect(p.auto_refresh_count).toBe(0);
+    });
+  });
+
   describe('notification behavior', () => {
     it('sets notification_method to null when notificationEnabled is false', () => {
       const p = buildRequestPayload({ ...baseForm, notificationEnabled: false, notificationMethod: 'email' }, USER_ID);

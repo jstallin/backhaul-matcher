@@ -82,9 +82,9 @@ describe('buildFleetPayload', () => {
       expect(profileData.other_charge_2_amount).toBeNull();
     });
 
-    it('defaults revenue_split_carrier to 70 when blank', () => {
+    it('defaults revenue_split_carrier to 20 when blank', () => {
       const { profileData } = buildFleetPayload({ ...baseForm, revenueSplitCarrier: '' });
-      expect(profileData.revenue_split_carrier).toBe(70);
+      expect(profileData.revenue_split_carrier).toBe(20);
     });
 
     it('defaults fuel_mpg to 6 when blank', () => {

@@ -8,7 +8,7 @@ import { RouteHomeMap } from './RouteHomeMap';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
-import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
@@ -53,6 +53,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     // Database stores interval in MINUTES (not hours)
     const refreshIntervalMinutes = selectedRequest.auto_refresh_interval || 240; // Default 240 min (4 hours)
     const refreshIntervalMs = refreshIntervalMinutes * 60 * 1000;
+    const maxRefreshes = selectedRequest.max_auto_refreshes; // null = unlimited (item 006)
+    let count = selectedRequest.auto_refresh_count || 0;
 
     // Set initial refresh time
     const now = new Date();
@@ -62,17 +64,33 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     console.log(`🔄 Auto-refresh enabled: every ${refreshIntervalMinutes} minutes (${refreshIntervalMinutes / 60} hours)`);
 
     // Set up interval to refresh matches
-    const refreshTimer = setInterval(() => {
+    const refreshTimer = setInterval(async () => {
       console.log('🔄 Auto-refreshing backhaul matches...');
       handleSelectRequest(selectedRequest);
-      
+
+      count += 1;
+      // Persist the running count; self-disable once the cap is reached.
+      const reachedLimit = maxRefreshes != null && count >= maxRefreshes;
+      const updates = { auto_refresh_count: count, ...(reachedLimit ? { auto_refresh: false } : {}) };
+      try {
+        const updated = await db.requests.update(selectedRequest.id, updates);
+        if (reachedLimit) {
+          clearInterval(refreshTimer);
+          setNextRefreshTime(null);
+          setSelectedRequest(prev => (prev?.id === selectedRequest.id ? { ...prev, ...(updated || updates) } : prev));
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to update auto-refresh count:', err?.message || err);
+      }
+
       // Update next refresh time
       const newNextRefresh = new Date(Date.now() + refreshIntervalMs);
       setNextRefreshTime(newNextRefresh);
     }, refreshIntervalMs);
 
     return () => clearInterval(refreshTimer);
-  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval]);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, selectedRequest?.max_auto_refreshes]);
 
   // Update countdown display every second
   useEffect(() => {
@@ -230,6 +248,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Build request context for live load board fetch
       // datum_point is stored as "City, ST" — split to give SOAP API separate city and state
       const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+      // A past available date is treated as "available now" — the load board rejects
+      // past pickup dates, and we keep the search + ±1-day filter on the same date.
+      const effPickupDate = effectivePickupDate(request.equipment_available_date);
       const requestContext = {
         datumCity:     datumCityParsed,
         datumState:    datumStateParsed,
@@ -240,7 +261,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: rawProfile?.trailer_type || 'Dry Van',
-        pickupDate:    request.equipment_available_date || ''
+        pickupDate:    effPickupDate
       };
 
       // Parallel: credit deduction + load fetching are independent of each other
@@ -262,7 +283,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeRadiusMiles,
         corridorWidthMiles,
         rateConfig,
-        request.is_relay || false
+        request.is_relay || false,
+        effPickupDate
       );
 
       const matches = result.opportunities;

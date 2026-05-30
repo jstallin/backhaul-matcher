@@ -6,6 +6,7 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { CityStateInput } from './CityStateInput';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -16,6 +17,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [saving, setSaving] = useState(false);
   const [fleets, setFleets] = useState([]);
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+  // Datum typo guard (item 002): null = unchecked, true = geocoded ok, false = couldn't resolve.
+  const [datumResolved, setDatumResolved] = useState(null);
   const hasLoadedEditingRequest = useRef(false);
 
   const [formData, setFormData] = useState({
@@ -27,6 +30,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     isRelay: false,
     autoRefresh: false,
     autoRefreshInterval: '0.5',  // 30 minutes default
+    maxAutoRefreshes: '',        // blank = unlimited (item 006)
     notificationEnabled: false,
     notificationMethod: 'both',
     editingId: null
@@ -84,6 +88,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           isRelay: request.is_relay || false,
           autoRefresh: request.auto_refresh || false,
           autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
+          maxAutoRefreshes: request.max_auto_refreshes != null ? String(request.max_auto_refreshes) : '',
           notificationEnabled: request.notification_enabled || false,
           notificationMethod: request.notification_method || 'both',
           editingId: request.id
@@ -154,7 +159,16 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      // Auto-refresh is only useful if the user gets notified of material changes,
+      // so notifications are mandatory whenever auto-refresh is enabled.
+      if (field === 'autoRefresh' && value) {
+        next.notificationEnabled = true;
+        if (!next.notificationMethod) next.notificationMethod = 'both';
+      }
+      return next;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
@@ -164,6 +178,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     const newErrors = {};
     if (!formData.requestName.trim()) newErrors.requestName = 'Request name is required';
     if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Datum point is required';
+    else if (datumResolved === false) newErrors.datumPoint = "We couldn't find that location — check the spelling.";
     if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
     if (!formData.equipmentNeededDate) newErrors.equipmentNeededDate = 'Equipment needed date is required';
@@ -182,6 +197,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   const refreshCreditLabel = (intervalHours) => {
     const h = parseFloat(intervalHours);
+    if (h === 0.25) return { interval: 'every 15 minutes', cost: '4 credits per hour' };
     if (h === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
     if (h === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
     if (h === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
@@ -212,8 +228,11 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         is_relay: formData.isRelay,
         auto_refresh: formData.autoRefresh,
         auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null, // Store as MINUTES
-        notification_enabled: formData.notificationEnabled,
-        notification_method: formData.notificationEnabled ? formData.notificationMethod : null,
+        // Optional cap on auto-refreshes before self-disabling (null = unlimited); counter resets on save (item 006)
+        max_auto_refreshes: formData.autoRefresh && parseInt(formData.maxAutoRefreshes, 10) > 0 ? parseInt(formData.maxAutoRefreshes, 10) : null,
+        auto_refresh_count: 0,
+        notification_enabled: formData.notificationEnabled || formData.autoRefresh,
+        notification_method: (formData.notificationEnabled || formData.autoRefresh) ? (formData.notificationMethod || 'both') : null,
         status: 'active'
       };
 
@@ -265,6 +284,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         isRelay: false,
         autoRefresh: false,
         autoRefreshInterval: '0.5',
+        maxAutoRefreshes: '',
         notificationEnabled: false,
         notificationMethod: 'both',
         editingId: null
@@ -344,7 +364,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
-                <input type="text" value={formData.datumPoint} onChange={(e) => handleChange('datumPoint', e.target.value)} disabled={saving} placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                <CityStateInput
+                  value={formData.datumPoint}
+                  onChange={(v) => { handleChange('datumPoint', v); setDatumResolved(null); }}
+                  onResolve={(r) => { const ok = !!r; setDatumResolved(ok); if (ok) setErrors(prev => ({ ...prev, datumPoint: null })); }}
+                  disabled={saving}
+                  placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)"
+                  accentColor={colors.accent.primary}
+                  inputStyle={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.datumPoint ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
+                />
                 {errors.datumPoint && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.datumPoint}</div>}
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return from</div>
               </div>
@@ -397,21 +425,38 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                       disabled={saving} 
                       style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}
                     >
+                      <option value="0.25">Every 15 Minutes</option>
                       <option value="0.5">Every 30 Minutes</option>
                       <option value="1">Every 1 Hour</option>
                       <option value="4">Every 4 Hours</option>
                     </select>
+                    <label style={{ display: 'block', margin: '16px 0 8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                      Stop After (refreshes)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={formData.maxAutoRefreshes}
+                      onChange={(e) => handleChange('maxAutoRefreshes', e.target.value)}
+                      disabled={saving}
+                      placeholder="Unlimited"
+                      style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', width: '160px' }}
+                    />
+                    <div style={{ marginTop: '6px', fontSize: '13px', color: colors.text.secondary }}>
+                      Leave blank for unlimited. Auto-refresh turns itself off once this many refreshes have run.
+                    </div>
                   </div>
                 )}
               </div>
 
               <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '32px' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 800, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: '8px' }}><Bell size={20} color={colors.accent.primary} />Notifications</h3>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', marginBottom: '16px' }}>
-                  <input type="checkbox" checked={formData.notificationEnabled} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer', marginTop: '2px' }} />
-                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Get notified when auto-refresh finds changes in top result</div></div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: formData.autoRefresh ? 'default' : 'pointer', marginBottom: '16px' }}>
+                  <input type="checkbox" checked={formData.notificationEnabled || formData.autoRefresh} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving || formData.autoRefresh} style={{ width: '20px', height: '20px', cursor: formData.autoRefresh ? 'not-allowed' : 'pointer', marginTop: '2px' }} />
+                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>{formData.autoRefresh ? 'Required while auto-refresh is on — you\'ll be alerted when the top result changes' : 'Get notified when auto-refresh finds changes in top result'}</div></div>
                 </label>
-                {formData.notificationEnabled && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
+                {(formData.notificationEnabled || formData.autoRefresh) && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
               </div>
 
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
