@@ -161,7 +161,7 @@ export const searchCityState = async (query) => {
   const q = (query || '').trim();
   if (q.length < 3) return [];
   try {
-    const response = await fetch(`/api/pcmiler/suggest?q=${encodeURIComponent(q)}`);
+    const response = await fetch(`/api/pcmiler/geocode?suggest=1&q=${encodeURIComponent(q)}`);
     if (!response.ok) return [];
     const data = await response.json();
     return Array.isArray(data?.suggestions) ? data.suggestions : [];
