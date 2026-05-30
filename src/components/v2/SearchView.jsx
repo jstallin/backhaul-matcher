@@ -403,6 +403,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     if (r && r.lat != null && r.lng != null) {
       setForm(f => ({ ...f, datumText: r.label, datumCity: r.city, datumState: r.state, datumLat: r.lat, datumLng: r.lng }));
       setDatumVerified(true);
+      setErrors(e => ({ ...e, datumText: null })); // clear stale typo error once verify succeeds
     } else {
       setForm(f => ({ ...f, datumLat: null, datumLng: null }));
       setDatumVerified(false);

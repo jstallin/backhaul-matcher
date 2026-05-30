@@ -360,7 +360,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <CityStateInput
                   value={formData.datumPoint}
                   onChange={(v) => { handleChange('datumPoint', v); setDatumResolved(null); }}
-                  onResolve={(r) => setDatumResolved(r ? true : false)}
+                  onResolve={(r) => { const ok = !!r; setDatumResolved(ok); if (ok) setErrors(prev => ({ ...prev, datumPoint: null })); }}
                   disabled={saving}
                   placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)"
                   accentColor={colors.accent.primary}

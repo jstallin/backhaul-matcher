@@ -8,7 +8,18 @@
 ## Last Updated
 - **Date:** May 30, 2026
 - **Session type:** Claude Code (Ryder pilot kickoff follow-ups)
-- **Updated by:** Claude Code (session 5)
+- **Updated by:** Claude Code (session 6)
+
+---
+
+## What Was Just Completed (May 30, 2026, session 6) — staging-test follow-up fixes
+
+Continued smoke-testing batch 2 on staging. 001, 003, 004, 005 all verified good. Two bugs found and fixed; pushed to staging.
+
+- **002 (FIX — stale typo error):** The "We couldn't find that location — check the spelling." warning stayed visible even after a later verify succeeded (v2 also showed the green "✓ Location verified" line at the same time). Cause: the parent set the error in `validate()` but never cleared it when `onResolve` later returned valid coords. Fix: clear the datum error on successful resolve in both v2 `SearchView` (`handleDatumResolve`) and v1 `StartRequest` (`onResolve`). The earlier 13th-function Vercel build bug from 002 was already fixed in commit `04b9b3a` (suggest merged into `geocode.js?suggest=1`).
+- **009-P2 (FIX — WWP mobile):** On mobile, the X to close the Work Week Plan detail popup was covered by the avatar/user menu. Cause: `PlanDetailModal` rendered at `zIndex: 1000`, below the avatar button (`Shell.jsx` zIndex 1100) and its popover (1200). Fix: bumped the modal to `zIndex: 2000`, matching every other full-screen v2 modal. v2-only (no v1 WWP plan modal).
+
+All 154 unit tests pass. Still on `staging`, not yet promoted to main.
 
 ---
 
