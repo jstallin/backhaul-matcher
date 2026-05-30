@@ -361,6 +361,7 @@ const BLANK_FORM = {
   isRelay: false,
   autoRefresh: false,
   autoRefreshInterval: 1,
+  maxAutoRefreshes: '',
   notificationEnabled: false,
   notificationMethod: 'email',
 };
@@ -379,6 +380,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     isRelay: initialValues.is_relay || false,
     autoRefresh: initialValues.auto_refresh || false,
     autoRefreshInterval: initialValues.auto_refresh_interval ? initialValues.auto_refresh_interval / 60 : 1,
+    maxAutoRefreshes: initialValues.max_auto_refreshes != null ? String(initialValues.max_auto_refreshes) : '',
     notificationEnabled: initialValues.notification_enabled || false,
     notificationMethod: initialValues.notification_method || 'email',
   } : { ...BLANK_FORM, selectedFleetId: fleets.length === 1 ? fleets[0].id : '' });
@@ -421,6 +423,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   };
 
   const refreshCreditLabel = (intervalHours) => {
+    if (intervalHours === 0.25) return { interval: 'every 15 minutes', cost: '4 credits per hour' };
     if (intervalHours === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
     if (intervalHours === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
     if (intervalHours === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
@@ -510,11 +513,26 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
               <div style={{ marginTop: '10px', marginLeft: '46px' }}>
                 <Field label="Refresh interval">
                   <SelectInput value={form.autoRefreshInterval} onChange={e => set('autoRefreshInterval', parseFloat(e.target.value))} style={{ width: '180px' }}>
+                    <option value={0.25}>Every 15 minutes</option>
                     <option value={0.5}>Every 30 minutes</option>
                     <option value={1}>Every 1 hour</option>
                     <option value={4}>Every 4 hours</option>
                   </SelectInput>
                 </Field>
+                <div style={{ marginTop: '10px' }}>
+                  <Field label="Stop after (refreshes)">
+                    <Input
+                      type="number"
+                      value={form.maxAutoRefreshes}
+                      onChange={e => set('maxAutoRefreshes', e.target.value)}
+                      placeholder="Unlimited"
+                      style={{ width: '180px' }}
+                    />
+                  </Field>
+                  <div style={{ marginTop: '4px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                    Leave blank for unlimited. Auto-refresh turns itself off once this many refreshes have run.
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1912,13 +1930,30 @@ export function SearchView() {
     }
     const intervalMinutes = selectedRequest.auto_refresh_interval || 240;
     const intervalMs = intervalMinutes * 60 * 1000;
+    const maxRefreshes = selectedRequest.max_auto_refreshes; // null = unlimited
+    let count = selectedRequest.auto_refresh_count || 0;
     setNextRefreshTime(new Date(Date.now() + intervalMs));
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       runMatching(selectedRequest);
+      count += 1;
+      // Persist the running count; self-disable once the cap is reached.
+      const reachedLimit = maxRefreshes != null && count >= maxRefreshes;
+      const updates = { auto_refresh_count: count, ...(reachedLimit ? { auto_refresh: false } : {}) };
+      try {
+        const updated = await db.requests.update(selectedRequest.id, updates);
+        if (reachedLimit) {
+          clearInterval(timer);
+          setNextRefreshTime(null);
+          setSelectedRequest(prev => (prev?.id === selectedRequest.id ? { ...prev, ...(updated || updates) } : prev));
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to update auto-refresh count:', err?.message || err);
+      }
       setNextRefreshTime(new Date(Date.now() + intervalMs));
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, runMatching]);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, selectedRequest?.max_auto_refreshes, runMatching]);
 
   // Countdown display
   useEffect(() => {

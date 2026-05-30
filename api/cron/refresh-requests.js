@@ -659,6 +659,10 @@ export default async function handler(req, res) {
         const intervalMinutes = request.auto_refresh_interval || 240;
         const nextRefreshAt = new Date(Date.now() + intervalMinutes * 60 * 1000).toISOString();
 
+        // Increment the refresh counter and self-disable once the cap is hit (item 006).
+        const newCount = (request.auto_refresh_count || 0) + 1;
+        const reachedLimit = request.max_auto_refreshes != null && newCount >= request.max_auto_refreshes;
+
         // Update request with new match info and next refresh time
         const { error: updateError } = await supabase
           .from('backhaul_requests')
@@ -666,7 +670,10 @@ export default async function handler(req, res) {
             last_top_match_id: topMatch?.load_id || null,
             last_top_match_revenue: topMatch?.totalRevenue || null,
             last_server_refresh_at: now,
-            next_refresh_at: nextRefreshAt
+            auto_refresh_count: newCount,
+            // Stop scheduling once disabled so it drops out of the due-for-refresh query.
+            auto_refresh: reachedLimit ? false : true,
+            next_refresh_at: reachedLimit ? null : nextRefreshAt
           })
           .eq('id', request.id);
 

@@ -17,6 +17,9 @@ export function buildRequestPayload(form, userId) {
     is_relay:                 form.isRelay,
     auto_refresh:             form.autoRefresh,
     auto_refresh_interval:    form.autoRefresh ? Math.round(form.autoRefreshInterval * 60) : null,
+    // Optional cap on how many auto-refreshes run before it self-disables (null = unlimited).
+    max_auto_refreshes:       form.autoRefresh && parseInt(form.maxAutoRefreshes, 10) > 0 ? parseInt(form.maxAutoRefreshes, 10) : null,
+    auto_refresh_count:       0, // reset the counter whenever the request is saved/re-enabled
     // Auto-refresh mandates notifications — persist them on even if the toggle state lagged.
     notification_enabled:     form.notificationEnabled || form.autoRefresh,
     notification_method:      (form.notificationEnabled || form.autoRefresh) ? (form.notificationMethod || 'email') : null,

@@ -30,6 +30,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     isRelay: false,
     autoRefresh: false,
     autoRefreshInterval: '0.5',  // 30 minutes default
+    maxAutoRefreshes: '',        // blank = unlimited (item 006)
     notificationEnabled: false,
     notificationMethod: 'both',
     editingId: null
@@ -87,6 +88,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           isRelay: request.is_relay || false,
           autoRefresh: request.auto_refresh || false,
           autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
+          maxAutoRefreshes: request.max_auto_refreshes != null ? String(request.max_auto_refreshes) : '',
           notificationEnabled: request.notification_enabled || false,
           notificationMethod: request.notification_method || 'both',
           editingId: request.id
@@ -195,6 +197,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   const refreshCreditLabel = (intervalHours) => {
     const h = parseFloat(intervalHours);
+    if (h === 0.25) return { interval: 'every 15 minutes', cost: '4 credits per hour' };
     if (h === 0.5) return { interval: 'every 30 minutes', cost: '2 credits per hour' };
     if (h === 1)   return { interval: 'every 1 hour',     cost: '1 credit per hour' };
     if (h === 4)   return { interval: 'every 4 hours',    cost: '1 credit every 4 hours' };
@@ -225,6 +228,9 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         is_relay: formData.isRelay,
         auto_refresh: formData.autoRefresh,
         auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null, // Store as MINUTES
+        // Optional cap on auto-refreshes before self-disabling (null = unlimited); counter resets on save (item 006)
+        max_auto_refreshes: formData.autoRefresh && parseInt(formData.maxAutoRefreshes, 10) > 0 ? parseInt(formData.maxAutoRefreshes, 10) : null,
+        auto_refresh_count: 0,
         notification_enabled: formData.notificationEnabled || formData.autoRefresh,
         notification_method: (formData.notificationEnabled || formData.autoRefresh) ? (formData.notificationMethod || 'both') : null,
         status: 'active'
@@ -278,6 +284,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         isRelay: false,
         autoRefresh: false,
         autoRefreshInterval: '0.5',
+        maxAutoRefreshes: '',
         notificationEnabled: false,
         notificationMethod: 'both',
         editingId: null
@@ -418,10 +425,27 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                       disabled={saving} 
                       style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: 'pointer' }}
                     >
+                      <option value="0.25">Every 15 Minutes</option>
                       <option value="0.5">Every 30 Minutes</option>
                       <option value="1">Every 1 Hour</option>
                       <option value="4">Every 4 Hours</option>
                     </select>
+                    <label style={{ display: 'block', margin: '16px 0 8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                      Stop After (refreshes)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={formData.maxAutoRefreshes}
+                      onChange={(e) => handleChange('maxAutoRefreshes', e.target.value)}
+                      disabled={saving}
+                      placeholder="Unlimited"
+                      style={{ padding: '10px 14px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', width: '160px' }}
+                    />
+                    <div style={{ marginTop: '6px', fontSize: '13px', color: colors.text.secondary }}>
+                      Leave blank for unlimited. Auto-refresh turns itself off once this many refreshes have run.
+                    </div>
                   </div>
                 )}
               </div>
