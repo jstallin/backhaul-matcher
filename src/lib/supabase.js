@@ -323,7 +323,7 @@ export const db = {
       const { data, error } = await supabase
         .from('backhaul_requests')
         .select('*, fleets(*)')
-        .eq('status', 'active')
+        .in('status', ['active', 'in_progress']) // item 008: in_progress keeps auto-refreshing
         .eq('auto_refresh', true)
         .lte('next_refresh_at', now)
         .order('next_refresh_at', { ascending: true });

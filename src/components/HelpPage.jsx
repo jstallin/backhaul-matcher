@@ -34,11 +34,11 @@ const FAQ = [
   },
   {
     q: 'How do I record a completed load?',
-    a: 'On any result, click "Haul This Load." This records the load as completed — capturing revenue, net revenue, OOR miles, and the completion date. Completed hauls feed into Fleet Reports and improve AI recommendations over time.',
+    a: 'On any result, click "Haul This Load." This records the load as completed — capturing revenue, net revenue, OOR miles, and the completion date. Completed hauls feed into Fleet Reports.',
   },
   {
-    q: 'How does the AI "Ask AI" feature work?',
-    a: '"Ask AI" gives a TAKE IT / PASS / NEGOTIATE recommendation for a specific load, with reasoning. It considers your fleet\'s rate config, OOR miles, and history. You can rate responses with thumbs up/down — that feedback trains the AI to your fleet\'s preferences over time.',
+    q: 'How does the Negotiate button work?',
+    a: 'When a broker posts a load with no rate ("Call for rate"), the Negotiate button opens a helper for that load. It shows your route charges, a walk-away floor (your breakeven) and a suggested lead-with target, plus where the load would rank against your other results if you land a given rate — so you can make the call with the numbers in front of you.',
   },
   {
     q: 'How do I add other users to my organization?',

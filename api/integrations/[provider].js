@@ -532,9 +532,13 @@ async function handleTruckstop(req, res, supabase, user) {
       dest_city, dest_state,
       dest_lat, dest_lng,
       equipment_type,
+      modes,
       pickup_date,
       radius_miles = '150'
     } = req.query;
+
+    // Optional fleet transport modes (item 007), arriving comma-separated.
+    const modesList = (modes || '').split(',').map((s) => s.trim()).filter(Boolean);
 
     try {
       const loads = await fetchTruckstopLoads({
@@ -544,6 +548,7 @@ async function handleTruckstop(req, res, supabase, user) {
         destState: dest_state,
         pickupDate: pickup_date,
         equipmentType: equipment_type || null,
+        modes: modesList,
         radiusMiles: parseInt(radius_miles, 10),
       });
 
@@ -592,6 +597,23 @@ const TS_TO_EQUIP = {
 // All major equipment codes sent when no specific type is requested
 const ALL_MAJOR_EQUIP = 'V F R SD LB';
 
+// Maps the fleet's selected transport modes (item 007) onto the Truckstop
+// LoadSearch <LoadType> enum (Full | Partial | All). The Full/Partial axis is
+// the only mode dimension the LoadSearch Criteria exposes — the broader modes
+// (Intermodal, Drayage, Parcel, Air, Water, Ocean) have no Criteria field and
+// are captured at the fleet level but not sent as a server-side filter.
+// No modes selected → 'Full' (preserves the prior hardcoded default).
+function deriveLoadType(modes = []) {
+  const set = new Set(modes);
+  const wantsFull = set.has('Truck Load');
+  const wantsPartial = set.has('Partial');
+  if (wantsFull && wantsPartial) return 'All';
+  if (wantsPartial && !wantsFull) return 'Partial';
+  if (wantsFull && !wantsPartial) return 'Full';
+  // Only non-Full/Partial modes (or none): don't restrict on the Full/Partial axis.
+  return modes.length ? 'All' : 'Full';
+}
+
 // US state adjacency — used to build destination state filter
 const STATE_ADJACENCY = {
   AL:['FL','GA','MS','TN'],         AK:[],
@@ -628,8 +650,9 @@ function getDestStates(homeState) {
 }
 
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pickupDate }) {
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
+  const loadType = deriveLoadType(modes);
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
   // Truckstop rejects past pickup dates. Clamp anything earlier than today (and the
   // empty case) up to today so a stale request's available date doesn't fail the search.
@@ -660,7 +683,7 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:DestinationRange>300</web1:DestinationRange>
           <web1:EquipmentType>${equip}</web1:EquipmentType>
           <web1:HoursOld>0</web1:HoursOld>
-          <web1:LoadType>Full</web1:LoadType>
+          <web1:LoadType>${loadType}</web1:LoadType>
           ${cleanCity ? `<web1:OriginCity>${escapeXml(cleanCity)}</web1:OriginCity>` : ''}
           <web1:OriginCountry>usa</web1:OriginCountry>
           <web1:OriginLatitude>0</web1:OriginLatitude>
@@ -690,14 +713,14 @@ function escapeXml(str) {
     .replace(/'/g, '&apos;');
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, radiusMiles = 150, pickupDate }) {
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate }) {
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
   if (!cleanState || /^\d{5}$/.test(cleanCity)) {
     console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
     return [];
   }
 
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, radiusMiles, pickupDate });
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate });
   const sanitized = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
   console.log('Truckstop SOAP envelope:\n', sanitized);
 

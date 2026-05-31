@@ -1339,6 +1339,7 @@ export function EstimatesView() {
         homeLat:       fleetData.home_lat || 0,
         homeLng:       fleetData.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
+        modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate:    estimate.equipment_available_date || '',
       };
 

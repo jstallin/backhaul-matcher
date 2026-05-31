@@ -13,6 +13,7 @@ import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
+import { isExpiredInProgress, finishPayload } from '../utils/autoFinishRequests';
 import { CoDriver } from './CoDriver';
 import { useCredits } from '../hooks/useCredits';
 import { BuyCreditsModal } from './BuyCreditsModal';
@@ -127,13 +128,33 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   const loadRequests = async () => {
     setLoading(true);
     try {
-      const requestsData = await db.requests.getAll(user.id);
-      setRequests(requestsData || []);
+      let requestsData = await db.requests.getAll(user.id) || [];
+      // Item 008: auto-complete in_progress requests whose equipment-needed date has
+      // passed, keeping the hauled load + revenue and stopping further auto-refresh.
+      const expired = requestsData.filter(r => isExpiredInProgress(r));
+      if (expired.length) {
+        const patch = finishPayload();
+        await Promise.all(expired.map(r => db.requests.update(r.id, patch).catch(err => console.error('Auto-finish failed:', err?.message || err))));
+        const expiredIds = new Set(expired.map(r => r.id));
+        requestsData = requestsData.map(r => expiredIds.has(r.id) ? { ...r, ...patch } : r);
+      }
+      setRequests(requestsData);
     } catch (error) {
       console.error('Error loading requests:', error);
       setRequests([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFinishRequest = async (request) => {
+    try {
+      await db.requests.update(request.id, finishPayload());
+      setSelectedRequest(null);
+      loadRequests();
+    } catch (error) {
+      console.error('Error finishing request:', error?.message || error);
+      alert('Failed to finish request');
     }
   };
 
@@ -261,6 +282,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: rawProfile?.trailer_type || 'Dry Van',
+        modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate:    effPickupDate
       };
 
@@ -481,18 +503,22 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
     }
   };
 
-  const handleCompleteRequest = async (match) => {
+  const handleCompleteRequest = async (match, keepSearching = false) => {
     const safeNum = (v, fallback = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fallback; };
     try {
+      // Item 008: "keep searching" → interim in_progress state, auto-refresh stays on.
+      // Final load → completed + auto_refresh off so no further credits are charged.
+      // Option A: only a completed request counts toward the dashboard (single haul).
       await db.requests.update(selectedRequest.id, {
-        status: 'completed',
+        status: keepSearching ? 'in_progress' : 'completed',
         revenue_amount: safeNum(match.totalRevenue),
         net_revenue: safeNum(match.customer_net_credit ?? match.netRevenue),
         out_of_route_miles: safeNum(match.additionalMiles),
         load_distance_miles: safeNum(match.distance) || null,
         hauled_load_id: match.load_id || null,
         hauled_load_source: match.source || null,
-        completed_at: new Date().toISOString()
+        completed_at: keepSearching ? null : new Date().toISOString(),
+        ...(keepSearching ? {} : { auto_refresh: false }),
       });
       setSelectedRequest(null);
       loadRequests();
@@ -753,11 +779,12 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 onEdit={handleEditRequest}
                 onCancel={handleCancelRequest}
                 onComplete={handleCompleteRequest}
+                onFinish={handleFinishRequest}
               />
             </>
           )
         ) : (() => {
-          const activeRequests = requests.filter(r => r.status === 'active' || r.status === 'paused');
+          const activeRequests = requests.filter(r => r.status === 'active' || r.status === 'paused' || r.status === 'in_progress');
           return activeRequests.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
             <FileText size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
@@ -791,9 +818,17 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                         <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
                           {request.request_name}
                         </h4>
-                        <div style={{ padding: '4px 12px', background: request.status === 'active' ? `${colors.accent.success}20` : `${colors.text.tertiary}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: request.status === 'active' ? colors.accent.success : colors.text.tertiary, textTransform: 'uppercase' }}>
-                          {request.status === 'active' ? '● Active' : '○ Paused'}
-                        </div>
+                        {(() => {
+                          const isActive = request.status === 'active';
+                          const isSearching = request.status === 'in_progress';
+                          const badgeColor = isActive ? colors.accent.success : isSearching ? colors.accent.warning : colors.text.tertiary;
+                          const label = isActive ? '● Active' : isSearching ? '◐ Load picked — searching' : '○ Paused';
+                          return (
+                            <div style={{ padding: '4px 12px', background: `${badgeColor}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: badgeColor, textTransform: 'uppercase' }}>
+                              {label}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ fontSize: '13px', color: colors.text.secondary }}>
                         {request.fleets?.name || 'Unknown Fleet'}

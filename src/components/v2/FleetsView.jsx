@@ -155,6 +155,7 @@ const US_STATES = [
 
 const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
 const EQUIPMENT_VARIATIONS = ['Conestoga', 'Tanker', 'Curtain Side', 'Extendable', 'Lowboy'];
+const FLEET_MODES = ['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
 const DRIVER_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }, { value: 'on_leave', label: 'On Leave' }];
@@ -171,7 +172,7 @@ const PADD_REGIONS = [
 
 const emptyProfileForm = () => ({
   name: '', mcNumber: '', dotNumber: '', phoneNumber: '', email: '', homeAddress: '',
-  homeLat: null, homeLng: null, trailerType: '', equipmentVariation: '',
+  homeLat: null, homeLng: null, trailerType: '', equipmentVariation: '', modes: [],
   revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: 6.0,
   doePaddRegion: 'national', doePaddRate: '',
   otherCharge1Name: '', otherCharge1Description: '', otherCharge1Amount: '',
@@ -203,6 +204,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       homeLng: fleet.home_lng ?? null,
       trailerType: fp?.trailer_type ?? '',
       equipmentVariation: fp?.equipment_variation ?? '',
+      modes: Array.isArray(fp?.modes) ? fp.modes : [],
       revenueSplitCarrier: fp?.revenue_split_carrier ?? 20,
       mileageRate: fp?.mileage_rate ?? '',
       stopRate: fp?.stop_rate ?? '',
@@ -339,6 +341,25 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
         </Field>
         <Field label="Equipment Variation" hint="Optional — Conestoga, Tanker, etc.">
           <SelectInput value={form.equipmentVariation} onChange={set('equipmentVariation')} options={EQUIPMENT_VARIATIONS} />
+        </Field>
+      </FormGrid>
+      <FormGrid cols={1}>
+        <Field label="Modes" hint="Optional — transport modes this fleet will take (e.g. Partial). Leave empty for no preference.">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {FLEET_MODES.map((m) => {
+              const checked = form.modes.includes(m);
+              return (
+                <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', border: `1px solid ${checked ? t.colors.accent.blue : t.colors.border.default}`, borderRadius: t.radius.lg, background: checked ? t.colors.accent.blueLight : '#fff', cursor: 'pointer', fontSize: t.font.size.sm, color: t.colors.text.primary, userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => setForm((f) => ({ ...f, modes: f.modes.includes(m) ? f.modes.filter((x) => x !== m) : [...f.modes, m] }))}
+                  />
+                  {m}
+                </label>
+              );
+            })}
+          </div>
         </Field>
       </FormGrid>
 

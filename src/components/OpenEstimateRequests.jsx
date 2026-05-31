@@ -121,6 +121,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || 'Dry Van',
+        modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate:    request.equipment_available_date || '',
       };
       const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
