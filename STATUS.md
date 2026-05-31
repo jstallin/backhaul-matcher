@@ -6,9 +6,30 @@
 ---
 
 ## Last Updated
-- **Date:** May 30, 2026
-- **Session type:** Claude Code (Ryder pilot kickoff follow-ups)
-- **Updated by:** Claude Code (session 6)
+- **Date:** May 31, 2026
+- **Session type:** Claude Code (Ryder pilot — 006/007/008 + cleanup)
+- **Updated by:** Claude Code (session 7)
+
+---
+
+## What Was Just Completed (May 31, 2026, session 7) — 007, 008, AI cleanup, 009-P2 redo
+
+All on `staging`, pending smoke test. 171 unit tests pass; production build clean; still 12 serverless functions.
+
+- **AI cleanup:** Removed the per-result **Financial Summary** block from v1 `BackhaulResults` + v2 `SearchView` (redundant now that the Financial Breakdown sits above each card and the $0-load Negotiate button handles no-rate loads). Replaced the stale **"Ask AI"** FAQ with a **Negotiate** FAQ and dropped the "improve AI recommendations over time" clause from the Haul FAQ (v1 `HelpPage` + v2 `HelpView`).
+
+- **007 (ENHANCE — Mode field):** Optional multi-select **Modes** (Truck Load, LTL, Intermodal, Partial, Drayage, Parcel, Air, Water, Ocean) at the fleet-profile level, next to Equipment Variation (v1 `FleetSetup`, v2 `FleetsView` ProfileTab). New `fleet_profiles.modes TEXT[]` (migration `20260531000001`, applied to staging; prod on promotion). Threads into the Truckstop SOAP call: `modes` flows fleet → `requestContext` → `getLoadsForMatching` → `[provider].js` → `buildSoapEnvelope`, mapping onto the `<LoadType>` enum via `deriveLoadType` (none→Full, Partial→Partial, both→All). Wired through all 4 consumers: Search, Estimates, WWP (v1+v2). 3 new unit tests.
+  - **⚠️ Known limit:** only Full/Partial are expressible in the LoadSearch Criteria — the other modes (Intermodal/Drayage/Parcel/Air/Water/Ocean) are captured at fleet level but **not** sent as a server filter. Ryder's priority (Partial) is covered. **Chip must validate the `LoadType` enum values (esp. `All`) against the live Truckstop API** — invalid filters have silently broken searches before.
+
+- **008 (FIX/ENHANCE — Haul + keep searching):** Haul-confirm dialogs now have a **"Keep checking for matching loads"** checkbox (v1 `BackhaulResults`, v2 `SearchView`).
+  - Unchecked (final load) → `status: completed` + `auto_refresh: false` (no further credits). Counts on the dashboard.
+  - Checked (keep looking) → interim `status: in_progress`, auto-refresh stays on, records the picked load but `completed_at: null`. **Option A**: only `completed` requests count on the dashboard (already filtered there), so an `in_progress` haul counts exactly once when finalized.
+  - Cron + `getActiveAutoRefresh` now match `['active','in_progress']` so in_progress keeps refreshing. 006 max-refresh cap still applies.
+  - Lists/badges: `in_progress` bucketed as Active in both UIs ("◐ Load picked — searching" v1, "Searching" v2).
+  - **Finish action:** manual "Finish & keep load" button on in_progress requests (v1 detail header, v2 request card) → completes + turns off auto-refresh, preserving the hauled load/revenue. Closes the gap where Cancel would've lost the credit.
+  - **Auto-finish:** in_progress requests past their `equipment_needed_date` auto-complete (keep load+revenue, auto-refresh off). Primary mechanism is a **client-side sweep on request load** (the periodic cron isn't scheduled on Hobby — see [[project_auto_refresh_cron_limit]]); same guard also added to the cron for when Vercel Pro lands. Shared, tested util `autoFinishRequests.js` (9 tests).
+
+- **009-P2 (FIX — redo):** Yesterday's z-index bump (1000→2000) didn't fix the mobile WWP plan sidebar X being covered by the avatar — the modal was nested in an isolating **stacking context**, so its z-index never competed against the app-chrome avatar. Real fix: render `PlanDetailModal` via a **React portal to `document.body`** (`createPortal`), escaping all ancestor stacking contexts. Fixes both mount points (WWP view + dashboard widget); X now behaves the same desktop vs mobile. **Needs a device check** (mobile stacking, not exercisable locally).
 
 ---
 

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map } from '../icons';
+import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map, CheckCircle } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
@@ -71,7 +71,7 @@ const LOAD_BOARD_CONFIG = {
   },
 };
 
-export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel, onComplete }) => {
+export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fleetHome, routeData, onBack, onEdit, onCancel, onComplete, onFinish }) => {
   const { colors } = useTheme();
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [mapMatch, setMapMatch] = useState(null);
@@ -80,6 +80,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [cancelling, setCancelling] = useState(false);
   const [haulMatch, setHaulMatch] = useState(null); // load selected for "haul this" confirmation
   const [completing, setCompleting] = useState(false);
+  const [keepSearching, setKeepSearching] = useState(false); // item 008: keep auto-refresh alive after hauling
   const [negotiateMatch, setNegotiateMatch] = useState(null); // $0 load opened in the negotiation helper
   // const [aiAnalysis, setAiAnalysis] = useState({});
   // const [aiLoading, setAiLoading] = useState({});
@@ -114,10 +115,11 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
     if (!haulMatch || !onComplete) return;
     setCompleting(true);
     try {
-      await onComplete(haulMatch);
+      await onComplete(haulMatch, keepSearching);
       const id = haulMatch.load_id || haulMatch.id;
       setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
       setHaulMatch(null);
+      setKeepSearching(false);
       setSelectedMatch(null);
     } catch (error) {
       console.error('Error completing haul:', error);
@@ -192,6 +194,12 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                 style={{ padding: '10px 20px', minHeight: '44px', background: colors.background.secondary, border: `2px solid ${colors.accent.success}`, borderRadius: '8px', color: colors.accent.success, fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
                 ⬇ Download Report
+              </button>
+            )}
+            {request.status === 'in_progress' && onFinish && (
+              <button onClick={() => onFinish(request)} style={{ padding: '10px 20px', minHeight: '44px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle size={16} />
+                Finish &amp; Keep Hauled Load
               </button>
             )}
             <button onClick={onEdit} style={{ padding: '10px 20px', minHeight: '44px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -484,38 +492,6 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                 )}
               </div>
-
-              {/* Financial Summary */}
-              {(() => {
-                const gross = Number(match.total_revenue ?? match.totalRevenue ?? 0);
-                const carrier = Number(match.carrier_revenue ?? 0);
-                const netCredit = match.has_rate_config ? Number(match.customer_net_credit ?? 0) : null;
-                const rpm = Number(match.revenue_per_mile ?? match.revenuePerMile ?? 0);
-                const fmt = (n) => Math.abs(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-
-                let summary;
-                if (match.has_rate_config && netCredit !== null) {
-                  const outcome = netCredit >= 0
-                    ? `Your customer nets ${fmt(netCredit)} after route charges — this load works for both parties.`
-                    : `Your customer is ${fmt(netCredit)} short after route charges — consider negotiating a higher rate.`;
-                  summary = `This load grosses ${fmt(gross)}. Your carrier earns ${fmt(carrier)} off the top. ${outcome}`;
-                } else if (gross > 0) {
-                  summary = `This load grosses ${fmt(gross)}${rpm > 0 ? ` at $${rpm.toFixed(2)}/mi` : ''}. Add rate configuration in Fleet Setup to see the full financial picture.`;
-                } else {
-                  return null;
-                }
-
-                return (
-                  <div style={{ marginTop: '12px', padding: '16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: colors.accent.primary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Financial Summary
-                    </div>
-                    <div style={{ fontSize: '13px', color: colors.text.primary, lineHeight: 1.6 }}>
-                      {summary}
-                    </div>
-                  </div>
-                );
-              })()}
 
               {/* Action Buttons */}
               <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -867,7 +843,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
 
       {/* Haul This Load Confirmation Dialog */}
       {haulMatch && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => !completing && setHaulMatch(null)}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => { if (!completing) { setHaulMatch(null); setKeepSearching(false); } }}>
           <div style={{ background: colors.background.overlay, borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '100%', border: `1px solid ${colors.border.primary}` }} onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 800, color: colors.text.primary }}>Haul This Load</h3>
             <p style={{ margin: '0 0 20px', fontSize: '14px', color: colors.text.secondary }}>
@@ -887,16 +863,23 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                 </div>
               </div>
             </div>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '20px' }}>
+              <input type="checkbox" checked={keepSearching} onChange={(e) => setKeepSearching(e.target.checked)} disabled={completing} style={{ width: '18px', height: '18px', marginTop: '2px', cursor: 'pointer' }} />
+              <span style={{ fontSize: '14px', color: colors.text.secondary }}>
+                <span style={{ fontWeight: 600, color: colors.text.primary }}>Keep checking for matching loads</span><br />
+                Leaves this request open with auto-refresh running (credits still apply). Leave unchecked if this is your final load — the request will be completed and auto-refresh turned off.
+              </span>
+            </label>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={handleHaulConfirm}
                 disabled={completing}
                 style={{ flex: 1, padding: '12px 20px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#fff', fontSize: '15px', fontWeight: 800, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
               >
-                {completing ? 'Recording...' : 'Mark as Hauled'}
+                {completing ? 'Recording...' : (keepSearching ? 'Mark as Hauled & Keep Searching' : 'Mark as Hauled')}
               </button>
               <button
-                onClick={() => setHaulMatch(null)}
+                onClick={() => { setHaulMatch(null); setKeepSearching(false); }}
                 disabled={completing}
                 style={{ padding: '12px 20px', background: 'none', border: `1px solid ${colors.border.accent}`, borderRadius: '10px', color: colors.text.secondary, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
               >

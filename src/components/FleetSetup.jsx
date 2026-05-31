@@ -46,6 +46,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
   const [rateData, setRateData] = useState({
     trailerType: '',
     equipmentVariation: '',
+    modes: [],
     revenueSplitCarrier: 20,
     mileageRate: '',
     stopRate: '',
@@ -131,6 +132,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         setRateData({
           trailerType: profile.trailer_type ?? '',
           equipmentVariation: profile.equipment_variation ?? '',
+          modes: Array.isArray(profile.modes) ? profile.modes : [],
           revenueSplitCarrier: profile.revenue_split_carrier ?? 20,
           mileageRate: profile.mileage_rate ?? '',
           stopRate: profile.stop_rate ?? '',
@@ -208,6 +210,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       const profileData = {
         trailer_type: rateData.trailerType || null,
         equipment_variation: rateData.equipmentVariation || null,
+        modes: Array.isArray(rateData.modes) && rateData.modes.length ? rateData.modes : null,
         revenue_split_carrier: carrierPct,
         revenue_split_customer: 100 - carrierPct,
         mileage_rate: rateData.mileageRate !== '' ? parseFloat(rateData.mileageRate) : null,
@@ -586,6 +589,29 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                   <option value="Extendable">Extendable (EX)</option>
                   <option value="Lowboy">Lowboy (LB)</option>
                 </select>
+              </div>
+            </div>
+            <div style={{ marginTop: '16px' }}>
+              <label style={labelStyle}>Modes <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(optional)</span></label>
+              <div style={{ fontSize: '13px', color: colors.text.secondary, margin: '0 0 10px 0' }}>
+                Transport modes this fleet will take (e.g. Partial). Leave empty for no preference.
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'].map((m) => {
+                  const checked = rateData.modes.includes(m);
+                  return (
+                    <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: `1px solid ${checked ? colors.accent.primary : colors.border.accent}`, borderRadius: '8px', background: checked ? `${colors.accent.primary}15` : colors.background.secondary, cursor: saving ? 'not-allowed' : 'pointer', fontSize: '14px', color: colors.text.primary, userSelect: 'none' }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={saving}
+                        onChange={() => handleRateChange('modes', rateData.modes.includes(m) ? rateData.modes.filter((x) => x !== m) : [...rateData.modes, m])}
+                        style={{ cursor: saving ? 'not-allowed' : 'pointer' }}
+                      />
+                      {m}
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </div>

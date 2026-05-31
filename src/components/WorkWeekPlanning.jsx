@@ -596,7 +596,9 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
       const requestContext = {
         datumCity: homeCity, datumState: homeState, datumLat: fleet.home_lat, datumLng: fleet.home_lng,
         homeCity, homeState, homeLat: fleet.home_lat, homeLng: fleet.home_lng,
-        equipmentType: fleetProfile.trailerType || 'Dry Van', pickupDate: '',
+        equipmentType: fleetProfile.trailerType || 'Dry Van',
+        modes: Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
+        pickupDate: '',
       };
 
       const [creditResult, loadsResult] = await Promise.all([

@@ -92,4 +92,21 @@ describe('buildFleetPayload', () => {
       expect(profileData.fuel_mpg).toBe(6);
     });
   });
+
+  describe('modes (item 007)', () => {
+    it('passes a non-empty modes array through to profileData', () => {
+      const { profileData } = buildFleetPayload({ ...baseForm, modes: ['Truck Load', 'Partial'] });
+      expect(profileData.modes).toEqual(['Truck Load', 'Partial']);
+    });
+
+    it('sets modes to null when the array is empty', () => {
+      const { profileData } = buildFleetPayload({ ...baseForm, modes: [] });
+      expect(profileData.modes).toBeNull();
+    });
+
+    it('sets modes to null when the field is absent', () => {
+      const { profileData } = buildFleetPayload(baseForm);
+      expect(profileData.modes).toBeNull();
+    });
+  });
 });

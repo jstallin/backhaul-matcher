@@ -875,6 +875,7 @@ export function WorkWeekView() {
         homeLat: fleet.home_lat,
         homeLng: fleet.home_lng,
         equipmentType: fleetProfile.trailerType || 'Dry Van',
+        modes: Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate: '',
       };
 

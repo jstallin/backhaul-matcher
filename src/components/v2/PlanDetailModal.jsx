@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { tokens } from '../../styles/tokens.v2';
 import { db } from '../../lib/supabase';
 import { X, CheckCircle, Clock, ChevronRight, DollarSign, Calendar } from '../../icons';
@@ -197,7 +198,10 @@ export function PlanDetailModal({ plan: initialPlan, onClose, onPlanUpdated }) {
     ? `${outbound.pickup_city} → ${outbound.delivery_city || ret.pickup_city} → ${ret.delivery_city}`
     : 'Work Week Plan';
 
-  return (
+  // Portal to <body> so the panel escapes any ancestor stacking context (Card/grid/
+  // page wrappers). Inline z-index alone wasn't enough to clear the mobile avatar
+  // menu because the modal was nested in an isolating context (item 009-P2).
+  return createPortal(
     <div
       style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', justifyContent: 'flex-end' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -343,6 +347,7 @@ export function PlanDetailModal({ plan: initialPlan, onClose, onPlanUpdated }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

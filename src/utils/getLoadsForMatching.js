@@ -45,6 +45,7 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       homeLat = 0,
       homeLng = 0,
       equipmentType = 'Dry Van',
+      modes = [],
       pickupDate = ''
     } = requestContext;
 
@@ -59,6 +60,8 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       dest_lat:       homeLat,
       dest_lng:       homeLng,
       equipment_type: equipmentType,
+      // Optional fleet transport modes (item 007); comma-separated, omitted when none.
+      modes:          Array.isArray(modes) ? modes.join(',') : '',
       pickup_date:    pickupDate,
       radius_miles:   '150'
     });

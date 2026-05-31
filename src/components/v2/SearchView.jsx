@@ -9,6 +9,7 @@ import { buildRequestPayload } from '../../utils/buildRequestPayload';
 import { findRouteHomeBackhauls, computeNegotiation, netCreditAtGross, isNoRateLoad, effectivePickupDate } from '../../utils/routeHomeMatching';
 import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
+import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishRequests';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
@@ -147,9 +148,10 @@ function StatusBadge({ status }) {
     active:    { bg: '#dcfce7', color: '#16a34a', label: 'Active' },
     open:      { bg: '#dcfce7', color: '#16a34a', label: 'Active' },
     paused:    { bg: '#fef9c3', color: '#854d0e', label: 'Paused' },
-    pending:   { bg: '#eff6ff', color: '#1d4ed8', label: 'Pending' },
-    cancelled: { bg: '#fee2e2', color: '#dc2626', label: 'Cancelled' },
-    completed: { bg: '#f1f5f9', color: '#64748b', label: 'Completed' },
+    pending:     { bg: '#eff6ff', color: '#1d4ed8', label: 'Pending' },
+    in_progress: { bg: '#fef9c3', color: '#854d0e', label: 'Searching' },
+    cancelled:   { bg: '#fee2e2', color: '#dc2626', label: 'Cancelled' },
+    completed:   { bg: '#f1f5f9', color: '#64748b', label: 'Completed' },
   };
   const s = map[status] || map.pending;
   return (
@@ -596,9 +598,9 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
 
 // ─── Request list (left panel) ───────────────────────────────────────────────
 
-function RequestCard({ request, active, onSelect, onEdit, onDelete }) {
+function RequestCard({ request, active, onSelect, onEdit, onDelete, onFinish }) {
   const [hovered, setHovered] = useState(false);
-  const isActive = ['active', 'open', 'pending'].includes(request.status);
+  const isActive = ['active', 'open', 'pending', 'in_progress'].includes(request.status);
 
   return (
     <div
@@ -632,6 +634,13 @@ function RequestCard({ request, active, onSelect, onEdit, onDelete }) {
           {request.equipment_needed_date && ` – ${new Date(request.equipment_needed_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
         </div>
       )}
+      {request.status === 'in_progress' && onFinish && (
+        <div style={{ marginTop: '8px' }} onClick={e => e.stopPropagation()}>
+          <button onClick={() => onFinish(request)} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', background: t.colors.accent.greenLight, border: `1px solid ${t.colors.accent.green}40`, borderRadius: t.radius.lg, color: t.colors.accent.green, fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, cursor: 'pointer' }}>
+            <CheckCircle size={12} /> Finish & keep load
+          </button>
+        </div>
+      )}
       {(hovered || active) && isActive && (
         <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }} onClick={e => e.stopPropagation()}>
           <button onClick={() => onEdit(request)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.text.muted, padding: '2px', display: 'flex', alignItems: 'center' }}>
@@ -646,9 +655,9 @@ function RequestCard({ request, active, onSelect, onEdit, onDelete }) {
   );
 }
 
-function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, onNew, isMobile }) {
-  const active = requests.filter(r => ['active', 'open', 'pending'].includes(r.status));
-  const archived = requests.filter(r => !['active', 'open', 'pending'].includes(r.status));
+function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, onFinish, onNew, isMobile }) {
+  const active = requests.filter(r => ['active', 'open', 'pending', 'in_progress'].includes(r.status));
+  const archived = requests.filter(r => !['active', 'open', 'pending', 'in_progress'].includes(r.status));
 
   return (
     <div style={{
@@ -683,7 +692,7 @@ function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, on
               <>
                 <SectionLabel style={{ paddingLeft: '6px', marginBottom: '8px' }}>Active</SectionLabel>
                 {active.map(r => (
-                  <RequestCard key={r.id} request={r} active={selectedId === r.id} onSelect={onSelect} onEdit={onEdit} onDelete={onDelete} />
+                  <RequestCard key={r.id} request={r} active={selectedId === r.id} onSelect={onSelect} onEdit={onEdit} onDelete={onDelete} onFinish={onFinish} />
                 ))}
               </>
             )}
@@ -691,7 +700,7 @@ function RequestListPanel({ requests, selectedId, onSelect, onEdit, onDelete, on
               <>
                 <SectionLabel style={{ paddingLeft: '6px', marginBottom: '8px', marginTop: active.length ? '16px' : 0 }}>History</SectionLabel>
                 {archived.map(r => (
-                  <RequestCard key={r.id} request={r} active={selectedId === r.id} onSelect={onSelect} onEdit={onEdit} onDelete={onDelete} />
+                  <RequestCard key={r.id} request={r} active={selectedId === r.id} onSelect={onSelect} onEdit={onEdit} onDelete={onDelete} onFinish={onFinish} />
                 ))}
               </>
             )}
@@ -963,38 +972,6 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           <span style={{ color: t.colors.text.primary, fontStyle: 'italic' }}>{match.special_info}</span>
         </div>
       )}
-
-      {/* ── Financial Summary ── */}
-      {(() => {
-        const gross = Number(match.total_revenue ?? match.totalRevenue ?? 0);
-        const carrier = Number(match.carrier_revenue ?? 0);
-        const netCredit = match.has_rate_config ? Number(match.customer_net_credit ?? 0) : null;
-        const rpm = Number(match.revenue_per_mile ?? match.revenuePerMile ?? 0);
-        const fmt = (n) => Math.abs(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-
-        let summary;
-        if (match.has_rate_config && netCredit !== null) {
-          const outcome = netCredit >= 0
-            ? `Your customer nets ${fmt(netCredit)} after route charges — this load works for both parties.`
-            : `Your customer is ${fmt(netCredit)} short after route charges — consider negotiating a higher rate.`;
-          summary = `This load grosses ${fmt(gross)}. Your carrier earns ${fmt(carrier)} off the top. ${outcome}`;
-        } else if (gross > 0) {
-          summary = `This load grosses ${fmt(gross)}${rpm > 0 ? ` at $${rpm.toFixed(2)}/mi` : ''}. Add rate configuration in Fleet Setup to see the full financial picture.`;
-        } else {
-          return null;
-        }
-
-        return (
-          <div style={{ padding: '10px 16px', borderTop: `1px solid ${rc.border}` }}>
-            <div style={{ fontSize: '10px', fontWeight: t.font.weight.bold, color: t.colors.accent.blue, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
-              Financial Summary
-            </div>
-            <div style={{ fontSize: t.font.size.xs, color: t.colors.text.primary, lineHeight: 1.6 }}>
-              {summary}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Action buttons ── */}
       <div style={{ padding: '10px 16px 14px', borderTop: `1px solid ${rc.border}`, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1313,6 +1290,7 @@ function MapModal({ match, onClose }) {
 // ─── Haul Confirm Dialog ──────────────────────────────────────────────────────
 
 function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
+  const [keepSearching, setKeepSearching] = useState(false);
   if (!match) return null;
   return (
     <div
@@ -1347,13 +1325,20 @@ function HaulConfirmDialog({ match, completing, onConfirm, onClose }) {
             </div>
           </div>
         </div>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '20px' }}>
+          <input type="checkbox" checked={keepSearching} onChange={(e) => setKeepSearching(e.target.checked)} disabled={completing} style={{ width: '16px', height: '16px', marginTop: '2px', cursor: 'pointer' }} />
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+            <span style={{ fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>Keep checking for matching loads</span><br />
+            Leaves this request open with auto-refresh running (credits still apply). Leave unchecked if this is your final load — the request completes and auto-refresh turns off.
+          </span>
+        </label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(keepSearching)}
             disabled={completing}
             style={{ flex: 1, padding: '11px 20px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: completing ? 'not-allowed' : 'pointer', opacity: completing ? 0.7 : 1 }}
           >
-            {completing ? 'Recording…' : 'Confirm Haul'}
+            {completing ? 'Recording…' : (keepSearching ? 'Confirm Haul & Keep Searching' : 'Confirm Haul')}
           </button>
           <button
             onClick={onClose}
@@ -1457,21 +1442,25 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
 
   const fleetHome = fleet ? { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address } : null;
 
-  const handleHaulConfirm = async () => {
+  const handleHaulConfirm = async (keepSearching = false) => {
     if (!haulMatch) return;
     setCompleting(true);
     // NaN is not caught by ??, so coerce all numeric fields explicitly
     const safeNum = (v, fallback = 0) => { const n = Number(v); return Number.isFinite(n) ? n : fallback; };
     try {
+      // Item 008: "keep searching" → interim in_progress, auto-refresh stays on.
+      // Final load → completed + auto_refresh off (no further credits). Option A:
+      // only a completed request counts toward the dashboard (single haul).
       await db.requests.update(request.id, {
-        status: 'completed',
+        status: keepSearching ? 'in_progress' : 'completed',
         revenue_amount: safeNum(mTotalRev(haulMatch)),
         net_revenue: safeNum(haulMatch.customer_net_credit ?? haulMatch.netRevenue),
         out_of_route_miles: safeNum(mAdditional(haulMatch)),
         load_distance_miles: safeNum(mDistance(haulMatch)) || null,
-        completed_at: new Date().toISOString(),
+        completed_at: keepSearching ? null : new Date().toISOString(),
         hauled_load_id: haulMatch.load_id || haulMatch.source_load_id || null,
         hauled_load_source: haulMatch.source || null,
+        ...(keepSearching ? {} : { auto_refresh: false }),
       });
       const id = haulMatch.load_id || haulMatch.id;
       setPendingLoads(prev => { const next = new Set(prev); next.delete(id); return next; });
@@ -1789,15 +1778,34 @@ export function SearchView() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [reqs, fls] = await Promise.all([
+      let [reqs, fls] = await Promise.all([
         db.requests.getAll(user.id),
         db.fleets.getAll(user.id),
       ]);
-      setRequests(reqs || []);
+      reqs = reqs || [];
+      // Item 008: auto-complete in_progress requests past their equipment-needed date,
+      // keeping the hauled load + revenue and stopping further auto-refresh.
+      const expired = reqs.filter(r => isExpiredInProgress(r));
+      if (expired.length) {
+        const patch = finishPayload();
+        await Promise.all(expired.map(r => db.requests.update(r.id, patch).catch(err => console.error('Auto-finish failed:', err?.message || err))));
+        const expiredIds = new Set(expired.map(r => r.id));
+        reqs = reqs.map(r => expiredIds.has(r.id) ? { ...r, ...patch } : r);
+      }
+      setRequests(reqs);
       setFleets(fls || []);
-      return reqs || [];
+      return reqs;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFinishRequest = async (req) => {
+    try {
+      await db.requests.update(req.id, finishPayload());
+      await loadData();
+    } catch (err) {
+      console.error('Error finishing request:', err?.message || err);
     }
   };
 
@@ -1866,6 +1874,7 @@ export function SearchView() {
         homeLat: fleet.home_lat || 0,
         homeLng: fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
+        modes: Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         // Past available date → treat as "available now" (load board rejects past dates).
         pickupDate: effectivePickupDate(request.equipment_available_date),
       };
@@ -2067,6 +2076,7 @@ export function SearchView() {
           onSelect={handleSelectRequest}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onFinish={handleFinishRequest}
           onNew={handleNew}
           isMobile={isMobile}
         />

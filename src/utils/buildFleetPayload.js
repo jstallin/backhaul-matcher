@@ -16,6 +16,8 @@ export function buildFleetPayload(form) {
   const profileData = {
     trailer_type:              form.trailerType || null,
     equipment_variation:       form.equipmentVariation || null,
+    // Optional transport modes the fleet handles (item 007); null when none selected.
+    modes:                     Array.isArray(form.modes) && form.modes.length ? form.modes : null,
     revenue_split_carrier:     Number(form.revenueSplitCarrier) || 20,
     mileage_rate:              Number(form.mileageRate) || null,
     stop_rate:                 Number(form.stopRate) || null,

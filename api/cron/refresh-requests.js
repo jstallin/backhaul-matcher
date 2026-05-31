@@ -556,7 +556,7 @@ export default async function handler(req, res) {
     const { data: requests, error: fetchError } = await supabase
       .from('backhaul_requests')
       .select('*, fleets(*, fleet_profiles(*))')
-      .eq('status', 'active')
+      .in('status', ['active', 'in_progress']) // item 008: in_progress keeps auto-refreshing
       .eq('auto_refresh', true)
       .lte('next_refresh_at', now);
 
@@ -581,6 +581,19 @@ export default async function handler(req, res) {
       console.log(`\n🔍 Processing request: ${request.request_name}`);
 
       try {
+        // Item 008: an in_progress request whose equipment-needed date has passed
+        // auto-completes — keep the hauled load + revenue, stop auto-refresh, no refresh.
+        const neededDate = request.equipment_needed_date ? String(request.equipment_needed_date).slice(0, 10) : null;
+        if (request.status === 'in_progress' && neededDate && neededDate < now.slice(0, 10)) {
+          await supabase
+            .from('backhaul_requests')
+            .update({ status: 'completed', completed_at: new Date().toISOString(), auto_refresh: false })
+            .eq('id', request.id);
+          console.log('  🏁 Auto-finished in_progress request past its needed date');
+          results.push({ requestId: request.id, requestName: request.request_name, autoFinished: true });
+          continue;
+        }
+
         const fleet = request.fleets;
         if (!fleet) {
           console.log('  ⚠️ No fleet found, skipping');
