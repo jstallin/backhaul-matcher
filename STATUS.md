@@ -12,9 +12,23 @@
 
 ---
 
+## Issue Tracker & Cadence (started May 31, 2026)
+
+**GitHub Issues is the durable backlog** — `gh issue list` (repo `jstallin/backhaul-matcher`). STATUS.md stays the per-session narrative; link issue numbers here rather than restating.
+
+- **Labels:** priority `P1` (blocks pilot/prod — drop everything) / `P2` (soon) / `P3` (backlog); type `bug`/`enhancement`; area `area:v1`/`area:v2`/`area:api`/`area:infra`; source `ryder`/`chip`.
+- **Milestones:** `Pilot — Week 1`, `Infra / Paid Tiers`.
+- **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
+- **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
+- **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
 ## What Was Just Completed (May 31, 2026, session 7) — 007, 008, AI cleanup, 009-P2 redo
 
-All on `staging`, pending smoke test. 171 unit tests pass; production build clean; still 12 serverless functions.
+**✅ ALL SHIPPED TO PRODUCTION** (PR #19 merged to `main`; `fleet_profiles.modes` migration `20260531000001` applied to prod + verified; local branches resynced). Smoke-tested on staging incl. live Partial-mode Truckstop search. 171 unit tests pass; build clean; still 12 serverless functions.
+
+Items 001–009 are now **all in production**. Remaining open threads are infra-gated, not code: (1) Vercel Pro → true server-side 15-min auto-refresh (006) + cron auto-finish (008); (2) 007 full mode filtering (only Full/Partial map to Truckstop `LoadType` today).
 
 - **AI cleanup:** Removed the per-result **Financial Summary** block from v1 `BackhaulResults` + v2 `SearchView` (redundant now that the Financial Breakdown sits above each card and the $0-load Negotiate button handles no-rate loads). Replaced the stale **"Ask AI"** FAQ with a **Negotiate** FAQ and dropped the "improve AI recommendations over time" clause from the Haul FAQ (v1 `HelpPage` + v2 `HelpView`).
 
