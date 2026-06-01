@@ -173,7 +173,7 @@ const PADD_REGIONS = [
 const emptyProfileForm = () => ({
   name: '', mcNumber: '', dotNumber: '', phoneNumber: '', email: '', homeAddress: '',
   homeLat: null, homeLng: null, trailerType: '', equipmentVariation: '', modes: [],
-  revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: 6.0,
+  revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: '',
   doePaddRegion: 'national', doePaddRate: '',
   otherCharge1Name: '', otherCharge1Description: '', otherCharge1Amount: '',
   otherCharge2Name: '', otherCharge2Description: '', otherCharge2Amount: '',
@@ -209,7 +209,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       mileageRate: fp?.mileage_rate ?? '',
       stopRate: fp?.stop_rate ?? '',
       fuelPeg: fp?.fuel_peg ?? '',
-      fuelMpg: fp?.fuel_mpg ?? 6.0,
+      fuelMpg: fp?.fuel_mpg ?? '',
       doePaddRegion: fp?.doe_padd_region ?? 'national',
       doePaddRate: fp?.doe_padd_rate ?? '',
       otherCharge1Name: fp?.other_charge_1_name ?? '',
@@ -246,6 +246,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
     if (!form.email.trim()) return setError('Email is required.');
     if (!form.homeAddress.trim()) return setError('Home address is required.');
     if (!form.homeLat || !form.homeLng) return setError('Please verify the home address before saving.');
+    if (form.fuelMpg === '' || !(Number(form.fuelMpg) > 0)) return setError('MPG is required (enter your contractual miles per gallon).');
 
     setSaving(true);
     try {
@@ -388,7 +389,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
         <Field label="PEG ($/gal)" hint="Fuel cost per gallon already included in your mileage rate">
           <Input value={form.fuelPeg} onChange={set('fuelPeg')} type="number" step="0.001" />
         </Field>
-        <Field label="MPG" hint="Contractual miles per gallon (typically 6–8)">
+        <Field label="MPG" required hint="Contractual miles per gallon (typically 6–8)">
           <Input value={form.fuelMpg} onChange={set('fuelMpg')} type="number" step="0.1" min={1} max={15} />
         </Field>
         <Field label="PADD Region">

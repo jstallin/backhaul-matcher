@@ -57,7 +57,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
     otherCharge2Description: '',
     otherCharge2Amount: '',
     fuelPeg: '',
-    fuelMpg: '6.0',
+    fuelMpg: '',
     doePaddRegion: '',
     doePaddRate: '',
     doePaddUpdatedAt: null
@@ -118,7 +118,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         otherCharge2Description: '',
         otherCharge2Amount: '',
         fuelPeg: '',
-        fuelMpg: '6.0',
+        fuelMpg: '',
         doePaddRegion: '',
         doePaddRate: '',
         doePaddUpdatedAt: null
@@ -144,7 +144,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
           otherCharge2Description: profile.other_charge_2_description ?? '',
           otherCharge2Amount: profile.other_charge_2_amount ?? '',
           fuelPeg: profile.fuel_peg ?? '',
-          fuelMpg: profile.fuel_mpg ?? '6.0',
+          fuelMpg: profile.fuel_mpg ?? '',
           doePaddRegion: profile.doe_padd_region ?? '',
           doePaddRate: profile.doe_padd_rate ?? '',
           doePaddUpdatedAt: profile.doe_padd_updated_at ?? null
@@ -223,7 +223,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         other_charge_2_description: rateData.otherCharge2Description || null,
         other_charge_2_amount: rateData.otherCharge2Amount !== '' ? parseFloat(rateData.otherCharge2Amount) : null,
         fuel_peg: rateData.fuelPeg !== '' ? parseFloat(rateData.fuelPeg) : null,
-        fuel_mpg: rateData.fuelMpg !== '' ? parseFloat(rateData.fuelMpg) : 6.0,
+        fuel_mpg: rateData.fuelMpg !== '' ? parseFloat(rateData.fuelMpg) : null,
         doe_padd_region: rateData.doePaddRegion || null,
         doe_padd_rate: rateData.doePaddRate !== '' ? parseFloat(rateData.doePaddRate) : null,
         doe_padd_updated_at: rateData.doePaddRate !== '' ? new Date().toISOString() : rateData.doePaddUpdatedAt
@@ -824,12 +824,13 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                   <div style={helperStyle}>Fuel cost per gallon already included in your mileage rate</div>
                 </div>
                 <div>
-                  <label style={labelStyle}>MPG</label>
+                  <label style={labelStyle}>MPG *</label>
                   <input
                     type="number"
                     min="1"
                     max="15"
                     step="0.1"
+                    required
                     value={rateData.fuelMpg}
                     onChange={(e) => handleRateChange('fuelMpg', e.target.value)}
                     disabled={saving}

@@ -22,7 +22,7 @@ export function buildFleetPayload(form) {
     mileage_rate:              Number(form.mileageRate) || null,
     stop_rate:                 Number(form.stopRate) || null,
     fuel_peg:                  Number(form.fuelPeg) || null,
-    fuel_mpg:                  Number(form.fuelMpg) || 6,
+    fuel_mpg:                  form.fuelMpg !== '' && form.fuelMpg != null ? Number(form.fuelMpg) : null,
     doe_padd_region:           form.doePaddRegion,
     doe_padd_rate:             Number(form.doePaddRate) || null,
     other_charge_1_name:        form.otherCharge1Name,

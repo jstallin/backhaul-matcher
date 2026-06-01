@@ -87,9 +87,9 @@ describe('buildFleetPayload', () => {
       expect(profileData.revenue_split_carrier).toBe(20);
     });
 
-    it('defaults fuel_mpg to 6 when blank', () => {
+    it('sets fuel_mpg to null when blank (no assumed default — MPG is now required in the form)', () => {
       const { profileData } = buildFleetPayload({ ...baseForm, fuelMpg: '' });
-      expect(profileData.fuel_mpg).toBe(6);
+      expect(profileData.fuel_mpg).toBeNull();
     });
   });
 
