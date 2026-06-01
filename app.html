@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Haul Monitor - Smart Return Route Optimization</title>
 
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#3d5f82" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Haul Monitor" />
+    <!--
+      PWA / "Add to Home Screen" app DISABLED for now (issue #34) — the iOS
+      standalone experience was misbehaving, so users access Haul Monitor through
+      the browser only. To re-enable, restore the manifest link + the
+      mobile-web-app-capable / apple-mobile-web-app-* meta tags + apple-touch-icon,
+      and switch the script below back to registering /sw.js.
+    -->
     <link rel="apple-touch-icon" href="/haul-monitor-icon.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,10 +24,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // PWA disabled (issue #34): unregister any previously-installed service
+      // worker and clear its caches so users who "Added to Home Screen" return to
+      // normal browser behavior. Restore registration here to re-enable the PWA.
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
-        });
+        navigator.serviceWorker.getRegistrations()
+          .then((regs) => regs.forEach((r) => r.unregister()))
+          .catch(() => {});
+        if (window.caches && caches.keys) {
+          caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+        }
       }
     </script>
   </body>
