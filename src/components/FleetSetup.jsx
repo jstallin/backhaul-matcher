@@ -107,6 +107,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       setRateData({
         trailerType: '',
         equipmentVariation: '',
+        modes: [],
         revenueSplitCarrier: 20,
         mileageRate: '',
         stopRate: '',
@@ -598,14 +599,14 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'].map((m) => {
-                  const checked = rateData.modes.includes(m);
+                  const checked = (rateData.modes || []).includes(m);
                   return (
                     <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: `1px solid ${checked ? colors.accent.primary : colors.border.accent}`, borderRadius: '8px', background: checked ? `${colors.accent.primary}15` : colors.background.secondary, cursor: saving ? 'not-allowed' : 'pointer', fontSize: '14px', color: colors.text.primary, userSelect: 'none' }}>
                       <input
                         type="checkbox"
                         checked={checked}
                         disabled={saving}
-                        onChange={() => handleRateChange('modes', rateData.modes.includes(m) ? rateData.modes.filter((x) => x !== m) : [...rateData.modes, m])}
+                        onChange={() => { const cur = rateData.modes || []; handleRateChange('modes', cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]); }}
                         style={{ cursor: saving ? 'not-allowed' : 'pointer' }}
                       />
                       {m}
