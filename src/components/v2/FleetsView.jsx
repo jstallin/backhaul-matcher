@@ -173,7 +173,7 @@ const PADD_REGIONS = [
 const emptyProfileForm = () => ({
   name: '', mcNumber: '', dotNumber: '', phoneNumber: '', email: '', homeAddress: '',
   homeLat: null, homeLng: null, trailerType: '', equipmentVariation: '', modes: [],
-  revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: 6.0,
+  revenueSplitCarrier: 20, mileageRate: '', stopRate: '', fuelPeg: '', fuelMpg: '',
   doePaddRegion: 'national', doePaddRate: '',
   otherCharge1Name: '', otherCharge1Description: '', otherCharge1Amount: '',
   otherCharge2Name: '', otherCharge2Description: '', otherCharge2Amount: '',
@@ -209,7 +209,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       mileageRate: fp?.mileage_rate ?? '',
       stopRate: fp?.stop_rate ?? '',
       fuelPeg: fp?.fuel_peg ?? '',
-      fuelMpg: fp?.fuel_mpg ?? 6.0,
+      fuelMpg: fp?.fuel_mpg ?? '',
       doePaddRegion: fp?.doe_padd_region ?? 'national',
       doePaddRate: fp?.doe_padd_rate ?? '',
       otherCharge1Name: fp?.other_charge_1_name ?? '',
@@ -246,6 +246,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
     if (!form.email.trim()) return setError('Email is required.');
     if (!form.homeAddress.trim()) return setError('Home address is required.');
     if (!form.homeLat || !form.homeLng) return setError('Please verify the home address before saving.');
+    if (form.fuelMpg === '' || !(Number(form.fuelMpg) > 0)) return setError('MPG is required (enter your contractual miles per gallon).');
 
     setSaving(true);
     try {
@@ -298,14 +299,14 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       <SectionLabel>Fleet Info</SectionLabel>
       <FormGrid>
         <Field label="Fleet Name" required span={2}>
-          <Input value={form.name} onChange={set('name')} placeholder="Acme Logistics" />
+          <Input value={form.name} onChange={set('name')} />
         </Field>
         {/* MC/DOT Number fields — commented out, may not need these
-        <Field label="MC Number"><Input value={form.mcNumber} onChange={set('mcNumber')} placeholder="MC-123456" /></Field>
-        <Field label="DOT Number"><Input value={form.dotNumber} onChange={set('dotNumber')} placeholder="1234567" /></Field>
+        <Field label="MC Number"><Input value={form.mcNumber} onChange={set('mcNumber')} /></Field>
+        <Field label="DOT Number"><Input value={form.dotNumber} onChange={set('dotNumber')} /></Field>
         */}
-        <Field label="Phone" required><Input value={form.phoneNumber} onChange={set('phoneNumber')} placeholder="(555) 867-5309" /></Field>
-        <Field label="Email" required><Input value={form.email} onChange={set('email')} type="email" placeholder="dispatch@fleet.com" /></Field>
+        <Field label="Phone" required><Input value={form.phoneNumber} onChange={set('phoneNumber')} /></Field>
+        <Field label="Email" required><Input value={form.email} onChange={set('email')} type="email" /></Field>
       </FormGrid>
 
       {/* Home Base */}
@@ -317,7 +318,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
               <Input
                 value={form.homeAddress}
                 onChange={(v) => { setForm((f) => ({ ...f, homeAddress: v, homeLat: null, homeLng: null })); setGeocoded(false); }}
-                placeholder="Davidson, NC"
+
               />
             </div>
             <button
@@ -367,7 +368,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       <SectionLabel>Rate Configuration</SectionLabel>
       <FormGrid>
         <Field label="Carrier %" hint="Percentage of gross backhaul revenue allocated to the carrier">
-          <Input value={form.revenueSplitCarrier} onChange={set('revenueSplitCarrier')} type="number" min={1} max={99} placeholder="20" />
+          <Input value={form.revenueSplitCarrier} onChange={set('revenueSplitCarrier')} type="number" min={1} max={99} />
         </Field>
         <Field label="Customer %">
           <div style={{ ...inputBase, background: t.colors.page.bg, color: t.colors.text.secondary, fontWeight: t.font.weight.semibold, cursor: 'not-allowed', display: 'flex', alignItems: 'center' }}>
@@ -375,10 +376,10 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
           </div>
         </Field>
         <Field label="Mileage Rate ($/mile)" hint="Rate per mile, loaded and empty">
-          <Input value={form.mileageRate} onChange={set('mileageRate')} type="number" step="0.01" placeholder="2.00" />
+          <Input value={form.mileageRate} onChange={set('mileageRate')} type="number" step="0.01" />
         </Field>
         <Field label="Stop Rate ($/stop)" hint="Rate per stop on the backhaul route">
-          <Input value={form.stopRate} onChange={set('stopRate')} type="number" step="0.01" placeholder="50.00" />
+          <Input value={form.stopRate} onChange={set('stopRate')} type="number" step="0.01" />
         </Field>
       </FormGrid>
 
@@ -386,16 +387,16 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '12px' }}>FSC per mile = (DOE PADD Rate − PEG) / MPG</div>
       <FormGrid>
         <Field label="PEG ($/gal)" hint="Fuel cost per gallon already included in your mileage rate">
-          <Input value={form.fuelPeg} onChange={set('fuelPeg')} type="number" step="0.001" placeholder="1.200" />
+          <Input value={form.fuelPeg} onChange={set('fuelPeg')} type="number" step="0.001" />
         </Field>
-        <Field label="MPG" hint="Contractual miles per gallon (typically 6–8)">
-          <Input value={form.fuelMpg} onChange={set('fuelMpg')} type="number" step="0.1" min={1} max={15} placeholder="6.0" />
+        <Field label="MPG" required hint="Contractual miles per gallon (typically 6–8)">
+          <Input value={form.fuelMpg} onChange={set('fuelMpg')} type="number" step="0.1" min={1} max={15} />
         </Field>
         <Field label="PADD Region">
           <SelectInput value={form.doePaddRegion} onChange={set('doePaddRegion')} options={PADD_REGIONS} />
         </Field>
-        <Field label="DOE PADD Rate ($/gal)" hint="Current diesel price from EIA.gov">
-          <Input value={form.doePaddRate} onChange={set('doePaddRate')} type="number" step="0.001" placeholder="3.736" />
+        <Field label="DOE PADD Rate ($/gal)" hint={<>Current diesel price from <a href="https://www.eia.gov/petroleum/gasdiesel/" target="_blank" rel="noopener noreferrer" style={{ color: t.colors.accent.blue }}>EIA.gov</a></>}>
+          <Input value={form.doePaddRate} onChange={set('doePaddRate')} type="number" step="0.001" />
         </Field>
       </FormGrid>
       {fscPreview && parseFloat(fscPreview) > 0 && (
@@ -409,12 +410,12 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
 
       <SectionLabel>Other Charges</SectionLabel>
       <FormGrid cols={3}>
-        <Field label="Charge 1 Name"><Input value={form.otherCharge1Name} onChange={set('otherCharge1Name')} placeholder="Layover" /></Field>
-        <Field label="Description" hint="Max 25 chars"><Input value={form.otherCharge1Description} onChange={(v) => set('otherCharge1Description')(v.slice(0, 25))} placeholder="Driver layover fee" /></Field>
-        <Field label="Amount ($)"><Input value={form.otherCharge1Amount} onChange={set('otherCharge1Amount')} type="number" step="0.01" placeholder="150.00" /></Field>
-        <Field label="Charge 2 Name"><Input value={form.otherCharge2Name} onChange={set('otherCharge2Name')} placeholder="TONU" /></Field>
-        <Field label="Description" hint="Max 25 chars"><Input value={form.otherCharge2Description} onChange={(v) => set('otherCharge2Description')(v.slice(0, 25))} placeholder="Truck order not used" /></Field>
-        <Field label="Amount ($)"><Input value={form.otherCharge2Amount} onChange={set('otherCharge2Amount')} type="number" step="0.01" placeholder="300.00" /></Field>
+        <Field label="Charge 1 Name"><Input value={form.otherCharge1Name} onChange={set('otherCharge1Name')} /></Field>
+        <Field label="Description" hint="Max 25 chars"><Input value={form.otherCharge1Description} onChange={(v) => set('otherCharge1Description')(v.slice(0, 25))} /></Field>
+        <Field label="Amount ($)"><Input value={form.otherCharge1Amount} onChange={set('otherCharge1Amount')} type="number" step="0.01" /></Field>
+        <Field label="Charge 2 Name"><Input value={form.otherCharge2Name} onChange={set('otherCharge2Name')} /></Field>
+        <Field label="Description" hint="Max 25 chars"><Input value={form.otherCharge2Description} onChange={(v) => set('otherCharge2Description')(v.slice(0, 25))} /></Field>
+        <Field label="Amount ($)"><Input value={form.otherCharge2Amount} onChange={set('otherCharge2Amount')} type="number" step="0.01" /></Field>
       </FormGrid>
 
       <div style={{ marginTop: '24px', display: 'flex', gap: '10px', alignItems: 'center' }}>
