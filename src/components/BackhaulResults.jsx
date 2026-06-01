@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map, CheckCircle } from '../icons';
+import { CANCELLATION_REASONS } from '../utils/cancellationReasons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
@@ -1009,12 +1010,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   style={{ width: '100%', padding: '12px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', cursor: cancelling ? 'not-allowed' : 'pointer' }}
                 >
                   <option value="">-- Select a reason --</option>
-                  <option value="accident">ACCIDENT</option>
-                  <option value="weather">WEATHER</option>
-                  <option value="illness">ILLNESS</option>
-                  <option value="returns">RETURNS</option>
-                  <option value="hours_of_service">HOURS OF SERVICE</option>
-                  <option value="no_load_avail">NO LOAD AVAIL</option>
+                  {CANCELLATION_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
               </div>
 

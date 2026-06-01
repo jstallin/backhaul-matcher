@@ -391,7 +391,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               onChange={(e) => handleChange('name', e.target.value)}
               required
               disabled={saving}
-              placeholder="e.g., Carolina Transport Fleet"
               style={inputStyle}
             />
           </div>
@@ -410,7 +409,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 value={formData.mcNumber}
                 onChange={(e) => handleChange('mcNumber', e.target.value)}
                 disabled={saving}
-                placeholder="MC-123456"
                 style={inputStyle}
               />
             </div>
@@ -421,7 +419,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 value={formData.dotNumber}
                 onChange={(e) => handleChange('dotNumber', e.target.value)}
                 disabled={saving}
-                placeholder="DOT-123456"
                 style={inputStyle}
               />
             </div>
@@ -443,7 +440,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 onChange={(e) => handleChange('phoneNumber', e.target.value)}
                 required
                 disabled={saving}
-                placeholder="(555) 123-4567"
                 style={inputStyle}
               />
               <div style={helperStyle}>For text notifications</div>
@@ -456,7 +452,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 onChange={(e) => handleChange('email', e.target.value)}
                 required
                 disabled={saving}
-                placeholder="manager@fleet.com"
                 style={inputStyle}
               />
               <div style={helperStyle}>For email notifications</div>
@@ -474,7 +469,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 setFormData(prev => ({ ...prev, homeStreet: e.target.value, homeLat: '', homeLng: '' }));
               }}
               disabled={saving || geocoding}
-              placeholder="Street address (optional)"
               style={{ ...inputStyle, marginBottom: '8px' }}
             />
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -488,7 +482,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 onBlur={handleHomeCityStateBlur}
                 required
                 disabled={saving || geocoding}
-                placeholder="City *"
                 style={{ ...inputStyle, flex: 1 }}
               />
               <select
@@ -657,7 +650,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.revenueSplitCarrier}
                     onChange={(e) => handleRateChange('revenueSplitCarrier', e.target.value)}
                     disabled={saving}
-                    placeholder="80"
                     style={inputStyle}
                   />
                 </div>
@@ -698,7 +690,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.mileageRate}
                     onChange={(e) => handleRateChange('mileageRate', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., 2.00"
                     style={inputStyle}
                   />
                   <div style={helperStyle}>Rate per mile, loaded and empty</div>
@@ -712,7 +703,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.stopRate}
                     onChange={(e) => handleRateChange('stopRate', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., 50.00"
                     style={inputStyle}
                   />
                   <div style={helperStyle}>Rate per stop on the backhaul route</div>
@@ -739,7 +729,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge1Name}
                     onChange={(e) => handleRateChange('otherCharge1Name', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., Detention fee"
                     style={inputStyle}
                   />
                 </div>
@@ -751,7 +740,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge1Description}
                     onChange={(e) => handleRateChange('otherCharge1Description', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., 2+ hr wait time"
                     style={inputStyle}
                   />
                 </div>
@@ -764,7 +752,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge1Amount}
                     onChange={(e) => handleRateChange('otherCharge1Amount', e.target.value)}
                     disabled={saving}
-                    placeholder="0.00"
                     style={inputStyle}
                   />
                 </div>
@@ -781,7 +768,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge2Name}
                     onChange={(e) => handleRateChange('otherCharge2Name', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., Lumper fee"
                     style={inputStyle}
                   />
                 </div>
@@ -793,7 +779,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge2Description}
                     onChange={(e) => handleRateChange('otherCharge2Description', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., Unloading assist"
                     style={inputStyle}
                   />
                 </div>
@@ -806,7 +791,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.otherCharge2Amount}
                     onChange={(e) => handleRateChange('otherCharge2Amount', e.target.value)}
                     disabled={saving}
-                    placeholder="0.00"
                     style={inputStyle}
                   />
                 </div>
@@ -835,7 +819,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.fuelPeg}
                     onChange={(e) => handleRateChange('fuelPeg', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., 1.200"
                     style={inputStyle}
                   />
                   <div style={helperStyle}>Fuel cost per gallon already included in your mileage rate</div>
@@ -850,7 +833,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.fuelMpg}
                     onChange={(e) => handleRateChange('fuelMpg', e.target.value)}
                     disabled={saving}
-                    placeholder="6.0"
                     style={inputStyle}
                   />
                   <div style={helperStyle}>Contractual miles per gallon (typically 6-8)</div>
@@ -889,7 +871,6 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                     value={rateData.doePaddRate}
                     onChange={(e) => handleRateChange('doePaddRate', e.target.value)}
                     disabled={saving}
-                    placeholder="e.g., 3.736"
                     style={inputStyle}
                   />
                   <div style={helperStyle}>

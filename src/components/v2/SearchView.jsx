@@ -10,6 +10,7 @@ import { findRouteHomeBackhauls, computeNegotiation, netCreditAtGross, isNoRateL
 import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishRequests';
+import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
@@ -1762,6 +1763,7 @@ export function SearchView() {
   const [noCredits, setNoCredits] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteReason, setDeleteReason] = useState(''); // #37: cancellation reason (parity with v1)
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
   const [timeUntilRefresh, setTimeUntilRefresh] = useState('');
   const previousMatchesRef = useRef([]);
@@ -2020,13 +2022,18 @@ export function SearchView() {
   };
 
   const handleDelete = (request) => {
+    setDeleteReason('');
     setDeleteTarget(request);
   };
 
   const confirmDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !deleteReason) return; // #37: reason required (parity with v1)
     try {
-      await db.requests.update(deleteTarget.id, { status: 'cancelled' });
+      await db.requests.update(deleteTarget.id, {
+        status: 'cancelled',
+        cancellation_reason: deleteReason,
+        cancelled_at: new Date().toISOString(),
+      });
     } catch (e) {
       console.error(e);
     }
@@ -2035,6 +2042,7 @@ export function SearchView() {
       setMode('empty');
     }
     setDeleteTarget(null);
+    setDeleteReason('');
     await loadData();
   };
 
@@ -2154,11 +2162,24 @@ export function SearchView() {
         >
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: t.radius['2xl'], padding: '28px', maxWidth: '380px', width: '90%', boxShadow: t.shadow.lg }}>
             <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '10px' }}>Cancel Request</div>
-            <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary, marginBottom: '20px' }}>
+            <div style={{ fontSize: t.font.size.sm, color: t.colors.text.secondary, marginBottom: '16px' }}>
               Cancel "<strong>{deleteTarget.request_name}</strong>"? This marks it as cancelled and removes it from your active list.
             </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.secondary, marginBottom: '5px' }}>
+                Reason for cancellation <span style={{ color: t.colors.accent.red }}>*</span>
+              </label>
+              <select
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.lg, fontSize: t.font.size.sm, color: t.colors.text.primary, background: '#fff', fontFamily: t.font.family }}
+              >
+                <option value="">-- Select a reason --</option>
+                {CANCELLATION_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <PrimaryBtn onClick={confirmDelete} style={{ background: '#dc2626' }}>Yes, Cancel It</PrimaryBtn>
+              <PrimaryBtn onClick={confirmDelete} disabled={!deleteReason} style={{ background: deleteReason ? '#dc2626' : undefined }}>Yes, Cancel It</PrimaryBtn>
               <GhostBtn onClick={() => setDeleteTarget(null)}>Keep It</GhostBtn>
             </div>
           </div>
