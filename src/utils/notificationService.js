@@ -2,6 +2,7 @@
  * Notification Service
  * Handles sending email and SMS notifications for backhaul changes
  */
+import { detectNotifiableChange, snapshotFromMatches, netOf } from './notificationChangeDetection';
 
 const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || '/api/notifications';
 
@@ -72,50 +73,41 @@ export const sendBackhaulChangeNotification = async (params) => {
 const buildNotificationMessage = (requestName, fleetName, oldTopMatch, newTopMatch, changeType) => {
   let subject, emailBody, emailHtml, smsBody;
 
-  const newRevenue = newTopMatch?.totalRevenue || 0;
-  const newRPM = newTopMatch?.revenuePerMile || 0;
+  const newNet = netOf(newTopMatch);
+  const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const newRoute = `${newTopMatch?.origin?.city}, ${newTopMatch?.origin?.state} → ${newTopMatch?.destination?.city}, ${newTopMatch?.destination?.state}`;
 
   switch (changeType) {
     case 'new_top':
-      subject = `🎯 New Top Backhaul for ${requestName}`;
-      smsBody = `New top backhaul for ${requestName}: $${newRevenue.toFixed(2)} (${newRoute}). Check Haul Monitor for details.`;
-      emailBody = `A new top backhaul opportunity is available for your request "${requestName}".\n\nRoute: ${newRoute}\nRevenue: $${newRevenue.toFixed(2)}\nRate: $${newRPM.toFixed(2)}/mile\n\nLog in to Haul Monitor to view details and book.`;
+      subject = `🎯 New top backhaul for ${requestName}`;
+      smsBody = `New #1 backhaul for ${requestName}: ${fmt(newNet)} net (${newRoute}). Check Haul Monitor.`;
+      emailBody = `A new #1 backhaul opportunity is available for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nLog in to Haul Monitor to view details.`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
         { label: 'Fleet', value: fleetName },
         { label: 'Route', value: newRoute },
-        { label: 'Revenue', value: `$${newRevenue.toFixed(2)}` },
-        { label: 'Rate', value: `$${newRPM.toFixed(2)}/mile` }
+        { label: 'Net Revenue', value: fmt(newNet), highlight: true }
       ]);
       break;
 
-    case 'price_increase':
-      const oldRevenue = oldTopMatch?.totalRevenue || 0;
-      const increase = newRevenue - oldRevenue;
-      subject = `📈 Price Increase for ${requestName}`;
-      smsBody = `Top backhaul price increased by $${increase.toFixed(2)} for ${requestName}. Now $${newRevenue.toFixed(2)}. Check Haul Monitor.`;
-      emailBody = `The top backhaul opportunity for "${requestName}" has increased in price.\n\nRoute: ${newRoute}\nNew Revenue: $${newRevenue.toFixed(2)} (was $${oldRevenue.toFixed(2)})\nIncrease: +$${increase.toFixed(2)}\n\nLog in to Haul Monitor to view details.`;
+    case 'top_net_up':
+      subject = `📈 Top backhaul improved for ${requestName}`;
+      smsBody = `Top backhaul net revenue improved for ${requestName}: now ${fmt(newNet)} (${newRoute}). Check Haul Monitor.`;
+      emailBody = `Your top backhaul's net revenue improved for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nLog in to Haul Monitor to view details.`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
         { label: 'Route', value: newRoute },
-        { label: 'Old Price', value: `$${oldRevenue.toFixed(2)}` },
-        { label: 'New Price', value: `$${newRevenue.toFixed(2)}`, highlight: true },
-        { label: 'Increase', value: `+$${increase.toFixed(2)}`, highlight: true }
+        { label: 'Net Revenue', value: fmt(newNet), highlight: true }
       ]);
       break;
 
-    case 'price_decrease':
-      const oldRev = oldTopMatch?.totalRevenue || 0;
-      const decrease = oldRev - newRevenue;
-      subject = `📉 Price Change for ${requestName}`;
-      smsBody = `Top backhaul price decreased by $${decrease.toFixed(2)} for ${requestName}. Now $${newRevenue.toFixed(2)}.`;
-      emailBody = `The top backhaul opportunity for "${requestName}" has decreased in price.\n\nRoute: ${newRoute}\nNew Revenue: $${newRevenue.toFixed(2)} (was $${oldRev.toFixed(2)})\nDecrease: -$${decrease.toFixed(2)}`;
+    case 'lane_softening':
+      subject = `📉 Lane softening for ${requestName}`;
+      smsBody = `Heads up: average net revenue across your top loads for ${requestName} is softening. Review in Haul Monitor.`;
+      emailBody = `Average net revenue across your top loads for "${requestName}" is softening — you may want to act soon.\n\nLog in to Haul Monitor to review.`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
-        { label: 'Route', value: newRoute },
-        { label: 'Old Price', value: `$${oldRev.toFixed(2)}` },
-        { label: 'New Price', value: `$${newRevenue.toFixed(2)}` }
+        { label: 'Signal', value: 'Top-loads net revenue softening', highlight: true }
       ]);
       break;
 
@@ -326,35 +318,11 @@ const buildEmailHtml = (title, fields) => {
  * Detect material changes in backhaul results
  */
 export const detectBackhaulChanges = (oldMatches, newMatches) => {
+  // Delegate to the shared, unit-tested net-based detector so client polling and the
+  // server cron agree on what's "material" (item #48). Preserves the {type, oldMatch,
+  // newMatch} contract the callers expect, plus carries pct/avgNet for messaging.
   if (!oldMatches || oldMatches.length === 0) return null;
-  if (!newMatches || newMatches.length === 0) return null;
-
-  const oldTop5 = oldMatches.slice(0, 5);
-  const newTop5 = newMatches.slice(0, 5);
-
-  // Check if the composition of the top 5 changed
-  const oldIds = new Set(oldTop5.map(m => m.load_id));
-  if (newTop5.some(m => !oldIds.has(m.load_id))) {
-    return {
-      type: 'new_top',
-      oldMatch: oldMatches[0],
-      newMatch: newMatches[0],
-    };
-  }
-
-  // Same loads in top 5 — check if any revenue shifted by $10+
-  for (const newMatch of newTop5) {
-    const oldMatch = oldTop5.find(m => m.load_id === newMatch.load_id);
-    if (!oldMatch) continue;
-    const diff = (newMatch.totalRevenue ?? 0) - (oldMatch.totalRevenue ?? 0);
-    if (Math.abs(diff) >= 10) {
-      return {
-        type: diff > 0 ? 'price_increase' : 'price_decrease',
-        oldMatch: oldMatches[0],
-        newMatch: newMatches[0],
-      };
-    }
-  }
-
-  return null;
+  const change = detectNotifiableChange(snapshotFromMatches(oldMatches), newMatches);
+  if (!change) return null;
+  return { ...change, oldMatch: oldMatches[0], newMatch: newMatches[0] };
 };
