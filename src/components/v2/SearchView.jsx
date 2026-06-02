@@ -11,6 +11,7 @@ import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishRequests';
 import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
+import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
@@ -362,6 +363,7 @@ const BLANK_FORM = {
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
   isRelay: false,
+  modes: [],
   autoRefresh: false,
   autoRefreshInterval: 1,
   maxAutoRefreshes: '',
@@ -381,6 +383,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     equipmentAvailableDate: initialValues.equipment_available_date || '',
     equipmentNeededDate: initialValues.equipment_needed_date || '',
     isRelay: initialValues.is_relay || false,
+    modes: Array.isArray(initialValues.modes) ? initialValues.modes : [],
     autoRefresh: initialValues.auto_refresh || false,
     autoRefreshInterval: initialValues.auto_refresh_interval ? initialValues.auto_refresh_interval / 60 : 1,
     maxAutoRefreshes: initialValues.max_auto_refreshes != null ? String(initialValues.max_auto_refreshes) : '',
@@ -512,6 +515,27 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
 
         <div style={{ borderTop: `1px solid ${t.colors.border.default}`, paddingTop: '16px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <Toggle checked={form.isRelay} onChange={v => set('isRelay', v)} label="Relay mode — driver picks up en route home" />
+
+          <div>
+            <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.secondary, marginBottom: '8px' }}>
+              Modes <span style={{ fontWeight: t.font.weight.medium, color: t.colors.text.muted }}>(optional — combined with the fleet's modes for this search)</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {FLEET_MODES.map((m) => {
+                const checked = form.modes.includes(m);
+                return (
+                  <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 10px', border: `1px solid ${checked ? t.colors.accent.blue : t.colors.border.default}`, borderRadius: t.radius.lg, background: checked ? t.colors.accent.blueLight : '#fff', cursor: 'pointer', fontSize: t.font.size.sm, color: t.colors.text.primary, userSelect: 'none' }}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => setForm(f => ({ ...f, modes: f.modes.includes(m) ? f.modes.filter(x => x !== m) : [...f.modes, m] }))}
+                    />
+                    {m}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           <div>
             <Toggle checked={form.autoRefresh} onChange={v => set('autoRefresh', v)} label="Auto-refresh results" />
@@ -1890,7 +1914,7 @@ export function SearchView() {
         homeLat: fleet.home_lat || 0,
         homeLng: fleet.home_lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
-        modes: Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
+        modes: unionModes(rawProfile?.modes, request.modes), // #36: fleet modes + request modes
         // Past available date → treat as "available now" (load board rejects past dates).
         pickupDate: effectivePickupDate(request.equipment_available_date),
       };

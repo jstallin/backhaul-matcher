@@ -15,6 +15,8 @@ export function buildRequestPayload(form, userId) {
     equipment_available_date: form.equipmentAvailableDate || null,
     equipment_needed_date:    form.equipmentNeededDate    || null,
     is_relay:                 form.isRelay,
+    // Optional request-level transport modes (#36); null when none selected.
+    modes:                    Array.isArray(form.modes) && form.modes.length ? form.modes : null,
     auto_refresh:             form.autoRefresh,
     auto_refresh_interval:    form.autoRefresh ? Math.round(form.autoRefreshInterval * 60) : null,
     // Optional cap on how many auto-refreshes run before it self-disables (null = unlimited).

@@ -7,6 +7,7 @@ import { AvatarMenu } from './AvatarMenu';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { CityStateInput } from './CityStateInput';
+import { FLEET_MODES } from '../utils/fleetModes';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -28,6 +29,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     equipmentAvailableDate: today(),
     equipmentNeededDate: today(),
     isRelay: false,
+    modes: [],                   // optional request-level transport modes (#36)
     autoRefresh: false,
     autoRefreshInterval: '0.5',  // 30 minutes default
     maxAutoRefreshes: '',        // blank = unlimited (item 006)
@@ -86,6 +88,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           equipmentAvailableDate: request.equipment_available_date || today(),
           equipmentNeededDate: request.equipment_needed_date || today(),
           isRelay: request.is_relay || false,
+          modes: Array.isArray(request.modes) ? request.modes : [],
           autoRefresh: request.auto_refresh || false,
           autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
           maxAutoRefreshes: request.max_auto_refreshes != null ? String(request.max_auto_refreshes) : '',
@@ -226,6 +229,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
+        modes: Array.isArray(formData.modes) && formData.modes.length ? formData.modes : null, // #36
         auto_refresh: formData.autoRefresh,
         auto_refresh_interval: formData.autoRefresh ? Math.round(parseFloat(formData.autoRefreshInterval) * 60) : null, // Store as MINUTES
         // Optional cap on auto-refreshes before self-disabling (null = unlimited); counter resets on save (item 006)
@@ -282,6 +286,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipmentAvailableDate: today(),
         equipmentNeededDate: today(),
         isRelay: false,
+        modes: [],
         autoRefresh: false,
         autoRefreshInterval: '0.5',
         maxAutoRefreshes: '',
@@ -405,6 +410,23 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <input type="checkbox" checked={formData.isRelay} onChange={(e) => handleChange('isRelay', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Relay Request</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Enable if this is a relay operation</div></div>
                 </label>
+              </div>
+
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>
+                  Modes <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(optional — combined with the fleet's modes for this search)</span>
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {FLEET_MODES.map((m) => {
+                    const checked = formData.modes.includes(m);
+                    return (
+                      <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: `1px solid ${checked ? colors.accent.primary : colors.border.accent}`, borderRadius: '8px', background: checked ? `${colors.accent.primary}15` : colors.background.secondary, cursor: saving ? 'not-allowed' : 'pointer', fontSize: '14px', color: colors.text.primary, userSelect: 'none' }}>
+                        <input type="checkbox" checked={checked} disabled={saving} onChange={() => handleChange('modes', formData.modes.includes(m) ? formData.modes.filter((x) => x !== m) : [...formData.modes, m])} style={{ cursor: saving ? 'not-allowed' : 'pointer' }} />
+                        {m}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div style={{ padding: '20px', background: `\${colors.accent.primary}10`, border: `1px solid \${colors.accent.primary}30`, borderRadius: '12px', marginBottom: '24px' }}>

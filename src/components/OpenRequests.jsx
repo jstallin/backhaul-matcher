@@ -14,6 +14,7 @@ import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFle
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../utils/autoFinishRequests';
+import { unionModes } from '../utils/fleetModes';
 import { CoDriver } from './CoDriver';
 import { useCredits } from '../hooks/useCredits';
 import { BuyCreditsModal } from './BuyCreditsModal';
@@ -282,7 +283,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeLat:       fleet.home_lat || 0,
         homeLng:       fleet.home_lng || 0,
         equipmentType: rawProfile?.trailer_type || 'Dry Van',
-        modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
+        modes:         unionModes(rawProfile?.modes, selectedRequest.modes), // #36: fleet + request modes
         pickupDate:    effPickupDate
       };
 

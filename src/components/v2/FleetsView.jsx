@@ -5,6 +5,7 @@ import { tokens } from '../../styles/tokens.v2';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
+import { FLEET_MODES } from '../../utils/fleetModes';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle } from '../../icons';
 
 const t = tokens;
@@ -168,7 +169,6 @@ const US_STATES = [
 
 const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
 const EQUIPMENT_VARIATIONS = ['Conestoga', 'Tanker', 'Curtain Side', 'Extendable', 'Lowboy'];
-const FLEET_MODES = ['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
 const DRIVER_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }, { value: 'on_leave', label: 'On Leave' }];

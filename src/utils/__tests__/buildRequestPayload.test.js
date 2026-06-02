@@ -75,6 +75,17 @@ describe('buildRequestPayload', () => {
     });
   });
 
+  describe('modes (#36)', () => {
+    it('passes a non-empty request modes array through', () => {
+      const p = buildRequestPayload({ ...baseForm, modes: ['Partial', 'Intermodal'] }, USER_ID);
+      expect(p.modes).toEqual(['Partial', 'Intermodal']);
+    });
+    it('is null when modes is empty or absent', () => {
+      expect(buildRequestPayload({ ...baseForm, modes: [] }, USER_ID).modes).toBeNull();
+      expect(buildRequestPayload(baseForm, USER_ID).modes).toBeNull();
+    });
+  });
+
   describe('max_auto_refreshes cap (item 006)', () => {
     it('is null when no limit is given (unlimited)', () => {
       const p = buildRequestPayload({ ...baseForm, autoRefresh: true, maxAutoRefreshes: '' }, USER_ID);
