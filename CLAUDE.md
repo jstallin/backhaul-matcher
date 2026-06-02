@@ -108,6 +108,11 @@ git checkout staging && git merge main
 ```
 This keeps staging caught up with main so your next push doesn't create conflicts.
 
+**Database migrations (manual — they do NOT ship with the code deploy):**
+Migrations under `supabase/migrations/` are applied **by hand to each Supabase project**, not by CI or the Vercel deploy. So a merged PR ships the code but **not** its schema/function changes until the migration is applied.
+1. When you create a migration during dev, apply it to **staging** (`vdrkpitooqgmmlfrbphi`) so staging can be smoke-tested.
+2. The moment a migration-bearing PR **merges to `main`, apply it to production** (`cxvmkvhwqktkktczpuyk`) **immediately** — don't wait. If the code is live but the migration isn't, prod breaks for the new path (e.g. the #67 "Failed to save" window). Verify the change landed (e.g. query `information_schema` / `pg_get_functiondef`) and confirm the prod behavior before considering the merge done.
+
 **Rules:**
 - Never commit directly to `main` — all changes go through `staging` first
 - Never use staging Supabase credentials in production and vice versa
