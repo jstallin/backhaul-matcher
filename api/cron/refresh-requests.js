@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import twilio from 'twilio';
 import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/notificationChangeDetection.js';
 
 // Backhaul data will be fetched at runtime
@@ -210,30 +211,6 @@ const geocodeDatumPoint = async (datumPoint) => {
 // Change detection now lives in the shared, unit-tested detector
 // (src/utils/notificationChangeDetection.js) so the cron and client agree.
 
-// Convert phone number to email-to-SMS gateway address
-const convertPhoneToEmailGateway = (phone, carrier = 'verizon') => {
-  if (!phone) return null;
-
-  // Remove all non-digits
-  const digits = phone.replace(/\D/g, '');
-
-  const gateways = {
-    'verizon': 'vtext.com',
-    'att': 'txt.att.net',
-    'tmobile': 'tmomail.net',
-    'sprint': 'messaging.sprintpcs.com',
-    'boost': 'sms.myboostmobile.com',
-    'cricket': 'sms.cricketwireless.net',
-    'uscellular': 'email.uscc.net'
-  };
-
-  if (gateways[carrier]) {
-    return `${digits}@${gateways[carrier]}`;
-  }
-
-  return null;
-};
-
 // Net-based notification copy (item #48) with a deep-link to the request results (#51).
 const buildNotificationMessage = (requestName, change, link) => {
   const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -310,41 +287,30 @@ const sendNotification = async (method, email, phone, subject, text, sms) => {
     console.log(`⚠️ Skipping email - method=${method}, email=${email || 'not set'}`);
   }
 
-  // Send SMS via email-to-SMS gateway
+  // Send SMS via Twilio (item #52 — replaces the unreliable email-to-carrier-gateway).
   if ((method === 'text' || method === 'both') && phone) {
-    const resendKey = process.env.RESEND_API_KEY;
-    const carrier = process.env.SMS_CARRIER || 'verizon';
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-    // Convert phone to email gateway address
-    const smsEmail = convertPhoneToEmailGateway(phone, carrier);
-
-    if (smsEmail && resendKey) {
+    if (accountSid && authToken && fromNumber) {
       try {
-        console.log(`📤 Attempting to send SMS via email gateway to ${smsEmail}...`);
-        const resend = new Resend(resendKey);
-        const { data, error } = await resend.emails.send({
-          from: 'Haul Monitor <notifications@haulmonitor.cloud>',
-          to: [smsEmail],
-          subject: 'Haul Monitor Alert',
-          text: (sms || text).slice(0, 300) // concise SMS body preserves the deep-link
+        console.log(`📤 Attempting to send SMS via Twilio to ${phone}...`);
+        const client = twilio(accountSid, authToken);
+        const result = await client.messages.create({
+          body: (sms || text).slice(0, 320), // concise body preserves the deep-link
+          from: fromNumber,
+          to: phone,
         });
-        if (error) {
-          results.sms = { success: false, error: error.message, gateway: smsEmail };
-          console.error(`❌ SMS via email gateway failed:`, error);
-        } else {
-          results.sms = { success: true, id: data?.id, gateway: smsEmail };
-          console.log(`✅ SMS sent via email gateway to ${smsEmail}, id: ${data?.id}`);
-        }
+        results.sms = { success: true, id: result.sid };
+        console.log(`✅ SMS sent via Twilio to ${phone}, sid: ${result.sid}`);
       } catch (error) {
-        results.sms = { success: false, error: error.message, gateway: smsEmail };
-        console.error(`❌ SMS via email gateway exception: ${error.message}`);
+        results.sms = { success: false, error: error.message, code: error.code };
+        console.error(`❌ Twilio SMS failed: ${error.message} (code ${error.code})`);
       }
-    } else if (!smsEmail) {
-      console.log(`⚠️ Skipping SMS - could not determine gateway for carrier: ${carrier}`);
-      results.sms = { success: false, error: `Unknown carrier: ${carrier}` };
     } else {
-      console.log('⚠️ Skipping SMS - RESEND_API_KEY not configured');
-      results.sms = { success: false, error: 'RESEND_API_KEY not configured' };
+      console.log('⚠️ Skipping SMS - Twilio env vars not set (TWILIO_ACCOUNT_SID/AUTH_TOKEN/PHONE_NUMBER)');
+      results.sms = { success: false, error: 'Twilio not configured' };
     }
   } else {
     console.log(`⚠️ Skipping SMS - method=${method}, phone=${phone || 'not set'}`);
