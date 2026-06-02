@@ -501,11 +501,11 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
             <ErrorMsg msg={errors.selectedFleetId} />
           </Field>
 
-          <Field label="Equipment Available Date">
+          <Field label="Begin Pickup Window">
             <Input type="date" value={form.equipmentAvailableDate} onChange={e => set('equipmentAvailableDate', e.target.value)} min={new Date().toISOString().split('T')[0]} />
           </Field>
 
-          <Field label="Equipment Needed By">
+          <Field label="End Pickup Window">
             <Input type="date" value={form.equipmentNeededDate} onChange={e => set('equipmentNeededDate', e.target.value)} min={new Date().toISOString().split('T')[0]} />
           </Field>
         </div>
