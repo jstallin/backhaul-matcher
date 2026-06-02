@@ -84,6 +84,8 @@ export default async function handler(req, res) {
     case 'members': return handleMembers(req, res, supabase, user);
     case 'role':            return handleRole(req, res, supabase, user);
     case 'all':             return handleAll(req, res, supabase, user);
+    case 'users':           return handleUsers(req, res, supabase, user);
+    case 'user-action':     return handleUserAction(req, res, supabase, user);
     case 'pilot':           return handlePilot(req, res, supabase, user);
     case 'admin-settings':    return handleAdminSettings(req, res, supabase, user);
     case 'trimble-actuals':   return handleTrimbleActuals(req, res, supabase, user);
@@ -815,4 +817,88 @@ function buildInviteEmailHtml({ orgName, inviterName, inviteeEmail, inviteUrl, i
   </div>
 </body>
 </html>`;
+}
+
+// ── GET /api/orgs/users ───────────────────────────────────────────────────────
+// App admin only: list ALL users (incl. org-less / personal-domain), for review +
+// the ban/delete controls (#49/#50). The org-centric views don't surface org-less
+// users at all, so this is how an admin even sees a registrant like the intern.
+
+async function handleUsers(req, res, supabase, user) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { data: adminRow } = await supabase
+    .from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle();
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  try {
+    const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+
+    const { data: memberships } = await supabase
+      .from('org_memberships').select('user_id, role, orgs(name)');
+    const byUser = {};
+    (memberships || []).forEach(m => { byUser[m.user_id] = { org: m.orgs?.name || null, role: m.role }; });
+
+    const { data: admins } = await supabase.from('admin_users').select('user_id');
+    const adminIds = new Set((admins || []).map(a => a.user_id));
+
+    const result = (users || []).map(u => {
+      const mem = byUser[u.id];
+      return {
+        id: u.id,
+        email: u.email,
+        full_name: u.user_metadata?.full_name || null,
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at || null,
+        banned: !!u.banned_until && new Date(u.banned_until) > new Date(),
+        personal_domain: !isEnterpriseDomain(getEmailDomain(u.email)),
+        org: mem?.org || null,
+        org_role: mem?.role || null,
+        is_app_admin: adminIds.has(u.id),
+      };
+    }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return res.status(200).json({ users: result });
+  } catch (err) {
+    console.error('Error in handleUsers:', err);
+    return res.status(500).json({ error: 'Failed to list users' });
+  }
+}
+
+// ── POST /api/orgs/user-action ────────────────────────────────────────────────
+// App admin only: ban / unban / delete a user (#49). Ban blocks login (right tool
+// for a suspected competitor — no access, not a browse-only lockout).
+
+async function handleUserAction(req, res, supabase, user) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { data: adminRow } = await supabase
+    .from('admin_users').select('user_id').eq('user_id', user.id).maybeSingle();
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  const { userId, op } = req.body || {};
+  if (!userId || !['ban', 'unban', 'delete'].includes(op)) {
+    return res.status(400).json({ error: 'userId and op (ban|unban|delete) are required' });
+  }
+  if (userId === user.id) return res.status(400).json({ error: 'You cannot perform this action on your own account' });
+
+  // Safety: never ban/delete another app admin.
+  const { data: targetAdmin } = await supabase
+    .from('admin_users').select('user_id').eq('user_id', userId).maybeSingle();
+  if (targetAdmin) return res.status(400).json({ error: 'Cannot modify another app admin' });
+
+  try {
+    if (op === 'delete') {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+    } else {
+      const ban_duration = op === 'ban' ? '876000h' : 'none'; // ~100 years / lift
+      const { error } = await supabase.auth.admin.updateUserById(userId, { ban_duration });
+      if (error) throw error;
+    }
+    return res.status(200).json({ success: true, op });
+  } catch (err) {
+    console.error('Error in handleUserAction:', err);
+    return res.status(500).json({ error: err.message || 'User action failed' });
+  }
 }
