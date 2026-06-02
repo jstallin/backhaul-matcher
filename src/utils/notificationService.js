@@ -28,13 +28,19 @@ export const sendBackhaulChangeNotification = async (params) => {
     fleetName,
     oldTopMatch,
     newTopMatch,
-    changeType
+    changeType,
+    requestId
   } = params;
 
   console.log('📧 Sending notification:', { method, email, phone, changeType });
 
+  // Deep-link to this request's results (#51). Uses the current origin (www on prod).
+  const link = requestId
+    ? `${(typeof window !== 'undefined' ? window.location.origin : '')}/app?request=${requestId}`
+    : (typeof window !== 'undefined' ? window.location.origin : '');
+
   // Build notification message
-  const message = buildNotificationMessage(requestName, fleetName, oldTopMatch, newTopMatch, changeType);
+  const message = buildNotificationMessage(requestName, fleetName, oldTopMatch, newTopMatch, changeType, link);
 
   try {
     // Send based on method
@@ -70,54 +76,55 @@ export const sendBackhaulChangeNotification = async (params) => {
 /**
  * Build notification message based on change type
  */
-const buildNotificationMessage = (requestName, fleetName, oldTopMatch, newTopMatch, changeType) => {
+const buildNotificationMessage = (requestName, fleetName, oldTopMatch, newTopMatch, changeType, link = '') => {
   let subject, emailBody, emailHtml, smsBody;
 
   const newNet = netOf(newTopMatch);
   const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const newRoute = `${newTopMatch?.origin?.city}, ${newTopMatch?.origin?.state} → ${newTopMatch?.destination?.city}, ${newTopMatch?.destination?.state}`;
+  const smsLink = link ? ` View: ${link}` : '';
 
   switch (changeType) {
     case 'new_top':
       subject = `🎯 New top backhaul for ${requestName}`;
-      smsBody = `New #1 backhaul for ${requestName}: ${fmt(newNet)} net (${newRoute}). Check Haul Monitor.`;
-      emailBody = `A new #1 backhaul opportunity is available for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nLog in to Haul Monitor to view details.`;
+      smsBody = `New #1 backhaul for ${requestName}: ${fmt(newNet)} net (${newRoute}).${smsLink}`;
+      emailBody = `A new #1 backhaul opportunity is available for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
         { label: 'Fleet', value: fleetName },
         { label: 'Route', value: newRoute },
         { label: 'Net Revenue', value: fmt(newNet), highlight: true }
-      ]);
+      ], link);
       break;
 
     case 'top_net_up':
       subject = `📈 Top backhaul improved for ${requestName}`;
-      smsBody = `Top backhaul net revenue improved for ${requestName}: now ${fmt(newNet)} (${newRoute}). Check Haul Monitor.`;
-      emailBody = `Your top backhaul's net revenue improved for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nLog in to Haul Monitor to view details.`;
+      smsBody = `Top backhaul net revenue improved for ${requestName}: now ${fmt(newNet)} (${newRoute}).${smsLink}`;
+      emailBody = `Your top backhaul's net revenue improved for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
         { label: 'Route', value: newRoute },
         { label: 'Net Revenue', value: fmt(newNet), highlight: true }
-      ]);
+      ], link);
       break;
 
     case 'lane_softening':
       subject = `📉 Lane softening for ${requestName}`;
-      smsBody = `Heads up: average net revenue across your top loads for ${requestName} is softening. Review in Haul Monitor.`;
-      emailBody = `Average net revenue across your top loads for "${requestName}" is softening — you may want to act soon.\n\nLog in to Haul Monitor to review.`;
+      smsBody = `Heads up: average net revenue across your top loads for ${requestName} is softening.${smsLink}`;
+      emailBody = `Average net revenue across your top loads for "${requestName}" is softening — you may want to act soon.\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
         { label: 'Signal', value: 'Top-loads net revenue softening', highlight: true }
-      ]);
+      ], link);
       break;
 
     default:
       subject = `Backhaul Update for ${requestName}`;
-      smsBody = `Backhaul update for ${requestName}. Check Haul Monitor for details.`;
-      emailBody = `There's an update for your backhaul request "${requestName}". Log in to Haul Monitor to view details.`;
+      smsBody = `Backhaul update for ${requestName}.${smsLink}`;
+      emailBody = `There's an update for your backhaul request "${requestName}".\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName }
-      ]);
+      ], link);
   }
 
   return { subject, emailBody, emailHtml, smsBody };
@@ -244,7 +251,7 @@ const convertPhoneToEmailGateway = (phone) => {
 /**
  * Build HTML email template
  */
-const buildEmailHtml = (title, fields) => {
+const buildEmailHtml = (title, fields, link = 'https://www.haulmonitor.cloud/app') => {
   return `
     <!DOCTYPE html>
     <html>
@@ -290,8 +297,8 @@ const buildEmailHtml = (title, fields) => {
                   </table>
                   
                   <div style="margin-top: 32px; text-align: center;">
-                    <a href="https://haulmonitor.cloud" style="display: inline-block; padding: 14px 32px; background-color: #008b00; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
-                      View in Haul Monitor
+                    <a href="${link}" style="display: inline-block; padding: 14px 32px; background-color: #008b00; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
+                      View this request
                     </a>
                   </div>
                 </td>

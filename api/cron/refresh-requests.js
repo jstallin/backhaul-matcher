@@ -234,33 +234,38 @@ const convertPhoneToEmailGateway = (phone, carrier = 'verizon') => {
   return null;
 };
 
-// Net-based notification copy (item #48). Deep-link + content polish is Part 2.
-const buildNotificationMessage = (requestName, change) => {
+// Net-based notification copy (item #48) with a deep-link to the request results (#51).
+const buildNotificationMessage = (requestName, change, link) => {
   const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const routeOf = (m) => m ? `${m.origin?.city}, ${m.origin?.state} → ${m.destination?.city}, ${m.destination?.state}` : '';
 
-  let subject, text;
+  let subject, body, sms;
   switch (change.type) {
     case 'new_top':
       subject = `🎯 New top backhaul for ${requestName}`;
-      text = `New #1 backhaul for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}\n\nLog in to Haul Monitor to view details.`;
+      body = `New #1 backhaul for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
+      sms = `New #1 backhaul for "${requestName}": ${fmt(change.newNet)} net. View: ${link}`;
       break;
     case 'top_net_up':
       subject = `📈 Top backhaul improved for ${requestName}`;
-      text = `Your top backhaul's net revenue rose ${Math.round(change.pct)}% for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}\n\nLog in to Haul Monitor to view details.`;
+      body = `Your top backhaul's net revenue rose ${Math.round(change.pct)}% for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
+      sms = `Top backhaul up ${Math.round(change.pct)}% for "${requestName}": ${fmt(change.newNet)} net. View: ${link}`;
       break;
     case 'lane_softening':
       subject = `📉 Lane softening for ${requestName}`;
-      text = `Average net revenue across your top loads for "${requestName}" is down ${Math.abs(Math.round(change.pct))}% (avg ${fmt(change.avgNet)}). You may want to act soon.`;
+      body = `Average net revenue across your top loads for "${requestName}" is down ${Math.abs(Math.round(change.pct))}% (avg ${fmt(change.avgNet)}). You may want to act soon.`;
+      sms = `Heads up: top loads for "${requestName}" softening (avg ${fmt(change.avgNet)} net). View: ${link}`;
       break;
     default:
       subject = `Backhaul update for ${requestName}`;
-      text = `There's an update for your backhaul request "${requestName}". Log in to Haul Monitor to view details.`;
+      body = `There's an update for your backhaul request "${requestName}".`;
+      sms = `Backhaul update for "${requestName}". View: ${link}`;
   }
-  return { subject, text };
+  const text = `${body}\n\nView this request: ${link}`;
+  return { subject, text, sms };
 };
 
-const sendNotification = async (method, email, phone, subject, text) => {
+const sendNotification = async (method, email, phone, subject, text, sms) => {
   const results = { email: null, sms: null };
 
   // Debug logging
@@ -321,7 +326,7 @@ const sendNotification = async (method, email, phone, subject, text) => {
           from: 'Haul Monitor <notifications@haulmonitor.cloud>',
           to: [smsEmail],
           subject: 'Haul Monitor Alert',
-          text: text.substring(0, 160) // SMS-friendly length
+          text: (sms || text).slice(0, 300) // concise SMS body preserves the deep-link
         });
         if (error) {
           results.sms = { success: false, error: error.message, gateway: smsEmail };
@@ -622,14 +627,16 @@ export default async function handler(req, res) {
           if (change) {
             console.log(`  📬 Material change detected: ${change.type}`);
 
-            const { subject, text } = buildNotificationMessage(request.request_name, change);
+            const requestLink = `${APP_URL}/app?request=${request.id}`;
+            const { subject, text, sms } = buildNotificationMessage(request.request_name, change, requestLink);
 
             const notifResult = await sendNotification(
               request.notification_method || 'both',
               fleet.email,
               fleet.phone_number,
               subject,
-              text
+              text,
+              sms
             );
 
             notificationSent = notifResult.email?.success || notifResult.sms?.success;

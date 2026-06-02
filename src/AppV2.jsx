@@ -668,10 +668,13 @@ function AppV2Inner() {
   const { user } = useAuth();
 
   // Deep-link from extension: ?view=imported-loads
+  // Notification deep-link (#51): ?request=<id> opens that request in the search view
+  // (SearchView reads the param, selects it, and cleans the URL).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get('view');
     if (view) setCurrentView(view);
+    else if (params.get('request')) setCurrentView('search');
   }, []);
 
   // Buy intent: handles both direct authenticated links (?buy=pro) and
