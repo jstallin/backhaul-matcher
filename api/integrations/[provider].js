@@ -389,6 +389,14 @@ async function handleTruckstop(req, res, supabase, user) {
     if (onboarding_action === 'save_id') {
       if (!isOrgAdmin) return res.status(403).json({ error: 'Only org admins can save the integration ID' });
       if (!integration_id?.trim()) return res.status(400).json({ error: 'integration_id is required' });
+      // #66: verify with Truckstop before storing / completing onboarding.
+      const validity = await validateTruckstopIntegrationId(integration_id.trim());
+      if (validity === 'invalid') {
+        return res.status(400).json({ error: "That integration ID isn't valid for Truckstop. Please contact Truckstop to confirm your API integration ID.", code: 'INVALID_INTEGRATION_ID' });
+      }
+      if (validity === 'unverified') {
+        return res.status(503).json({ error: "Couldn't verify the integration ID with Truckstop right now. Please try again in a moment.", code: 'VERIFY_FAILED' });
+      }
       const { error: rpcError } = await supabase.rpc('store_ts_integration_id', {
         p_org_id: orgId, p_integration_id: integration_id.trim(),
       });
@@ -463,6 +471,15 @@ async function handleTruckstop(req, res, supabase, user) {
     if (!isOrgAdmin) return res.status(403).json({ error: 'Only org admins can save the integration ID' });
 
     try {
+      // #66: verify with Truckstop before storing / claiming connected.
+      const validity = await validateTruckstopIntegrationId(integration_id.trim());
+      if (validity === 'invalid') {
+        return res.status(400).json({ error: "That integration ID isn't valid for Truckstop. Please contact Truckstop to confirm your API integration ID.", code: 'INVALID_INTEGRATION_ID' });
+      }
+      if (validity === 'unverified') {
+        return res.status(503).json({ error: "Couldn't verify the integration ID with Truckstop right now. Please try again in a moment.", code: 'VERIFY_FAILED' });
+      }
+
       const { error: rpcError } = await supabase.rpc('store_ts_integration_id', {
         p_org_id: orgId,
         p_integration_id: integration_id.trim(),
@@ -473,7 +490,7 @@ async function handleTruckstop(req, res, supabase, user) {
         return res.status(500).json({ error: 'Failed to save integration ID', code: 'DB_ERROR' });
       }
 
-      console.log(`✅ Truckstop integration ID saved for org: ${orgId}`);
+      console.log(`✅ Truckstop integration ID validated + saved for org: ${orgId}`);
       return res.status(200).json({ success: true, message: 'Truckstop connected for your organization', is_org_token: true });
     } catch (err) {
       console.error('Truckstop POST error:', err);
@@ -710,6 +727,52 @@ function escapeXml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+// #66: verify an integration ID actually authenticates with Truckstop (not just that
+// it was typed in). Runs a minimal LoadSearch and reuses the same auth-error detection
+// as the live path. Returns 'valid' | 'invalid' | 'unverified' (transient/can't-check —
+// never tell a user their ID is invalid on a Truckstop outage).
+async function validateTruckstopIntegrationId(integrationId) {
+  const username = process.env.TRUCKSTOP_WS_USERNAME;
+  const password = process.env.TRUCKSTOP_WS_PASSWORD;
+  if (!username || !password) return 'unverified';
+
+  try {
+    const envelope = buildSoapEnvelope({
+      integrationId, username, password,
+      originCity: 'Atlanta', originState: 'GA',
+      equipmentType: null, modes: [], radiusMiles: 25, pickupDate: '',
+    });
+    const tsRes = await fetch(TS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/xml', 'Accept': 'text/xml', 'SOAPAction': TS_SOAP_ACTION },
+      body: envelope,
+    });
+    const responseText = await tsRes.text();
+
+    if (!tsRes.ok) {
+      if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) return 'invalid';
+      return 'unverified'; // 5xx / other transient — don't claim invalid
+    }
+
+    const parser = new XMLParser({ ignoreAttributes: false, removeNSPrefix: true });
+    const parsed = parser.parse(responseText);
+    const result = parsed?.Envelope?.Body?.GetMultipleLoadDetailResultsResponse?.GetMultipleLoadDetailResultsResult;
+    const errors = result?.Errors;
+    if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
+      const errMsg = JSON.stringify(errors).toLowerCase();
+      if (errMsg.includes('unauthorized') || errMsg.includes('invalid integration') || errMsg.includes('authentication')) {
+        return 'invalid';
+      }
+      // Non-auth errors (e.g. search warnings) mean the ID authenticated fine.
+      return 'valid';
+    }
+    return 'valid';
+  } catch (err) {
+    console.error('[Truckstop] integration ID validation error:', err.message);
+    return 'unverified';
+  }
 }
 
 async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate }) {
