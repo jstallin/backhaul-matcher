@@ -3,8 +3,18 @@
  * Handles sending email and SMS notifications for backhaul changes
  */
 import { detectNotifiableChange, snapshotFromMatches, netOf } from './notificationChangeDetection';
+import { supabase } from '../lib/supabase';
 
 const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || '/api/notifications';
+
+// #57: the notifications endpoint now requires a valid session — attach the user's token.
+const authHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return {
+    'Content-Type': 'application/json',
+    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+  };
+};
 
 /**
  * Send a notification about backhaul changes
@@ -139,12 +149,9 @@ const sendEmail = async ({ to, subject, body, html }) => {
   
   console.log('📧 Sending email:', { to, subject });
   
-  // Example with fetch to your backend API endpoint
   const response = await fetch(`${NOTIFICATION_API_URL}?type=email`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: await authHeaders(),
     body: JSON.stringify({
       to,
       subject,
@@ -170,7 +177,7 @@ const sendSMS = async ({ to, message }) => {
   // (item #52). The endpoint (api/notifications?type=sms) does the real Twilio send.
   const response = await fetch(`${NOTIFICATION_API_URL}?type=sms`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeaders(),
     body: JSON.stringify({ to, message }),
   });
 
