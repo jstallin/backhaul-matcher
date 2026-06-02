@@ -343,7 +343,11 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
     <div
       style={{
         display: 'flex',
-        height: '100vh',
+        // iOS Safari: 100vh is taller than the visible viewport (ignores browser chrome),
+        // which pushed the scroll area's bottom — and the Save button — below the fold,
+        // behind the fixed BottomNav (#62). dvh sizes to the *visible* viewport. Desktop
+        // keeps vh (dvh==vh there anyway).
+        height: isMobile ? '100dvh' : '100vh',
         overflow: 'hidden',
         background: t.colors.page.bg,
         fontFamily: t.font.family,
