@@ -25,6 +25,7 @@ export const AcceptInvite = () => {
   const [sendingOtp, setSendingOtp] = useState(false);
 
   // Password-setting state (shown for authenticated new users before accepting)
+  const [displayName, setDisplayName] = useState(''); // #46: required for invited users
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -127,6 +128,10 @@ export const AcceptInvite = () => {
   const handleSetPassword = async (e) => {
     e.preventDefault();
     setPasswordError('');
+    if (!displayName.trim()) {
+      setPasswordError('Please enter your display name.');
+      return;
+    }
     if (newPassword.length < 8) {
       setPasswordError('Password must be at least 8 characters.');
       return;
@@ -137,7 +142,11 @@ export const AcceptInvite = () => {
     }
     setSettingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      // #46: invited users had no display name — capture it here and store as full_name.
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        data: { full_name: displayName.trim() },
+      });
       if (error) throw error;
       setPasswordSet(true);
     } catch (err) {
@@ -285,6 +294,15 @@ export const AcceptInvite = () => {
             Set a password for <strong style={{ color: colors.text.primary }}>{user.email}</strong> to finish joining {invite?.org_name}.
           </p>
           <form onSubmit={handleSetPassword}>
+            <input
+              type="text"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder="Display name (e.g., Jenny James)"
+              required
+              autoComplete="name"
+              style={{ width: '100%', padding: '12px', marginBottom: '12px', background: colors.background.primary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+            />
             <input
               type="password"
               value={newPassword}
