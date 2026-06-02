@@ -350,7 +350,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               fleetName: fleet.name,
               oldTopMatch: change.oldMatch,
               newTopMatch: change.newMatch,
-              changeType: change.type
+              changeType: change.type,
+              requestId: request.id
             }).then(result => {
               if (result.success) {
                 console.log('✅ Notification sent successfully');

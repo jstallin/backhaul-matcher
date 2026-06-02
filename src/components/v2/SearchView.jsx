@@ -1769,7 +1769,21 @@ export function SearchView() {
   const previousMatchesRef = useRef([]);
 
   useEffect(() => {
-    if (user) loadData();
+    if (!user) return;
+    (async () => {
+      const reqs = await loadData();
+      // Notification deep-link (#51): ?request=<id> opens that request's results.
+      // We don't auto-run a search (costs a credit; zero-copy = no stored loads) —
+      // selecting shows the request with a Run button.
+      const reqId = new URLSearchParams(window.location.search).get('request');
+      if (reqId && Array.isArray(reqs)) {
+        const match = reqs.find(r => r.id === reqId);
+        if (match) handleSelectRequest(match);
+        const url = new URL(window.location.href);
+        url.searchParams.delete('request');
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      }
+    })();
   }, [user]);
 
   useEffect(() => {
@@ -1921,6 +1935,7 @@ export function SearchView() {
             oldTopMatch: change.oldMatch,
             newTopMatch: change.newMatch,
             changeType: change.type,
+            requestId: request.id,
           }).catch(err => console.error('Notification error:', err));
         }
       }
