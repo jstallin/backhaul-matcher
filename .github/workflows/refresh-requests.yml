@@ -1,11 +1,11 @@
 name: Refresh Backhaul Requests
 
 on:
-  schedule:
-    # Run every 15 minutes
-    - cron: '*/15 * * * *'
+  # Scheduled trigger retired (#54): the every-15-min refresh is now driven by an
+  # external scheduler (cron-job.org) hitting /api/cron/refresh-requests reliably.
+  # GitHub Actions throttled the */15 schedule to ~hourly, so it's no longer the
+  # source of truth. Manual trigger kept for ad-hoc runs / debugging.
   workflow_dispatch:
-    # Allow manual trigger from GitHub Actions UI
 
 jobs:
   refresh:
