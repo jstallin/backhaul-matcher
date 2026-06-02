@@ -99,6 +99,8 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [requestStats, setRequestStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
+  const [users, setUsers] = useState([]);               // #49/#50: all users incl. org-less
+  const [userActionPending, setUserActionPending] = useState(null);
   const [roleChanging, setRoleChanging] = useState(null);
   const [pilotToggling, setPilotToggling] = useState(null);
   const [pilotDates, setPilotDates] = useState({}); // { [orgId]: { start, end } }
@@ -111,7 +113,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [trimbleBillingStartSaving, setTrimbleBillingStartSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
+    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchUsers(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
   }, []);
 
   const fetchMetas = async () => {
@@ -149,6 +151,42 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       setPilotDates(dates);
     } catch {
       // Non-critical
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/orgs/users', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  // #49: ban / unban / delete a user.
+  const handleUserAction = async (u, op) => {
+    if (!session?.access_token) return;
+    const verb = op === 'delete' ? 'delete' : op;
+    if (!window.confirm(`${verb.charAt(0).toUpperCase() + verb.slice(1)} ${u.email}?${op === 'delete' ? ' This permanently removes the account.' : ''}`)) return;
+    setUserActionPending(u.id);
+    try {
+      const res = await fetch('/api/orgs/user-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId: u.id, op }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || 'Action failed'); return; }
+      await fetchUsers();
+    } catch (e) {
+      alert('Action failed');
+    } finally {
+      setUserActionPending(null);
     }
   };
 
@@ -507,6 +545,50 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         )}
 
         {/* ── ORGANIZATIONS ── */}
+        {users.length > 0 && (
+          <>
+            <SectionHeader title={`Users (${users.length})`} />
+            <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, overflow: 'hidden', boxShadow: t.shadow.card, marginBottom: '24px' }}>
+              {users.map(u => {
+                const Badge = ({ children, tone }) => (
+                  <span style={{ fontSize: '10px', fontWeight: t.font.weight.bold, textTransform: 'uppercase', letterSpacing: '0.03em', padding: '2px 7px', borderRadius: t.radius.full,
+                    color: tone === 'red' ? '#dc2626' : tone === 'amber' ? '#b45309' : t.colors.text.muted,
+                    background: tone === 'red' ? '#fee2e2' : tone === 'amber' ? '#fef3c7' : t.colors.page.bg,
+                    border: `1px solid ${tone === 'red' ? '#fecaca' : tone === 'amber' ? '#fcd34d' : t.colors.page.cardBorder}` }}>{children}</span>
+                );
+                const pending = userActionPending === u.id;
+                return (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.colors.page.cardBorder}`, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                      <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{u.full_name || '—'}</div>
+                      <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{u.email}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {u.banned && <Badge tone="red">Banned</Badge>}
+                      {u.is_app_admin && <Badge>Admin</Badge>}
+                      {u.org ? <Badge>{u.org}</Badge> : <Badge tone="amber">No org</Badge>}
+                      {u.personal_domain && <Badge tone="amber">Personal email</Badge>}
+                    </div>
+                    <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, width: '88px', textAlign: 'right' }}>
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                    </div>
+                    {!u.is_app_admin && (
+                      <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                        {u.banned ? (
+                          <button onClick={() => handleUserAction(u, 'unban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid ${t.colors.accent.green}`, background: 'transparent', color: t.colors.accent.green, cursor: pending ? 'not-allowed' : 'pointer' }}>Unban</button>
+                        ) : (
+                          <button onClick={() => handleUserAction(u, 'ban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fcd34d`, background: 'transparent', color: '#b45309', cursor: pending ? 'not-allowed' : 'pointer' }}>Ban</button>
+                        )}
+                        <button onClick={() => handleUserAction(u, 'delete')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fecaca`, background: 'transparent', color: '#dc2626', cursor: pending ? 'not-allowed' : 'pointer' }}>Delete</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {orgs.length > 0 && (
           <>
             <SectionHeader title="Organizations" />
