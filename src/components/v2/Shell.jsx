@@ -343,7 +343,11 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
     <div
       style={{
         display: 'flex',
-        height: '100vh',
+        // iOS Safari: 100vh is taller than the visible viewport (ignores browser chrome),
+        // which pushed the scroll area's bottom — and the Save button — below the fold,
+        // behind the fixed BottomNav (#62). dvh sizes to the *visible* viewport. Desktop
+        // keeps vh (dvh==vh there anyway).
+        height: isMobile ? '100dvh' : '100vh',
         overflow: 'hidden',
         background: t.colors.page.bg,
         fontFamily: t.font.family,
@@ -378,7 +382,10 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: isMobile ? '16px 16px 76px' : '28px 32px 40px',
+            // Bottom padding must clear the fixed BottomNav (60px) PLUS the device
+            // safe-area inset (home indicator) so the last element (e.g. Save Profile,
+            // issue #62) isn't hidden under the nav on iPhones.
+            padding: isMobile ? '16px 16px calc(72px + env(safe-area-inset-bottom))' : '28px 32px 40px',
             background: t.colors.page.bg,
           }}
         >

@@ -917,7 +917,7 @@ export function FleetsView() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: isMobile ? '0' : '24px', alignItems: 'flex-start', height: isMobile ? '100%' : 'auto' }}>
+    <div style={{ display: 'flex', gap: isMobile ? '0' : '24px', alignItems: 'flex-start', minHeight: isMobile ? '100%' : 'auto' }}>
       {/* Fleet list — hidden on mobile when detail is open */}
       {(!isMobile || !showingDetail) && (
         <div style={isMobile ? { width: '100%' } : {}}>
