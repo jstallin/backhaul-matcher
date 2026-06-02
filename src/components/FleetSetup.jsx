@@ -4,6 +4,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { geocodeAddress } from '../utils/pcMilerClient';
+import { FLEET_MODES } from '../utils/fleetModes';
 import { parseFleetHome } from '../utils/parseFleetHome';
 
 const US_STATES = [
@@ -591,7 +592,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 Transport modes this fleet will take (e.g. Partial). Leave empty for no preference.
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'].map((m) => {
+                {FLEET_MODES.map((m) => {
                   const checked = (rateData.modes || []).includes(m);
                   return (
                     <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: `1px solid ${checked ? colors.accent.primary : colors.border.accent}`, borderRadius: '8px', background: checked ? `${colors.accent.primary}15` : colors.background.secondary, cursor: saving ? 'not-allowed' : 'pointer', fontSize: '14px', color: colors.text.primary, userSelect: 'none' }}>

@@ -5,6 +5,7 @@ import { tokens } from '../../styles/tokens.v2';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
+import { FLEET_MODES } from '../../utils/fleetModes';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle } from '../../icons';
 
 const t = tokens;
@@ -77,6 +78,19 @@ function SectionLabel({ children }) {
   return (
     <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.07em', margin: '20px 0 12px' }}>
       {children}
+    </div>
+  );
+}
+
+// #39: Trucks/Drivers aren't in use yet — show a banner instead of the entry UI.
+function FutureDevBanner({ feature }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px', minHeight: '320px', padding: '40px 24px', border: `1px dashed ${t.colors.border.default}`, borderRadius: t.radius.xl, background: t.colors.page.bg }}>
+      <div style={{ fontSize: '28px' }}>🚧</div>
+      <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{feature} — coming soon</div>
+      <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, maxWidth: '420px' }}>
+        This area is reserved for future development and isn't active yet. Your fleet profile and rate configuration are fully available on the Profile tab.
+      </div>
     </div>
   );
 }
@@ -155,7 +169,6 @@ const US_STATES = [
 
 const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
 const EQUIPMENT_VARIATIONS = ['Conestoga', 'Tanker', 'Curtain Side', 'Extendable', 'Lowboy'];
-const FLEET_MODES = ['Truck Load', 'LTL', 'Intermodal', 'Partial', 'Drayage', 'Parcel', 'Air', 'Water', 'Ocean'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
 const DRIVER_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }, { value: 'on_leave', label: 'On Leave' }];
@@ -772,13 +785,17 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
       <div style={{ display: 'flex', gap: '0', borderBottom: `2px solid ${t.colors.border.default}`, marginBottom: '24px' }}>
         {(isNew ? TABS.slice(0, 1) : TABS).map((tab) => {
           const active = activeTab === tab.id;
+          const comingSoon = tab.id === 'trucks' || tab.id === 'drivers'; // #39: not active yet
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: active ? `2px solid ${t.colors.accent.blue}` : '2px solid transparent', marginBottom: '-2px', color: active ? t.colors.accent.blue : t.colors.text.muted, fontSize: t.font.size.base, fontWeight: active ? t.font.weight.semibold : t.font.weight.medium, cursor: 'pointer', fontFamily: t.font.family, transition: 'color 0.15s' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: 'none', border: 'none', borderBottom: active ? `2px solid ${t.colors.accent.blue}` : '2px solid transparent', marginBottom: '-2px', color: comingSoon ? t.colors.text.muted : (active ? t.colors.accent.blue : t.colors.text.muted), opacity: comingSoon ? 0.55 : 1, fontSize: t.font.size.base, fontWeight: active && !comingSoon ? t.font.weight.semibold : t.font.weight.medium, cursor: 'pointer', fontFamily: t.font.family, transition: 'color 0.15s' }}
             >
               {tab.label}
+              {comingSoon && (
+                <span style={{ fontSize: '9px', fontWeight: t.font.weight.bold, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.colors.text.muted, background: t.colors.page.bg, border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.full, padding: '1px 6px' }}>Soon</span>
+              )}
             </button>
           );
         })}
@@ -786,8 +803,8 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
 
       {/* Tab content */}
       {activeTab === 'profile' && <ProfileTab fleet={fleet} onSaved={onSaved} onDeleted={onDeleted} />}
-      {activeTab === 'trucks'  && !isNew && <TrucksTab fleet={fleet} onChanged={onChanged} />}
-      {activeTab === 'drivers' && !isNew && <DriversTab fleet={fleet} onChanged={onChanged} />}
+      {activeTab === 'trucks'  && !isNew && <FutureDevBanner feature="Truck management" />}
+      {activeTab === 'drivers' && !isNew && <FutureDevBanner feature="Driver management" />}
     </div>
   );
 }

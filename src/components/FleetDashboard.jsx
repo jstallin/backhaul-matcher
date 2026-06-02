@@ -163,7 +163,8 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
                 background: activeTab === 'trucks' ? `${colors.accent.primary}20` : 'transparent',
                 border: 'none',
                 borderBottom: activeTab === 'trucks' ? `2px solid ${colors.accent.primary}` : '2px solid transparent',
-                color: activeTab === 'trucks' ? colors.accent.primary : colors.text.secondary,
+                color: colors.text.tertiary,
+                opacity: 0.6,
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -174,7 +175,8 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
               }}
             >
               <Truck size={16} />
-              Trucks {fleet && fleet.trucks && `(${fleet.trucks.length})`}
+              Trucks
+              <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.text.tertiary, border: `1px solid ${colors.border.accent}`, borderRadius: '10px', padding: '1px 6px' }}>Soon</span>
             </button>
             <button
               onClick={() => setActiveTab('drivers')}
@@ -183,7 +185,8 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
                 background: activeTab === 'drivers' ? `${colors.accent.primary}20` : 'transparent',
                 border: 'none',
                 borderBottom: activeTab === 'drivers' ? `2px solid ${colors.accent.primary}` : '2px solid transparent',
-                color: activeTab === 'drivers' ? colors.accent.primary : colors.text.secondary,
+                color: colors.text.tertiary,
+                opacity: 0.6,
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -195,6 +198,7 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
             >
               <User size={16} />
               Drivers
+              <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: colors.text.tertiary, border: `1px solid ${colors.border.accent}`, borderRadius: '10px', padding: '1px 6px' }}>Soon</span>
             </button>
           </div>
         </div>
@@ -209,11 +213,16 @@ export const FleetDashboard = ({ fleetId, onBackToSearch }) => {
           {activeTab === 'profile' && (
             <FleetSetup fleet={fleet} onComplete={handleFleetComplete} />
           )}
-          {activeTab === 'trucks' && fleet && (
-            <TruckManagement fleetId={fleet.id} />
-          )}
-          {activeTab === 'drivers' && fleet && (
-            <DriverManagement fleetId={fleet.id} />
+          {(activeTab === 'trucks' || activeTab === 'drivers') && fleet && (
+            <div style={{ textAlign: 'center', padding: '48px 24px', border: `1px dashed ${colors.border.accent}`, borderRadius: '12px', color: colors.text.secondary }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>🚧</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: colors.text.primary, marginBottom: '6px' }}>
+                {activeTab === 'trucks' ? 'Truck management' : 'Driver management'} — coming soon
+              </div>
+              <div style={{ fontSize: '14px', color: colors.text.secondary, maxWidth: '420px', margin: '0 auto' }}>
+                This area is reserved for future development and isn't active yet. Your fleet profile and rate configuration are on the Fleet Profile tab.
+              </div>
+            </div>
           )}
           {(activeTab === 'trucks' || activeTab === 'drivers') && !fleet && (
             <div style={{
