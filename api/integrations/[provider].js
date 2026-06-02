@@ -512,14 +512,13 @@ async function handleTruckstop(req, res, supabase, user) {
       return res.status(500).json({ error: 'Truckstop WS credentials not configured' });
     }
 
-    // Integration ID is per-org (encrypted in vault), falls back to env for dev/testing
+    // Integration ID is strictly per-org (encrypted in vault). No env fallback (#64):
+    // an org without its own valid integration ID must NOT use Haul Monitor's connection
+    // — it should fall through to NOT_CONNECTED (and the client's DirectFreight/demo path).
     let integrationId = null;
     if (orgId) {
       const { data: rpcResult } = await supabase.rpc('get_ts_integration_id', { p_org_id: orgId });
       integrationId = rpcResult || null;
-    }
-    if (!integrationId) {
-      integrationId = process.env.TRUCKSTOP_INTEGRATION_ID;
     }
 
     if (!integrationId) {
