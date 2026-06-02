@@ -739,6 +739,7 @@ async function validateTruckstopIntegrationId(integrationId) {
   if (!username || !password) return 'unverified';
 
   try {
+    console.log(`[TS validate] endpoint=${TS_ENDPOINT}`);
     const envelope = buildSoapEnvelope({
       integrationId, username, password,
       originCity: 'Atlanta', originState: 'GA',
@@ -750,9 +751,14 @@ async function validateTruckstopIntegrationId(integrationId) {
       body: envelope,
     });
     const responseText = await tsRes.text();
+    console.log(`[TS validate] HTTP ${tsRes.status}; body snippet: ${responseText.slice(0, 400)}`);
 
     if (!tsRes.ok) {
-      if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) return 'invalid';
+      if (tsRes.status === 401 || tsRes.status === 403 || responseText.includes('Unauthorized')) {
+        console.log('[TS validate] → invalid (http auth)');
+        return 'invalid';
+      }
+      console.log('[TS validate] → unverified (non-auth http error)');
       return 'unverified'; // 5xx / other transient — don't claim invalid
     }
 
@@ -762,12 +768,15 @@ async function validateTruckstopIntegrationId(integrationId) {
     const errors = result?.Errors;
     if (errors && typeof errors === 'object' && Object.keys(errors).length > 0) {
       const errMsg = JSON.stringify(errors).toLowerCase();
+      console.log(`[TS validate] errors present: ${errMsg.slice(0, 300)}`);
       if (errMsg.includes('unauthorized') || errMsg.includes('invalid integration') || errMsg.includes('authentication')) {
+        console.log('[TS validate] → invalid (soap auth error)');
         return 'invalid';
       }
-      // Non-auth errors (e.g. search warnings) mean the ID authenticated fine.
+      console.log('[TS validate] → valid (non-auth errors)');
       return 'valid';
     }
+    console.log('[TS validate] → valid (clean response)');
     return 'valid';
   } catch (err) {
     console.error('[Truckstop] integration ID validation error:', err.message);
