@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/notificationChangeDetection.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -206,31 +207,8 @@ const geocodeDatumPoint = async (datumPoint) => {
 // NOTIFICATION LOGIC
 // ============================================
 
-const detectMaterialChange = (lastMatchId, lastMatchRevenue, newTopMatch) => {
-  if (!newTopMatch) return null;
-
-  // First time - no previous match to compare
-  if (!lastMatchId) return null;
-
-  // Check if top match changed
-  if (lastMatchId !== newTopMatch.load_id) {
-    return { type: 'new_top', newMatch: newTopMatch };
-  }
-
-  // Check if price changed significantly (>= $10)
-  if (lastMatchRevenue) {
-    const priceDiff = newTopMatch.totalRevenue - lastMatchRevenue;
-    if (Math.abs(priceDiff) >= 10) {
-      return {
-        type: priceDiff > 0 ? 'price_increase' : 'price_decrease',
-        newMatch: newTopMatch,
-        priceDiff
-      };
-    }
-  }
-
-  return null;
-};
+// Change detection now lives in the shared, unit-tested detector
+// (src/utils/notificationChangeDetection.js) so the cron and client agree.
 
 // Convert phone number to email-to-SMS gateway address
 const convertPhoneToEmailGateway = (phone, carrier = 'verizon') => {
@@ -256,30 +234,29 @@ const convertPhoneToEmailGateway = (phone, carrier = 'verizon') => {
   return null;
 };
 
-const buildNotificationMessage = (requestName, _fleetName, changeType, newTopMatch, priceDiff) => {
-  const route = `${newTopMatch.origin.city}, ${newTopMatch.origin.state} → ${newTopMatch.destination.city}, ${newTopMatch.destination.state}`;
-  const revenue = newTopMatch.totalRevenue;
+// Net-based notification copy (item #48). Deep-link + content polish is Part 2.
+const buildNotificationMessage = (requestName, change) => {
+  const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  const routeOf = (m) => m ? `${m.origin?.city}, ${m.origin?.state} → ${m.destination?.city}, ${m.destination?.state}` : '';
 
   let subject, text;
-
-  switch (changeType) {
+  switch (change.type) {
     case 'new_top':
-      subject = `🎯 New Top Backhaul for ${requestName}`;
-      text = `New top backhaul opportunity for "${requestName}"!\n\nRoute: ${route}\nRevenue: $${revenue.toFixed(2)}\n\nLog in to Haul Monitor to view details.`;
+      subject = `🎯 New top backhaul for ${requestName}`;
+      text = `New #1 backhaul for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}\n\nLog in to Haul Monitor to view details.`;
       break;
-    case 'price_increase':
-      subject = `📈 Price Increase for ${requestName}`;
-      text = `Top backhaul price increased by $${Math.abs(priceDiff).toFixed(2)} for "${requestName}".\n\nRoute: ${route}\nNew Revenue: $${revenue.toFixed(2)}\n\nLog in to Haul Monitor to view details.`;
+    case 'top_net_up':
+      subject = `📈 Top backhaul improved for ${requestName}`;
+      text = `Your top backhaul's net revenue rose ${Math.round(change.pct)}% for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}\n\nLog in to Haul Monitor to view details.`;
       break;
-    case 'price_decrease':
-      subject = `📉 Price Change for ${requestName}`;
-      text = `Top backhaul price decreased by $${Math.abs(priceDiff).toFixed(2)} for "${requestName}".\n\nRoute: ${route}\nNew Revenue: $${revenue.toFixed(2)}`;
+    case 'lane_softening':
+      subject = `📉 Lane softening for ${requestName}`;
+      text = `Average net revenue across your top loads for "${requestName}" is down ${Math.abs(Math.round(change.pct))}% (avg ${fmt(change.avgNet)}). You may want to act soon.`;
       break;
     default:
-      subject = `Backhaul Update for ${requestName}`;
+      subject = `Backhaul update for ${requestName}`;
       text = `There's an update for your backhaul request "${requestName}". Log in to Haul Monitor to view details.`;
   }
-
   return { subject, text };
 };
 
@@ -635,24 +612,17 @@ export default async function handler(req, res) {
         const topMatch = matches[0] || null;
         let notificationSent = false;
 
-        // Check for material change
+        // Check for material change (unified net-based detector)
         if (topMatch && request.notification_enabled) {
-          const change = detectMaterialChange(
-            request.last_top_match_id,
-            request.last_top_match_revenue,
-            topMatch
+          const change = detectNotifiableChange(
+            { topId: request.last_top_match_id, topNet: request.last_top_net, top25AvgNet: request.last_top25_avg_net },
+            matches
           );
 
           if (change) {
             console.log(`  📬 Material change detected: ${change.type}`);
 
-            const { subject, text } = buildNotificationMessage(
-              request.request_name,
-              fleet.name,
-              change.type,
-              change.newMatch,
-              change.priceDiff
-            );
+            const { subject, text } = buildNotificationMessage(request.request_name, change);
 
             const notifResult = await sendNotification(
               request.notification_method || 'both',
@@ -676,12 +646,17 @@ export default async function handler(req, res) {
         const newCount = (request.auto_refresh_count || 0) + 1;
         const reachedLimit = request.max_auto_refreshes != null && newCount >= request.max_auto_refreshes;
 
+        // Snapshot the current result set for next run's comparison (item #48).
+        const snap = snapshotFromMatches(matches);
+
         // Update request with new match info and next refresh time
         const { error: updateError } = await supabase
           .from('backhaul_requests')
           .update({
-            last_top_match_id: topMatch?.load_id || null,
+            last_top_match_id: snap?.topId || null,
             last_top_match_revenue: topMatch?.totalRevenue || null,
+            last_top_net: snap?.topNet ?? null,
+            last_top25_avg_net: snap?.top25AvgNet ?? null,
             last_server_refresh_at: now,
             auto_refresh_count: newCount,
             // Stop scheduling once disabled so it drops out of the due-for-refresh query.
