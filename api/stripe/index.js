@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 export const config = { api: { bodyParser: false } };
 
 const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
+  process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
@@ -31,6 +31,16 @@ async function getUserId(req) {
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
   if (error || !user) return null;
   return user.id;
+}
+
+// True if the user is an app admin (admin_users table)
+async function isAppAdmin(userId) {
+  const { data } = await supabaseAdmin
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return !!data;
 }
 
 // Returns true if the user belongs to a pilot org whose date window is active
@@ -82,6 +92,61 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to fetch balance' });
     }
     return res.status(200).json({ balance: data?.balance ?? 0 });
+  }
+
+  // ── GET revenue (app admin only) ─────────────────────────────────────────────
+  // Trailing 6 months of net-of-fee revenue from Stripe balance transactions,
+  // grouped by calendar month. Powers the admin net-revenue / P&L trend view.
+  if (action === 'revenue') {
+    if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+    const userId = await getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    if (!(await isAppAdmin(userId))) return res.status(403).json({ error: 'App admin access required' });
+
+    const monthsBack = 6;
+    const now = new Date();
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (monthsBack - 1), 1));
+    const startUnix = Math.floor(start.getTime() / 1000);
+
+    // Sales-related balance-transaction types (exclude payouts/transfers/stripe billing fees).
+    const REVENUE_TYPES = new Set(['charge', 'payment', 'payment_refund', 'refund', 'adjustment']);
+
+    const buckets = {};
+    for (let i = 0; i < monthsBack; i++) {
+      const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+      const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+      buckets[key] = { month: key, grossCents: 0, feeCents: 0, netCents: 0, count: 0 };
+    }
+
+    try {
+      let hasMore = true;
+      let startingAfter;
+      let pages = 0;
+      while (hasMore && pages < 20) {
+        const params = { limit: 100, created: { gte: startUnix } };
+        if (startingAfter) params.starting_after = startingAfter;
+        const page = await stripe.balanceTransactions.list(params);
+        for (const tx of page.data) {
+          if (!REVENUE_TYPES.has(tx.type)) continue;
+          const d = new Date(tx.created * 1000);
+          const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+          if (!buckets[key]) continue;
+          buckets[key].grossCents += tx.amount;
+          buckets[key].feeCents += tx.fee;
+          buckets[key].netCents += tx.net;
+          buckets[key].count += 1;
+        }
+        hasMore = page.has_more;
+        startingAfter = page.data.length ? page.data[page.data.length - 1].id : undefined;
+        pages++;
+      }
+    } catch (err) {
+      console.error('[stripe revenue] balance transaction list failed:', err.message);
+      return res.status(500).json({ error: 'Failed to load Stripe revenue' });
+    }
+
+    const months = Object.values(buckets).sort((a, b) => a.month.localeCompare(b.month));
+    return res.status(200).json({ months, currency: 'usd' });
   }
 
   // ── POST checkout ────────────────────────────────────────────────────────────
