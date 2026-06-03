@@ -131,7 +131,7 @@
   <div class="section-label">Section 1</div>
   <div class="section-title">Getting Started: Registration &amp; Setup</div>
   <p class="section-intro">
-    Before using Haul Monitor, your organization needs one person to register and set up your account. This first user becomes the Organization Owner and can invite colleagues once setup is complete. You'll also connect your load board API key once as part of this process — every user in your organization will share that connection automatically.
+    Before using Haul Monitor, your organization needs one person to register and set up your account. This first user becomes the Organization Owner and can invite colleagues once setup is complete. You'll also connect your load board integration id as part of this process.
   </p>
 
   <div class="steps">
@@ -184,15 +184,14 @@
       <div class="step-num-col"><div class="step-num">5</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Connect Your Load Board</div>
-        <p class="step-desc">From the navigation menu go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to the Truckstop load board and enter your credentials in the dialog that appears.</p>
-        <img class="shot" src="/guide/s0-integrations.png" alt="Connect to Truckstop dialog showing username and password fields" />
+        <p class="step-desc">From the navigation menu go to <strong>Settings → Integrations</strong>. Click <strong>Connect</strong> next to the Truckstop load board and enter your Integration ID in the dialog that appears.</p>
+        <img class="shot" src="/guide/s0-integrations.png" alt="Connect to Truckstop dialog showing the Integration ID field" />
         <div class="fields">
-          <div class="field-row"><div class="field-name">Username</div><div class="field-desc">Your load board login username or email address.</div></div>
-          <div class="field-row"><div class="field-name">Password</div><div class="field-desc">Your load board login password.</div></div>
+          <div class="field-row"><div class="field-name">Integration ID</div><div class="field-desc">Your Truckstop API Integration ID.</div></div>
         </div>
         <div class="tip">
           <span class="tip-icon">💡</span>
-          <span><strong>Organization-wide connection.</strong> These credentials are stored at the organization level. Colleagues you invite will automatically have access to the same load data — no additional configuration needed on their end.</span>
+          <span><strong>Valid Integration ID required.</strong> Haul Monitor instantly checks for a valid integration id with Truckstop.</span>
         </div>
       </div>
     </div>
