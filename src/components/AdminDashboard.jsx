@@ -616,9 +616,9 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               {users.map(u => {
                 const Badge = ({ children, tone }) => (
                   <span style={{ fontSize: '10px', fontWeight: t.font.weight.bold, textTransform: 'uppercase', letterSpacing: '0.03em', padding: '2px 7px', borderRadius: t.radius.full,
-                    color: tone === 'red' ? '#dc2626' : tone === 'amber' ? '#b45309' : t.colors.text.muted,
-                    background: tone === 'red' ? '#fee2e2' : tone === 'amber' ? '#fef3c7' : t.colors.page.bg,
-                    border: `1px solid ${tone === 'red' ? '#fecaca' : tone === 'amber' ? '#fcd34d' : t.colors.page.cardBorder}` }}>{children}</span>
+                    color: tone === 'red' ? '#dc2626' : tone === 'amber' ? '#b45309' : tone === 'green' ? '#15803d' : t.colors.text.muted,
+                    background: tone === 'red' ? '#fee2e2' : tone === 'amber' ? '#fef3c7' : tone === 'green' ? '#dcfce7' : t.colors.page.bg,
+                    border: `1px solid ${tone === 'red' ? '#fecaca' : tone === 'amber' ? '#fcd34d' : tone === 'green' ? '#86efac' : t.colors.page.cardBorder}` }}>{children}</span>
                 );
                 const pending = userActionPending === u.id;
                 return (
@@ -628,6 +628,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                       <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{u.email}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {u.is_test_account && <Badge tone="green">E2E Test — do not delete</Badge>}
                       {u.banned && <Badge tone="red">Banned</Badge>}
                       {u.is_app_admin && <Badge>Admin</Badge>}
                       {u.org ? <Badge>{u.org}</Badge> : <Badge tone="amber">No org</Badge>}
@@ -636,7 +637,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, width: '88px', textAlign: 'right' }}>
                       {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                     </div>
-                    {!u.is_app_admin && (
+                    {!u.is_app_admin && !u.is_test_account && (
                       <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
                         {u.banned ? (
                           <button onClick={() => handleUserAction(u, 'unban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid ${t.colors.accent.green}`, background: 'transparent', color: t.colors.accent.green, cursor: pending ? 'not-allowed' : 'pointer' }}>Unban</button>

@@ -22,6 +22,14 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const APP_URL = process.env.VITE_APP_URL || 'https://haulmonitor.cloud';
 
+// Protected E2E test account(s): authenticated Playwright CI logs in as this user
+// (GitHub secrets TEST_EMAIL/TEST_PASSWORD point at it). Deleting/banning it breaks
+// the authenticated suite on every main merge — it already happened once (Jun 2026).
+// Keep this in sync with the TEST_EMAIL secret. Surfaced to the admin UI as
+// is_test_account and hard-blocked in the ban/delete handler.
+const PROTECTED_TEST_EMAILS = new Set(['lajopo4996@mugstock.com']);
+const isProtectedTestEmail = (email) => PROTECTED_TEST_EMAILS.has((email || '').toLowerCase());
+
 const FREE_EMAIL_DOMAINS = new Set([
   'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com',
   'icloud.com', 'me.com', 'aol.com', 'protonmail.com', 'pm.me',
@@ -855,6 +863,7 @@ async function handleUsers(req, res, supabase, user) {
         org: mem?.org || null,
         org_role: mem?.role || null,
         is_app_admin: adminIds.has(u.id),
+        is_test_account: isProtectedTestEmail(u.email),
       };
     }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -886,6 +895,14 @@ async function handleUserAction(req, res, supabase, user) {
   const { data: targetAdmin } = await supabase
     .from('admin_users').select('user_id').eq('user_id', userId).maybeSingle();
   if (targetAdmin) return res.status(400).json({ error: 'Cannot modify another app admin' });
+
+  // Safety: never ban/delete the protected E2E test account — CI auth depends on it.
+  if (op === 'ban' || op === 'delete') {
+    const { data: target } = await supabase.auth.admin.getUserById(userId);
+    if (isProtectedTestEmail(target?.user?.email)) {
+      return res.status(400).json({ error: 'This is the protected E2E test account used by CI auth. Remove it from PROTECTED_TEST_EMAILS first if you really mean to.' });
+    }
+  }
 
   try {
     if (op === 'delete') {
