@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# Authenticated app + auth flows — no public content to index
+Disallow: /app
+Disallow: /reset-password
+Disallow: /accept-invite
+
+Sitemap: https://www.haulmonitor.cloud/sitemap.xml
