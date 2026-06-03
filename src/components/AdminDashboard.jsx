@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Shield, AlertCircle, Calendar, BarChart2, FileText, Download } from '../icons';
+import { useState, useEffect, useMemo } from 'react';
+import { Shield, BarChart2, FileText, DollarSign, TrendingUp } from '../icons';
 import { useAuth } from '../contexts/AuthContext';
 import { tokens } from '../styles/tokens.v2';
-import { db } from '../lib/supabase';
 
 const t = tokens;
 
@@ -90,13 +89,54 @@ function getBillingTier(billingStartDate) {
   return { perLoad: 0.10, minimum: 500, tier: '7+' };
 }
 
-export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
-  const { user, session } = useAuth();
+// Default fixed monthly infra costs (USD) — editable in the admin dash, stored under
+// admin_settings key `infra_costs`. PC*MILER/Trimble is variable and computed separately.
+const DEFAULT_INFRA_COSTS = { vercel: 20, supabase: 25, twilio: 0, resend: 0, address: 0, llc: 0, other: 0 };
+const INFRA_LINE_ITEMS = [
+  { key: 'vercel', label: 'Vercel Pro' },
+  { key: 'supabase', label: 'Supabase Pro' },
+  { key: 'twilio', label: 'Twilio (SMS)' },
+  { key: 'resend', label: 'Resend (email)' },
+  { key: 'address', label: 'Virtual Address' },
+  { key: 'llc', label: 'LLC Renewal' },
+  { key: 'other', label: 'Other' },
+];
 
-  const [dfMeta, setDfMeta] = useState(null);
-  const [tpMeta, setTpMeta] = useState(null);
-  const [metaError, setMetaError] = useState(false);
-  const [requestStats, setRequestStats] = useState(null);
+// Trailing-N calendar-month keys (['YYYY-MM', …]) ending with the current month, ascending.
+function lastMonthKeys(n) {
+  const now = new Date();
+  const keys = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+  }
+  return keys;
+}
+
+// Trimble/PC*MILER cost for a given month, mirroring getBillingTier's per-load rate and
+// tier minimums but evaluated as-of that month. Months before the billing start (or with no
+// start set — i.e. pre-contract / trial key) cost $0.
+function trimbleCostForMonth(billingStart, monthKey, billableCount) {
+  if (!billingStart) return 0;
+  const [y, m] = monthKey.split('-').map(Number);
+  const start = new Date(billingStart);
+  const monthsElapsed = (y - start.getUTCFullYear()) * 12 + (m - 1 - start.getUTCMonth());
+  if (monthsElapsed < 0) return 0; // before contract start
+  const minimum = monthsElapsed < 3 ? 0 : monthsElapsed < 6 ? 250 : 500;
+  return Math.max(billableCount * 0.10, minimum);
+}
+
+const fmtUSD = (n, dec = 0) =>
+  `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+
+const monthLabel = (key) => {
+  const [y, m] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+};
+
+export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
+  const { session } = useAuth();
+
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);               // #49/#50: all users incl. org-less
@@ -112,28 +152,18 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [trimbleBillingStartInput, setTrimbleBillingStartInput] = useState('');
   const [trimbleBillingStartSaving, setTrimbleBillingStartSaving] = useState(false);
 
+  // ── Net Revenue & Trend (P&L) ──
+  const [pnlLoading, setPnlLoading] = useState(true);
+  const [revenueMonths, setRevenueMonths] = useState(null);   // [{ month, netCents, grossCents, feeCents }]
+  const [trimbleHistory, setTrimbleHistory] = useState({});   // { 'YYYY-MM': billableCount }
+  const [infraCosts, setInfraCosts] = useState(DEFAULT_INFRA_COSTS);
+  const [infraInput, setInfraInput] = useState(DEFAULT_INFRA_COSTS);
+  const [infraSaving, setInfraSaving] = useState(false);
+
   useEffect(() => {
-    Promise.all([fetchMetas(), fetchRequestStats(), fetchOrgs(), fetchUsers(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
+    Promise.all([fetchOrgs(), fetchUsers(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
+    Promise.all([fetchRevenue(), fetchTrimbleHistory(), fetchInfraCosts()]).finally(() => setPnlLoading(false));
   }, []);
-
-  const fetchMetas = async () => {
-    const bust = '?_=' + Date.now();
-    const [dfRes, tpRes] = await Promise.allSettled([
-      fetch('/df-loads-meta.json' + bust),
-      fetch('/tp-loads-meta.json' + bust),
-    ]);
-
-    let gotAny = false;
-    if (dfRes.status === 'fulfilled' && dfRes.value.ok) {
-      const data = await dfRes.value.json().catch(() => null);
-      if (data && Object.keys(data).length > 0) { setDfMeta(data); gotAny = true; }
-    }
-    if (tpRes.status === 'fulfilled' && tpRes.value.ok) {
-      const data = await tpRes.value.json().catch(() => null);
-      if (data && Object.keys(data).length > 0) { setTpMeta(data); gotAny = true; }
-    }
-    if (!gotAny) setMetaError(true);
-  };
 
   const fetchOrgs = async () => {
     if (!session?.access_token) return;
@@ -311,19 +341,79 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
     }
   };
 
-  const fetchRequestStats = async () => {
-    if (!user) return;
+  // ── P&L data ──
+  const fetchRevenue = async () => {
+    if (!session?.access_token) return;
     try {
-      const requests = await db.requests.getAll(user.id);
-      const open = requests.filter(r => r.status === 'open' || r.status === 'active' || !r.status).length;
-      const thisMonth = requests.filter(r => {
-        const d = new Date(r.created_at);
-        const now = new Date();
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-      }).length;
-      setRequestStats({ total: requests.length, open, thisMonth, recent: requests.slice(0, 5) });
+      const res = await fetch('/api/stripe?action=revenue', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setRevenueMonths(data.months || []);
     } catch {
       // Non-critical
+    }
+  };
+
+  // 6 monthly trimble-actuals queries → billable load count per month.
+  const fetchTrimbleHistory = async () => {
+    if (!session?.access_token) return;
+    const keys = lastMonthKeys(6);
+    try {
+      const results = await Promise.all(keys.map(async (key) => {
+        const res = await fetch(`/api/orgs/trimble-actuals?month=${key}`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        if (!res.ok) return [key, 0];
+        const data = await res.json();
+        const count = data?.loads
+          ? data.loads.filter(l => !l.excluded_from_billing).length
+          : (data?.count ?? 0);
+        return [key, count];
+      }));
+      setTrimbleHistory(Object.fromEntries(results));
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const fetchInfraCosts = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/orgs/admin-settings', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const setting = (data.settings || []).find(s => s.key === 'infra_costs');
+      if (setting?.value) {
+        const merged = { ...DEFAULT_INFRA_COSTS, ...setting.value };
+        setInfraCosts(merged);
+        setInfraInput(merged);
+      }
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const saveInfraCosts = async () => {
+    if (!session?.access_token) return;
+    setInfraSaving(true);
+    try {
+      // Coerce inputs to numbers
+      const clean = {};
+      for (const { key } of INFRA_LINE_ITEMS) clean[key] = Number(infraInput[key]) || 0;
+      const res = await fetch('/api/orgs/admin-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ key: 'infra_costs', value: clean }),
+      });
+      if (res.ok) { setInfraCosts(clean); setInfraInput(clean); }
+    } catch {
+      // Non-critical
+    } finally {
+      setInfraSaving(false);
     }
   };
 
@@ -372,16 +462,23 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
     return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const fmtChange = (n) => {
-    if (n === undefined || n === null) return '—';
-    const sign = n > 0 ? '+' : '';
-    return `${sign}${n.toLocaleString()}`;
-  };
+  // Merge revenue (Stripe, net of fees) + variable Trimble cost + fixed infra into a
+  // per-month P&L for the trailing 6 months.
+  const pnl = useMemo(() => {
+    const keys = lastMonthKeys(6);
+    const revByMonth = {};
+    (revenueMonths || []).forEach(m => { revByMonth[m.month] = (m.netCents || 0) / 100; });
+    const fixedInfra = INFRA_LINE_ITEMS.reduce((sum, { key }) => sum + (Number(infraCosts[key]) || 0), 0);
 
-  const changeColor = (n) => {
-    if (!n) return t.colors.text.muted;
-    return n > 0 ? t.colors.accent.green : n < -100 ? t.colors.accent.red : t.colors.accent.amber;
-  };
+    const months = keys.map(key => {
+      const revenue = revByMonth[key] || 0;
+      const trimble = trimbleCostForMonth(trimbleBillingStart, key, trimbleHistory[key] || 0);
+      const cost = trimble + fixedInfra;
+      return { month: key, revenue, trimble, infra: fixedInfra, cost, net: revenue - cost };
+    });
+    const current = months[months.length - 1] || { revenue: 0, trimble: 0, infra: fixedInfra, cost: fixedInfra, net: -fixedInfra };
+    return { months, current, fixedInfra };
+  }, [revenueMonths, trimbleHistory, infraCosts, trimbleBillingStart]);
 
   if (loading) {
     return (
@@ -404,145 +501,112 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
             </div>
           </div>
-          {dfMeta && (
-            <a
-              href="/df-loads-diff-latest.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px',
-                background: t.colors.page.cardBg,
-                border: `1px solid ${t.colors.page.cardBorder}`,
-                borderRadius: t.radius.lg,
-                color: t.colors.text.secondary,
-                fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold,
-                textDecoration: 'none',
-                cursor: 'pointer',
-                boxShadow: t.shadow.sm,
-              }}
-            >
-              <Download size={15} color={t.colors.text.muted} />
-              DF Diff Report
-            </a>
-          )}
         </div>
 
-        {/* ── DATA HEALTH ── */}
-        <SectionHeader title="Load Data Health" />
+        {/* ── NET REVENUE & TREND ── */}
+        <SectionHeader title="Net Revenue & Trend" />
+        {pnlLoading ? (
+          <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '24px' }}>Loading financials…</div>
+        ) : (() => {
+          const max = Math.max(1, ...pnl.months.map(m => Math.max(m.revenue, m.cost)));
+          const BAR_AREA = 150; // px
+          const net = pnl.current.net;
+          const infraDirty = INFRA_LINE_ITEMS.some(({ key }) => (Number(infraInput[key]) || 0) !== (Number(infraCosts[key]) || 0));
+          return (
+            <>
+              {/* Current-month summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                <StatCard label={`Revenue · ${monthLabel(pnl.current.month)}`} value={fmtUSD(pnl.current.revenue)} sub="net of Stripe fees" icon={DollarSign} color={t.colors.accent.green} />
+                <StatCard label="Total Cost" value={fmtUSD(pnl.current.cost)} sub={`Trimble ${fmtUSD(pnl.current.trimble)} · Infra ${fmtUSD(pnl.current.infra)}`} icon={FileText} color={t.colors.accent.amber} />
+                <StatCard label="Net" value={fmtUSD(net)} sub={net >= 0 ? 'profit' : 'loss'} icon={TrendingUp} color={net >= 0 ? t.colors.accent.green : t.colors.accent.red} />
+              </div>
 
-        {metaError ? (
-          <div style={{
-            background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`,
-            borderRadius: t.radius.xl, padding: '24px', display: 'flex', alignItems: 'center', gap: '12px',
-            color: t.colors.text.muted, boxShadow: t.shadow.card,
-          }}>
-            <AlertCircle size={20} color={t.colors.accent.amber} />
-            No load metadata found. Run the data fetch workflows to generate it.
-          </div>
-        ) : (dfMeta || tpMeta) ? (
-          <>
-            {/* Per-source panels */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '24px' }}>
-              {[
-                { meta: dfMeta, label: 'DirectFreight', abbr: 'DF', color: t.colors.accent.blue },
-                { meta: tpMeta, label: 'TruckerPath',   abbr: 'TP', color: t.colors.accent.purple },
-              ].map(({ meta, label, abbr, color }) => meta ? (
-                <div key={abbr} style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '20px 24px', boxShadow: t.shadow.card }}>
-                  {/* Source header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                    <div style={{ padding: '4px 10px', background: `${color}18`, border: `1px solid ${color}40`, borderRadius: t.radius.md, fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color }}>
-                      {abbr}
-                    </div>
-                    <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{label}</div>
-                    <div style={{ marginLeft: 'auto', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
-                      Last run: {fmtDate(meta.runDate)}
-                      {meta.runAt && ` · ${new Date(meta.runAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
-                    </div>
+              {revenueMonths === null && (
+                <div style={{ marginTop: '12px', fontSize: t.font.size.xs, color: t.colors.accent.amber }}>
+                  Stripe revenue unavailable — showing $0 revenue. Check STRIPE_SECRET_KEY / admin access.
+                </div>
+              )}
+
+              {/* 6-month trend */}
+              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '20px 24px', boxShadow: t.shadow.card, marginTop: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '18px' }}>
+                  <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>Trailing 6 months</div>
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '16px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: t.colors.accent.green }} /> Revenue</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: t.colors.accent.amber }} /> Cost</span>
                   </div>
-
-                  {/* Summary stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-                    {[
-                      { label: 'Total Loads', value: meta.totalLoads?.toLocaleString() ?? '—' },
-                      { label: 'With Pay Data', value: meta.loadsWithPay?.toLocaleString() ?? '—' },
-                      { label: 'Avg Pay', value: meta.avgPay ? `$${meta.avgPay.toLocaleString()}` : '—' },
-                      ...(meta.netChange !== undefined ? [
-                        { label: 'vs Prev Run', value: fmtChange(meta.netChange), valueColor: changeColor(meta.netChange) },
-                        { label: 'Added', value: `+${meta.added?.toLocaleString() ?? 0}`, valueColor: t.colors.accent.green },
-                        { label: 'Removed', value: `-${meta.removed?.toLocaleString() ?? 0}`, valueColor: meta.removed > 0 ? t.colors.accent.amber : t.colors.text.muted },
-                      ] : []),
-                    ].map(({ label, value, valueColor }) => (
-                      <div key={label} style={{ background: t.colors.page.bg, borderRadius: t.radius.lg, padding: '10px 12px' }}>
-                        <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-                        <div style={{ fontSize: t.font.size.md, fontWeight: t.font.weight.bold, color: valueColor || t.colors.text.primary }}>{value}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: `${BAR_AREA}px` }}>
+                  {pnl.months.map(m => (
+                    <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                      <div style={{ fontSize: '11px', fontWeight: t.font.weight.bold, color: m.net >= 0 ? t.colors.accent.green : t.colors.accent.red, marginBottom: '4px' }}>{fmtUSD(m.net)}</div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: `${BAR_AREA - 24}px` }}>
+                        <div title={`Revenue ${fmtUSD(m.revenue)}`} style={{ width: '14px', height: `${Math.max(2, (m.revenue / max) * (BAR_AREA - 24))}px`, background: t.colors.accent.green, borderRadius: '3px 3px 0 0' }} />
+                        <div title={`Cost ${fmtUSD(m.cost)}`} style={{ width: '14px', height: `${Math.max(2, (m.cost / max) * (BAR_AREA - 24))}px`, background: t.colors.accent.amber, borderRadius: '3px 3px 0 0' }} />
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Equipment & States side by side */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.text.muted, marginBottom: '8px' }}>Equipment Types</div>
-                      <Table
-                        headers={['Type', 'Count', '%']}
-                        rows={(meta.equipmentTypes || []).map(([type, count]) => [
-                          type, count.toLocaleString(),
-                          `${Math.round((count / meta.totalLoads) * 100)}%`,
-                        ])}
-                      />
                     </div>
-                    <div>
-                      <div style={{ fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.text.muted, marginBottom: '8px' }}>Top Pickup States</div>
-                      <Table
-                        headers={['State', 'Count', '%']}
-                        rows={(meta.topPickupStates || []).slice(0, 10).map(([state, count]) => [
-                          state, count.toLocaleString(),
-                          `${Math.round((count / meta.totalLoads) * 100)}%`,
-                        ])}
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ) : (
-                <div key={abbr} style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: t.shadow.card }}>
-                  <div style={{ padding: '4px 10px', background: `${color}10`, border: `1px solid ${color}30`, borderRadius: t.radius.md, fontSize: t.font.size.xs, fontWeight: t.font.weight.bold, color: `${color}80` }}>{abbr}</div>
-                  <div style={{ fontSize: t.font.size.sm, color: t.colors.text.muted }}>{label} — no data yet. Trigger the fetch workflow to populate.</div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  {pnl.months.map(m => (
+                    <div key={m.month} style={{ flex: 1, textAlign: 'center', fontSize: '11px', color: t.colors.text.muted }}>{monthLabel(m.month)}</div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </>
-        ) : null}
+              </div>
 
-        {/* ── REQUEST ACTIVITY ── */}
-        <SectionHeader title="Your Request Activity" />
-
-        {requestStats ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
-              <StatCard label="Open Requests" value={requestStats.open} icon={FileText} color={t.colors.accent.blue} />
-              <StatCard label="This Month" value={requestStats.thisMonth} icon={Calendar} color={t.colors.accent.amber} />
-              <StatCard label="All Time" value={requestStats.total} icon={BarChart2} color={t.colors.accent.purple} />
-            </div>
-
-            {requestStats.recent?.length > 0 && (
+              {/* Breakdown table */}
               <div style={{ marginTop: '16px' }}>
-                <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.muted, marginBottom: '10px' }}>Recent Requests</div>
                 <Table
-                  headers={['Request Name', 'Datum Point', 'Fleet', 'Created']}
-                  rows={requestStats.recent.map(r => [
-                    r.request_name || '—',
-                    r.datum_point || '—',
-                    r.fleets?.name || '—',
-                    fmtDate(r.created_at),
+                  headers={['Month', 'Revenue', 'Trimble', 'Infra', 'Net']}
+                  rows={pnl.months.map(m => [
+                    monthLabel(m.month),
+                    fmtUSD(m.revenue),
+                    fmtUSD(m.trimble),
+                    fmtUSD(m.infra),
+                    <span style={{ fontWeight: t.font.weight.bold, color: m.net >= 0 ? t.colors.accent.green : t.colors.accent.red }}>{fmtUSD(m.net)}</span>,
                   ])}
                 />
               </div>
-            )}
-          </>
-        ) : (
-          <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm }}>No request data available.</div>
-        )}
+
+              {/* Editable fixed infra costs */}
+              <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, padding: '18px 24px', boxShadow: t.shadow.card, marginTop: '16px' }}>
+                <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.primary, marginBottom: '4px' }}>Fixed Monthly Infrastructure Costs</div>
+                <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginBottom: '16px' }}>
+                  Applied to every month in the trend. PC*MILER / Trimble is variable and computed from actuals separately.
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-end' }}>
+                  {INFRA_LINE_ITEMS.map(({ key, label }) => (
+                    <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{label}</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: t.font.size.sm, color: t.colors.text.muted }}>$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={infraInput[key]}
+                          onChange={e => setInfraInput(prev => ({ ...prev, [key]: e.target.value }))}
+                          style={{ width: '80px', padding: '6px 10px', border: `1px solid ${t.colors.border.strong}`, borderRadius: t.radius.md, fontSize: t.font.size.sm, background: t.colors.page.bg, color: t.colors.text.primary }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>Total / mo</label>
+                    <div style={{ padding: '6px 10px', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{fmtUSD(pnl.fixedInfra)}</div>
+                  </div>
+                  <button
+                    onClick={saveInfraCosts}
+                    disabled={infraSaving || !infraDirty}
+                    style={{ padding: '7px 18px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.md, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, cursor: (infraSaving || !infraDirty) ? 'not-allowed' : 'pointer', opacity: (infraSaving || !infraDirty) ? 0.5 : 1 }}
+                  >
+                    {infraSaving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* ── ORGANIZATIONS ── */}
         {users.length > 0 && (
@@ -808,6 +872,10 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
         })()}
 
         {/* ── DEBUG SETTINGS ── */}
+        {/* DAT API debug toggle commented out — DAT integration is not on the table right now.
+            Uncomment (and the fetchDebugSettings/toggleDebugSetting helpers remain in place)
+            if/when we revisit DAT. */}
+        {/*
         <SectionHeader title="Debug Settings" />
         <div style={{ background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, overflow: 'hidden', boxShadow: t.shadow.card }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', gap: '24px' }}>
@@ -845,6 +913,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
             </div>
           </div>
         </div>
+        */}
 
     </div>
   );
