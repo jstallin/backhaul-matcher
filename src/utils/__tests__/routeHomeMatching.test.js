@@ -343,6 +343,55 @@ describe('findRouteHomeBackhauls — corridor filter', () => {
 });
 
 // ---------------------------------------------------------------------------
+// findRouteHomeBackhauls — same-city search (datum == home, local round-trip)
+// Regression for the centroid filter collapsing when datum == home: with
+// datum == home the datum→home distance is ~0, so the old
+// `centroidToHome > haversineDirect` test rejected every coordless live load
+// (Truckstop loads have no pickup/delivery coords). The threshold is now floored
+// with homeRadiusMiles. Uses the production same-city params (radius 200 / corridor 300).
+// ---------------------------------------------------------------------------
+
+describe('findRouteHomeBackhauls — same-city search (datum == home)', () => {
+  // Atlanta GA — the datum and fleet home are the same city.
+  const ATLANTA = { lat: 33.749, lng: -84.388 };
+
+  beforeEach(() => {
+    clearDistanceCache();
+    getDrivingDistance.mockResolvedValue(null); // PC*MILER unavailable → Haversine + centroid fallback
+  });
+
+  it('keeps a coordless load delivering to a nearby state (GA centroid within home radius)', async () => {
+    const { opportunities } = await findRouteHomeBackhauls(
+      ATLANTA, ATLANTA, DRY_VAN_FLEET,
+      [makeLoad({
+        load_id: 'load-ts-ga',
+        pickup_lat: null, pickup_lng: null, pickup_state: 'GA',
+        delivery_lat: null, delivery_lng: null, delivery_state: 'GA',
+        distance_miles: 50,
+      })],
+      200,  // homeRadiusMiles — same-city production value
+      300   // corridorWidthMiles — same-city production value
+    );
+    expect(opportunities).toHaveLength(1);
+  });
+
+  it('still rejects a coordless load delivering to a far state (CA centroid beyond home radius)', async () => {
+    const { opportunities } = await findRouteHomeBackhauls(
+      ATLANTA, ATLANTA, DRY_VAN_FLEET,
+      [makeLoad({
+        load_id: 'load-ts-ca',
+        pickup_lat: null, pickup_lng: null, pickup_state: 'GA',
+        delivery_lat: null, delivery_lng: null, delivery_state: 'CA',
+        distance_miles: 50,
+      })],
+      200,
+      300
+    );
+    expect(opportunities).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // findRouteHomeBackhauls — scoring math (with mocked PC*MILER distances)
 // ---------------------------------------------------------------------------
 
