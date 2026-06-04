@@ -25,19 +25,39 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Haul Monitor",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Web",
-    "url": "https://www.haulmonitor.cloud/",
-    "description": "Haul Monitor helps fleet operators recover backhaul revenue by finding profitable return loads along their trucks' routes — turning empty miles into margin.",
-    "offers": { "@type": "Offer", "category": "SaaS" },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Haul Monitor",
-      "url": "https://www.haulmonitor.cloud/",
-      "logo": "https://www.haulmonitor.cloud/haul-monitor-full.png"
-    }
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.haulmonitor.cloud/#organization",
+        "name": "Haul Monitor",
+        "url": "https://www.haulmonitor.cloud/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.haulmonitor.cloud/haul-monitor-full.png"
+        },
+        "description": "Haul Monitor is a software company whose backhaul load-matching and route-home platform helps trucking fleet operators and dispatchers recover revenue by finding profitable return loads along their trucks' existing routes.",
+        "knowsAbout": ["Backhaul freight matching", "Trucking fleet operations", "Route optimization", "Load boards"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.haulmonitor.cloud/#website",
+        "url": "https://www.haulmonitor.cloud/",
+        "name": "Haul Monitor",
+        "publisher": { "@id": "https://www.haulmonitor.cloud/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://www.haulmonitor.cloud/#software",
+        "name": "Haul Monitor",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "url": "https://www.haulmonitor.cloud/",
+        "description": "Haul Monitor helps fleet operators recover backhaul revenue by finding profitable return loads along their trucks' routes — turning empty miles into margin.",
+        "offers": { "@type": "Offer", "category": "SaaS" },
+        "publisher": { "@id": "https://www.haulmonitor.cloud/#organization" },
+        "provider": { "@id": "https://www.haulmonitor.cloud/#organization" }
+      }
+    ]
   }
   </script>
 
