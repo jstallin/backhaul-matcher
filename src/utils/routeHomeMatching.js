@@ -358,10 +358,16 @@ export const findRouteHomeBackhauls = async (
       // the FL centroid is near Orlando). Instead, reject states whose centroid is farther
       // from home than the datum→home distance — this catches obvious off-route states
       // (Indiana, West Virginia, Maryland on an NC→GA run) without being too narrow.
+      //
+      // Floor the threshold with homeRadiusMiles so it can't collapse to ~0 on a same-city
+      // search (datum == home → haversineDirect ≈ 0), which would otherwise reject every
+      // coordless load. In that case the bound becomes "delivery state within the home
+      // radius" — the right set for a local round-trip. Normal route-home searches are
+      // unaffected (haversineDirect ≫ homeRadiusMiles, so the max returns haversineDirect).
       const centroid = STATE_CENTROIDS[load.delivery_state];
       if (centroid) {
         const centroidToHome = calculateDistance(centroid.lat, centroid.lng, fleetHome.lat, fleetHome.lng);
-        if (centroidToHome > haversineDirect) continue;
+        if (centroidToHome > Math.max(haversineDirect, homeRadiusMiles)) continue;
       }
     }
 
