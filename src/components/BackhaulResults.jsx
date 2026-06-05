@@ -4,6 +4,7 @@ import { CANCELLATION_REASONS } from '../utils/cancellationReasons';
 import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
+import { LoadShareMenu } from './LoadShareMenu';
 import { generateTop10Report } from '../utils/generateReport';
 import { computeNegotiation, netCreditAtGross, isNoRateLoad } from '../utils/routeHomeMatching';
 
@@ -563,9 +564,18 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                     </div>
                   )}
                 </div>
-                <button onClick={() => setSelectedMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: colors.text.secondary, fontSize: '20px', lineHeight: 1 }}>
-                  ✕
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                  {/* #82: Share this load — Email / Text / Copy */}
+                  <LoadShareMenu
+                    match={m}
+                    request={request}
+                    fleetHome={fleetHome}
+                    palette={{ accent: colors.accent.primary, text: colors.text.primary, textMuted: colors.text.secondary, border: colors.border.accent, cardBg: colors.background.overlay, inputBg: colors.background.secondary }}
+                  />
+                  <button onClick={() => setSelectedMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: colors.text.secondary, fontSize: '20px', lineHeight: 1 }}>
+                    ✕
+                  </button>
+                </div>
               </div>
 
               <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -825,8 +835,8 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   </div>
                 </div>
 
-                {/* Haul This Load CTA */}
-                <div style={{ paddingTop: '4px', display: 'flex', gap: '12px' }}>
+                {/* Haul This Load CTA — sticky so the actions stay visible without scrolling (#82 bonus) */}
+                <div style={{ position: 'sticky', bottom: 0, background: colors.background.overlay, margin: '0 -24px -24px', padding: '12px 24px 16px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', gap: '12px' }}>
                   <button
                     onClick={() => { setHaulMatch(m); setSelectedMatch(null); }}
                     style={{ flex: 1, padding: '14px 24px', background: colors.accent.success, border: 'none', borderRadius: '10px', color: '#ffffff', fontSize: '15px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
