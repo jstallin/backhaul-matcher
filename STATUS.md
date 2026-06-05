@@ -7,8 +7,8 @@
 
 ## Last Updated
 - **Date:** June 5, 2026
-- **Session type:** Claude Code (security review #86–#89 + staging Stripe fix)
-- **Updated by:** Claude Code (session 9)
+- **Session type:** Claude Code (security sweep shipped #86–#100 + test rehab + uptime health + migration-history reconcile)
+- **Updated by:** Claude Code (session 10)
 
 ---
 
@@ -21,6 +21,34 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 5, 2026, session 10) — security sweep shipped end-to-end + CI/test rehab + uptime + migration reconcile
+
+Continuation of the session-9 security review — everything below **shipped to production** (PRs #90, #92, #93, #95, #96, #97, #98, #99, #100, all merged; prod migrations applied + verified live).
+
+**Security (all closed):**
+- **#86 (P1 CRITICAL) — shipped + verified.** Anon-executable `SECURITY DEFINER` RPCs (`add_credits` = free credits / Stripe bypass, `get_ts_integration_id` = decrypted Truckstop ID from Vault, + 4 more). Migration `20260605000001` revoked `anon/authenticated/PUBLIC` EXECUTE; verified live on prod (`anon_exec=false`, `service_role` retained). **Issue left open** — Chip declined the Truckstop-ID rotation for now (logs showed no `rpc/get_ts_integration_id` calls in the retained window, but retention < exposure window, so can't prove a negative; rotation still recommended).
+- **#87 (P1) — shipped.** Gated the 4 `api/pcmiler/*` proxies behind a Supabase session JWT (`tile.js` uses a Referer allowlist → OSM fallback). Client sends the token via `pcMilerClient.js`. Cron unaffected (calls PC*MILER directly).
+- **#88 + #97 (P2) — shipped.** Security headers enforced (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy). CSP shipped Report-Only in #88, then **flipped to enforcing** in #97 (kept `script-src 'unsafe-inline'`).
+- **#89 (P3) — closed.** `search_path=public` pinned on 8 flagged functions (`20260605000002`); `route_distance_cache` write policies bounded + UPDATE policy dropped (client now upserts `ignoreDuplicates` — distances are immutable, first-writer-wins) + `handle_new_user` anon EXECUTE revoked (`20260605000003`). Leaked-password protection + min length 8 enabled in the Supabase dashboard (Chip). **Supabase security advisor is now WARN-free** (only 2 intentional INFO "RLS-enabled-no-policy" on `org_integrations`/`org_invites` — server-only locked tables).
+
+**CI / test rehab (#91, closed):** the `api/__tests__` handler tests were never wired into CI and had rotted. Found a real `orgs` `GET /members` 3-way inconsistency → product decision: **roster is viewable by any org member** (removing stays admin-only); reconciled docstring + test (#95). Rewrote `integrations-truckstop.test.js` to the **Vault** model (#96). `api/**` now runs in CI. 247 tests / 14 files green. Also fixed a flaky firefox E2E selector (`getByText('Haul Monitor').first()`).
+
+**Uptime (#98, #99 — shipped):** the Better Stack monitors on `/api/pcmiler/geocode` and `/api/integrations/truckstop` were hitting **gated** endpoints (geocode went false-down 401 after #87, and was burning PC*MILER quota on every ping). Added public, zero-cost health endpoints `/api/pcmiler/health` + `/api/integrations/health` (config-presence only, no billed calls). Chip repointed the monitors — all green.
+
+**Open security residuals (intentional follow-ups):**
+- **#86** — Truckstop integration-ID rotation (Chip's call; deferred).
+- **#94 (P2)** — drop `script-src 'unsafe-inline'`: externalize the SW inline script in `app.html` + audit static pages, then enforce. Not yet done.
+
+**⚠️ Migration-history drift — RECONCILED (important process lesson):**
+Applying migrations via the **Supabase dashboard / MCP `apply_migration`** stamps a wall-clock version (e.g. `20260605153021`) that does **not** match the repo filename version (e.g. `20260605000002`). From ~May 27 onward this drifted, and the **`Supabase Preview` GitHub check started failing** ("Remote migration versions not found in local migrations directory"). Schema was always correct — only the `schema_migrations` version labels drifted. Reconciled by realigning remote `version` → repo filename on **both prod + staging** (9 versions each, `20260527230000`→`20260605000003`). Should be green on the next migration PR.
+- **Process fix (do this):** re-link the Supabase CLI (`supabase link --project-ref cxvmkvhwqktkktczpuyk`) and apply migrations via **`supabase db push`** (uses the repo filename as the version) — NOT the dashboard/MCP. This is the standing STATUS TODO and the durable fix. See [[reference_supabase_migration_apply_method]].
+
+**Also this session:** staging Stripe "buy credits" 500 was a missing `STRIPE_PRICE_*` env on the staging project → set up Stripe **test mode** for staging (test key + price IDs). Filed pilot-feedback issues **#81–#85** (Driver-Needed-Home-By field, Share-load Email/Text/Copy, expire stale requests, Operations-Declined reason + report tile, Admin org-activity section) and security follow-ups; **#94** open.
+
+**Deploy gotcha observed:** production deploys here are **gated on CI** — a merge to `main` won't show a prod deployment until Playwright + unit checks pass (Vercel does NOT block on the `Supabase Preview` check). If "no new prod deployment," check the merge commit's CI is green first.
 
 ---
 
