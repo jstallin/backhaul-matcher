@@ -15,6 +15,7 @@ import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
+import { LoadShareMenu } from '../LoadShareMenu';
 import { CoDriverV2 } from './CoDriverV2';
 import {
   Plus, Search, MapPin, Truck, Package, RefreshCw,
@@ -1067,7 +1068,7 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
 
 // ─── Route Details Modal ──────────────────────────────────────────────────────
 
-function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
+function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onViewMap }) {
   if (!match) return null;
 
   const directMiles    = match.direct_return_miles ?? mAdditional(match) ?? 0;
@@ -1103,7 +1104,16 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
               </div>
             )}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.text.muted, padding: '4px', fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            {/* #82: Share this load — Email / Text / Copy */}
+            <LoadShareMenu
+              match={match}
+              request={request}
+              fleetHome={fleetHome}
+              palette={{ accent: t.colors.accent.blue, text: t.colors.text.primary, textMuted: t.colors.text.muted, border: t.colors.border.default, cardBg: '#fff', inputBg: '#fff' }}
+            />
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.text.muted, padding: '4px', fontSize: '20px', lineHeight: 1 }}>✕</button>
+          </div>
         </div>
 
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1262,8 +1272,8 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
             </div>
           </div>
 
-          {/* Footer CTA */}
-          <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Footer CTA — sticky so the actions stay visible without scrolling (#82 bonus) */}
+          <div style={{ display: 'flex', gap: '10px', position: 'sticky', bottom: 0, background: '#fff', margin: '0 -24px -24px', padding: '12px 24px 16px', borderTop: `1px solid ${t.colors.border.default}` }}>
             <button
               onClick={onHaulThis}
               style={{ flex: 1, padding: '12px 20px', background: t.colors.accent.blue, border: 'none', borderRadius: t.radius.xl, color: '#fff', fontSize: t.font.size.sm, fontWeight: t.font.weight.bold, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
@@ -1687,6 +1697,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
       <RouteDetailsModal
         match={selectedMatch}
         request={request}
+        fleetHome={fleetHome}
         onClose={() => setSelectedMatch(null)}
         onHaulThis={() => { setHaulMatch(selectedMatch); setSelectedMatch(null); }}
         onViewMap={() => { setMapMatch(selectedMatch); setSelectedMatch(null); }}
