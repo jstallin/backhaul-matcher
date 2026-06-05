@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** May 31, 2026
-- **Session type:** Claude Code (Ryder pilot — 006/007/008 + cleanup)
-- **Updated by:** Claude Code (session 7)
+- **Date:** June 5, 2026
+- **Session type:** Claude Code (security review #86–#89 + staging Stripe fix)
+- **Updated by:** Claude Code (session 9)
 
 ---
 
@@ -21,6 +21,42 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 5, 2026, session 9) — security review + staging Stripe fix
+
+Triggered by a Reddit thread on "vibe-coded" insecure defaults. Verified each claim against **live production** (Supabase advisor + reading function source/ACLs — not by executing anything destructive).
+
+**Reddit checklist vs. Haul Monitor:** anon key in bundle = *misconception* (it's the publishable key; HM handles it correctly — service-role key not client-exposed, RLS on all public tables with policies). Login rate-limiting = overstated (Supabase GoTrue has baseline limits). localStorage tokens = true (default). Missing security headers = true. Unauthenticated endpoints = true, and worse than the post (see #86/#87).
+
+**The real findings the post didn't mention — `SECURITY DEFINER` RPCs callable by `anon`:**
+- **#86 (P1, CRITICAL) — FIX STAGED, prod pending.** `add_credits`, `deduct_credit`, `get_ts_integration_id`, `store_ts_integration_id`, `set_user_as_driver`, `link_driver_to_user` all had `EXECUTE` granted to `anon` (Postgres grants to PUBLIC by default; never revoked). Anon could mint unlimited credits (Stripe bypass) and read the **decrypted** Truckstop integration id from Vault, bypassing RLS. Root cause = classic insecure default. All six are only called server-side with the service role, so the fix is a clean revoke. Migration `20260605000001_revoke_anon_execute_on_security_definer_rpcs.sql` (guarded `DO` block, portable/idempotent) **applied + verified on staging** (anon/authenticated EXECUTE now false, service_role retained). Commit `4972dda`.
+  - **AFTER PROD MERGE (manual, required):** apply the migration to prod (`cxvmkvhwqktkktczpuyk`), re-check ACLs, and **rotate the Truckstop integration id** (it was reachable decrypted).
+- **#87 (P1) — open.** The 4 `api/pcmiler/*` proxies (route, routepath, geocode, tile) have **no auth gate** → free use of the server `PCMILER_API_KEY`; becomes a metered-cost/bill-amplification risk when the Trimble paying contract starts (July 2026, billed on actuals). `notifications` + `analyze-load` are correctly gated.
+- **#88 (P2) — open.** No security headers in `vercel.json` (no CSP/X-Frame-Options/HSTS/etc.); compounds the localStorage-token XSS risk. Fix = headers block + CSP.
+- **#89 (P3) — open.** Hardening backlog: `route_distance_cache` permissive write policy (any authed user can poison the shared distance cache), leaked-password protection disabled, mutable `search_path` on several functions.
+
+**What HM does right (honest credit):** table RLS properly scoped (`user_credits` has no direct-write policy — RPC is the only write path), service-role key server-only, Vault used for the integration id, `notifications`/`analyze-load` JWT-gated.
+
+**Staging Stripe "buy credits" 500 — RESOLVED (config, not code).** `POST /api/stripe?action=checkout` 500'd ("Price not configured for starter") because the staging Vercel project was missing `STRIPE_PRICE_STARTER/PRO/FLEET`. Pre-existing gap (credits purchase never worked on staging), unrelated to the migration. Fixed by setting up **Stripe test mode** for staging: test secret key + 3 test price IDs added to the staging project; verified — buy-credits now redirects to Stripe test checkout. (Note: staging had been holding a non-test key.)
+
+---
+
+## What Was Just Completed (June 4, 2026, session 8) — same-city matching fix + pilot feedback intake
+
+**1. Same-city backhaul search returned 0 results — FIXED & SHIPPED TO PRODUCTION.**
+When the datum point and fleet home are the same city, `findRouteHomeBackhauls` returned 0 matches even with hundreds of live loads sourced (Chip set up a "Same-Same Request Test", Atlanta→Atlanta, radius 150, which reproduced it). Root cause: live Truckstop loads have no coordinates, so the delivery-state **centroid pre-filter** (`routeHomeMatching.js`) is what gates them — and its test `centroidToHome > haversineDirect` collapses when datum == home, because `haversineDirect ≈ 0`, rejecting every load. Confirmed live: `Corridor filter: 0 candidates from 286 available loads`.
+- **Fix:** floor the threshold with the home radius — `if (centroidToHome > Math.max(haversineDirect, homeRadiusMiles)) continue;`. Normal route-home searches are unaffected (`haversineDirect` dominates the max); same-city searches fall back to "delivery state within the home radius" — the right set for a local round-trip. Code-only, **no migration**.
+- Added 2 regression tests for the datum == home case (one keeps a nearby-state coordless load, one confirms a far state is still rejected). Full suite green (192 tests). Verified live on staging: 286 loads → **18 opportunities**. Commit `295c165`; PR merged to `main`; local branches resynced.
+
+**2. Ryder pilot feedback (via Chip) → 5 new issues, #81–#85.** All `P2`, labeled `ryder`/`chip`. Two cross-issue dependency clusters worth respecting when sequencing:
+- **#81** — "Driver Needed Home By" date field on bh requests (`backhaul_requests.driver_home_by`, migration). Display-only (not sent to Truckstop); shown at top of results + near top of each load detail view. Detail-header layout is designed to leave room for #82. v1 + v2.
+- **#82** — Share load from detail view (Email / Text / Copy). Email = Resend w/ reply-to = logged-in user + route map; Text = Twilio, `+1` locked, SMS-sized note; Copy = same content minus map → clipboard. Reuses `api/notifications` (Resend/Twilio). Tracks every share (channel + recipient). v1 + v2.
+- **#83** — Disable expired bh requests (End Pickup Window < today): mark inactive, block run (manual + cron, no credit burn), re-enable on date edit. Recommended derived-from-dates approach (no stored status, no migration); keep "expired" distinct from "completed". v1 + v2.
+- **#84** — "Operations Declined" cancellation reason (one-line add to shared `cancellationReasons.js`) + Reports tile aggregating the declined request's **top load** gross / customer-net / carrier-net revenue. **Zero-copy crux:** the top load is gone by report time, so its dollar figures must be **snapshotted at decline** onto the request (proposed `declined_top_*` columns, migration). v1 + v2.
+- **#85** — Admin Dashboard "Org Activity" section: last login / request created / request updated / search run / load detail opened, hauled revenue (user + org), ops-declined lost revenue (org). Most metrics have existing sources; **last search run** and **last load detail opened** are net-new telemetry.
+- **Dependency notes:** #84 → #85 (org-level ops-declined rollup). **#82 ⇄ #85 should share one telemetry mechanism** — recommended a single `user_activity_events` table rather than building event tracking twice; whichever lands first creates it.
 
 ---
 
