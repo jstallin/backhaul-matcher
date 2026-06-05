@@ -28,6 +28,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     selectedFleetId: '',
     equipmentAvailableDate: today(),
     equipmentNeededDate: today(),
+    driverHomeBy: '',            // #81: display-only dispatcher signal, optional
     isRelay: false,
     modes: [],                   // optional request-level transport modes (#36)
     autoRefresh: false,
@@ -87,6 +88,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           selectedFleetId: request.fleet_id || '',
           equipmentAvailableDate: request.equipment_available_date || today(),
           equipmentNeededDate: request.equipment_needed_date || today(),
+          driverHomeBy: request.driver_home_by || '',
           isRelay: request.is_relay || false,
           modes: Array.isArray(request.modes) ? request.modes : [],
           autoRefresh: request.auto_refresh || false,
@@ -228,6 +230,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         datum_point: formData.datumPoint,
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
+        driver_home_by: formData.driverHomeBy || null, // #81: display-only, never sent to load boards
         is_relay: formData.isRelay,
         modes: Array.isArray(formData.modes) && formData.modes.length ? formData.modes : null, // #36
         auto_refresh: formData.autoRefresh,
@@ -285,6 +288,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
         equipmentAvailableDate: today(),
         equipmentNeededDate: today(),
+        driverHomeBy: '',
         isRelay: false,
         modes: [],
         autoRefresh: false,
@@ -402,6 +406,11 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />End Pickup Window *</label>
                   <input type="date" value={formData.equipmentNeededDate} onChange={(e) => handleChange('equipmentNeededDate', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${errors.equipmentNeededDate ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                   {errors.equipmentNeededDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentNeededDate}</div>}
+                </div>
+                {/* #81: dispatcher-visibility only — not sent to load-board search params */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Driver Needed Home By</label>
+                  <input type="date" value={formData.driverHomeBy} onChange={(e) => handleChange('driverHomeBy', e.target.value)} disabled={saving} style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid \${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 </div>
               </div>
 

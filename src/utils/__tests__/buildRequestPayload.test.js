@@ -115,6 +115,18 @@ describe('buildRequestPayload', () => {
     });
   });
 
+  describe('driver_home_by (#81)', () => {
+    it('passes the date through when set', () => {
+      const p = buildRequestPayload({ ...baseForm, driverHomeBy: '2026-06-10' }, USER_ID);
+      expect(p.driver_home_by).toBe('2026-06-10');
+    });
+
+    it('is null when empty or absent (optional field)', () => {
+      expect(buildRequestPayload({ ...baseForm, driverHomeBy: '' }, USER_ID).driver_home_by).toBeNull();
+      expect(buildRequestPayload(baseForm, USER_ID).driver_home_by).toBeNull();
+    });
+  });
+
   describe('notification behavior', () => {
     it('sets notification_method to null when notificationEnabled is false', () => {
       const p = buildRequestPayload({ ...baseForm, notificationEnabled: false, notificationMethod: 'email' }, USER_ID);
