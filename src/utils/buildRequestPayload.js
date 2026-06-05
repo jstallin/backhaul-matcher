@@ -14,6 +14,8 @@ export function buildRequestPayload(form, userId) {
     fleet_id:                 form.selectedFleetId,
     equipment_available_date: form.equipmentAvailableDate || null,
     equipment_needed_date:    form.equipmentNeededDate    || null,
+    // #81: dispatcher-visibility only — never sent to load-board search params.
+    driver_home_by:           form.driverHomeBy           || null,
     is_relay:                 form.isRelay,
     // Optional request-level transport modes (#36); null when none selected.
     modes:                    Array.isArray(form.modes) && form.modes.length ? form.modes : null,

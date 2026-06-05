@@ -20,7 +20,7 @@ import {
   Plus, Search, MapPin, Truck, Package, RefreshCw,
   Edit, Trash2, X, AlertCircle, CheckCircle, Clock,
   ChevronRight, DollarSign, Navigation, Bell,
-  TrendingUp, Map,
+  TrendingUp, Map, Calendar,
 } from '../../icons';
 
 const t = tokens;
@@ -362,6 +362,7 @@ const BLANK_FORM = {
   selectedFleetId: '',
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
+  driverHomeBy: '',
   isRelay: false,
   modes: [],
   autoRefresh: false,
@@ -382,6 +383,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     selectedFleetId: initialValues.fleet_id || '',
     equipmentAvailableDate: initialValues.equipment_available_date || '',
     equipmentNeededDate: initialValues.equipment_needed_date || '',
+    driverHomeBy: initialValues.driver_home_by || '',
     isRelay: initialValues.is_relay || false,
     modes: Array.isArray(initialValues.modes) ? initialValues.modes : [],
     autoRefresh: initialValues.auto_refresh || false,
@@ -510,6 +512,11 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
 
           <Field label="End Pickup Window">
             <Input type="date" value={form.equipmentNeededDate} onChange={e => set('equipmentNeededDate', e.target.value)} min={new Date().toISOString().split('T')[0]} />
+          </Field>
+
+          {/* #81: dispatcher-visibility only — not sent to load-board search params */}
+          <Field label="Driver Needed Home By">
+            <Input type="date" value={form.driverHomeBy} onChange={e => set('driverHomeBy', e.target.value)} min={new Date().toISOString().split('T')[0]} />
           </Field>
         </div>
 
@@ -1088,6 +1095,13 @@ function RouteDetailsModal({ match, request, onClose, onHaulThis, onViewMap }) {
             <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
               {mEquipType(match)} · {mWeight(match) ? `${fmtNum(mWeight(match))} lbs` : ''} · {mLength(match) ? `${mLength(match)} ft` : ''} · {mFreight(match) || ''}
             </div>
+            {/* #81: dispatcher signal — display only. Kept in the left header block so the
+                right side stays free for the upcoming "send this load" action. */}
+            {request?.driver_home_by && (
+              <div style={{ marginTop: '4px', fontSize: t.font.size.xs, fontWeight: t.font.weight.semibold, color: t.colors.accent.blue, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Calendar size={12} /> Driver Needed Home By: {fmtDate(request.driver_home_by)}
+              </div>
+            )}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.colors.text.muted, padding: '4px', fontSize: '20px', lineHeight: 1, flexShrink: 0 }}>✕</button>
         </div>
@@ -1522,6 +1536,12 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
           <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} />{request.datum_point}</span>
           {fleet && <span>· {fleet.name}</span>}
           {!isLoading && matches.length > 0 && <span>· {matches.length} match{matches.length !== 1 ? 'es' : ''}</span>}
+          {/* #81: dispatcher signal — display only, does not affect matching */}
+          {request.driver_home_by && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', color: t.colors.accent.blue, fontWeight: t.font.weight.semibold }}>
+              · <Calendar size={11} /> Driver Needed Home By: {fmtDate(request.driver_home_by)}
+            </span>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <GhostBtn onClick={() => setMapVisible(v => !v)} style={{ padding: '6px 12px', fontSize: t.font.size.xs }}>

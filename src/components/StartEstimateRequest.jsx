@@ -21,6 +21,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     selectedFleetId: '',
     equipmentAvailableDate: '',
     equipmentNeededDate: '',
+    driverHomeBy: '',  // #81: display-only dispatcher signal, optional
     isRelay: false,
     annualVolume: '',
     minNetCredit: '',
@@ -48,6 +49,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
         selectedFleetId: request.fleet_id || '',
         equipmentAvailableDate: request.equipment_available_date ? request.equipment_available_date.split('T')[0] : '',
         equipmentNeededDate: request.equipment_needed_date ? request.equipment_needed_date.split('T')[0] : '',
+        driverHomeBy: request.driver_home_by ? request.driver_home_by.split('T')[0] : '',
         isRelay: request.is_relay || false,
         annualVolume: request.annual_volume != null ? String(request.annual_volume) : '',
         minNetCredit: request.min_net_credit != null ? String(request.min_net_credit) : '',
@@ -115,6 +117,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
         datum_point: formData.datumPoint,
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
+        driver_home_by: formData.driverHomeBy || null, // #81: display-only, never sent to load boards
         is_relay: formData.isRelay,
         annual_volume: formData.annualVolume !== '' ? parseInt(formData.annualVolume) : null,
         min_net_credit: formData.minNetCredit !== '' ? parseFloat(formData.minNetCredit) : null,
@@ -134,6 +137,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
           selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
           equipmentAvailableDate: '',
           equipmentNeededDate: '',
+          driverHomeBy: '',
           isRelay: false,
           annualVolume: '',
           minNetCredit: '',
@@ -246,6 +250,11 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
                   <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />End Pickup Window *</label>
                   <input type="date" value={formData.equipmentNeededDate} onChange={(e) => handleChange('equipmentNeededDate', e.target.value)} disabled={saving} style={{ ...inputStyle, border: `1px solid ${errors.equipmentNeededDate ? colors.accent.danger : colors.border.accent}` }} />
                   {errors.equipmentNeededDate && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.equipmentNeededDate}</div>}
+                </div>
+                {/* #81: dispatcher-visibility only — not sent to load-board search params */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Calendar size={16} style={{ display: 'inline', marginRight: '6px' }} />Driver Needed Home By</label>
+                  <input type="date" value={formData.driverHomeBy} onChange={(e) => handleChange('driverHomeBy', e.target.value)} disabled={saving} style={{ ...inputStyle, border: `1px solid ${colors.border.accent}` }} />
                 </div>
               </div>
 

@@ -331,6 +331,7 @@ const BLANK_FORM = {
   selectedFleetId: '',
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
+  driverHomeBy: '',
   annualVolume: '',
   minNetCredit: '',
   isRelay: false,
@@ -346,6 +347,7 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
         selectedFleetId: initialValues.fleet_id || '',
         equipmentAvailableDate: initialValues.equipment_available_date || '',
         equipmentNeededDate: initialValues.equipment_needed_date || '',
+        driverHomeBy: initialValues.driver_home_by || '',
         annualVolume: initialValues.annual_volume != null ? String(initialValues.annual_volume) : '',
         minNetCredit: initialValues.min_net_credit != null ? String(initialValues.min_net_credit) : '',
         isRelay: initialValues.is_relay || false,
@@ -378,6 +380,8 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
         fleet_id: form.selectedFleetId,
         equipment_available_date: form.equipmentAvailableDate || null,
         equipment_needed_date: form.equipmentNeededDate || null,
+        // #81: dispatcher-visibility only — not used in estimate math or sourcing.
+        driver_home_by: form.driverHomeBy || null,
         annual_volume: form.annualVolume !== '' ? Number(form.annualVolume) : null,
         min_net_credit: form.minNetCredit !== '' ? Number(form.minNetCredit) : null,
         is_relay: form.isRelay,
@@ -429,6 +433,11 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
 
           <Field label="Equipment Needed By">
             <Input type="date" value={form.equipmentNeededDate} onChange={e => set('equipmentNeededDate', e.target.value)} />
+          </Field>
+
+          {/* #81: dispatcher-visibility only — not sent to load-board search params */}
+          <Field label="Driver Needed Home By">
+            <Input type="date" value={form.driverHomeBy} onChange={e => set('driverHomeBy', e.target.value)} />
           </Field>
 
           <Field label="Est. Loads Per Year (optional)">

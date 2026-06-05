@@ -223,6 +223,12 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           <div><strong>Fleet:</strong> {fleet.name}</div>
           <div><strong>Datum Point:</strong> {request.datum_point}</div>
           <div><strong>Matches Found:</strong> {matches.length}</div>
+          {/* #81: dispatcher signal — display only, does not affect matching */}
+          {request.driver_home_by && (
+            <div style={{ color: colors.accent.primary, fontWeight: 600 }}>
+              <strong>Driver Needed Home By:</strong> {formatDate(request.driver_home_by)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -549,6 +555,13 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   <div style={{ fontSize: '13px', color: colors.text.tertiary }}>
                     {m.equipmentType} · {formatNumber(m.weight)} lbs · {m.trailerLength} ft · {m.freightType}
                   </div>
+                  {/* #81: dispatcher signal — display only. Kept in the left header block so the
+                      right side stays free for the upcoming "send this load" action. */}
+                  {request.driver_home_by && (
+                    <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: 600, color: colors.accent.primary }}>
+                      Driver Needed Home By: {formatDate(request.driver_home_by)}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => setSelectedMatch(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: colors.text.secondary, fontSize: '20px', lineHeight: 1 }}>
                   ✕
