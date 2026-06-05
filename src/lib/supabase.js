@@ -433,9 +433,12 @@ export const db = {
       // update the same row twice (e.g. two loads sharing a common leg).
       const seen = new Map();
       for (const entry of entries) seen.set(entry.route_key, entry);
+      // ignoreDuplicates: driving distances are immutable, so never overwrite an existing
+      // cached entry (ON CONFLICT DO NOTHING). This also lets the table drop its UPDATE
+      // RLS policy (#89) — existing entries are non-overwritable (first-writer-wins).
       const { error } = await supabase
         .from('route_distance_cache')
-        .upsert([...seen.values()], { onConflict: 'route_key' });
+        .upsert([...seen.values()], { onConflict: 'route_key', ignoreDuplicates: true });
       if (error) throw error;
     }
   },
