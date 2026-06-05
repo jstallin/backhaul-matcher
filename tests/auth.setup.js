@@ -25,7 +25,9 @@ setup('authenticate', async ({ page }) => {
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole('button', { name: 'Sign In' }).click();
 
-  await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 15_000 });
+  // .first() — the brand appears more than once on the shell; strict mode would
+  // otherwise fail (intermittently, browser-dependent) on "resolved to N elements".
+  await expect(page.getByText('Haul Monitor').first()).toBeVisible({ timeout: 15_000 });
 
   fs.mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
   await page.context().storageState({ path: STORAGE_STATE });
