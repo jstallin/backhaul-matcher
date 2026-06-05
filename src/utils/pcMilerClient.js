@@ -5,6 +5,17 @@
  * All calls go through /api/pcmiler/* to keep the API key server-side.
  */
 
+import { supabase } from '../lib/supabase';
+
+// #87: the /api/pcmiler/* proxies now require a valid session (they spend the billed
+// PC*MILER key). Attach the current user's access token to each request. getSession()
+// reads from local storage (no network) so this is cheap. Returns {} when signed out;
+// the proxy then responds 401 and callers fall back gracefully (null / []).
+const authHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+};
+
 /**
  * Format coordinates for PC Miler stops parameter.
  * PC Miler uses longitude,latitude format (same as GeoJSON).
@@ -30,7 +41,7 @@ export const formatStops = (points) => {
 export const getDrivingDistance = async (points) => {
   try {
     const stops = formatStops(points);
-    const response = await fetch(`/api/pcmiler/route?stops=${encodeURIComponent(stops)}&reports=Mileage`);
+    const response = await fetch(`/api/pcmiler/route?stops=${encodeURIComponent(stops)}&reports=Mileage`, { headers: await authHeaders() });
 
     if (!response.ok) {
       console.warn(`PC Miler route API returned ${response.status}`);
@@ -88,7 +99,7 @@ export const getDrivingDistance = async (points) => {
 export const getRouteGeometry = async (points) => {
   try {
     const stops = formatStops(points);
-    const response = await fetch(`/api/pcmiler/routepath?stops=${encodeURIComponent(stops)}`);
+    const response = await fetch(`/api/pcmiler/routepath?stops=${encodeURIComponent(stops)}`, { headers: await authHeaders() });
 
     if (!response.ok) {
       console.warn(`PC Miler routepath API returned ${response.status}`);
@@ -137,7 +148,7 @@ export const getRouteGeometry = async (points) => {
 export const geocodeAddress = async (address) => {
   if (!address || !address.trim()) return null;
   try {
-    const response = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address.trim())}`);
+    const response = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address.trim())}`, { headers: await authHeaders() });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       console.warn('PC Miler geocode failed:', response.status, err.error);
@@ -161,7 +172,7 @@ export const searchCityState = async (query) => {
   const q = (query || '').trim();
   if (q.length < 3) return [];
   try {
-    const response = await fetch(`/api/pcmiler/geocode?suggest=1&q=${encodeURIComponent(q)}`);
+    const response = await fetch(`/api/pcmiler/geocode?suggest=1&q=${encodeURIComponent(q)}`, { headers: await authHeaders() });
     if (!response.ok) return [];
     const data = await response.json();
     return Array.isArray(data?.suggestions) ? data.suggestions : [];

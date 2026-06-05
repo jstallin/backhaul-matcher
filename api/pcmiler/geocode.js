@@ -7,7 +7,28 @@
  * Query params:
  *   address - Required. Address string to geocode (e.g., "Davidson, NC" or "123 Main St, Charlotte, NC 28202")
  */
+import { createClient } from '@supabase/supabase-js';
+
+// #87: this proxy spends the billed server-side PCMILER_API_KEY (and our Nominatim
+// quota for suggest), so require a valid Supabase session JWT — both geocode and
+// suggest modes are gated. The cron calls PC*MILER directly and is unaffected.
+const supabaseAuth = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+);
+
+async function isAuthed(req) {
+  const h = req.headers.authorization;
+  if (!h?.startsWith('Bearer ')) return false;
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(h.slice(7));
+  return !error && !!user;
+}
+
 export default async function handler(req, res) {
+  if (!(await isAuthed(req))) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const PCMILER_TOKEN = process.env.PCMILER_API_KEY;
 
   // Suggest mode (item 002): city/state typeahead. Lives here rather than a

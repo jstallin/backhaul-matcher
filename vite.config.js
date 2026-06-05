@@ -10,7 +10,14 @@ export default defineConfig({
     }
   },
   test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    include: [
+      'src/**/*.{test,spec}.{js,ts}',
+      // NOTE: api/__tests__ is not wired into CI broadly — several pre-existing
+      // orgs/integrations tests fail when run (dormant + rotted; see #91). Include
+      // the #87 pcmiler auth-gate test explicitly so the security check is covered
+      // without unblocking/red-flagging the rest.
+      'api/__tests__/pcmiler-auth.test.js',
+    ],
     environment: 'node',
     globals: true,
     env: {
