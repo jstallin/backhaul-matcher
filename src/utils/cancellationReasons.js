@@ -8,4 +8,5 @@ export const CANCELLATION_REASONS = [
   { value: 'returns', label: 'RETURNS' },
   { value: 'hours_of_service', label: 'HOURS OF SERVICE' },
   { value: 'no_load_avail', label: 'NO LOAD AVAIL' },
+  { value: 'operations_declined', label: 'OPERATIONS DECLINED' }, // #84: triggers top-match revenue snapshot
 ];
