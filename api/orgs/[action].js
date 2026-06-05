@@ -7,7 +7,7 @@
  *   POST /api/orgs/invite        — send invite email (org admin only)
  *   GET  /api/orgs/invite-token  — validate invite token, return org/inviter info
  *   POST /api/orgs/respond       — accept or decline an invite (auth required)
- *   GET  /api/orgs/members       — list org members (org admin only)
+ *   GET  /api/orgs/members       — list org members (any org member)
  *   DELETE /api/orgs/members     — remove a member (org admin only)
  *   POST /api/orgs/role          — promote/demote member role (app admin only)
  *   GET  /api/orgs/all           — list all orgs with member counts (app admin only)
@@ -407,6 +407,8 @@ async function handleMembers(req, res, supabase, user) {
   const orgId = callerMembership.org_id;
 
   if (req.method === 'GET') {
+    // Viewing the member roster is open to any org member (read-only team list,
+    // shown in v2 Settings). Removing a member is admin-only (DELETE below). (#91)
     try {
       const { data: members, error } = await supabase
         .from('org_memberships')
