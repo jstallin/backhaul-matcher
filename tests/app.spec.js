@@ -14,7 +14,7 @@ test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     requireAuth();
     await page.goto(appPath);
-    await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Haul Monitor').first()).toBeVisible({ timeout: 20_000 });
   });
 
   test('loads and shows a welcome heading', async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
     requireAuth();
     await page.goto(appPath);
-    await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Haul Monitor').first()).toBeVisible({ timeout: 20_000 });
   });
 
   test('can navigate to Fleets view', async ({ page }) => {
@@ -58,7 +58,7 @@ test.describe('No JS errors on load', () => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.goto(appPath);
-    await expect(page.getByText('Haul Monitor')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Haul Monitor').first()).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(2000);
     expect(errors.filter(e => !e.includes('ResizeObserver'))).toHaveLength(0);
   });
