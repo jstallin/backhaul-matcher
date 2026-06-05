@@ -454,11 +454,31 @@ describe('/api/orgs/members — GET', () => {
     };
   });
 
-  it('returns 403 when caller is not an org admin', async () => {
-    mockSupabase.from.mockReturnValue(q({ role: 'member', org_id: 'org-1' }));
+  it('returns the member list for any org member (viewing is not admin-only) (#91)', async () => {
+    let orgMembershipCalls = 0;
+    mockSupabase.from.mockImplementation((table) => {
+      if (table === 'org_memberships') {
+        orgMembershipCalls++;
+        if (orgMembershipCalls === 1) return q({ role: 'member', org_id: 'org-1' }); // caller (non-admin)
+        // Member list — terminated by .order()
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq:     vi.fn().mockReturnThis(),
+          order:  vi.fn().mockResolvedValue({
+            data: [
+              { id: 'm1', role: 'admin',  user_id: 'user-admin', created_at: '2026-01-01' },
+              { id: 'm2', role: 'member', user_id: 'chip-id',    created_at: '2026-02-01' },
+            ],
+            error: null
+          }),
+        };
+      }
+      return q(null);
+    });
     const r = makeRes();
     await handler(makeReq('GET', 'members'), r);
-    expect(r._status).toBe(403);
+    expect(r._status).toBe(200);
+    expect(r._body.members).toHaveLength(2);
   });
 
   it('returns enriched member list for org admin', async () => {
