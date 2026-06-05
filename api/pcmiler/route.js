@@ -9,7 +9,28 @@
  *           Example: -85.7585,38.2527;-82.3535,36.3134
  *   reports - Optional. Comma-separated report types. Default: Mileage
  */
+import { createClient } from '@supabase/supabase-js';
+
+// #87: this proxy spends the billed server-side PCMILER_API_KEY, so require a valid
+// Supabase session JWT (mirrors api/notifications). The cron calls PC*MILER directly
+// and is unaffected.
+const supabaseAuth = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
+);
+
+async function isAuthed(req) {
+  const h = req.headers.authorization;
+  if (!h?.startsWith('Bearer ')) return false;
+  const { data: { user }, error } = await supabaseAuth.auth.getUser(h.slice(7));
+  return !error && !!user;
+}
+
 export default async function handler(req, res) {
+  if (!(await isAuthed(req))) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const PCMILER_TOKEN = process.env.PCMILER_API_KEY;
   if (!PCMILER_TOKEN) {
     return res.status(500).json({ error: 'PC Miler API key not configured' });

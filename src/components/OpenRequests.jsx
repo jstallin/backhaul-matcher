@@ -9,6 +9,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
+import { geocodeAddress } from '../utils/pcMilerClient';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
@@ -386,13 +387,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         });
         Promise.all([...cityMap.keys()].map(async (key) => {
           const [city, state] = key.split(',');
-          try {
-            const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(`${city}, ${state}`)}`);
-            if (res.ok) {
-              const geo = await res.json();
-              if (geo.lat && geo.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
-            }
-          } catch (e) { /* ignore */ }
+          // #87: geocodeAddress sends the session token (the proxy now requires auth).
+          const geo = await geocodeAddress(`${city}, ${state}`);
+          if (geo?.lat && geo?.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
         })).then(() => {
           setBackhaulMatches(prev => prev.map(m => {
             const updated = { ...m };

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { db } from '../lib/supabase';
 import { parseDatCsv } from '../utils/datCsvParser';
+import { geocodeAddress } from '../utils/pcMilerClient';
 
 const Step = ({ n, label, active, done }) => {
   const { colors } = useTheme();
@@ -96,18 +97,12 @@ export const DatImportModal = ({ request, onClose, onImport }) => {
       try {
         // PC*Miler expects "City, ST" format (e.g. "Davidson, NC")
         const [city, state] = key.split(',').map(s => s.trim());
-        const address = `${city}, ${state}`;
-        const res = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.lat && data?.lng) {
-            unique.set(key, { lat: data.lat, lng: data.lng });
-          } else {
-            console.warn('[DatImport] PC*Miler geocode: no coords in response for', key, data);
-          }
+        // #87: geocodeAddress sends the session token (the proxy now requires auth).
+        const data = await geocodeAddress(`${city}, ${state}`);
+        if (data?.lat && data?.lng) {
+          unique.set(key, { lat: data.lat, lng: data.lng });
         } else {
-          const errText = await res.text().catch(() => '');
-          console.warn('[DatImport] PC*Miler geocode failed for', key, '- status', res.status, errText.slice(0, 200));
+          console.warn('[DatImport] PC*Miler geocode: no coords for', key);
         }
       } catch (e) {
         console.warn('[DatImport] PC*Miler geocode error for', key, e.message);
