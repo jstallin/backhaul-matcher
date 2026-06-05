@@ -12,11 +12,7 @@ export default defineConfig({
   test: {
     include: [
       'src/**/*.{test,spec}.{js,ts}',
-      // api/__tests__ is enabled file-by-file as tests are rehabbed (they were never
-      // wired into CI and some rotted — see #91). integrations-truckstop.test.js is
-      // still excluded: its mocks predate the Vault migration and need a rewrite.
-      'api/__tests__/pcmiler-auth.test.js',
-      'api/__tests__/orgs.test.js',
+      'api/**/*.{test,spec}.{js,ts}',
     ],
     environment: 'node',
     globals: true,

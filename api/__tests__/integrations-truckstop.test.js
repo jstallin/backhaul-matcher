@@ -1,16 +1,19 @@
 /**
  * Unit tests for the Truckstop handler in api/integrations/[provider].js
  *
- * Focuses on org-aware behavior introduced with the Org model:
- * - Org admins can read/write/delete org-level tokens (stored by org_id)
- * - Org members (non-admin) cannot modify the org token (403)
- * - Users with no org fall back to user-level tokens
+ * Current model (post-Vault migration, #91 rehab):
+ * - Truckstop is connected per-ORG via a single `integration_id`, encrypted in
+ *   Supabase Vault and referenced by `org_integrations.integration_id_vault_id`.
+ * - There is NO user-level token and NO username/password. Saving takes
+ *   `{ integration_id }`, which is validated against Truckstop (SOAP) before being
+ *   stored via the `store_ts_integration_id` RPC.
+ * - Only org admins may save/disconnect; any member may read connection status.
  *
- * Env vars are injected via vite.config.js test.env so they're available
- * when the handler module loads its module-level constants.
+ * Env vars are injected via vite.config.js test.env; TRUCKSTOP_WS_* are set per-test
+ * below so validateTruckstopIntegrationId proceeds to the (mocked) SOAP fetch.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let mockSupabase;
 vi.mock('@supabase/supabase-js', () => ({
@@ -25,8 +28,7 @@ import handler from '../integrations/[provider].js';
 
 /**
  * Build a fluent Supabase query chain that resolves to { data, error }.
- * The chain is thenable so `await chain.update().eq()` works without needing
- * a terminal method like .single().
+ * Thenable so `await chain.update().eq().eq()` works without a terminal method.
  */
 function q(data, error = null) {
   const result = { data, error };
@@ -45,11 +47,7 @@ function q(data, error = null) {
   return chain;
 }
 
-/**
- * Simulates Supabase's "no rows" error (PGRST116) from .single().
- * The handler checks `if (error && error.code !== 'PGRST116')` — a PGRST116 error
- * means "not found" and is treated as null data, not a real failure.
- */
+/** Supabase "no rows" (PGRST116) from .single() — treated as null, not an error. */
 function qNotFound() {
   return q(null, { code: 'PGRST116', message: 'The result contains 0 rows' });
 }
@@ -70,27 +68,46 @@ function makeRes() {
   return r;
 }
 
-const MOCK_USER      = { id: 'user-123', email: 'jason@acme.com' };
-const CREDS          = { username: 'chip', password: 'secret' };
-const ORG_TOKEN_ROW  = { username: 'org-user', created_at: '2026-01-01' };
-const USER_TOKEN_ROW = { is_connected: true, account_email: 'chip@ts.com', connected_at: '2026-01-01' };
+const MOCK_USER = { id: 'user-123', email: 'jason@acme.com' };
+const INTEGRATION_ID = 'TS-INT-123';
+
+// A Truckstop SOAP response the validator reads as "valid" (200, no auth Errors).
+const validSoapResponse = () => ({ ok: true, status: 200, text: async () => '<Envelope></Envelope>' });
+// 401/Unauthorized → "invalid".
+const unauthorizedResponse = () => ({ ok: false, status: 401, text: async () => 'Unauthorized' });
+
+const realFetch = global.fetch;
 
 beforeEach(() => {
   mockSupabase = {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: MOCK_USER }, error: null }) },
     from: vi.fn(),
+    rpc:  vi.fn().mockResolvedValue({ data: null, error: null }),
   };
+  // WS creds present → validator proceeds to the (mocked) SOAP fetch instead of
+  // short-circuiting to 'unverified'.
+  process.env.TRUCKSTOP_WS_USERNAME = 'ws-user';
+  process.env.TRUCKSTOP_WS_PASSWORD = 'ws-pass';
+  // Default: Truckstop validation succeeds.
+  global.fetch = vi.fn().mockResolvedValue(validSoapResponse());
+});
+
+afterEach(() => {
+  delete process.env.TRUCKSTOP_WS_USERNAME;
+  delete process.env.TRUCKSTOP_WS_PASSWORD;
+  global.fetch = realFetch;
+  vi.clearAllMocks();
 });
 
 // ---------------------------------------------------------------------------
-// GET — connection status
+// GET — connection status (any org member may read)
 // ---------------------------------------------------------------------------
 
 describe('GET /api/integrations/truckstop — connection status', () => {
-  it('returns org token (is_org_token:true) when user has an org with a Truckstop token', async () => {
+  it('reports connected (is_org_token:true) when the org has an integration ID in vault', async () => {
     mockSupabase.from.mockImplementation((table) => {
       if (table === 'org_memberships')  return q({ org_id: 'org-1', role: 'admin' });
-      if (table === 'org_integrations') return q(ORG_TOKEN_ROW);
+      if (table === 'org_integrations') return q({ integration_id_vault_id: 'vault-1', created_at: '2026-01-01' });
       return q(null);
     });
     const r = makeRes();
@@ -98,41 +115,25 @@ describe('GET /api/integrations/truckstop — connection status', () => {
     expect(r._status).toBe(200);
     expect(r._body.connected).toBe(true);
     expect(r._body.is_org_token).toBe(true);
-    expect(r._body.username).toBe('org-user');
+    expect(r._body.connected_at).toBe('2026-01-01');
   });
 
-  it('falls back to user token when org has no Truckstop integration', async () => {
+  it('reports not-connected (is_org_token:true) when the org has no integration ID', async () => {
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q({ org_id: 'org-1', role: 'member' });
-      if (table === 'org_integrations')  return qNotFound(); // no org token (.single() → PGRST116)
-      if (table === 'user_integrations') return q(USER_TOKEN_ROW);
-      return q(null);
-    });
-    const r = makeRes();
-    await handler(tsReq('GET'), r);
-    expect(r._status).toBe(200);
-    expect(r._body.connected).toBe(true);
-    expect(r._body.is_org_token).toBe(false);
-    expect(r._body.username).toBe('chip@ts.com');
-  });
-
-  it('returns connected:false when user has an org but neither org nor user token exists', async () => {
-    mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q({ org_id: 'org-1', role: 'member' });
-      if (table === 'org_integrations')  return qNotFound();
-      if (table === 'user_integrations') return qNotFound();
+      if (table === 'org_memberships')  return q({ org_id: 'org-1', role: 'member' });
+      if (table === 'org_integrations') return qNotFound();
       return q(null);
     });
     const r = makeRes();
     await handler(tsReq('GET'), r);
     expect(r._status).toBe(200);
     expect(r._body.connected).toBe(false);
+    expect(r._body.is_org_token).toBe(true);
   });
 
-  it('returns connected:false when user has no org and no user-level token', async () => {
+  it('reports not-connected (is_org_token:false) when the user has no org', async () => {
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q(null);      // no org
-      if (table === 'user_integrations') return qNotFound();
+      if (table === 'org_memberships') return q(null);
       return q(null);
     });
     const r = makeRes();
@@ -144,29 +145,23 @@ describe('GET /api/integrations/truckstop — connection status', () => {
 });
 
 // ---------------------------------------------------------------------------
-// POST — save credentials
+// POST — save integration ID (org admin only)
 // ---------------------------------------------------------------------------
 
-describe('POST /api/integrations/truckstop — save credentials', () => {
-  it('saves org-level token and returns is_org_token:true when caller is org admin', async () => {
-    const orgIntChain = q(null);
+describe('POST /api/integrations/truckstop — save integration ID', () => {
+  it('validates then stores the integration ID via RPC for an org admin (200, is_org_token:true)', async () => {
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')  return q({ org_id: 'org-1', role: 'admin' });
-      if (table === 'org_integrations') return orgIntChain;
+      if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: CREDS }), r);
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
     expect(r._status).toBe(200);
     expect(r._body.is_org_token).toBe(true);
-    expect(orgIntChain.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ org_id: 'org-1', provider: 'truckstop', username: 'chip' }),
-      expect.anything()
-    );
-    expect(orgIntChain.upsert).toHaveBeenCalledWith(
-      expect.not.objectContaining({ api_token: expect.anything() }),
-      expect.anything()
-    );
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('store_ts_integration_id', {
+      p_org_id: 'org-1',
+      p_integration_id: INTEGRATION_ID,
+    });
   });
 
   it('returns 403 when caller is an org member (not admin)', async () => {
@@ -175,74 +170,95 @@ describe('POST /api/integrations/truckstop — save credentials', () => {
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: CREDS }), r);
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
     expect(r._status).toBe(403);
     expect(r._body.error).toMatch(/only org admins/i);
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
   });
 
-  it('saves user-level token and returns is_org_token:false when user has no org', async () => {
-    const userIntChain = q(null);
+  it('returns 400 when the user has no org', async () => {
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q(null); // no org
-      if (table === 'user_integrations') return userIntChain;
+      if (table === 'org_memberships') return q(null);
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: CREDS }), r);
-    expect(r._status).toBe(200);
-    expect(r._body.is_org_token).toBe(false);
-    expect(userIntChain.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: MOCK_USER.id, provider: 'truckstop', account_email: 'chip', is_connected: true }),
-      expect.anything()
-    );
-    expect(userIntChain.upsert).toHaveBeenCalledWith(
-      expect.not.objectContaining({ access_token: expect.anything() }),
-      expect.anything()
-    );
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
+    expect(r._status).toBe(400);
   });
 
-  it('returns 400 when username is missing', async () => {
+  it('returns 400 when integration_id is missing', async () => {
     mockSupabase.from.mockImplementation((table) => {
       if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: { password: 'secret' } }), r);
+    await handler(tsReq('POST', { body: {} }), r);
     expect(r._status).toBe(400);
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
   });
 
-  it('returns 400 when password is missing', async () => {
+  it('returns 400 (INVALID_INTEGRATION_ID) when Truckstop rejects the ID', async () => {
+    global.fetch = vi.fn().mockResolvedValue(unauthorizedResponse());
     mockSupabase.from.mockImplementation((table) => {
       if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
       return q(null);
     });
     const r = makeRes();
-    await handler(tsReq('POST', { body: { username: 'chip' } }), r);
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
     expect(r._status).toBe(400);
+    expect(r._body.code).toBe('INVALID_INTEGRATION_ID');
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 (VERIFY_FAILED) when validation cannot be performed', async () => {
+    // No WS creds → validator returns 'unverified' before any fetch.
+    delete process.env.TRUCKSTOP_WS_USERNAME;
+    delete process.env.TRUCKSTOP_WS_PASSWORD;
+    mockSupabase.from.mockImplementation((table) => {
+      if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
+      return q(null);
+    });
+    const r = makeRes();
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
+    expect(r._status).toBe(503);
+    expect(r._body.code).toBe('VERIFY_FAILED');
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when the store RPC fails', async () => {
+    mockSupabase.rpc.mockResolvedValue({ error: { message: 'vault down' } });
+    mockSupabase.from.mockImplementation((table) => {
+      if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'admin' });
+      return q(null);
+    });
+    const r = makeRes();
+    await handler(tsReq('POST', { body: { integration_id: INTEGRATION_ID } }), r);
+    expect(r._status).toBe(500);
   });
 });
 
 // ---------------------------------------------------------------------------
-// DELETE — disconnect
+// DELETE — disconnect (org admin only)
 // ---------------------------------------------------------------------------
 
 describe('DELETE /api/integrations/truckstop — disconnect', () => {
-  it('deletes org-level token and returns success when caller is org admin', async () => {
+  it('clears the org integration (vault ref → null) and returns success for an org admin', async () => {
     const orgIntChain = q(null);
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q({ org_id: 'org-1', role: 'admin' });
-      if (table === 'org_integrations')  return orgIntChain;
-      if (table === 'user_integrations') return q(null);
+      if (table === 'org_memberships')  return q({ org_id: 'org-1', role: 'admin' });
+      if (table === 'org_integrations') return orgIntChain;
       return q(null);
     });
     const r = makeRes();
     await handler(tsReq('DELETE'), r);
     expect(r._status).toBe(200);
     expect(r._body.success).toBe(true);
-    expect(orgIntChain.delete).toHaveBeenCalled();
+    expect(orgIntChain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ integration_id_vault_id: null })
+    );
   });
 
-  it('returns 403 when org member tries to disconnect org-level token', async () => {
+  it('returns 403 when an org member tries to disconnect', async () => {
     mockSupabase.from.mockImplementation((table) => {
       if (table === 'org_memberships') return q({ org_id: 'org-1', role: 'member' });
       return q(null);
@@ -253,18 +269,13 @@ describe('DELETE /api/integrations/truckstop — disconnect', () => {
     expect(r._body.error).toMatch(/only org admins/i);
   });
 
-  it('disconnects user-level token for a user with no org', async () => {
-    const userIntChain = q(null);
+  it('returns 400 when the user has no org', async () => {
     mockSupabase.from.mockImplementation((table) => {
-      if (table === 'org_memberships')   return q(null); // no org
-      if (table === 'user_integrations') return userIntChain;
+      if (table === 'org_memberships') return q(null);
       return q(null);
     });
     const r = makeRes();
     await handler(tsReq('DELETE'), r);
-    expect(r._status).toBe(200);
-    expect(userIntChain.update).toHaveBeenCalledWith(
-      expect.objectContaining({ is_connected: false, access_token: null })
-    );
+    expect(r._status).toBe(400);
   });
 });
