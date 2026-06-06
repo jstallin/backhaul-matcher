@@ -302,3 +302,11 @@ export const Share = ({ size = 24, color = 'currentColor', style = {} }) => (
     <line x1="12" y1="2" x2="12" y2="15"></line>
   </svg>
 );
+
+// #38: duplicate glyph — two overlapping rounded squares (lucide "copy" outline)
+export const Copy = ({ size = 24, color = 'currentColor', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);

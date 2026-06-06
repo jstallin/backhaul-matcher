@@ -6,7 +6,7 @@ import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
 import { FLEET_MODES } from '../../utils/fleetModes';
-import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle } from '../../icons';
+import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle, Copy } from '../../icons';
 
 const t = tokens;
 
@@ -201,6 +201,23 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false); // #38
+
+  // #38: copy the fleet + its rate config (trucks/drivers intentionally not copied)
+  const handleDuplicate = async () => {
+    if (!fleet || duplicating) return;
+    setDuplicating(true);
+    setError('');
+    try {
+      await db.fleets.duplicate(fleet.id);
+      onSaved(); // reload the fleet list — "Copy of <name>" appears alongside
+    } catch (err) {
+      console.error('Duplicate fleet error:', err);
+      setError('Failed to duplicate fleet');
+    } finally {
+      setDuplicating(false);
+    }
+  };
 
   // Populate form when fleet changes
   useEffect(() => {
@@ -436,7 +453,12 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
           <Save size={15} />{saving ? 'Saving…' : 'Save Profile'}
         </PrimaryBtn>
         {fleet && (
-          <GhostBtn onClick={() => setConfirmDelete(true)} danger style={{ marginLeft: 'auto' }}>
+          <GhostBtn onClick={handleDuplicate} style={{ marginLeft: 'auto' }}>
+            <Copy size={14} /> {duplicating ? 'Duplicating…' : 'Duplicate Fleet'}
+          </GhostBtn>
+        )}
+        {fleet && (
+          <GhostBtn onClick={() => setConfirmDelete(true)} danger>
             <Trash2 size={14} /> Delete Fleet
           </GhostBtn>
         )}
