@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Shield, BarChart2, FileText, DollarSign, TrendingUp } from '../icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useMobile } from '../hooks/useMobile';
 import { tokens } from '../styles/tokens.v2';
 
 const t = tokens;
@@ -41,14 +42,16 @@ const SectionHeader = ({ title }) => (
   </div>
 );
 
-const Table = ({ headers, rows }) => (
+// minWidth makes wide tables horizontally swipeable on mobile instead of clipping columns (#115)
+const Table = ({ headers, rows, minWidth }) => (
   <div style={{
     background: t.colors.page.cardBg,
     border: `1px solid ${t.colors.page.cardBorder}`,
     borderRadius: t.radius.xl, overflow: 'hidden',
     boxShadow: t.shadow.card,
   }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm }}>
+    <div style={{ overflowX: 'auto' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm, ...(minWidth ? { minWidth } : {}) }}>
       <thead>
         <tr style={{ background: t.colors.accent.blueLight }}>
           {headers.map((h, i) => (
@@ -74,6 +77,7 @@ const Table = ({ headers, rows }) => (
         ))}
       </tbody>
     </table>
+    </div>
   </div>
 );
 
@@ -136,6 +140,7 @@ const monthLabel = (key) => {
 
 export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const { session } = useAuth();
+  const isMobile = useMobile();
 
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
@@ -593,6 +598,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               {/* Breakdown table */}
               <div style={{ marginTop: '16px' }}>
                 <Table
+                  minWidth="480px"
                   headers={['Month', 'Revenue', 'Trimble', 'Infra', 'Net']}
                   rows={pnl.months.map(m => [
                     monthLabel(m.month),
@@ -657,32 +663,57 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                     border: `1px solid ${tone === 'red' ? '#fecaca' : tone === 'amber' ? '#fcd34d' : tone === 'green' ? '#86efac' : t.colors.page.cardBorder}` }}>{children}</span>
                 );
                 const pending = userActionPending === u.id;
+                const badges = (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {u.is_test_account && <Badge tone="green">E2E Test — do not delete</Badge>}
+                    {u.banned && <Badge tone="red">Banned</Badge>}
+                    {u.is_app_admin && <Badge>Admin</Badge>}
+                    {u.org ? <Badge>{u.org}</Badge> : <Badge tone="amber">No org</Badge>}
+                    {u.personal_domain && <Badge tone="amber">Personal email</Badge>}
+                  </div>
+                );
+                const actions = !u.is_app_admin && !u.is_test_account && (
+                  <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                    {u.banned ? (
+                      <button onClick={() => handleUserAction(u, 'unban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid ${t.colors.accent.green}`, background: 'transparent', color: t.colors.accent.green, cursor: pending ? 'not-allowed' : 'pointer' }}>Unban</button>
+                    ) : (
+                      <button onClick={() => handleUserAction(u, 'ban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fcd34d`, background: 'transparent', color: '#b45309', cursor: pending ? 'not-allowed' : 'pointer' }}>Ban</button>
+                    )}
+                    <button onClick={() => handleUserAction(u, 'delete')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fecaca`, background: 'transparent', color: '#dc2626', cursor: pending ? 'not-allowed' : 'pointer' }}>Delete</button>
+                  </div>
+                );
+                // Mobile: two predictable lines (name/email + signup date, then badges + actions)
+                // instead of free-form flex wrap, which broke differently row to row (#115).
+                if (isMobile) {
+                  return (
+                    <div key={u.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 16px', borderBottom: `1px solid ${t.colors.page.cardBorder}` }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{u.full_name || '—'}</div>
+                          <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, overflowWrap: 'anywhere' }}>{u.email}</div>
+                        </div>
+                        <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, whiteSpace: 'nowrap' }}>
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                        {badges}
+                        {actions}
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.colors.page.cardBorder}`, flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                       <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{u.full_name || '—'}</div>
                       <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{u.email}</div>
                     </div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {u.is_test_account && <Badge tone="green">E2E Test — do not delete</Badge>}
-                      {u.banned && <Badge tone="red">Banned</Badge>}
-                      {u.is_app_admin && <Badge>Admin</Badge>}
-                      {u.org ? <Badge>{u.org}</Badge> : <Badge tone="amber">No org</Badge>}
-                      {u.personal_domain && <Badge tone="amber">Personal email</Badge>}
-                    </div>
+                    {badges}
                     <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, width: '88px', textAlign: 'right' }}>
                       {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                     </div>
-                    {!u.is_app_admin && !u.is_test_account && (
-                      <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
-                        {u.banned ? (
-                          <button onClick={() => handleUserAction(u, 'unban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid ${t.colors.accent.green}`, background: 'transparent', color: t.colors.accent.green, cursor: pending ? 'not-allowed' : 'pointer' }}>Unban</button>
-                        ) : (
-                          <button onClick={() => handleUserAction(u, 'ban')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fcd34d`, background: 'transparent', color: '#b45309', cursor: pending ? 'not-allowed' : 'pointer' }}>Ban</button>
-                        )}
-                        <button onClick={() => handleUserAction(u, 'delete')} disabled={pending} style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: t.radius.md, border: `1px solid #fecaca`, background: 'transparent', color: '#dc2626', cursor: pending ? 'not-allowed' : 'pointer' }}>Delete</button>
-                      </div>
-                    )}
+                    {actions}
                   </div>
                 );
               })}
@@ -753,7 +784,8 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                     </div>
                   )}
                   {org.members?.length > 0 && (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm }}>
+                    <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm, minWidth: '520px' }}>
                       <thead>
                         <tr>
                           {['Member', 'Email', 'Role', ''].map((h, i) => (
@@ -784,6 +816,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   )}
                 </div>
               ))}
@@ -816,6 +849,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
               {/* Per-user activity table */}
               <Table
+                minWidth="760px"
                 headers={['User', 'Last Login', 'Last Request', 'Last Updated', 'Last Search', 'Last Detail Open', 'Hauled (all / 30d)']}
                 rows={org.members.map((m) => [
                   <span key="u" title={m.email}>{m.full_name || m.email}{m.role === 'admin' ? ' ★' : ''}</span>,

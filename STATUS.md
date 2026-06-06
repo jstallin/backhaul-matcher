@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** June 5, 2026
-- **Session type:** Claude Code (security sweep shipped #86–#100 + test rehab + uptime health + migration-history reconcile)
-- **Updated by:** Claude Code (session 10)
+- **Date:** June 6, 2026
+- **Session type:** Claude Code (Ryder pilot-feedback batch #81–#85 shipped + #38, #94, #108 What's New banner, #103 user guide)
+- **Updated by:** Claude Code (session 11)
 
 ---
 
@@ -21,6 +21,28 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 5–6, 2026, session 11) — Ryder feedback batch #81–#85 + fleet duplicate + CSP finish + What's New banner + user guide
+
+Everything below **shipped to production** (PRs #101–#102, #104–#107, #109, #111–#114, all merged). Four new migrations (`20260605000004` → `20260606000001`) auto-applied to prod by the Supabase GitHub integration and **verified June 6** — `supabase migration list` shows local = remote on both prod and staging; CLI relinked to staging afterward.
+
+**Ryder pilot-feedback batch (all five from session 8 intake, all closed):**
+- **#81 — "Driver Needed Home By"** date field on backhaul requests (migration `20260605000004_add_driver_home_by`). Display-only (not sent to Truckstop); shown at results top + load detail header. Follow-up refinement: **dropped from estimate requests** (`896faef`) — backhaul-only. v1 + v2.
+- **#82 — Share load from detail view** (Email / Text / Copy). Email via Resend with reply-to = logged-in user; Text via Twilio; Copy → clipboard. Every share tracked (migration `20260605000005_add_load_shares`). v1 + v2.
+- **#83 — Expired backhaul requests auto-disabled** (End Pickup Window fully in the past): derived-from-dates approach as planned — no stored status, **no migration** (`requestExpiry.js` + tests). Run blocked in UI (manual) and skipped in the cron (no credit burn); re-enables on date edit. v1 + v2 incl. estimates.
+- **#84 — "Operations Declined"** cancellation reason + Reports tile aggregating declined top-load revenue. Zero-copy crux handled as designed: top-load gross / customer-net / carrier-net **snapshotted at decline** onto the request (migration `20260605000006_add_declined_top_snapshot`, `declineSnapshot.js` + tests). v1 `FleetReports` + v2 `ReportsView`.
+- **#85 — Admin Dashboard "Org Activity"** section: per-user last login / request created / search run / load detail opened, hauled revenue, ops-declined lost revenue. The shared telemetry mechanism landed here as planned: new **`user_activity_events`** table (migration `20260606000001`) + `activityEvents.js` emitter, rollups in `api/orgs/[action].js`.
+
+**Also shipped:**
+- **#38 — Duplicate a fleet** (v1 `Fleets` + v2 `FleetsView`, `db.fleets` copy helper).
+- **#94 (security P2, closed) — CSP `script-src 'unsafe-inline'` dropped.** The `app.html` inline SW script externalized to `public/sw-register.js`; CSP now fully enforcing without unsafe-inline. **Security sweep is now fully closed** — #86 also closed (Truckstop integration-ID rotation deferred/accepted by Chip as residual risk; logs showed no calls in the retained window).
+- **#108 — "What's New" release banner**, driven by GitHub milestones: `scripts/generate-whats-new.mjs` + `whats-new.yml` workflow regenerate `public/whats-new.json`; dismissible banner in v1 `Dashboard` + v2 `Shell`. Content seeded ("June 2026 - Pilot Updates!"). Fixed a Playwright strict-mode flake the banner content introduced (broad text assertions now `.first()`, `f12ccb2`).
+- **#103 — User guide updated** for all June 2026 features (Duplicate Fleet, Driver Home By, expiry behavior, Share, Declined reports, Modes field) + new/refreshed screenshots.
+- Docs: CLAUDE.md records that prod migrations auto-apply via the Supabase GitHub integration on merge (`e1c8ac8`) and that branch protection is enabled on `main` (`90c1322`).
+
+**Open backlog is now all-P3:** #78 (LinkedIn/founder schema), #77 (mobile app discussion), #45 (Ryder uses Edge), #31 (negotiation option-3 revisit), #30 (full mode filtering + LoadType enum validation).
 
 ---
 
@@ -303,11 +325,11 @@ Great Ryder kickoff (ran an hour over, they're excited to start). Items 001–00
 ---
 
 ## In Progress / Next Up
+- **All-P3 backlog** — #78 (LinkedIn/founder schema), #77 (mobile app discussion), #45 (Edge browser awareness), #31 (negotiation option-3), #30 (full mode filtering + LoadType enum validation by Chip).
 - **Waiting on Chip's feedback** on Work Week Planning results quality + new load card fields (credit, email, appt times, special instructions).
 - **Remove `[WWP]` debug logging** from algorithm once Chip validates.
 - **Crisp chat** — uncomment `CrispChat` in App.jsx + AppV2.jsx and the button in HelpView.jsx when ready to launch.
 - **Zip-code geocoding** — `pickup_zip` and `delivery_zip` are now captured; could replace state-centroid map markers with more accurate positions.
-- **Corporate card** → Supabase Pro + Vercel Pro upgrades → Supabase Vault for integration ID encryption.
 
 ---
 
@@ -329,10 +351,10 @@ Great Ryder kickoff (ran an hour over, they're excited to start). Items 001–00
 ---
 
 ## Open Questions / Blockers
-- Corporate card for Supabase Pro + Vercel Pro upgrades.
-- Authenticated Playwright tests need proper auth flow implementation.
-- Truckstop integration ID stored in plaintext — encrypt via Supabase Vault after Pro upgrade (accepted risk for pilot).
+- Truckstop integration-ID **rotation** — deferred/accepted by Chip (#86 closed); ID itself now lives in Vault.
+- Relay-mode math + distance numbers — pending Chip validation against live PC*MILER.
 - WWP algorithm quality — pending Chip validation.
+- Truckstop `LoadType` enum (esp. `All`) — Chip must validate against the live API (#30).
 
 ---
 
