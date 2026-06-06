@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { HaulMonitorLogo } from './HaulMonitorLogo';
+import { WhatsNewBanner } from './WhatsNewBanner';
 import { db } from '../lib/supabase';
 import { CoDriver } from './CoDriver';
 import { useCredits } from '../hooks/useCredits';
@@ -200,6 +201,9 @@ export const Dashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       </header>
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: 'clamp(20px, 4vw, 32px) clamp(16px, 3vw, 24px)' }}>
+        {/* #108: temporary release-notes banner (dismiss = hidden until next release) */}
+        <WhatsNewBanner palette={{ accent: colors.accent.primary, accentBg: `${colors.accent.primary}12`, border: `${colors.accent.primary}40`, text: colors.text.primary, textMuted: colors.text.secondary }} />
+
         {/* Page title */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ margin: '0 0 6px 0', fontSize: '26px', fontWeight: 800, color: colors.text.primary }}>

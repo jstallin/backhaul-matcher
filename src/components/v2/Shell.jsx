@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { tokens } from '../../styles/tokens.v2';
 import { Sidebar } from './Sidebar';
+import { WhatsNewBanner } from '../WhatsNewBanner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
@@ -389,6 +390,8 @@ export function Shell({ currentView, onNavigate, creditBalance, children }) {
             background: t.colors.page.bg,
           }}
         >
+          {/* #108: temporary release-notes banner (dismiss = hidden until next release) */}
+          <WhatsNewBanner />
           {children}
         </main>
 

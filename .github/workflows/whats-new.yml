@@ -1,0 +1,47 @@
+# Issue #108: when a milestone closes, generate the "What's New" banner JSON from
+# issues labeled `whats-new` in that milestone and commit it to STAGING. The change
+# then ships through the normal staging → main promotion (reviewable in the PR).
+name: Generate What's New
+
+on:
+  milestone:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: "Milestone title to (re)generate from"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate whats-new.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/generate-whats-new.mjs "${{ github.event.milestone.title || inputs.milestone }}"
+
+      - name: Commit to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/whats-new.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: What's New banner content — ${{ github.event.milestone.title || inputs.milestone }} (#108)"
+          git push origin staging
