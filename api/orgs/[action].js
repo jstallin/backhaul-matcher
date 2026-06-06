@@ -13,6 +13,7 @@
  *   GET  /api/orgs/all           — list all orgs with member counts (app admin only)
  *   GET  /api/orgs/admin-settings — get admin key/value settings (app admin only)
  *   POST /api/orgs/admin-settings — upsert a setting { key, value } (app admin only)
+ *   GET  /api/orgs/activity      — per-org/per-user activity & revenue rollups (app admin only, #85)
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -96,6 +97,7 @@ export default async function handler(req, res) {
     case 'user-action':     return handleUserAction(req, res, supabase, user);
     case 'pilot':           return handlePilot(req, res, supabase, user);
     case 'admin-settings':    return handleAdminSettings(req, res, supabase, user);
+    case 'activity':          return handleActivity(req, res, supabase, user);
     case 'trimble-actuals':   return handleTrimbleActuals(req, res, supabase, user);
     default:
       return res.status(404).json({ error: `Unknown action: ${action}` });
@@ -919,5 +921,132 @@ async function handleUserAction(req, res, supabase, user) {
   } catch (err) {
     console.error('Error in handleUserAction:', err);
     return res.status(500).json({ error: err.message || 'User action failed' });
+  }
+}
+
+// ── GET /api/orgs/activity ────────────────────────────────────────────────────
+// App admin only (#85): per-org, per-user activity recency + revenue rollups for
+// the Admin Dashboard "Org Activity" panel. Revenue shown all-time AND last 30
+// days. Cross-user reads happen here with the service role — never client-side.
+
+async function handleActivity(req, res, supabase, user) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { data: adminRow } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!adminRow) return res.status(403).json({ error: 'App admin access required' });
+
+  try {
+    const cutoff30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [{ data: orgs, error: orgsError }, { data: { users } }, { data: requests, error: reqError }, { data: events, error: evError }] = await Promise.all([
+      supabase.from('orgs').select('id, name, email_domain, is_pilot, org_memberships(user_id, role)').order('created_at'),
+      supabase.auth.admin.listUsers({ perPage: 1000 }),
+      supabase.from('backhaul_requests').select(
+        'user_id, created_at, updated_at, status, net_revenue, completed_at, cancellation_reason, cancelled_at, declined_top_gross_revenue, declined_top_customer_net, declined_top_carrier_net'
+      ),
+      // Latest-first; 5000 covers pilot scale for months (index on user/type/created).
+      // If this ever truncates, "last X" stays correct for active users — only very
+      // stale users could under-report, which the panel exists to surface anyway.
+      supabase.from('user_activity_events').select('user_id, event_type, created_at').order('created_at', { ascending: false }).limit(5000),
+    ]);
+
+    if (orgsError) throw orgsError;
+    if (reqError) throw reqError;
+    if (evError) throw evError;
+
+    // Per-user reductions
+    const byUser = {};
+    const u = (id) => (byUser[id] ||= {
+      last_request_created: null, last_request_updated: null,
+      last_search_run: null, last_detail_open: null,
+      hauled_all: 0, hauled_30d: 0, completed_count: 0,
+      declined_gross_all: 0, declined_customer_all: 0, declined_carrier_all: 0,
+      declined_gross_30d: 0, declined_customer_30d: 0, declined_carrier_30d: 0,
+      declined_count: 0,
+    });
+    const maxTs = (a, b) => (!a || (b && b > a)) ? b : a;
+
+    for (const r of requests || []) {
+      const row = u(r.user_id);
+      row.last_request_created = maxTs(row.last_request_created, r.created_at);
+      row.last_request_updated = maxTs(row.last_request_updated, r.updated_at);
+      if (r.status === 'completed') {
+        const net = Number(r.net_revenue) || 0;
+        row.hauled_all += net;
+        row.completed_count += 1;
+        if (r.completed_at && r.completed_at >= cutoff30d) row.hauled_30d += net;
+      }
+      if (r.cancellation_reason === 'operations_declined' && r.declined_top_gross_revenue != null) {
+        const gross = Number(r.declined_top_gross_revenue) || 0;
+        const cust = Number(r.declined_top_customer_net) || 0;
+        const carr = Number(r.declined_top_carrier_net) || 0;
+        row.declined_gross_all += gross; row.declined_customer_all += cust; row.declined_carrier_all += carr;
+        row.declined_count += 1;
+        if (r.cancelled_at && r.cancelled_at >= cutoff30d) {
+          row.declined_gross_30d += gross; row.declined_customer_30d += cust; row.declined_carrier_30d += carr;
+        }
+      }
+    }
+
+    for (const e of events || []) {
+      const row = u(e.user_id);
+      if (e.event_type === 'search_run') row.last_search_run = maxTs(row.last_search_run, e.created_at);
+      if (e.event_type === 'load_detail_open') row.last_detail_open = maxTs(row.last_detail_open, e.created_at);
+    }
+
+    // Assemble per-org
+    const result = (orgs || []).map((org) => {
+      const members = (org.org_memberships || []).map((m) => {
+        const authUser = users?.find((au) => au.id === m.user_id);
+        const stats = byUser[m.user_id] || u(`__empty_${m.user_id}`);
+        return {
+          user_id: m.user_id,
+          role: m.role,
+          email: authUser?.email || '—',
+          full_name: authUser?.user_metadata?.full_name || null,
+          last_sign_in_at: authUser?.last_sign_in_at || null,
+          last_request_created: stats.last_request_created,
+          last_request_updated: stats.last_request_updated,
+          last_search_run: stats.last_search_run,
+          last_detail_open: stats.last_detail_open,
+          hauled_all: stats.hauled_all,
+          hauled_30d: stats.hauled_30d,
+          completed_count: stats.completed_count,
+        };
+      });
+
+      const sum = (fn) => members.reduce((s, m) => s + (byUser[m.user_id] ? fn(byUser[m.user_id]) : 0), 0);
+      return {
+        id: org.id,
+        name: org.name,
+        email_domain: org.email_domain,
+        is_pilot: org.is_pilot || false,
+        member_count: members.length,
+        rollup: {
+          hauled_all: sum((s) => s.hauled_all),
+          hauled_30d: sum((s) => s.hauled_30d),
+          completed_count: sum((s) => s.completed_count),
+          declined_gross_all: sum((s) => s.declined_gross_all),
+          declined_customer_all: sum((s) => s.declined_customer_all),
+          declined_carrier_all: sum((s) => s.declined_carrier_all),
+          declined_gross_30d: sum((s) => s.declined_gross_30d),
+          declined_customer_30d: sum((s) => s.declined_customer_30d),
+          declined_carrier_30d: sum((s) => s.declined_carrier_30d),
+          declined_count: sum((s) => s.declined_count),
+          last_sign_in_at: members.reduce((a, m) => (!a || (m.last_sign_in_at && m.last_sign_in_at > a)) ? m.last_sign_in_at : a, null),
+        },
+        members,
+      };
+    });
+
+    return res.status(200).json({ orgs: result });
+  } catch (err) {
+    console.error('Error in handleActivity:', err);
+    return res.status(500).json({ error: 'Failed to fetch org activity' });
   }
 }

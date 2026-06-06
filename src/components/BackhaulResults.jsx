@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { LoadShareMenu } from './LoadShareMenu';
+import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { generateTop10Report } from '../utils/generateReport';
 import { computeNegotiation, netCreditAtGross, isNoRateLoad } from '../utils/routeHomeMatching';
 
@@ -504,7 +505,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
               {/* Action Buttons */}
               <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <button onClick={() => setSelectedMatch(match)} style={{ flex: 1, padding: '12px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent.secondary; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent.primary; }}>
+                  <button onClick={() => { logActivityEvent(ACTIVITY_EVENTS.LOAD_DETAIL_OPEN, { load_id: match.load_id || match.id, source: match.source }); setSelectedMatch(match); }} style={{ flex: 1, padding: '12px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent.secondary; }} onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent.primary; }}>
                     <Package size={16} />
                     View Details
                   </button>

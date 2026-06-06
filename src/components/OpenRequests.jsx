@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
 import { buildDeclineSnapshot } from '../utils/declineSnapshot';
+import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { geocodeAddress } from '../utils/pcMilerClient';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
@@ -300,6 +301,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       }
       console.log(`Using ${loadsForMatching.length} ${isLive ? 'live ' : ''}loads from: ${source}`);
 
+      logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'backhaul', request_id: request.id }); // #85
       const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,
@@ -457,6 +459,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       const homeRadiusMiles = 50;
       const corridorWidthMiles = 100;
 
+      logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'backhaul', request_id: request.id, source: 'import' }); // #85
       const result = await findRouteHomeBackhauls(
         datumPoint, fleetHome, fleetProfile, importedLoads,
         homeRadiusMiles, corridorWidthMiles, rateConfig, request.is_relay || false

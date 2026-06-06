@@ -11,6 +11,7 @@ import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
+import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { useCredits } from '../hooks/useCredits';
 import { BuyCreditsModal } from './BuyCreditsModal';
 
@@ -131,6 +132,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
         console.log('No imported loads found — using demo data');
       }
 
+      logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'estimate', request_id: request.id }); // #85
       const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,
