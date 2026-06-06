@@ -8,6 +8,7 @@ import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
+import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 
 const t = tokens;
 
@@ -1346,6 +1347,7 @@ export function EstimatesView() {
       const loadsResult = await getLoadsForMatching(user.id, estimate.fleet_id, requestContext);
       const { loads: loadsForMatching } = loadsResult || { loads: [] };
 
+      logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'estimate', request_id: estimate.id }); // #85
       const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,

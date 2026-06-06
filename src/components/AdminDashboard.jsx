@@ -140,6 +140,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [loading, setLoading] = useState(true);
   const [orgs, setOrgs] = useState([]);
   const [users, setUsers] = useState([]);               // #49/#50: all users incl. org-less
+  const [activity, setActivity] = useState([]);         // #85: per-org activity & revenue rollups
   const [userActionPending, setUserActionPending] = useState(null);
   const [roleChanging, setRoleChanging] = useState(null);
   const [pilotToggling, setPilotToggling] = useState(null);
@@ -161,7 +162,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [infraSaving, setInfraSaving] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchOrgs(), fetchUsers(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
+    Promise.all([fetchOrgs(), fetchUsers(), fetchActivity(), fetchDebugSettings(), fetchTrimbleActuals(), fetchTrimbleBillingStart()]).finally(() => setLoading(false));
     Promise.all([fetchRevenue(), fetchTrimbleHistory(), fetchInfraCosts()]).finally(() => setPnlLoading(false));
   }, []);
 
@@ -193,6 +194,21 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
       if (!res.ok) return;
       const data = await res.json();
       setUsers(data.users || []);
+    } catch {
+      // Non-critical
+    }
+  };
+
+  // #85: per-org/per-user activity & revenue rollups
+  const fetchActivity = async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/orgs/activity', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setActivity(data.orgs || []);
     } catch {
       // Non-critical
     }
@@ -460,6 +476,26 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
   const fmtDate = (iso) => {
     if (!iso) return '—';
     return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // #85: relative recency for the Org Activity panel — "just now", "3h ago", "12d ago".
+  // Color-coding pairs with this: green <7d, amber 7–30d, red >30d / never.
+  const fmtAgo = (iso) => {
+    if (!iso) return 'never';
+    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+  const agoColor = (iso) => {
+    if (!iso) return '#dc2626';
+    const days = (Date.now() - new Date(iso).getTime()) / 86400000;
+    if (days < 7) return '#16a34a';
+    if (days < 30) return '#d97706';
+    return '#dc2626';
   };
 
   // Merge revenue (Stripe, net of fees) + variable Trimble cost + fixed infra into a
@@ -753,6 +789,46 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
               ))}
             </div>
           </>
+        )}
+
+        {/* ── ORG ACTIVITY (#85) ── */}
+        <SectionHeader title="Org Activity" />
+        {activity.length === 0 ? (
+          <div style={{ padding: '16px', background: t.colors.page.cardBg, border: `1px solid ${t.colors.page.cardBorder}`, borderRadius: t.radius.xl, color: t.colors.text.muted, fontSize: t.font.size.sm }}>
+            No org activity data yet.
+          </div>
+        ) : (
+          activity.map((org) => (
+            <div key={org.id} style={{ marginBottom: '20px' }}>
+              {/* Org header + rollups */}
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                <span style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{org.name}</span>
+                {org.is_pilot && <span style={{ padding: '2px 8px', background: t.colors.accent.blueLight, color: t.colors.accent.blue, borderRadius: t.radius.md, fontSize: t.font.size.xs, fontWeight: t.font.weight.bold }}>PILOT</span>}
+                <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                  {org.member_count} member{org.member_count !== 1 ? 's' : ''} · last login <span style={{ color: agoColor(org.rollup.last_sign_in_at), fontWeight: t.font.weight.semibold }}>{fmtAgo(org.rollup.last_sign_in_at)}</span>
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+                  Hauled: <strong style={{ color: '#16a34a' }}>{fmtUSD(org.rollup.hauled_all)}</strong> all-time / <strong style={{ color: '#16a34a' }}>{fmtUSD(org.rollup.hauled_30d)}</strong> 30d
+                  {org.rollup.declined_count > 0 && (
+                    <> · Ops declined: <strong style={{ color: '#dc2626' }}>{fmtUSD(org.rollup.declined_gross_all)}</strong> all-time / <strong style={{ color: '#dc2626' }}>{fmtUSD(org.rollup.declined_gross_30d)}</strong> 30d</>
+                  )}
+                </span>
+              </div>
+              {/* Per-user activity table */}
+              <Table
+                headers={['User', 'Last Login', 'Last Request', 'Last Updated', 'Last Search', 'Last Detail Open', 'Hauled (all / 30d)']}
+                rows={org.members.map((m) => [
+                  <span key="u" title={m.email}>{m.full_name || m.email}{m.role === 'admin' ? ' ★' : ''}</span>,
+                  <span key="l" style={{ color: agoColor(m.last_sign_in_at), fontWeight: t.font.weight.semibold }}>{fmtAgo(m.last_sign_in_at)}</span>,
+                  <span key="c" style={{ color: agoColor(m.last_request_created) }}>{fmtAgo(m.last_request_created)}</span>,
+                  <span key="up" style={{ color: agoColor(m.last_request_updated) }}>{fmtAgo(m.last_request_updated)}</span>,
+                  <span key="s" style={{ color: agoColor(m.last_search_run) }}>{fmtAgo(m.last_search_run)}</span>,
+                  <span key="d" style={{ color: agoColor(m.last_detail_open) }}>{fmtAgo(m.last_detail_open)}</span>,
+                  <span key="r">{fmtUSD(m.hauled_all)} / {fmtUSD(m.hauled_30d)}{m.completed_count > 0 ? ` (${m.completed_count})` : ''}</span>,
+                ])}
+              />
+            </div>
+          ))
         )}
 
         {/* ── TRIMBLE ACTUALS ── */}

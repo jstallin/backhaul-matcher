@@ -12,6 +12,7 @@ import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishRequests';
 import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
 import { buildDeclineSnapshot } from '../../utils/declineSnapshot';
+import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
@@ -1674,7 +1675,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
                 rank={idx + 1}
                 fleet={fleet}
                 request={request}
-                onViewDetails={m => setSelectedMatch(m)}
+                onViewDetails={m => { logActivityEvent(ACTIVITY_EVENTS.LOAD_DETAIL_OPEN, { load_id: m.load_id || m.id, source: m.source }); setSelectedMatch(m); }} // #85
                 onMapClick={m => { setMapFocusLoad(m); setMapMatch(m); }}
                 onHaulThis={m => setHaulMatch(m)}
                 onNegotiate={m => setNegotiateMatch(m)}
@@ -1965,6 +1966,7 @@ export function SearchView() {
         return;
       }
 
+      logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'backhaul', request_id: request.id }); // #85
       const result = await findRouteHomeBackhauls(
         datumPoint,
         fleetHome,
