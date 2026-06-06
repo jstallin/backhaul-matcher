@@ -39,7 +39,8 @@ test.describe('Navigation', () => {
     const fleetsLink = page.getByText(/fleets/i).first();
     if (await fleetsLink.isVisible()) {
       await fleetsLink.click();
-      await expect(page.getByText(/fleet/i)).toBeVisible({ timeout: 10_000 });
+      // .first(): the What's New banner (#108) may also mention "fleet" — strict mode would fail
+      await expect(page.getByText(/fleet/i).first()).toBeVisible({ timeout: 10_000 });
     }
   });
 
@@ -47,7 +48,8 @@ test.describe('Navigation', () => {
     const startLink = page.getByText(/start request/i).first();
     if (await startLink.isVisible()) {
       await startLink.click();
-      await expect(page.getByText(/request/i)).toBeVisible({ timeout: 10_000 });
+      // .first(): the What's New banner (#108) may also mention "request" — strict mode would fail
+      await expect(page.getByText(/request/i).first()).toBeVisible({ timeout: 10_000 });
     }
   });
 });
