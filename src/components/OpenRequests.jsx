@@ -11,6 +11,7 @@ import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
 import { buildDeclineSnapshot } from '../utils/declineSnapshot';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
+import { isRequestExpired, EXPIRED_HINT } from '../utils/requestExpiry';
 import { geocodeAddress } from '../utils/pcMilerClient';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
@@ -163,6 +164,16 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const handleSelectRequest = async (request) => {
+    // #83: an expired request can't be run (no credit deducted) — offer the fix.
+    if (isRequestExpired(request)) {
+      if (window.confirm(`${EXPIRED_HINT}.\n\nEdit "${request.request_name}" now?`)) {
+        localStorage.setItem('editingRequest', JSON.stringify(request));
+        localStorage.setItem('editingRequestIntent', 'true');
+        onMenuNavigate('start-request');
+      }
+      return;
+    }
+
     setLoadingMatches(true);
     setSelectedRequest(request);
 
@@ -417,6 +428,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
   };
 
   const handleRunWithImportedLoads = async (request, importedLoads) => {
+    // #83: expired request can't be run — no credit deducted.
+    if (isRequestExpired(request)) { alert(EXPIRED_HINT); return; }
+
     setDatImportRequest(null);
     setLoadingMatches(true);
     setSelectedRequest(request);
@@ -825,6 +839,15 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                           {request.request_name}
                         </h4>
                         {(() => {
+                          // #83: expired (pickup window fully past) overrides the status badge —
+                          // distinct from Active, Paused, and Completed. Edit the dates to revive.
+                          if (isRequestExpired(request)) {
+                            return (
+                              <div title={EXPIRED_HINT} style={{ padding: '4px 12px', background: `${colors.accent.danger}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: colors.accent.danger, textTransform: 'uppercase' }}>
+                                ◌ Inactive — window passed
+                              </div>
+                            );
+                          }
                           const isActive = request.status === 'active';
                           const isSearching = request.status === 'in_progress';
                           const badgeColor = isActive ? colors.accent.success : isSearching ? colors.accent.warning : colors.text.tertiary;
