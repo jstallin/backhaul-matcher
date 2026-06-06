@@ -1,5 +1,11 @@
 {
-  "version": null,
-  "date": null,
-  "items": []
+  "version": "Banner Test — DELETE ME",
+  "date": "2026-06-06",
+  "items": [
+    {
+      "title": "Throwaway banner test issue — DELETE ME",
+      "body": "You can now share any load by email or text straight from its detail view — this is a test blurb to verify the banner renders correctly.",
+      "issue": 110
+    }
+  ]
 }
