@@ -99,9 +99,21 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       }, {})
   }));
 
+  // #84: Operations Declined — revenue passed on. Only requests with a snapshot
+  // (captured from the displayed top match at decline time) are counted; declines
+  // with no matches on screen had nothing to capture and are silently skipped.
+  const declinedRequests = cancelledRequests.filter(r =>
+    r.cancellation_reason === 'operations_declined' && r.declined_top_gross_revenue != null);
+  const declinedGross = declinedRequests.reduce((sum, r) => sum + (parseFloat(r.declined_top_gross_revenue) || 0), 0);
+  const declinedCustomerNet = declinedRequests.reduce((sum, r) => sum + (parseFloat(r.declined_top_customer_net) || 0), 0);
+  const declinedCarrierNet = declinedRequests.reduce((sum, r) => sum + (parseFloat(r.declined_top_carrier_net) || 0), 0);
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
   };
+
+  // '—' for nets that couldn't be computed (no rate config at decline time)
+  const formatCurrencyOrDash = (value) => (value == null ? '—' : formatCurrency(parseFloat(value)));
 
   const formatNumber = (value) => {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(value);
@@ -171,6 +183,15 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
       title: 'Cancellation Reasons',
       value: `${Object.keys(cancellationReasons).length} types`,
       icon: FileText,
+      color: colors.accent.danger,
+      gradient: `colors.accent.danger`
+    },
+    {
+      id: 'operations-declined',
+      title: 'Ops Declined Revenue',
+      value: formatCurrency(declinedGross),
+      subtitle: `${declinedRequests.length} declined request${declinedRequests.length !== 1 ? 's' : ''}`,
+      icon: DollarSign,
       color: colors.accent.danger,
       gradient: `colors.accent.danger`
     },
@@ -347,6 +368,57 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                 </tbody>
               </table>
             </div>
+          </div>
+        );
+
+      case 'operations-declined':
+        return (
+          <div>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 800 }}>Operations Declined — Revenue Passed On</h3>
+            <div style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.accent.danger}40` }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Gross Revenue</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.danger }}>{formatCurrency(declinedGross)}</div>
+              </div>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.accent.danger}40` }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Customer Net</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.danger }}>{formatCurrency(declinedCustomerNet)}</div>
+              </div>
+              <div style={{ padding: '20px', background: colors.background.secondary, borderRadius: '12px', border: `1px solid ${colors.accent.danger}40` }}>
+                <div style={{ fontSize: '13px', color: colors.text.secondary, marginBottom: '8px' }}>Carrier Net</div>
+                <div style={{ fontSize: '28px', fontWeight: 900, color: colors.accent.danger }}>{formatCurrency(declinedCarrierNet)}</div>
+              </div>
+            </div>
+            {declinedRequests.length === 0 ? (
+              <p style={{ color: colors.text.secondary }}>No Operations-Declined requests with a captured top load yet. Snapshots are taken when a request is cancelled as OPERATIONS DECLINED while search results are displayed.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${colors.border.secondary}` }}>
+                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Request Name</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Top Load at Decline</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Gross</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Customer Net</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Carrier Net</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Declined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {declinedRequests.map(request => (
+                      <tr key={request.id} style={{ borderBottom: `1px solid ${colors.border.primary}` }}>
+                        <td style={{ padding: '12px', fontWeight: 600 }}>{request.request_name}</td>
+                        <td style={{ padding: '12px' }}>{request.declined_top_load_summary || '—'}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: colors.accent.danger }}>{formatCurrencyOrDash(request.declined_top_gross_revenue)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>{formatCurrencyOrDash(request.declined_top_customer_net)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>{formatCurrencyOrDash(request.declined_top_carrier_net)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>{request.cancelled_at ? new Date(request.cancelled_at).toLocaleDateString() : 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         );
 

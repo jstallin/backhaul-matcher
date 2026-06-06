@@ -314,6 +314,15 @@ export function ReportsView() {
   const monthlyRevenue  = getRevenueByMonth(completed, 6);
   const statusCounts    = getRequestsByStatus(requests);
 
+  // #84: Operations Declined — revenue passed on. Only requests with a snapshot
+  // (taken at decline time from the displayed top match) appear; declines with no
+  // matches on screen had nothing to capture and are silently skipped.
+  const declined = requests.filter((r) =>
+    r.cancellation_reason === 'operations_declined' && r.declined_top_gross_revenue != null);
+  const declinedGross       = declined.reduce((s, r) => s + (Number(r.declined_top_gross_revenue) || 0), 0);
+  const declinedCustomerNet = declined.reduce((s, r) => s + (Number(r.declined_top_customer_net) || 0), 0);
+  const declinedCarrierNet  = declined.reduce((s, r) => s + (Number(r.declined_top_carrier_net) || 0), 0);
+
   const sorted = [...requests].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 50);
 
   const thStyle = {
@@ -417,6 +426,43 @@ export function ReportsView() {
           </div>
         </Card>
       </div>
+
+      {/* #84: Operations Declined — revenue passed on */}
+      {declined.length > 0 && (
+        <Card style={{ marginBottom: '24px' }}>
+          <CardHeader title="Operations Declined" subtitle="Revenue passed on — top available load at decline time" />
+          <div style={{ padding: '16px 24px 24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
+              {[
+                { label: 'Gross Revenue', value: formatCurrency(declinedGross) },
+                { label: 'Customer Net', value: formatCurrency(declinedCustomerNet) },
+                { label: 'Carrier Net', value: formatCurrency(declinedCarrierNet) },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ padding: '14px 16px', background: t.colors.accent.redLight, border: `1px solid ${t.colors.accent.red}30`, borderRadius: t.radius.xl }}>
+                  <SectionLabel>{label}</SectionLabel>
+                  <div style={{ marginTop: '6px', fontSize: t.font.size.xl, fontWeight: t.font.weight.black, color: t.colors.accent.red }}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {declined.map((r, idx) => (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: idx < declined.length - 1 ? `1px solid ${t.colors.page.cardBorder}` : 'none', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{r.request_name || '—'}</span>
+                  {r.declined_top_load_summary && (
+                    <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>· {r.declined_top_load_summary}</span>
+                  )}
+                  <span style={{ marginLeft: 'auto', fontSize: t.font.size.sm, color: t.colors.text.secondary, whiteSpace: 'nowrap' }}>
+                    {formatCurrency(r.declined_top_gross_revenue)} / {formatCurrency(r.declined_top_customer_net)} / {formatCurrency(r.declined_top_carrier_net)}
+                  </span>
+                </div>
+              ))}
+              <div style={{ marginTop: '10px', fontSize: t.font.size.xs, color: t.colors.text.muted }}>
+                {declined.length} declined request{declined.length !== 1 ? 's' : ''} · gross / customer net / carrier net
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* All Requests table */}
       <Card>

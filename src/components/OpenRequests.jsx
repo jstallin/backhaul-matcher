@@ -9,6 +9,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { BackhaulResults } from './BackhaulResults';
 import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeMatching';
+import { buildDeclineSnapshot } from '../utils/declineSnapshot';
 import { geocodeAddress } from '../utils/pcMilerClient';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
@@ -490,7 +491,10 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       await db.requests.update(selectedRequest.id, {
         status: 'cancelled',
         cancelled_at: new Date().toISOString(),
-        cancellation_reason: cancelReason
+        cancellation_reason: cancelReason,
+        // #84: OPERATIONS DECLINED snapshots the displayed top match's revenue
+        // figures (zero-copy — the load itself is gone by report time). {} otherwise.
+        ...buildDeclineSnapshot(cancelReason, backhaulMatches[0]),
       });
       
       alert('Request cancelled successfully!');

@@ -11,6 +11,7 @@ import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishRequests';
 import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
+import { buildDeclineSnapshot } from '../../utils/declineSnapshot';
 import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
@@ -2099,10 +2100,15 @@ export function SearchView() {
   const confirmDelete = async () => {
     if (!deleteTarget || !deleteReason) return; // #37: reason required (parity with v1)
     try {
+      // #84: OPERATIONS DECLINED snapshots the displayed top match's revenue figures.
+      // Matches in memory belong to selectedRequest — only snapshot when cancelling
+      // that same request with results on screen; otherwise there's nothing to capture.
+      const topMatch = selectedRequest?.id === deleteTarget.id ? matches[0] : null;
       await db.requests.update(deleteTarget.id, {
         status: 'cancelled',
         cancellation_reason: deleteReason,
         cancelled_at: new Date().toISOString(),
+        ...buildDeclineSnapshot(deleteReason, topMatch),
       });
     } catch (e) {
       console.error(e);
