@@ -121,7 +121,7 @@ This keeps staging caught up with main so your next push doesn't create conflict
 - Playwright E2E tests run on pushes and PRs; target URL is dynamic based on branch
 - Authenticated Playwright tests only run against production (staging has a separate user DB)
 - GitHub Actions secrets: `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`
-- TODO: enable branch protection on `main` in GitHub to enforce the PR requirement
+- Branch protection is ENABLED on `main` (June 2026, requires GitHub Pro): required checks `unit-tests` + `Playwright cross-browser tests`, strict up-to-date, enforced for admins. A PR cannot merge until both checks pass — wait for green before merging (the #112/#113 lesson).
 
 ---
 
