@@ -58,13 +58,41 @@ export const db = {
       if (error) throw error;
       return data;
     },
-    
+
     async delete(fleetId) {
       const { error } = await supabase
         .from('fleets')
         .delete()
         .eq('id', fleetId);
       if (error) throw error;
+    },
+
+    // #38: duplicate a fleet — copies the fleets row + its fleet_profiles rate
+    // config (carrier %, mileage/stop rates, fuel PEG/MPG, DOE PADD, equipment,
+    // modes, other charges). Home address/coords are kept (user edits after).
+    // Trucks/drivers are intentionally NOT copied (first-pass scope per issue).
+    async duplicate(fleetId) {
+      const source = await this.getById(fleetId);
+
+      // Copy every fleet column except identity/meta; column-agnostic so new
+      // fields are picked up automatically.
+      const { id, created_at, updated_at, fleet_profiles, trucks, drivers, ...fleetFields } = source;
+      const { data: newFleet, error } = await supabase
+        .from('fleets')
+        .insert([{ ...fleetFields, name: `Copy of ${source.name}` }])
+        .select()
+        .single();
+      if (error) throw error;
+
+      // fleet_profiles joins as an array here (fleet_id is not unique).
+      const sourceProfile = Array.isArray(fleet_profiles) ? fleet_profiles[0] : fleet_profiles;
+      const { id: _pid, fleet_id: _pfid, created_at: _pc, updated_at: _pu, ...profileFields } = sourceProfile || {};
+      const { error: profileError } = await supabase
+        .from('fleet_profiles')
+        .insert([{ ...profileFields, fleet_id: newFleet.id }]);
+      if (profileError) throw profileError;
+
+      return newFleet;
     }
   },
   

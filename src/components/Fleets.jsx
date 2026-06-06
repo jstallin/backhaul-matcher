@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, MapPin, Plus, Edit, Trash2, Phone, Mail, ChevronRight, X } from '../icons';
+import { Truck, MapPin, Plus, Edit, Trash2, Phone, Mail, ChevronRight, X, Copy } from '../icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
@@ -13,6 +13,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
   const [expandedFleetId, setExpandedFleetId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // {id, name}
   const [editConfirm, setEditConfirm] = useState(null); // {id, name}
+  const [duplicatingId, setDuplicatingId] = useState(null); // #38
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -55,6 +56,22 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
       alert('Failed to delete fleet: ' + error.message);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // #38: copy the fleet + its rate config (trucks/drivers intentionally not copied)
+  const handleDuplicateClick = async (e, fleet) => {
+    e.stopPropagation();
+    if (duplicatingId) return;
+    setDuplicatingId(fleet.id);
+    try {
+      await db.fleets.duplicate(fleet.id);
+      await loadFleets();
+    } catch (error) {
+      console.error('Error duplicating fleet:', error);
+      alert('Failed to duplicate fleet');
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -455,6 +472,37 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                           >
                             <Edit size={18} />
                             Edit Fleet
+                          </button>
+
+                          {/* #38: duplicate fleet + rate config (not trucks/drivers) */}
+                          <button
+                            onClick={(e) => handleDuplicateClick(e, fleet)}
+                            disabled={duplicatingId === fleet.id}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              background: colors.background.secondary,
+                              border: `1px solid ${colors.accent.primary}40`,
+                              borderRadius: '8px',
+                              color: colors.accent.primary,
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              cursor: duplicatingId === fleet.id ? 'wait' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = `${colors.accent.primary}20`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = colors.background.secondary;
+                            }}
+                          >
+                            <Copy size={18} />
+                            {duplicatingId === fleet.id ? 'Duplicating…' : 'Duplicate'}
                           </button>
 
                           <button
