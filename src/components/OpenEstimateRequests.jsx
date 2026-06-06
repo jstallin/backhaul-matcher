@@ -12,6 +12,7 @@ import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
+import { isRequestExpired, EXPIRED_HINT } from '../utils/requestExpiry';
 import { useCredits } from '../hooks/useCredits';
 import { BuyCreditsModal } from './BuyCreditsModal';
 
@@ -45,6 +46,15 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
   };
 
   const handleSelectRequest = async (request) => {
+    // #83: an expired request can't be run (no credit deducted) — offer the fix.
+    if (isRequestExpired(request)) {
+      if (window.confirm(`${EXPIRED_HINT}.\n\nEdit "${request.request_name}" now?`)) {
+        localStorage.setItem('editingEstimateRequest', JSON.stringify(request));
+        onMenuNavigate('start-estimate-request');
+      }
+      return;
+    }
+
     setLoadingMatches(true);
     setSelectedRequest(request);
     setMatches([]);
@@ -275,9 +285,16 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>{request.request_name}</h4>
-                        <div style={{ padding: '4px 12px', background: `${colors.accent.success}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: colors.accent.success, textTransform: 'uppercase' }}>
-                          ● Active
-                        </div>
+                        {/* #83: expired window overrides the Active badge */}
+                        {isRequestExpired(request) ? (
+                          <div title={EXPIRED_HINT} style={{ padding: '4px 12px', background: `${colors.accent.danger}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: colors.accent.danger, textTransform: 'uppercase' }}>
+                            ◌ Inactive — window passed
+                          </div>
+                        ) : (
+                          <div style={{ padding: '4px 12px', background: `${colors.accent.success}20`, borderRadius: '12px', fontSize: '12px', fontWeight: 700, color: colors.accent.success, textTransform: 'uppercase' }}>
+                            ● Active
+                          </div>
+                        )}
                       </div>
                       <div style={{ fontSize: '13px', color: colors.text.secondary }}>{request.fleets?.name || 'Unknown Fleet'}</div>
                     </div>

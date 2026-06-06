@@ -9,6 +9,7 @@ import { geocodeAddress } from '../../utils/pcMilerClient';
 import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
+import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
 
 const t = tokens;
 
@@ -482,7 +483,14 @@ function EstimateCard({ estimate, active, onSelect, onEdit, onDelete }) {
         <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, lineHeight: 1.3 }}>
           {estimate.request_name}
         </div>
-        <StatusBadge status={estimate.status} />
+        {/* #83: expired window overrides the status badge — edit dates to revive */}
+        {isRequestExpired(estimate) ? (
+          <span title={EXPIRED_HINT} style={{ padding: '2px 8px', borderRadius: t.radius.md, fontSize: '10px', fontWeight: t.font.weight.bold, background: t.colors.accent.redLight, color: t.colors.accent.red, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+            Inactive
+          </span>
+        ) : (
+          <StatusBadge status={estimate.status} />
+        )}
       </div>
 
       {fleetName && (
@@ -801,9 +809,15 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
         </div>
         {canPrint && <GhostBtn onClick={handlePrint} style={{ fontSize: t.font.size.xs, padding: '6px 12px' }}>🖨 Print / Save PDF</GhostBtn>}
         <GhostBtn onClick={() => onEdit(estimate)} style={{ fontSize: t.font.size.xs, padding: '6px 10px' }}>✏️ Edit</GhostBtn>
-        <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ fontSize: t.font.size.xs, padding: '6px 14px' }}>
-          {isLoading ? 'Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
-        </PrimaryBtn>
+        {/* #83: expired pickup window — run disabled until dates are edited forward */}
+        <span title={isRequestExpired(estimate) ? EXPIRED_HINT : undefined}>
+          <PrimaryBtn onClick={onRun} disabled={isLoading || isRequestExpired(estimate)} style={{ fontSize: t.font.size.xs, padding: '6px 14px', ...(isRequestExpired(estimate) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}>
+            {isLoading ? 'Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
+          </PrimaryBtn>
+        </span>
+        {isRequestExpired(estimate) && (
+          <span style={{ fontSize: t.font.size.xs, color: t.colors.accent.red, fontWeight: t.font.weight.semibold }}>{EXPIRED_HINT}</span>
+        )}
       </div>
 
       <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
@@ -831,7 +845,12 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
             <div style={{ fontSize: '36px', marginBottom: '12px' }}>📊</div>
             <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, marginBottom: '8px' }}>Ready to estimate</div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '20px' }}>Click "Run Estimate" to find loads along this route and project annual revenue.</div>
-            <PrimaryBtn onClick={onRun}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
+            <span title={isRequestExpired(estimate) ? EXPIRED_HINT : undefined}>
+              <PrimaryBtn onClick={onRun} disabled={isRequestExpired(estimate)} style={isRequestExpired(estimate) ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
+            </span>
+            {isRequestExpired(estimate) && (
+              <div style={{ marginTop: '10px', fontSize: t.font.size.xs, color: t.colors.accent.red, fontWeight: t.font.weight.semibold }}>{EXPIRED_HINT}</div>
+            )}
           </Card>
         )}
 
@@ -1136,9 +1155,12 @@ function EstimateResultsPanel({ estimate, fleet, matches, isLoading, error, hasR
           <GhostBtn onClick={() => onEdit(estimate)} style={{ padding: '6px 10px', fontSize: t.font.size.xs }}>
             ✏️ Edit
           </GhostBtn>
-          <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ padding: '6px 14px', fontSize: t.font.size.xs }}>
-            {isLoading ? '⏳ Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
-          </PrimaryBtn>
+          {/* #83: expired pickup window — run disabled until dates are edited forward */}
+          <span title={isRequestExpired(estimate) ? EXPIRED_HINT : undefined}>
+            <PrimaryBtn onClick={onRun} disabled={isLoading || isRequestExpired(estimate)} style={{ padding: '6px 14px', fontSize: t.font.size.xs, ...(isRequestExpired(estimate) ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}>
+              {isLoading ? '⏳ Running…' : <><span>▶ Run Estimate</span><CreditBadge /></>}
+            </PrimaryBtn>
+          </span>
         </div>
       </div>
 
@@ -1168,7 +1190,12 @@ function EstimateResultsPanel({ estimate, fleet, matches, isLoading, error, hasR
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '20px' }}>
               Click "Run Estimate" to find loads along this route and project annual revenue.
             </div>
-            <PrimaryBtn onClick={onRun}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
+            <span title={isRequestExpired(estimate) ? EXPIRED_HINT : undefined}>
+              <PrimaryBtn onClick={onRun} disabled={isRequestExpired(estimate)} style={isRequestExpired(estimate) ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>▶ Run Estimate <CreditBadge /></PrimaryBtn>
+            </span>
+            {isRequestExpired(estimate) && (
+              <div style={{ marginTop: '10px', fontSize: t.font.size.xs, color: t.colors.accent.red, fontWeight: t.font.weight.semibold }}>{EXPIRED_HINT}</div>
+            )}
           </Card>
         )}
 
@@ -1279,6 +1306,11 @@ export function EstimatesView() {
 
   const runEstimate = useCallback(async (estimate) => {
     if (!estimate) return;
+    // #83: expired pickup window — refuse to run so no credit is deducted.
+    if (isRequestExpired(estimate)) {
+      setMatchError(EXPIRED_HINT);
+      return;
+    }
     setIsMatching(true);
     setMatchError(null);
     setMatches([]);

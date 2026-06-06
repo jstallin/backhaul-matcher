@@ -13,6 +13,7 @@ import { isExpiredInProgress, finishPayload } from '../../utils/autoFinishReques
 import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
 import { buildDeclineSnapshot } from '../../utils/declineSnapshot';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
+import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
 import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
@@ -656,7 +657,14 @@ function RequestCard({ request, active, onSelect, onEdit, onDelete, onFinish }) 
         <div style={{ fontSize: t.font.size.sm, fontWeight: t.font.weight.semibold, color: t.colors.text.primary, lineHeight: 1.3 }}>
           {request.request_name}
         </div>
-        <StatusBadge status={request.status} />
+        {/* #83: expired window overrides the status badge — edit dates to revive */}
+        {isRequestExpired(request) ? (
+          <span title={EXPIRED_HINT} style={{ padding: '2px 8px', borderRadius: t.radius.md, fontSize: '10px', fontWeight: t.font.weight.bold, background: t.colors.accent.redLight, color: t.colors.accent.red, whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+            Inactive
+          </span>
+        ) : (
+          <StatusBadge status={request.status} />
+        )}
       </div>
       <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
         <MapPin size={11} color={t.colors.text.muted} />
@@ -1492,6 +1500,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const toastTimerRef = useRef(null);
 
   const fleetHome = fleet ? { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address } : null;
+  const expired = isRequestExpired(request); // #83: window fully past — run disabled
 
   const handleHaulConfirm = async (keepSearching = false) => {
     if (!haulMatch) return;
@@ -1562,10 +1571,17 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
           <GhostBtn onClick={() => onEdit(request)} style={{ padding: '6px 10px', fontSize: t.font.size.xs }}>
             <Edit size={13} /> Edit
           </GhostBtn>
-          <PrimaryBtn onClick={onRun} disabled={isLoading} style={{ padding: '6px 14px', fontSize: t.font.size.xs }}>
-            <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
-            {isLoading ? 'Searching…' : <><span>Run Search</span><CreditBadge /></>}
-          </PrimaryBtn>
+          <span title={expired ? EXPIRED_HINT : undefined}>
+            <PrimaryBtn onClick={onRun} disabled={isLoading || expired} style={{ padding: '6px 14px', fontSize: t.font.size.xs, ...(expired ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}>
+              <RefreshCw size={13} style={{ animation: isLoading ? 'spin 1s linear infinite' : 'none' }} />
+              {isLoading ? 'Searching…' : <><span>Run Search</span><CreditBadge /></>}
+            </PrimaryBtn>
+          </span>
+          {expired && (
+            <span style={{ fontSize: t.font.size.xs, color: t.colors.accent.red, fontWeight: t.font.weight.semibold }}>
+              {EXPIRED_HINT}
+            </span>
+          )}
           {request.auto_refresh && timeUntilRefresh && !isLoading && (
             <span style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Clock size={11} />
@@ -1630,9 +1646,16 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, marginBottom: '20px' }}>
               Click "Run Search" to find backhaul loads along this route.
             </div>
-            <PrimaryBtn onClick={onRun}>
-              <Search size={14} /> Run Search <CreditBadge />
-            </PrimaryBtn>
+            <span title={expired ? EXPIRED_HINT : undefined}>
+              <PrimaryBtn onClick={onRun} disabled={expired} style={expired ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
+                <Search size={14} /> Run Search <CreditBadge />
+              </PrimaryBtn>
+            </span>
+            {expired && (
+              <div style={{ marginTop: '10px', fontSize: t.font.size.xs, color: t.colors.accent.red, fontWeight: t.font.weight.semibold }}>
+                {EXPIRED_HINT}
+              </div>
+            )}
           </Card>
         )}
 
@@ -1884,6 +1907,12 @@ export function SearchView() {
 
   const runMatching = useCallback(async (request) => {
     if (!request) return;
+    // #83: expired pickup window — refuse to run (covers manual, auto-refresh
+    // timer, and any UI bypass) so no credit is deducted.
+    if (isRequestExpired(request)) {
+      setMatchError(EXPIRED_HINT);
+      return;
+    }
     setIsMatching(true);
     setMatchError(null);
     setNoCredits(false);

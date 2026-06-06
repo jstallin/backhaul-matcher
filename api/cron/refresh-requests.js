@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import twilio from 'twilio';
 import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/notificationChangeDetection.js';
+import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -539,6 +540,16 @@ export default async function handler(req, res) {
             .eq('id', request.id);
           console.log('  🏁 Auto-finished in_progress request past its needed date');
           results.push({ requestId: request.id, requestName: request.request_name, autoFinished: true });
+          continue;
+        }
+
+        // #83: an active request past its end pickup window is expired — skip it
+        // entirely (no refresh, no credit/API burn). Distinct from the in_progress
+        // flip above: nothing was hauled, so it is NOT completed. The state is
+        // derived, so editing the dates forward re-enables auto-refresh untouched.
+        if (isRequestExpired(request)) {
+          console.log('  ⏸ Skipping expired request (pickup window passed)');
+          results.push({ requestId: request.id, requestName: request.request_name, skippedExpired: true });
           continue;
         }
 
