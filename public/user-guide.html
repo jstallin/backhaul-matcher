@@ -123,6 +123,7 @@
     <li><span class="toc-num">2</span>Setting Up Your Fleet</li>
     <li><span class="toc-num">3</span>Creating a Backhaul Request</li>
     <li><span class="toc-num">4</span>Creating an Estimate Request</li>
+    <li><span class="toc-num">5</span>Reports &amp; Tracking</li>
   </ul>
 </div>
 
@@ -323,6 +324,10 @@
       <div class="step-body">
         <div class="step-title">Save the Fleet Profile</div>
         <p class="step-desc">Click <strong>Save Profile</strong> at the bottom of the form. You can edit your fleet profile at any time — changes take effect on the next request run.</p>
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span>Need a similar fleet? Click <strong>Duplicate Fleet</strong> (next to Delete Fleet) to copy the entire profile — rates, fuel settings, equipment, and charges — as "Copy of &lt;name&gt;". Just rename it and adjust what differs; trucks and drivers are not copied.</span>
+        </div>
       </div>
     </div>
 
@@ -356,8 +361,9 @@
           <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive name for this request (e.g., Backhaul Request 12/30/2025)</div></div>
           <div class="field-row"><div class="field-name">Datum Point (Return Location) <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
           <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div></div>
-          <div class="field-row"><div class="field-name">Equipment Available Date <span class="req">*</span></div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
-          <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">The date the equipment must be returned home by</div></div>
+          <div class="field-row"><div class="field-name">Begin Pickup Window</div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
+          <div class="field-row"><div class="field-name">End Pickup Window</div><div class="field-desc">The last day of the pickup window. Once this date is fully in the past the request is marked <strong>Inactive</strong> and can't be run — edit the dates forward to re-enable it instantly (no credits are spent on inactive requests).</div></div>
+          <div class="field-row"><div class="field-name">Driver Needed Home By</div><div class="field-desc">Optional. The date the driver must be back home — shown on search results and each load's details for dispatcher visibility. It does not affect which loads are matched.</div></div>
         </div>
       </div>
     </div>
@@ -373,6 +379,11 @@
         </div>
 
         <div class="subsection">
+          <div class="subsection-title">Modes <span class="badge">Optional</span></div>
+          <div class="subsection-desc">Select transport modes (Truck Load, LTL, Intermodal, etc.) to widen this search beyond your fleet's default modes. Selections are combined with the fleet profile's modes for this request only.</div>
+        </div>
+
+        <div class="subsection">
           <div class="subsection-title">Auto-refresh results <span class="badge">Optional</span></div>
           <div class="subsection-desc">Toggle <strong>Auto-refresh results</strong> and Haul Monitor will automatically re-run the search on a schedule so your results stay current without manual intervention. Choose from 30 min to 24 hr intervals.</div>
         </div>
@@ -382,7 +393,7 @@
           <div class="subsection-desc">Toggle <strong>Notify me when top loads change</strong> to get alerted by email, text, or both when auto-refresh detects a change in the top result. Sent to the phone and email on your fleet profile.</div>
         </div>
 
-        <img class="shot" src="/guide/s2-backhaul-form.png" alt="Backhaul request form showing all fields with Relay mode, Auto-refresh results, and Notify me toggles, and Save Request button" />
+        <img class="shot" src="/guide/s2-backhaul-form.png" alt="Backhaul request form showing all fields including Driver Needed Home By, with Relay mode, Modes, Auto-refresh results, and Notify me toggles, and Save Request button" />
       </div>
     </div>
 
@@ -421,6 +432,25 @@
       </div>
     </div>
 
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">6</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Load Details &amp; Sharing</div>
+        <p class="step-desc">Click <strong>View Details</strong> on any load to open the full breakdown — route comparison versus an empty return, the complete financial picture, and broker contact information. If you set a <strong>Driver Needed Home By</strong> date, it's shown right in the header.</p>
+        <p class="step-desc" style="margin-top:12px;">Use the <strong>Share</strong> button in the dialog header to send the load to anyone:</p>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Email</div><div class="field-desc">Enter one recipient and an optional note. The email includes the full load details and a map of the route; replies come straight back to your email address.</div></div>
+          <div class="field-row"><div class="field-name">Text</div><div class="field-desc">Enter a US mobile number and a short note. Sends a compact summary by SMS (no map).</div></div>
+          <div class="field-row"><div class="field-name">Copy</div><div class="field-desc">Copies the full load summary to your clipboard — paste it into any channel of your own and edit before sending.</div></div>
+        </div>
+        <img class="shot" src="/guide/s2-share.png" alt="Load detail dialog with the Share menu open showing Email, Text, and Copy options" />
+        <div class="note" style="margin-top:12px;">
+          <span class="note-icon">⚠️</span>
+          <span>Cancelling a request asks for a reason. Choose <strong>OPERATIONS DECLINED</strong> when operations passes on a viable load — Haul Monitor records the top load's revenue at that moment and totals what was passed on in <strong>Reports</strong> (see Section 5).</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -452,7 +482,7 @@
           <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">The starting location for the return route. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
           <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">The fleet whose rate config will be used for all financial calculations</div></div>
           <div class="field-row"><div class="field-name">Equipment Available Date <span class="req">*</span></div><div class="field-desc">Start of the date window to search for available loads</div></div>
-          <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date</div></div>
+          <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date. As with backhaul requests, once this date is fully in the past the estimate is marked <strong>Inactive</strong>; edit the dates forward to run it again.</div></div>
           <div class="field-row"><div class="field-name">Est. Loads Per Year</div><div class="field-desc">Expected loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly, 120 for roughly weekly with some weeks doubled).</div></div>
           <div class="field-row"><div class="field-name">Min Net Credit Per Load $</div><div class="field-desc">Only opportunities at or above this net credit per load are included in the report averages. Prevents low-value or negative loads from skewing results (e.g., $50 or $100).</div></div>
         </div>
@@ -512,6 +542,43 @@
           <span class="tip-icon">💡</span>
           <span>Click <strong>Print / Save PDF</strong> to export the report. Use <strong>Edit</strong> to adjust dates, annual volume, or minimum net credit and regenerate at any time.</span>
         </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 5 ══════════════ -->
+<div class="section">
+  <div class="section-label">Section 5</div>
+  <div class="section-title">Reports &amp; Tracking</div>
+  <p class="section-intro">
+    The <strong>Reports</strong> page rolls up everything your fleets have done — completed loads, revenue earned, miles saved, and the opportunities operations chose to pass on.
+  </p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">1</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Fleet Performance at a Glance</div>
+        <p class="step-desc">The headline cards show <strong>Completed Loads</strong>, <strong>Total Revenue</strong>, <strong>Net Revenue</strong>, and <strong>Gallons Saved</strong> versus running empty. Below them, the revenue trend chart covers the last six months and the status breakdown counts every request by outcome. The full request table lists each request with its revenue, net revenue, and out-of-route miles.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num-col"><div class="step-num">2</div><div class="step-line"></div></div>
+      <div class="step-body">
+        <div class="step-title">Operations Declined — Revenue Passed On</div>
+        <p class="step-desc">When a request is cancelled with the <strong>OPERATIONS DECLINED</strong> reason while search results are on screen, Haul Monitor snapshots the top available load's value at that moment. The <strong>Operations Declined</strong> card totals what was passed on:</p>
+        <div class="fields">
+          <div class="field-row"><div class="field-name">Gross Revenue</div><div class="field-desc">Total gross value of the declined top loads</div></div>
+          <div class="field-row"><div class="field-name">Customer Net</div><div class="field-desc">Net credit the customer would have received (requires a rate config; shows — without one)</div></div>
+          <div class="field-row"><div class="field-name">Carrier Net</div><div class="field-desc">The carrier's revenue share of the declined loads</div></div>
+        </div>
+        <p class="step-desc" style="margin-top:12px;">Each declined request is listed beneath the totals with the load's origin → destination and its figures — a clear record of the cost of saying no.</p>
+        <img class="shot" src="/guide/s5-reports-declined.png" alt="Reports page Operations Declined card showing gross, customer net, and carrier net totals with per-request rows" />
       </div>
     </div>
 
