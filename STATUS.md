@@ -44,6 +44,8 @@ Everything below **shipped to production** (PRs #101–#102, #104–#107, #109, 
 
 **Open backlog is now all-P3:** #78 (LinkedIn/founder schema), #77 (mobile app discussion), #45 (Ryder uses Edge), #31 (negotiation option-3 revisit), #30 (full mode filtering + LoadType enum validation).
 
+**Addendum (June 6 evening):** **#115 (P2) — admin dashboard mobile layout — fixed and shipped to prod** (PR #116). Wide tables (P&L breakdown, Org Activity, org members) now horizontally swipeable instead of clipping at the viewport edge; Users list rows stack into two predictable lines on mobile via `useMobile`. One shared `AdminDashboard.jsx` covers both v1 + v2. Smoke-tested on staging from Jason's phone; no migration. Also noted in CI: GitHub deprecates Node 20 action runners **June 16, 2026** — bump `actions/checkout@v4`/`setup-node@v4`/`cache@v4`/`upload-artifact@v4` in the workflows soon.
+
 ---
 
 ## What Was Just Completed (June 5, 2026, session 10) — security sweep shipped end-to-end + CI/test rehab + uptime + migration reconcile
