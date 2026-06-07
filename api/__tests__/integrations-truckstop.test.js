@@ -20,7 +20,7 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabase)
 }));
 
-import handler from '../integrations/[provider].js';
+import handler, { buildPickupDates } from '../integrations/[provider].js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -277,5 +277,58 @@ describe('DELETE /api/integrations/truckstop — disconnect', () => {
     const r = makeRes();
     await handler(tsReq('DELETE'), r);
     expect(r._status).toBe(400);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// buildPickupDates (#117) — pickup window → PickupDates list
+// ---------------------------------------------------------------------------
+
+describe('buildPickupDates (#117)', () => {
+  // 18:00 UTC = 13:00 CDT — unambiguous "June 5" in America/Chicago
+  const today = new Date('2026-06-05T18:00:00Z');
+
+  it('expands a start→end window into one date per day', () => {
+    expect(buildPickupDates('2026-06-08', '2026-06-11', today)).toEqual([
+      '2026-06-08', '2026-06-09', '2026-06-10', '2026-06-11',
+    ]);
+  });
+
+  it('clamps a past start up to today and keeps the future remainder of the window', () => {
+    expect(buildPickupDates('2026-06-01', '2026-06-07', today)).toEqual([
+      '2026-06-05', '2026-06-06', '2026-06-07',
+    ]);
+  });
+
+  it('returns a single date when there is no end (estimates/WWP) or end ≤ start', () => {
+    expect(buildPickupDates('2026-06-08', null, today)).toEqual(['2026-06-08']);
+    expect(buildPickupDates('2026-06-08', '2026-06-08', today)).toEqual(['2026-06-08']);
+    expect(buildPickupDates('2026-06-08', '2026-06-01', today)).toEqual(['2026-06-08']);
+  });
+
+  it('returns today for an empty/past start with no end (prior single-date behavior)', () => {
+    expect(buildPickupDates('', null, today)).toEqual(['2026-06-05']);
+    expect(buildPickupDates('2026-05-01', null, today)).toEqual(['2026-06-05']);
+  });
+
+  it('caps the window at 10 dates', () => {
+    const dates = buildPickupDates('2026-06-08', '2026-07-30', today);
+    expect(dates).toHaveLength(10);
+    expect(dates[0]).toBe('2026-06-08');
+    expect(dates[9]).toBe('2026-06-17');
+  });
+
+  it('computes "today" in Central time, not UTC (the Friday-midnight bug)', () => {
+    // Friday 11:59 PM CDT = Saturday 04:59 UTC. UTC "today" would be 06-07 (Sunday);
+    // Central "today" is still 06-06 (Saturday)... i.e. the *next morning's* loads
+    // stay searchable instead of skipping a day.
+    const lateFriday = new Date('2026-06-07T04:59:00Z'); // = 2026-06-06 23:59 CDT
+    expect(buildPickupDates('2026-06-04', null, lateFriday)).toEqual(['2026-06-06']);
+  });
+
+  it('strips time portions from ISO inputs', () => {
+    expect(buildPickupDates('2026-06-08T08:00:00', '2026-06-09T17:00:00', today)).toEqual([
+      '2026-06-08', '2026-06-09',
+    ]);
   });
 });

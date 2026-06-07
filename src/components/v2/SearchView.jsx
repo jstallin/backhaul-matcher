@@ -1979,6 +1979,8 @@ export function SearchView() {
         modes: unionModes(rawProfile?.modes, request.modes), // #36: fleet modes + request modes
         // Past available date → treat as "available now" (load board rejects past dates).
         pickupDate: effectivePickupDate(request.equipment_available_date),
+        // #117: end of the pickup window — Truckstop searches the whole remaining span
+        pickupDateEnd: request.equipment_needed_date || '',
       };
 
       const [creditResult, loadsResult] = await Promise.all([
@@ -2005,7 +2007,8 @@ export function SearchView() {
         corridorWidthMiles,
         rateConfig,
         request.is_relay || false,
-        effectivePickupDate(request.equipment_available_date)
+        effectivePickupDate(request.equipment_available_date),
+        request.equipment_needed_date || null // #117: window end keeps the client filter in step
       );
 
       const opportunities = result.opportunities || [];

@@ -298,7 +298,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         homeLng:       fleet.home_lng || 0,
         equipmentType: rawProfile?.trailer_type || 'Dry Van',
         modes:         unionModes(rawProfile?.modes, selectedRequest.modes), // #36: fleet + request modes
-        pickupDate:    effPickupDate
+        pickupDate:    effPickupDate,
+        // #117: end of the pickup window — Truckstop searches the whole remaining span
+        pickupDateEnd: request.equipment_needed_date || ''
       };
 
       // Parallel: credit deduction + load fetching are independent of each other
@@ -322,7 +324,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         corridorWidthMiles,
         rateConfig,
         request.is_relay || false,
-        effPickupDate
+        effPickupDate,
+        request.equipment_needed_date || null // #117: window end keeps the client filter in step
       );
 
       const matches = result.opportunities;

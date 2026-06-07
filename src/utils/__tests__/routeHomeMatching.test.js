@@ -606,6 +606,36 @@ describe('evaluatePickupDateFit', () => {
     const r = evaluatePickupDateFit('2026-06-01T14:00:00', '2026-06-01');
     expect(r.fit).toBe('exact');
   });
+
+  // #117: window-aware — a start + end span instead of a single requested date
+  describe('with a pickup window end date', () => {
+    it('treats any day inside [start, end] as an exact fit', () => {
+      expect(evaluatePickupDateFit('2026-06-08', '2026-06-08', '2026-06-15'))
+        .toEqual({ withinWindow: true, fit: 'exact', offsetDays: 0 });
+      expect(evaluatePickupDateFit('2026-06-11', '2026-06-08', '2026-06-15'))
+        .toEqual({ withinWindow: true, fit: 'exact', offsetDays: 0 });
+      expect(evaluatePickupDateFit('2026-06-15', '2026-06-08', '2026-06-15'))
+        .toEqual({ withinWindow: true, fit: 'exact', offsetDays: 0 });
+    });
+
+    it('flags the ±1-day edges as early/late but within window', () => {
+      expect(evaluatePickupDateFit('2026-06-07', '2026-06-08', '2026-06-15'))
+        .toEqual({ withinWindow: true, fit: 'early', offsetDays: -1 });
+      expect(evaluatePickupDateFit('2026-06-16', '2026-06-08', '2026-06-15'))
+        .toEqual({ withinWindow: true, fit: 'late', offsetDays: 1 });
+    });
+
+    it('rejects loads more than one day outside the window', () => {
+      expect(evaluatePickupDateFit('2026-06-06', '2026-06-08', '2026-06-15').withinWindow).toBe(false);
+      expect(evaluatePickupDateFit('2026-06-17', '2026-06-08', '2026-06-15').withinWindow).toBe(false);
+    });
+
+    it('falls back to single-day behavior when end is missing, invalid, or before start', () => {
+      expect(evaluatePickupDateFit('2026-06-09', '2026-06-08', null).fit).toBe('late');
+      expect(evaluatePickupDateFit('2026-06-09', '2026-06-08', 'not-a-date').fit).toBe('late');
+      expect(evaluatePickupDateFit('2026-06-09', '2026-06-08', '2026-06-01').fit).toBe('late');
+    });
+  });
 });
 
 describe('effectivePickupDate', () => {
