@@ -550,6 +550,7 @@ async function handleTruckstop(req, res, supabase, user) {
       equipment_type,
       modes,
       pickup_date,
+      pickup_date_end,
       radius_miles = '150'
     } = req.query;
 
@@ -563,6 +564,7 @@ async function handleTruckstop(req, res, supabase, user) {
         originState: origin_state,
         destState: dest_state,
         pickupDate: pickup_date,
+        pickupDateEnd: pickup_date_end,
         equipmentType: equipment_type || null,
         modes: modesList,
         radiusMiles: parseInt(radius_miles, 10),
@@ -666,17 +668,35 @@ function getDestStates(homeState) {
 }
 
 
-function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate }) {
+// #117: PickupDates is an array type, but we used to send a single date — the window
+// start clamped to *UTC* today. That starved evening/weekend searches (a Friday-night
+// CT search asked for Sunday-pickup loads only). Build the full remaining window:
+// max(start, today) → min(end, start + MAX_PICKUP_DATES − 1), with "today" computed
+// in Central time so an evening search doesn't roll onto the next calendar day.
+// Truckstop still rejects past dates, so the clamp-up-to-today behavior is preserved.
+const MAX_PICKUP_DATES = 10;
+export function buildPickupDates(pickupDate, pickupDateEnd, today = new Date()) {
+  const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+  const startRaw = pickupDate ? String(pickupDate).slice(0, 10) : '';
+  const start = startRaw && startRaw >= todayStr ? startRaw : todayStr;
+  const endRaw = pickupDateEnd ? String(pickupDateEnd).slice(0, 10) : '';
+  const end = endRaw && endRaw > start ? endRaw : start;
+  const dates = [];
+  const cursor = new Date(`${start}T12:00:00Z`); // noon UTC sidesteps DST edges
+  for (let i = 0; i < MAX_PICKUP_DATES; i++) {
+    const d = cursor.toISOString().slice(0, 10);
+    if (d > end) break;
+    dates.push(d);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+function buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate, pickupDateEnd }) {
   const equip = equipmentType ? (EQUIP_TO_TS[equipmentType] || equipmentType) : ALL_MAJOR_EQUIP;
   const loadType = deriveLoadType(modes);
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
-  // Truckstop rejects past pickup dates. Clamp anything earlier than today (and the
-  // empty case) up to today so a stale request's available date doesn't fail the search.
-  const todayStr = new Date().toISOString().split('T')[0];
-  const effectivePickup = (pickupDate && String(pickupDate).slice(0, 10) >= todayStr)
-    ? String(pickupDate).slice(0, 10)
-    : todayStr;
-  const pickupDateTime = `${effectivePickup}T00:00:00`;
+  const pickupDates = buildPickupDates(pickupDate, pickupDateEnd);
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope
@@ -709,7 +729,7 @@ function buildSoapEnvelope({ integrationId, username, password, originCity, orig
           <web1:PageNumber>0</web1:PageNumber>
           <web1:PageSize>200</web1:PageSize>
           <web1:PickupDates>
-            <arr:dateTime>${pickupDateTime}</arr:dateTime>
+            ${pickupDates.map(d => `<arr:dateTime>${d}T00:00:00</arr:dateTime>`).join('\n            ')}
           </web1:PickupDates>
           <web1:SortDescending>false</web1:SortDescending>
         </web1:Criteria>
@@ -782,14 +802,14 @@ async function validateTruckstopIntegrationId(integrationId) {
   }
 }
 
-async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate }) {
+async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate, pickupDateEnd }) {
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
   if (!cleanState || /^\d{5}$/.test(cleanCity)) {
     console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
     return [];
   }
 
-  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate });
+  const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate, pickupDateEnd });
   const sanitized = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
   console.log('Truckstop SOAP envelope:\n', sanitized);
 

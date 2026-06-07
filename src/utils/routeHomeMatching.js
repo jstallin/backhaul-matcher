@@ -223,19 +223,25 @@ export const isNoRateLoad = (match) =>
 export const PICKUP_WINDOW_DAYS = 1;
 
 /**
- * Compare a load's pickup date to the requested pickup date.
+ * Compare a load's pickup date to the requested pickup window (#117).
+ * With only a start date the window is that single day (original behavior);
+ * with an end date, anything inside [start, end] is an exact fit.
  * Loads with no requested date (no filter) or no load date (can't evaluate) are kept unflagged.
  *
  * @returns {{ withinWindow: boolean, fit: 'exact'|'early'|'late'|null, offsetDays: number|null }}
- *   fit: 'exact' = same day, 'early' = load picks up before requested, 'late' = after.
- *   offsetDays: signed day difference (load − requested), null when not comparable.
+ *   fit: 'exact' = inside the window, 'early' = load picks up before it, 'late' = after.
+ *   offsetDays: signed day distance to the nearest window edge (0 = inside), null when not comparable.
  */
-export const evaluatePickupDateFit = (loadDateStr, requestedDateStr) => {
+export const evaluatePickupDateFit = (loadDateStr, requestedDateStr, requestedEndDateStr = null) => {
   if (!requestedDateStr || !loadDateStr) return { withinWindow: true, fit: null, offsetDays: null };
-  const loadMs = Date.parse(`${String(loadDateStr).slice(0, 10)}T00:00:00`);
-  const reqMs  = Date.parse(`${String(requestedDateStr).slice(0, 10)}T00:00:00`);
-  if (isNaN(loadMs) || isNaN(reqMs)) return { withinWindow: true, fit: null, offsetDays: null };
-  const offsetDays = Math.round((loadMs - reqMs) / 86400000);
+  const loadMs  = Date.parse(`${String(loadDateStr).slice(0, 10)}T00:00:00`);
+  const startMs = Date.parse(`${String(requestedDateStr).slice(0, 10)}T00:00:00`);
+  if (isNaN(loadMs) || isNaN(startMs)) return { withinWindow: true, fit: null, offsetDays: null };
+  let endMs = requestedEndDateStr ? Date.parse(`${String(requestedEndDateStr).slice(0, 10)}T00:00:00`) : startMs;
+  if (isNaN(endMs) || endMs < startMs) endMs = startMs;
+  const offsetDays = loadMs < startMs ? Math.round((loadMs - startMs) / 86400000)
+                   : loadMs > endMs   ? Math.round((loadMs - endMs)   / 86400000)
+                   : 0;
   if (Math.abs(offsetDays) > PICKUP_WINDOW_DAYS) return { withinWindow: false, fit: null, offsetDays };
   const fit = offsetDays === 0 ? 'exact' : (offsetDays > 0 ? 'late' : 'early');
   return { withinWindow: true, fit, offsetDays };
@@ -271,7 +277,8 @@ export const effectivePickupDate = (dateStr, today = new Date()) => {
  * @param {Number} corridorWidthMiles - How far off the direct route is acceptable (default 50)
  * @param {Object} rateConfig - Optional rate configuration from fleet profile
  * @param {Boolean} isRelay - Relay mode
- * @param {String} requestedPickupDate - Optional 'YYYY-MM-DD'; loads outside ±PICKUP_WINDOW_DAYS are dropped
+ * @param {String} requestedPickupDate - Optional 'YYYY-MM-DD'; loads outside the window ±PICKUP_WINDOW_DAYS are dropped
+ * @param {String} requestedPickupDateEnd - Optional 'YYYY-MM-DD' end of the pickup window (#117); defaults to the start date
  * @returns {Object} - { opportunities: Array, routeData: { route, corridor } | null }
  */
 export const findRouteHomeBackhauls = async (
@@ -283,7 +290,8 @@ export const findRouteHomeBackhauls = async (
   corridorWidthMiles = 50,
   rateConfig = null,
   isRelay = false,
-  requestedPickupDate = null
+  requestedPickupDate = null,
+  requestedPickupDateEnd = null
 ) => {
   const opportunities = [];
   let routeData = null;
@@ -332,7 +340,7 @@ export const findRouteHomeBackhauls = async (
 
     // Pickup date — hard filter to the requested ±PICKUP_WINDOW_DAYS window.
     // Done here (before corridor/distance work) so out-of-window loads never consume PC*MILER calls.
-    if (requestedPickupDate && !evaluatePickupDateFit(loadPickupDate(load), requestedPickupDate).withinWindow) continue;
+    if (requestedPickupDate && !evaluatePickupDateFit(loadPickupDate(load), requestedPickupDate, requestedPickupDateEnd).withinWindow) continue;
 
     // 2. Corridor check on pickup — only when precise coordinates are available.
     // State-centroid fallback is skipped here: live load boards (Truckstop) already
@@ -662,7 +670,7 @@ export const findRouteHomeBackhauls = async (
 
       // Pickup-date fit vs. the requested date: { fit: 'exact'|'early'|'late'|null, offsetDays }
       // Drives the +1/-1 day badge on load cards. null when no requested date or no load date.
-      date_fit: evaluatePickupDateFit(loadPickupDate(load), requestedPickupDate),
+      date_fit: evaluatePickupDateFit(loadPickupDate(load), requestedPickupDate, requestedPickupDateEnd),
       broker: load.company_name || null,
       shipper: load.shipper_name || null,
       freightType: load.freight_type || load.commodity || null,

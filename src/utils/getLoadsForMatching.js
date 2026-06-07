@@ -46,7 +46,8 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       homeLng = 0,
       equipmentType = 'Dry Van',
       modes = [],
-      pickupDate = ''
+      pickupDate = '',
+      pickupDateEnd = ''
     } = requestContext;
 
     const params = new URLSearchParams({
@@ -63,6 +64,8 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       // Optional fleet transport modes (item 007); comma-separated, omitted when none.
       modes:          Array.isArray(modes) ? modes.join(',') : '',
       pickup_date:    pickupDate,
+      // #117: end of the request's pickup window — server searches the whole span
+      pickup_date_end: pickupDateEnd,
       radius_miles:   '150'
     });
 
