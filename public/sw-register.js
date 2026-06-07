@@ -14,9 +14,30 @@ if ('serviceWorker' in navigator) {
     reloadedForUpdate = true;
     window.location.reload();
   });
+  var swReg = null;
+  var lastUpdateCheck = 0;
+  var checkForUpdate = function () {
+    if (!swReg) return;
+    var now = Date.now();
+    if (now - lastUpdateCheck < 60000) return; // at most once a minute
+    lastUpdateCheck = now;
+    swReg.update().catch(() => {});
+  };
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((reg) => reg.update())
+      .then((reg) => { swReg = reg; lastUpdateCheck = Date.now(); return reg.update(); })
       .catch(() => {});
+  });
+
+  // #120: an installed (home-screen) PWA is resumed from a snapshot, not reloaded —
+  // the load event never refires, so a long-lived instance would stay on a stale
+  // bundle across deploys. Re-check whenever the app returns to the foreground;
+  // the controllerchange handler above reloads once a new worker takes over.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkForUpdate();
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) checkForUpdate(); // bfcache restore
   });
 }
