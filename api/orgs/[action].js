@@ -943,7 +943,7 @@ async function handleActivity(req, res, supabase, user) {
   try {
     const cutoff30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [{ data: orgs, error: orgsError }, { data: { users } }, { data: requests, error: reqError }, { data: events, error: evError }] = await Promise.all([
+    const [{ data: orgs, error: orgsError }, { data: { users } }, { data: requests, error: reqError }, { data: events, error: evError }, { data: creditUsage, error: cuError }] = await Promise.all([
       supabase.from('orgs').select('id, name, email_domain, is_pilot, org_memberships(user_id, role)').order('created_at'),
       supabase.auth.admin.listUsers({ perPage: 1000 }),
       supabase.from('backhaul_requests').select(
@@ -953,11 +953,14 @@ async function handleActivity(req, res, supabase, user) {
       // If this ever truncates, "last X" stays correct for active users — only very
       // stale users could under-report, which the panel exists to surface anyway.
       supabase.from('user_activity_events').select('user_id, event_type, created_at').order('created_at', { ascending: false }).limit(5000),
+      // #131: per-user billable credit spend (summed in SQL), for the revenue projection.
+      supabase.rpc('get_credit_usage_by_user', { p_cutoff: cutoff30d }),
     ]);
 
     if (orgsError) throw orgsError;
     if (reqError) throw reqError;
     if (evError) throw evError;
+    if (cuError) throw cuError;
 
     // Per-user reductions
     const byUser = {};
@@ -968,6 +971,7 @@ async function handleActivity(req, res, supabase, user) {
       declined_gross_all: 0, declined_customer_all: 0, declined_carrier_all: 0,
       declined_gross_30d: 0, declined_customer_30d: 0, declined_carrier_30d: 0,
       declined_count: 0,
+      credits_all: 0, credits_30d: 0, credit_actions_all: 0, credit_actions_30d: 0, // #131
     });
     const maxTs = (a, b) => (!a || (b && b > a)) ? b : a;
 
@@ -999,6 +1003,15 @@ async function handleActivity(req, res, supabase, user) {
       if (e.event_type === 'load_detail_open') row.last_detail_open = maxTs(row.last_detail_open, e.created_at);
     }
 
+    // #131: billable credit spend per user (from the SQL aggregate).
+    for (const c of creditUsage || []) {
+      const row = u(c.user_id);
+      row.credits_all = Number(c.credits_all) || 0;
+      row.credits_30d = Number(c.credits_30d) || 0;
+      row.credit_actions_all = Number(c.count_all) || 0;
+      row.credit_actions_30d = Number(c.count_30d) || 0;
+    }
+
     // Assemble per-org
     const result = (orgs || []).map((org) => {
       const members = (org.org_memberships || []).map((m) => {
@@ -1017,6 +1030,10 @@ async function handleActivity(req, res, supabase, user) {
           hauled_all: stats.hauled_all,
           hauled_30d: stats.hauled_30d,
           completed_count: stats.completed_count,
+          credits_all: stats.credits_all,           // #131
+          credits_30d: stats.credits_30d,
+          credit_actions_all: stats.credit_actions_all,
+          credit_actions_30d: stats.credit_actions_30d,
         };
       });
 
@@ -1038,6 +1055,10 @@ async function handleActivity(req, res, supabase, user) {
           declined_customer_30d: sum((s) => s.declined_customer_30d),
           declined_carrier_30d: sum((s) => s.declined_carrier_30d),
           declined_count: sum((s) => s.declined_count),
+          credits_all: sum((s) => s.credits_all),               // #131
+          credits_30d: sum((s) => s.credits_30d),
+          credit_actions_all: sum((s) => s.credit_actions_all),
+          credit_actions_30d: sum((s) => s.credit_actions_30d),
           last_sign_in_at: members.reduce((a, m) => (!a || (m.last_sign_in_at && m.last_sign_in_at > a)) ? m.last_sign_in_at : a, null),
         },
         members,
