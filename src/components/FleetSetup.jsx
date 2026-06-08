@@ -6,6 +6,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { geocodeAddress } from '../utils/pcMilerClient';
 import { FLEET_MODES } from '../utils/fleetModes';
 import { parseFleetHome } from '../utils/parseFleetHome';
+import { OrgMemberMultiSelect } from './OrgMemberMultiSelect';
+import { fetchOrgMembers } from '../utils/orgMembers';
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -32,6 +34,14 @@ export const FleetSetup = ({ fleet, onComplete }) => {
   const [success, setSuccess] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeStatus, setGeocodeStatus] = useState(null); // { ok: bool, label: string }
+  const [members, setMembers] = useState([]);   // #129: org members for share picker
+  const [shareIds, setShareIds] = useState([]); // #129: granted view-only user_ids
+
+  useEffect(() => { fetchOrgMembers().then(setMembers); }, [user]);
+  useEffect(() => {
+    if (fleet?.id) db.fleetShares.listForFleet(fleet.id).then(setShareIds).catch(() => setShareIds([]));
+    else setShareIds([]);
+  }, [fleet?.id]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -231,6 +241,9 @@ export const FleetSetup = ({ fleet, onComplete }) => {
       };
 
       await db.fleetProfiles.update(savedFleetId, profileData);
+
+      // #129: persist view-only share grants (only meaningful for an existing fleet)
+      if (fleet) await db.fleetShares.setForFleet(savedFleetId, shareIds, user.id);
 
       setSuccess(true);
       setTimeout(() => {
@@ -910,6 +923,21 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               )}
             </div>
           </div>
+
+          {/* #129: owner grants org members view-only access (existing fleets only) */}
+          {fleet && (
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ ...labelStyle, display: 'block', marginBottom: '8px' }}>Shared With (View Only)</label>
+              <OrgMemberMultiSelect
+                value={shareIds}
+                members={members.filter(m => m.user_id !== user?.id)}
+                onChange={setShareIds}
+                inputStyle={inputStyle}
+                accentColor={colors.accent.primary}
+              />
+              <div style={helperStyle}>They can view this fleet and select it on requests, but can't edit it. Search by name or email.</div>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button

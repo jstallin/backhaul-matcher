@@ -420,7 +420,7 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
           <Field label="Fleet">
             <SelectInput value={form.selectedFleetId} onChange={e => set('selectedFleetId', e.target.value)}>
               <option value="">Select fleet…</option>
-              {fleets.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+              {fleets.map(f => <option key={f.id} value={f.id}>{f.name}{f.user_id !== user?.id ? ' · shared' : ''}</option>)}
             </SelectInput>
             <ErrorMsg msg={errors.selectedFleetId} />
           </Field>

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { diffShareSet } from '../utils/fleetShares';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -14,10 +15,12 @@ export const db = {
   // Fleet operations
   fleets: {
     async getAll(userId) {
+      // #129: RLS returns own fleets + fleets shared with the caller (view-only), so
+      // we no longer filter by user_id here — rows carry user_id for the UI to mark
+      // ownership. `userId` is kept for signature/compat; RLS scopes to the caller.
       const { data, error } = await supabase
         .from('fleets')
-        .select('*, fleet_profiles(*), trucks(*), drivers(*)')
-        .eq('user_id', userId);
+        .select('*, fleet_profiles(*), trucks(*), drivers(*)');
       if (error) throw error;
       return data;
     },
@@ -95,7 +98,44 @@ export const db = {
       return newFleet;
     }
   },
-  
+
+  // #129: per-fleet view-only access grants to org members. Owner-managed
+  // (enforced by RLS on fleet_shares); recipients get read-only SELECT on the
+  // fleet + its profile/trucks/drivers.
+  fleetShares: {
+    // Current grantee user_ids for a fleet (owner view).
+    async listForFleet(fleetId) {
+      const { data, error } = await supabase
+        .from('fleet_shares')
+        .select('shared_with_user_id')
+        .eq('fleet_id', fleetId);
+      if (error) throw error;
+      return (data || []).map(r => r.shared_with_user_id);
+    },
+
+    // Replace-set: grant the given user_ids, revoke any no longer selected.
+    async setForFleet(fleetId, userIds, sharedByUserId) {
+      const current = await this.listForFleet(fleetId);
+      const { added, removed } = diffShareSet(current, userIds);
+      if (added.length) {
+        const rows = added.map(uid => ({
+          fleet_id: fleetId, shared_with_user_id: uid, shared_by_user_id: sharedByUserId,
+        }));
+        const { error } = await supabase.from('fleet_shares').insert(rows);
+        if (error) throw error;
+      }
+      if (removed.length) {
+        const { error } = await supabase
+          .from('fleet_shares')
+          .delete()
+          .eq('fleet_id', fleetId)
+          .in('shared_with_user_id', removed);
+        if (error) throw error;
+      }
+      return { added, removed };
+    },
+  },
+
   // Truck operations
   trucks: {
     async getByFleet(fleetId) {

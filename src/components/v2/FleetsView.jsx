@@ -6,6 +6,8 @@ import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
 import { FLEET_MODES } from '../../utils/fleetModes';
+import { OrgMemberMultiSelect } from '../OrgMemberMultiSelect';
+import { fetchOrgMembers, memberName } from '../../utils/orgMembers';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle, Copy } from '../../icons';
 
 const t = tokens;
@@ -192,7 +194,7 @@ const emptyProfileForm = () => ({
   otherCharge2Name: '', otherCharge2Description: '', otherCharge2Amount: '',
 });
 
-function ProfileTab({ fleet, onSaved, onDeleted }) {
+function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
   const { user } = useAuth();
   const [form, setForm] = useState(emptyProfileForm());
   const [geocoded, setGeocoded] = useState(false);
@@ -202,6 +204,18 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false); // #38
+  const [shareIds, setShareIds] = useState([]); // #129: org members granted view-only
+
+  // #129: a fleet shared with me (not mine) is view-only.
+  const isOwner = !fleet || fleet.user_id === user?.id;
+  const ownerLabel = fleet && !isOwner ? (memberName(members, fleet.user_id) || 'another member') : null;
+  const shareCandidates = members.filter(m => m.user_id !== user?.id); // can't share with self
+
+  // Seed the current share grants when editing one of my own fleets.
+  useEffect(() => {
+    if (fleet && isOwner) db.fleetShares.listForFleet(fleet.id).then(setShareIds).catch(() => setShareIds([]));
+    else setShareIds([]);
+  }, [fleet?.id, isOwner]);
 
   // #38: copy the fleet + its rate config (trucks/drivers intentionally not copied)
   const handleDuplicate = async () => {
@@ -285,6 +299,7 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
       if (fleet) {
         await db.fleets.update(fleet.id, fleetData);
         await db.fleetProfiles.update(fleet.id, profileData);
+        await db.fleetShares.setForFleet(fleet.id, shareIds, user.id); // #129
       } else {
         const newFleet = await db.fleets.create({ ...fleetData, user_id: user.id });
         await db.fleetProfiles.update(newFleet.id, profileData);
@@ -325,6 +340,15 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
       <ErrorMsg msg={error} />
 
+      {/* #129: view-only notice for a fleet shared with me */}
+      {!isOwner && fleet && (
+        <div style={{ marginBottom: '16px', padding: '10px 14px', background: t.colors.page.bg, border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.lg, fontSize: t.font.size.sm, color: t.colors.text.secondary }}>
+          Shared by <strong>{ownerLabel}</strong> · <strong>View only</strong> — you can select this fleet on requests, but can't edit it.
+        </div>
+      )}
+
+      {/* All fields are read-only for non-owners (native fieldset disable). */}
+      <fieldset disabled={!isOwner} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
       {/* Basic Info */}
       <SectionLabel>Fleet Info</SectionLabel>
       <FormGrid>
@@ -447,22 +471,41 @@ function ProfileTab({ fleet, onSaved, onDeleted }) {
         <Field label="Description" hint="Max 25 chars"><Input value={form.otherCharge2Description} onChange={(v) => set('otherCharge2Description')(v.slice(0, 25))} /></Field>
         <Field label="Amount ($)"><Input value={form.otherCharge2Amount} onChange={set('otherCharge2Amount')} type="number" step="0.01" /></Field>
       </FormGrid>
+      </fieldset>
 
-      <div style={{ marginTop: '24px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <PrimaryBtn onClick={handleSave} loading={saving}>
-          <Save size={15} />{saving ? 'Saving…' : 'Save Profile'}
-        </PrimaryBtn>
-        {fleet && (
-          <GhostBtn onClick={handleDuplicate} style={{ marginLeft: 'auto' }}>
-            <Copy size={14} /> {duplicating ? 'Duplicating…' : 'Duplicate Fleet'}
-          </GhostBtn>
-        )}
-        {fleet && (
-          <GhostBtn onClick={() => setConfirmDelete(true)} danger>
-            <Trash2 size={14} /> Delete Fleet
-          </GhostBtn>
-        )}
-      </div>
+      {/* #129: owner-only — grant org members view-only access. Shown once the fleet exists. */}
+      {isOwner && fleet && (
+        <>
+          <SectionLabel>Shared With (View Only)</SectionLabel>
+          <Field label="Org members" hint="They can view this fleet and select it on requests, but can't edit it. Search by name or email.">
+            <OrgMemberMultiSelect
+              value={shareIds}
+              members={shareCandidates}
+              onChange={setShareIds}
+              inputStyle={inputBase}
+              accentColor={t.colors.accent.blue}
+            />
+          </Field>
+        </>
+      )}
+
+      {isOwner && (
+        <div style={{ marginTop: '24px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <PrimaryBtn onClick={handleSave} loading={saving}>
+            <Save size={15} />{saving ? 'Saving…' : 'Save Profile'}
+          </PrimaryBtn>
+          {fleet && (
+            <GhostBtn onClick={handleDuplicate} style={{ marginLeft: 'auto' }}>
+              <Copy size={14} /> {duplicating ? 'Duplicating…' : 'Duplicate Fleet'}
+            </GhostBtn>
+          )}
+          {fleet && (
+            <GhostBtn onClick={() => setConfirmDelete(true)} danger>
+              <Trash2 size={14} /> Delete Fleet
+            </GhostBtn>
+          )}
+        </div>
+      )}
 
       {confirmDelete && (
         <ConfirmDialog
@@ -776,7 +819,7 @@ const TABS = [
   { id: 'drivers', label: 'Drivers' },
 ];
 
-function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onChanged, onDeleted }) {
+function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onChanged, onDeleted, members }) {
   const isMobile = useMobile();
 
   if (!fleet && !isNew) {
@@ -824,7 +867,7 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
       </div>
 
       {/* Tab content */}
-      {activeTab === 'profile' && <ProfileTab fleet={fleet} onSaved={onSaved} onDeleted={onDeleted} />}
+      {activeTab === 'profile' && <ProfileTab fleet={fleet} onSaved={onSaved} onDeleted={onDeleted} members={members} />}
       {activeTab === 'trucks'  && !isNew && <FutureDevBanner feature="Truck management" />}
       {activeTab === 'drivers' && !isNew && <FutureDevBanner feature="Driver management" />}
     </div>
@@ -833,7 +876,7 @@ function FleetDetailPanel({ fleet, isNew, activeTab, setActiveTab, onSaved, onCh
 
 // ─── Fleet List Panel ─────────────────────────────────────────────────────────
 
-function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn }) {
+function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn, currentUserId, members }) {
   return (
     <div style={{ width: '260px', flexShrink: 0 }}>
       {!hiddenNewBtn && (
@@ -849,6 +892,7 @@ function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn }) {
         {fleets.map((fleet) => {
           const active = fleet.id === selectedId;
           const truckCount = Array.isArray(fleet.trucks) ? fleet.trucks.length : 0;
+          const shared = currentUserId && fleet.user_id && fleet.user_id !== currentUserId; // #129
           return (
             <div
               key={fleet.id}
@@ -858,6 +902,11 @@ function FleetListPanel({ fleets, selectedId, onSelect, onNew, hiddenNewBtn }) {
               onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
             >
               <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, color: t.colors.text.primary }}>{fleet.name}</div>
+              {shared && (
+                <div style={{ fontSize: '11px', color: t.colors.text.muted, marginTop: '2px' }}>
+                  Shared by {memberName(members, fleet.user_id) || 'another member'} · View only
+                </div>
+              )}
               {fleet.home_address && (
                 <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fleet.home_address}</div>
               )}
@@ -893,10 +942,13 @@ export function FleetsView() {
   const { user } = useAuth();
   const isMobile = useMobile();
   const [fleets, setFleets] = useState([]);
+  const [members, setMembers] = useState([]); // #129: org members for share picker + owner labels
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [isNew, setIsNew] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+
+  useEffect(() => { fetchOrgMembers().then(setMembers); }, [user]);
 
   const loadFleets = async () => {
     if (!user) return;
@@ -957,6 +1009,8 @@ export function FleetsView() {
             onSelect={handleSelect}
             onNew={handleNew}
             hiddenNewBtn={isMobile}
+            currentUserId={user?.id}
+            members={members}
           />
         </div>
       )}
@@ -982,6 +1036,7 @@ export function FleetsView() {
             onSaved={handleSaved}
             onChanged={handleChanged}
             onDeleted={handleDeleted}
+            members={members}
           />
         </div>
       )}

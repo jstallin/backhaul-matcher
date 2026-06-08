@@ -422,7 +422,7 @@ function ReturnOnlyCard({ option, colors }) {
 
 // ─── Setup form ───────────────────────────────────────────────────────────────
 
-function SetupForm({ fleets, colors, onRun, loading, error }) {
+function SetupForm({ fleets, colors, onRun, loading, error, currentUserId }) {
   const defaultDeadline = getDefaultDeadline();
   const [selectedFleetId, setSelectedFleetId] = useState(fleets.length === 1 ? fleets[0].id : '');
   const [deadlineDate, setDeadlineDate] = useState(toDateInputValue(defaultDeadline));
@@ -459,7 +459,7 @@ function SetupForm({ fleets, colors, onRun, loading, error }) {
             style={{ ...inputStyle, width: '100%', cursor: 'pointer' }}
           >
             {fleets.length !== 1 && <option value="">Select a fleet…</option>}
-            {fleets.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+            {fleets.map(f => <option key={f.id} value={f.id}>{f.name}{f.user_id !== currentUserId ? ' · shared' : ''}</option>)}
           </select>
           {selectedFleet && !hasHome && (
             <div style={{ marginTop: '6px', fontSize: '12px', color: '#ef4444' }}>
@@ -708,7 +708,7 @@ export const WorkWeekPlanning = ({ onMenuNavigate }) => {
             </p>
           </div>
         ) : (
-          <SetupForm fleets={fleets} colors={colors} onRun={handleRun} loading={running} error={error} />
+          <SetupForm fleets={fleets} colors={colors} onRun={handleRun} loading={running} error={error} currentUserId={user?.id} />
         )}
 
         {noCredits && (

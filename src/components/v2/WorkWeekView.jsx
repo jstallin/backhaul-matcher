@@ -669,7 +669,7 @@ function ReturnOnlyCard({ option }) {
 
 // ─── Setup form ───────────────────────────────────────────────────────────────
 
-function SetupForm({ fleets, onRun, loading, error }) {
+function SetupForm({ fleets, onRun, loading, error, currentUserId }) {
   const defaultDeadline = getDefaultDeadline();
   const [selectedFleetId, setSelectedFleetId] = useState(fleets.length === 1 ? fleets[0].id : '');
   const [deadlineDate, setDeadlineDate] = useState(toDateInputValue(defaultDeadline));
@@ -711,7 +711,7 @@ function SetupForm({ fleets, onRun, loading, error }) {
           >
             {fleets.length !== 1 && <option value="">Select a fleet…</option>}
             {fleets.map(f => (
-              <option key={f.id} value={f.id}>{f.name}</option>
+              <option key={f.id} value={f.id}>{f.name}{f.user_id !== currentUserId ? ' · shared' : ''}</option>
             ))}
           </select>
           {selectedFleet && !hasHome && (
@@ -970,7 +970,7 @@ export function WorkWeekView() {
           </p>
         </Card>
       ) : (
-        <SetupForm fleets={fleets} onRun={handleRun} loading={running} error={error} />
+        <SetupForm fleets={fleets} onRun={handleRun} loading={running} error={error} currentUserId={user?.id} />
       )}
 
       {noCredits && (
