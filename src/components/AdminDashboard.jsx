@@ -95,8 +95,9 @@ function getBillingTier(billingStartDate) {
 
 // Default fixed monthly infra costs (USD) — editable in the admin dash, stored under
 // admin_settings key `infra_costs`. PC*MILER/Trimble is variable and computed separately.
-const DEFAULT_INFRA_COSTS = { vercel: 20, supabase: 25, twilio: 0, resend: 0, address: 0, llc: 0, other: 0 };
+const DEFAULT_INFRA_COSTS = { github: 4, vercel: 20, supabase: 25, twilio: 0, resend: 0, address: 0, llc: 0, other: 0 };
 const INFRA_LINE_ITEMS = [
+  { key: 'github', label: 'GitHub Pro' }, // #124
   { key: 'vercel', label: 'Vercel Pro' },
   { key: 'supabase', label: 'Supabase Pro' },
   { key: 'twilio', label: 'Twilio (SMS)' },
