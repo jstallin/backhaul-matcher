@@ -181,13 +181,20 @@ export default async function handler(req, res) {
     const userId = await getUserId(req);
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    if (await isInPilotOrg(userId)) {
-      return res.status(200).json({ success: true, balance: 999, is_pilot: true });
-    }
-
     const rawBody = await readRawBody(req);
     const { description = 'Backhaul search', amount = 1 } = JSON.parse(rawBody || '{}');
     const p_amount = Math.max(1, Math.floor(amount));
+
+    if (await isInPilotOrg(userId)) {
+      // #131: pilot orgs aren't charged, but record the would-be charge as a
+      // type='pilot' ledger row (balance untouched) so the admin revenue projection
+      // can count it. A telemetry failure must never block the user's search.
+      const { error: pErr } = await supabaseAdmin
+        .from('credit_transactions')
+        .insert({ user_id: userId, amount: -p_amount, type: 'pilot', description });
+      if (pErr) console.error('Pilot would-be credit record failed:', pErr.message);
+      return res.status(200).json({ success: true, balance: 999, is_pilot: true });
+    }
 
     const { data: ok, error } = await supabaseAdmin.rpc('deduct_credit', {
       p_user_id: userId,
