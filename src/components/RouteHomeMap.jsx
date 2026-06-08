@@ -180,7 +180,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
         >
           <Popup>
             <div style={{ padding: '4px' }}>
-              <strong>Datum Point</strong><br/>
+              <strong>Pick-up Location</strong><br/>
               Current Location
             </div>
           </Popup>
@@ -229,7 +229,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
                       <strong>#{loadNum} Pickup</strong><br/>
                       {load.pickup_city}, {load.pickup_state}<br/>
                       <span style={{ fontSize: '11px', color: '#666' }}>
-                        {load.datum_to_pickup_miles} mi from datum
+                        {load.datum_to_pickup_miles} mi from pick-up location
                       </span>
                     </div>
                   </Popup>

@@ -10,11 +10,11 @@ const FAQ = [
   },
   {
     q: 'How do I start a backhaul request?',
-    a: 'Go to Backhaul Requests → New Request. Select the fleet, enter the datum point (the city/state where the truck currently is), pick the equipment type and pickup date, then submit. Matching runs automatically and results are sorted best-first.',
+    a: 'Go to Backhaul Requests → New Request. Select the fleet, enter the pick-up location (the city/state where the truck currently is), pick the equipment type and pickup date, then submit. Matching runs automatically and results are sorted best-first.',
   },
   {
-    q: 'What is a datum point?',
-    a: 'The datum point is the city and state where the truck is right now — the search origin. It\'s where the truck starts before picking up a backhaul load. Enter it as "City, State" (e.g., "Nashville, TN").',
+    q: 'What is the pick-up location?',
+    a: 'The pick-up location is the city and state where the truck is right now — the search origin. It\'s where the truck starts before picking up a backhaul load. Enter it as "City, State" (e.g., "Nashville, TN").',
   },
   {
     q: 'What are out-of-route (OOR) miles?',
@@ -26,11 +26,11 @@ const FAQ = [
   },
   {
     q: 'I\'m not seeing any results — what\'s wrong?',
-    a: 'Check three things: (1) the fleet has a home location set, (2) the datum point is in "City, State" format, and (3) the equipment type matches available loads. If loads are sparse on a lane, try adjusting the datum point to a nearby major city.',
+    a: 'Check three things: (1) the fleet has a home location set, (2) the pick-up location is in "City, State" format, and (3) the equipment type matches available loads. If loads are sparse on a lane, try adjusting the pick-up location to a nearby major city.',
   },
   {
     q: 'What is relay mode and when should I use it?',
-    a: 'Relay mode is for fleets where drivers always return to a home terminal between loads instead of running point-to-point. When enabled, OOR miles are calculated as the full driver loop: home → pickup → delivery → home, rather than datum → pickup → delivery → home. Toggle it on the request form.',
+    a: 'Relay mode is for fleets where drivers always return to a home terminal between loads instead of running point-to-point. When enabled, OOR miles are calculated as the full driver loop: home → load pickup → delivery → home, rather than pick-up location → load pickup → delivery → home. Toggle it on the request form.',
   },
   {
     q: 'How do I record a completed load?',

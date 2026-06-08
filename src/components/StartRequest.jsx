@@ -8,6 +8,7 @@ import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { CityStateInput } from './CityStateInput';
 import { FLEET_MODES } from '../utils/fleetModes';
+import { generateRequestName } from '../utils/requestName';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -181,8 +182,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.requestName.trim()) newErrors.requestName = 'Request name is required';
-    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Datum point is required';
+    // #128: request name is optional — auto-generated on save when left blank.
+    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Pick-up location is required';
     else if (datumResolved === false) newErrors.datumPoint = "We couldn't find that location — check the spelling.";
     if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
@@ -222,11 +223,21 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const doSave = async () => {
     setSaving(true);
     try {
+      // #128: auto-generate a name when the user left it blank (unique per user).
+      let requestName = formData.requestName.trim();
+      if (!requestName) {
+        const existing = await db.requests.getAll(user.id).catch(() => []);
+        requestName = generateRequestName({
+          displayName: user.user_metadata?.full_name || user.email,
+          location: formData.datumPoint,
+          existingNames: (existing || []).map(r => r.request_name),
+        });
+      }
       // Prepare request data for database
       const requestData = {
         user_id: user.id,
         fleet_id: formData.selectedFleetId,
-        request_name: formData.requestName,
+        request_name: requestName,
         datum_point: formData.datumPoint,
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
@@ -366,13 +377,13 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
             <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
               
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Backhaul Request Name *</label>
-                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="e.g., Backhaul Request 12/30/2025" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Backhaul Request Name</label>
+                <input type="text" value={formData.requestName} onChange={(e) => handleChange('requestName', e.target.value)} disabled={saving} placeholder="Optional — we'll generate one if left blank" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.requestName ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none' }} />
                 {errors.requestName && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.requestName}</div>}
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Datum Point (Return Location) *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Pick-up Location *</label>
                 <CityStateInput
                   value={formData.datumPoint}
                   onChange={(v) => { handleChange('datumPoint', v); setDatumResolved(null); }}

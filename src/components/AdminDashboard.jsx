@@ -894,7 +894,7 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: t.font.size.sm, minWidth: '780px' }}>
                   <thead>
                     <tr style={{ background: t.colors.accent.blueLight }}>
-                      {['Date / Time (CT)', 'Fleet', 'Request', 'Datum Point', 'Load ID', 'Source', 'Revenue', 'Exclude'].map((h, i) => (
+                      {['Date / Time (CT)', 'Fleet', 'Request', 'Pick-up Location', 'Load ID', 'Source', 'Revenue', 'Exclude'].map((h, i) => (
                         <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontWeight: t.font.weight.bold, fontSize: t.font.size.xs, color: t.colors.text.muted, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: `1px solid ${t.colors.page.cardBorder}`, whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>

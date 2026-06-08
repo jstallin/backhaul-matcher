@@ -767,7 +767,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#EF4444', border: '2px solid white' }} />
-                      <span><strong>A</strong> = Datum Point (Current Location)</span>
+                      <span><strong>A</strong> = Pick-up Location</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#10B981', border: '2px solid white' }} />
@@ -873,7 +873,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <MapPin size={16} color={colors.text.tertiary} />
                       <div>
-                        <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Datum Point</div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Pick-up Location</div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>{request.datum_point}</div>
                       </div>
                     </div>
