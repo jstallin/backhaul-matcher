@@ -614,7 +614,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: colors.text.secondary }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>Pick-up Location → Load Pickup</span>
+                          <span>Empty → Pickup</span>
                           <span style={{ fontWeight: 600 }}>{formatNumber(datumToPickup)} mi</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>

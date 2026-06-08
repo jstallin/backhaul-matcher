@@ -499,7 +499,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
             <ErrorMsg msg={errors.requestName} />
           </Field>
 
-          <Field label="Pick-up Location" style={{ gridColumn: '1 / -1' }}>
+          <Field label="Empty City, ST" style={{ gridColumn: '1 / -1' }}>
             <CityStateInput
               value={form.datumText}
               onChange={(v) => { set('datumText', v); setDatumVerified(false); }}
@@ -1169,7 +1169,7 @@ function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onV
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Pick-up Location → Load Pickup</span>
+                    <span>Empty → Pickup</span>
                     <span style={{ fontWeight: t.font.weight.semibold }}>{fmtNum(datumToPickup, 0)} mi</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1645,7 +1645,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
               No matches found
             </div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, maxWidth: '360px', margin: '0 auto' }}>
-              No loads were found along this route. Try a different pick-up location or check that the fleet's home address is set correctly.
+              No loads were found along this route. Try a different empty location or check that the fleet's home address is set correctly.
             </div>
           </Card>
         )}

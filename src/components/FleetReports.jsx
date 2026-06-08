@@ -259,7 +259,7 @@ export const FleetReports = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <tr style={{ borderBottom: `2px solid ${colors.border.secondary}` }}>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Request Name</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Fleet</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Pick-up Location</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Empty</th>
                     <th style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: colors.text.secondary }}>Status</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 700, color: colors.text.secondary }}>Cancellation Reason</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 700, color: colors.text.secondary }}>Created</th>

@@ -183,7 +183,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const validateForm = () => {
     const newErrors = {};
     // #128: request name is optional — auto-generated on save when left blank.
-    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Pick-up location is required';
+    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Empty City, ST is required';
     else if (datumResolved === false) newErrors.datumPoint = "We couldn't find that location — check the spelling.";
     if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
@@ -383,7 +383,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
               </div>
 
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Pick-up Location *</label>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Empty City, ST *</label>
                 <CityStateInput
                   value={formData.datumPoint}
                   onChange={(v) => { handleChange('datumPoint', v); setDatumResolved(null); }}
