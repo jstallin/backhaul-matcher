@@ -229,7 +229,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Truck size={16} style={{ display: 'inline', marginRight: '6px' }} />Select Fleet *</label>
                 <select value={formData.selectedFleetId} onChange={(e) => handleChange('selectedFleetId', e.target.value)} disabled={saving} style={{ ...inputStyle, border: `1px solid ${errors.selectedFleetId ? colors.accent.danger : colors.border.accent}`, cursor: 'pointer' }}>
                   <option value="">-- Select a fleet --</option>
-                  {fleets.map(fleet => <option key={fleet.id} value={fleet.id}>{fleet.name} (MC: {fleet.mc_number || 'N/A'})</option>)}
+                  {fleets.map(fleet => <option key={fleet.id} value={fleet.id}>{fleet.name} (MC: {fleet.mc_number || 'N/A'}){fleet.user_id !== user?.id ? ' · shared' : ''}</option>)}
                 </select>
                 {errors.selectedFleetId && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.selectedFleetId}</div>}
                 {selectedFleet && <div style={{ marginTop: '12px', padding: '12px', background: colors.background.tertiary, borderRadius: '8px', fontSize: '13px', color: colors.text.secondary }}><div><strong>Home:</strong> {selectedFleet.home_address}</div>{selectedFleet.mc_number && <div><strong>MC:</strong> {selectedFleet.mc_number}</div>}{selectedFleet.dot_number && <div><strong>DOT:</strong> {selectedFleet.dot_number}</div>}</div>}

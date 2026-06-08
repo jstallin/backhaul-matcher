@@ -5,10 +5,12 @@ import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
 import { HaulMonitorLogo } from './HaulMonitorLogo';
 import { db } from '../lib/supabase';
+import { fetchOrgMembers, memberName } from '../utils/orgMembers';
 
 export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSettings, onMenuNavigate }) => {
   const { colors } = useTheme();
   const [fleets, setFleets] = useState([]);
+  const [members, setMembers] = useState([]); // #129: resolve owner names for shared fleets
   const [loading, setLoading] = useState(true);
   const [expandedFleetId, setExpandedFleetId] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // {id, name}
@@ -19,6 +21,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
   useEffect(() => {
     if (user) {
       loadFleets();
+      fetchOrgMembers().then(setMembers);
     }
   }, [user]);
 
@@ -285,7 +288,8 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
             }}>
               {fleets.map((fleet) => {
                 const isExpanded = expandedFleetId === fleet.id;
-                
+                const shared = user && fleet.user_id && fleet.user_id !== user.id; // #129: view-only
+
                 return (
                   <div
                     key={fleet.id}
@@ -349,6 +353,11 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                             }}>
                               MC: {fleet.mc_number || 'N/A'}
                             </div>
+                            {shared && (
+                              <div style={{ fontSize: '12px', color: colors.text.tertiary, marginTop: '2px' }}>
+                                Shared by {memberName(members, fleet.user_id) || 'another member'} · View only
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -435,7 +444,13 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                           )}
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* #129: view-only fleets (shared by another member) get no actions */}
+                        {shared ? (
+                          <div style={{ marginTop: '20px', borderTop: `1px solid ${colors.border.secondary}`, paddingTop: '20px', fontSize: '13px', color: colors.text.secondary }}>
+                            <strong>View only</strong> — shared by {memberName(members, fleet.user_id) || 'another member'}. You can select this fleet on requests, but can't edit it.
+                          </div>
+                        ) : (
+                        /* Action Buttons */
                         <div style={{
                           display: 'flex',
                           gap: '12px',
@@ -536,6 +551,7 @@ export const Fleets = ({ user, onSelectFleet, onCreateFleet, onNavigateToSetting
                             Delete Fleet
                           </button>
                         </div>
+                        )}
                       </div>
                     )}
                   </div>
