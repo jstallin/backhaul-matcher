@@ -19,6 +19,9 @@ export function buildFleetPayload(form) {
     // Optional transport modes the fleet handles (item 007); null when none selected.
     modes:                     Array.isArray(form.modes) && form.modes.length ? form.modes : null,
     revenue_split_carrier:     Number(form.revenueSplitCarrier) || 20,
+    // #122: split is strictly complementary — store the derived customer % too, else it
+    // falls to the DB DEFAULT 20 (wrong) since v2 never wrote it. Mirrors v1 FleetSetup.
+    revenue_split_customer:    100 - (Number(form.revenueSplitCarrier) || 20),
     mileage_rate:              Number(form.mileageRate) || null,
     stop_rate:                 Number(form.stopRate) || null,
     fuel_peg:                  Number(form.fuelPeg) || null,

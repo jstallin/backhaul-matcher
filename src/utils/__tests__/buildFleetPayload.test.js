@@ -87,6 +87,19 @@ describe('buildFleetPayload', () => {
       expect(profileData.revenue_split_carrier).toBe(20);
     });
 
+    // #122: the split is complementary — customer must be stored as 100 - carrier,
+    // not left to the DB DEFAULT 20.
+    it('stores revenue_split_customer as the complement of carrier', () => {
+      const { profileData } = buildFleetPayload({ ...baseForm, revenueSplitCarrier: 30 });
+      expect(profileData.revenue_split_carrier).toBe(30);
+      expect(profileData.revenue_split_customer).toBe(70);
+    });
+
+    it('defaults the customer split to 80 when carrier is blank', () => {
+      const { profileData } = buildFleetPayload({ ...baseForm, revenueSplitCarrier: '' });
+      expect(profileData.revenue_split_customer).toBe(80);
+    });
+
     it('sets fuel_mpg to null when blank (no assumed default — MPG is now required in the form)', () => {
       const { profileData } = buildFleetPayload({ ...baseForm, fuelMpg: '' });
       expect(profileData.fuel_mpg).toBeNull();
