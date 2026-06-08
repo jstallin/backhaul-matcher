@@ -810,8 +810,10 @@ async function fetchTruckstopLoads({ integrationId, username, password, originCi
   }
 
   const envelope = buildSoapEnvelope({ integrationId, username, password, originCity, originState, equipmentType, modes, radiusMiles, pickupDate, pickupDateEnd });
-  const sanitized = envelope.replace(/<web:Password>[^<]*<\/web:Password>/, '<web:Password>***</web:Password>');
-  console.log('Truckstop SOAP envelope:\n', sanitized);
+  // #123: do NOT log the envelope — it carries the per-org IntegrationId and the WS
+  // UserName in plaintext (only Password was redacted), which leaked them into Vercel
+  // runtime logs on every search. The HTTP request line + load count below are enough
+  // to debug; the integration ID stays out of logs (Vault-protected at rest).
 
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
