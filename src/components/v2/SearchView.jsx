@@ -6,6 +6,7 @@ import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildRequestPayload } from '../../utils/buildRequestPayload';
+import { generateRequestName } from '../../utils/requestName';
 import { findRouteHomeBackhauls, computeNegotiation, netCreditAtGross, isNoRateLoad, effectivePickupDate } from '../../utils/routeHomeMatching';
 import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
@@ -429,7 +430,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
 
   const validate = () => {
     const e = {};
-    if (!form.requestName.trim()) e.requestName = 'Required';
+    // #128: request name is optional — auto-generated on save when left blank.
     if (!form.datumText.trim()) e.datumText = 'Required';
     else if (!datumVerified) e.datumText = "We couldn't find that location — check the spelling.";
     if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
@@ -448,7 +449,20 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const doSave = async () => {
     setSaving(true);
     try {
-      const payload = buildRequestPayload(form, user.id);
+      // #128: auto-generate a name when the user left it blank (unique per user).
+      let resolvedForm = form;
+      if (!form.requestName.trim()) {
+        const existing = await db.requests.getAll(user.id).catch(() => []);
+        resolvedForm = {
+          ...form,
+          requestName: generateRequestName({
+            displayName: user.user_metadata?.full_name || user.email,
+            location: form.datumText,
+            existingNames: (existing || []).map(r => r.request_name),
+          }),
+        };
+      }
+      const payload = buildRequestPayload(resolvedForm, user.id);
       if (initialValues?.id) {
         await db.requests.update(initialValues.id, payload);
       } else {
@@ -481,11 +495,11 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
           <Field label="Request Name" style={{ gridColumn: '1 / -1' }}>
-            <Input value={form.requestName} onChange={e => set('requestName', e.target.value)} placeholder="e.g. ATL Return Run" />
+            <Input value={form.requestName} onChange={e => set('requestName', e.target.value)} placeholder="Optional — auto-generated if blank" />
             <ErrorMsg msg={errors.requestName} />
           </Field>
 
-          <Field label="Datum (Return Location)" style={{ gridColumn: '1 / -1' }}>
+          <Field label="Empty City, ST" style={{ gridColumn: '1 / -1' }}>
             <CityStateInput
               value={form.datumText}
               onChange={(v) => { set('datumText', v); setDatumVerified(false); }}
@@ -1155,7 +1169,7 @@ function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onV
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Datum → Pickup</span>
+                    <span>Empty → Pickup</span>
                     <span style={{ fontWeight: t.font.weight.semibold }}>{fmtNum(datumToPickup, 0)} mi</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1631,7 +1645,7 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
               No matches found
             </div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, maxWidth: '360px', margin: '0 auto' }}>
-              No loads were found along this route. Try a different datum point or check that the fleet's home address is set correctly.
+              No loads were found along this route. Try a different empty location or check that the fleet's home address is set correctly.
             </div>
           </Card>
         )}

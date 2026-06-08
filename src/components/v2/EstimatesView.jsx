@@ -412,7 +412,7 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
             <ErrorMsg msg={errors.requestName} />
           </Field>
 
-          <Field label="Datum Point">
+          <Field label="Empty City, ST">
             <Input value={form.datumPoint} onChange={e => set('datumPoint', e.target.value)} placeholder="City, ST or ZIP" />
             <ErrorMsg msg={errors.datumPoint} />
           </Field>
@@ -1022,7 +1022,7 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
                 ) : (
                   <>
                     <div style={{ fontSize: t.font.size.base, fontWeight: t.font.weight.semibold, marginBottom: '8px' }}>No matching opportunities found for this route.</div>
-                    <div style={{ fontSize: t.font.size.sm }}>Try a different datum point or check fleet equipment settings.</div>
+                    <div style={{ fontSize: t.font.size.sm }}>Try a different empty location or check fleet equipment settings.</div>
                   </>
                 )}
               </div>
@@ -1206,7 +1206,7 @@ function EstimateResultsPanel({ estimate, fleet, matches, isLoading, error, hasR
               No matches found
             </div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm, maxWidth: '360px', margin: '0 auto' }}>
-              No loads were found along this route. Try a different datum point or check the fleet home address.
+              No loads were found along this route. Try a different empty location or check the fleet home address.
             </div>
           </Card>
         )}

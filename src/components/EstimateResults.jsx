@@ -430,7 +430,7 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
             ) : (
               <>
                 <p style={{ fontSize: '15px', fontWeight: 600 }}>No matching opportunities found for this route.</p>
-                <p style={{ fontSize: '13px' }}>Try a different datum point or check fleet equipment settings.</p>
+                <p style={{ fontSize: '13px' }}>Try a different empty location or check fleet equipment settings.</p>
               </>
             )}
           </div>

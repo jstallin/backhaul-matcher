@@ -293,7 +293,7 @@ export function LoadsView() {
                   <th style={thStyle}>Date</th>
                   <th style={thStyle}>Request</th>
                   <th style={thStyle}>Fleet</th>
-                  <th style={thStyle}>Datum Point</th>
+                  <th style={thStyle}>Empty</th>
                   <th style={thStyle}>Status</th>
                   <th style={{ ...thStyle, textAlign: 'right' }}>Revenue</th>
                   <th style={{ ...thStyle, textAlign: 'right' }}>Net Revenue</th>

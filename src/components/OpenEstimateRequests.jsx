@@ -305,7 +305,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <MapPin size={16} color={colors.text.tertiary} />
                       <div>
-                        <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Datum Point</div>
+                        <div style={{ fontSize: '11px', color: colors.text.tertiary }}>Empty</div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>{request.datum_point}</div>
                       </div>
                     </div>
