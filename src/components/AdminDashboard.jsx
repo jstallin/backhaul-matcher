@@ -134,6 +134,12 @@ function trimbleCostForMonth(billingStart, monthKey, billableCount) {
 const fmtUSD = (n, dec = 0) =>
   `${n < 0 ? '-' : ''}$${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 
+// #131: projected revenue rate for the Org Activity credit-usage estimate. Pricing is
+// tiered ($2.00 → $1.33 / credit by pack size); we anchor on the 10-pack starter rate
+// and label it an estimate. Bump if pilot pricing changes.
+const EST_CREDIT_PRICE = 2.00;
+const fmtCredits = (n) => Number(n || 0).toLocaleString('en-US');
+
 const monthLabel = (key) => {
   const [y, m] = key.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
@@ -846,12 +852,14 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                   {org.rollup.declined_count > 0 && (
                     <> · Ops declined: <strong style={{ color: '#dc2626' }}>{fmtUSD(org.rollup.declined_gross_all)}</strong> all-time / <strong style={{ color: '#dc2626' }}>{fmtUSD(org.rollup.declined_gross_30d)}</strong> 30d</>
                   )}
+                  {/* #131: billable credit spend → projected revenue (est. at the starter rate) */}
+                  <> · Credits: <strong style={{ color: t.colors.accent.blue }}>{fmtCredits(org.rollup.credits_all)}</strong> all-time / <strong style={{ color: t.colors.accent.blue }}>{fmtCredits(org.rollup.credits_30d)}</strong> 30d · ≈ <strong style={{ color: t.colors.accent.blue }}>{fmtUSD(org.rollup.credits_all * EST_CREDIT_PRICE)}</strong> potential rev @ ${EST_CREDIT_PRICE.toFixed(2)}/cr</>
                 </span>
               </div>
               {/* Per-user activity table */}
               <Table
-                minWidth="760px"
-                headers={['User', 'Last Login', 'Last Request', 'Last Updated', 'Last Search', 'Last Detail Open', 'Hauled (all / 30d)']}
+                minWidth="980px"
+                headers={['User', 'Last Login', 'Last Request', 'Last Updated', 'Last Search', 'Last Detail Open', 'Hauled (all / 30d)', 'Credits Used (all / 30d)', 'Est. Rev (all / 30d)']}
                 rows={org.members.map((m) => [
                   <span key="u" title={m.email}>{m.full_name || m.email}{m.role === 'admin' ? ' ★' : ''}</span>,
                   <span key="l" style={{ color: agoColor(m.last_sign_in_at), fontWeight: t.font.weight.semibold }}>{fmtAgo(m.last_sign_in_at)}</span>,
@@ -860,6 +868,9 @@ export const AdminDashboard = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <span key="s" style={{ color: agoColor(m.last_search_run) }}>{fmtAgo(m.last_search_run)}</span>,
                   <span key="d" style={{ color: agoColor(m.last_detail_open) }}>{fmtAgo(m.last_detail_open)}</span>,
                   <span key="r">{fmtUSD(m.hauled_all)} / {fmtUSD(m.hauled_30d)}{m.completed_count > 0 ? ` (${m.completed_count})` : ''}</span>,
+                  // #131: credits spent (count of billable actions in title) + projected revenue
+                  <span key="cr" title={`${m.credit_actions_all || 0} billable actions all-time / ${m.credit_actions_30d || 0} in 30d`}>{fmtCredits(m.credits_all)} / {fmtCredits(m.credits_30d)}</span>,
+                  <span key="er" style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.semibold }}>{fmtUSD((m.credits_all || 0) * EST_CREDIT_PRICE)} / {fmtUSD((m.credits_30d || 0) * EST_CREDIT_PRICE)}</span>,
                 ])}
               />
             </div>
