@@ -303,6 +303,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
       } else {
         const newFleet = await db.fleets.create({ ...fleetData, user_id: user.id });
         await db.fleetProfiles.update(newFleet.id, profileData);
+        await db.fleetShares.setForFleet(newFleet.id, shareIds, user.id); // #129: persist shares chosen at creation
       }
       onSaved();
     } catch (err) {
@@ -473,8 +474,8 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
       </FormGrid>
       </fieldset>
 
-      {/* #129: owner-only — grant org members view-only access. Shown once the fleet exists. */}
-      {isOwner && fleet && (
+      {/* #129: owner-only — grant org members view-only access (works at create time too). */}
+      {isOwner && (
         <>
           <SectionLabel>Shared With (View Only)</SectionLabel>
           <Field label="Org members" hint="They can view this fleet and select it on requests, but can't edit it. Search by name or email.">
