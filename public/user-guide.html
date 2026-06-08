@@ -340,7 +340,7 @@
   <div class="section-label">Section 3</div>
   <div class="section-title">Creating a Backhaul Request</div>
   <p class="section-intro">
-    A Backhaul Request tells Haul Monitor where your truck currently is (the datum point) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
+    A Backhaul Request tells Haul Monitor where your truck currently is (the empty location) and when the equipment needs to be back home. The system searches live load data, scores every opportunity by out-of-route efficiency and net revenue, and presents the best matches in a ranked list with a route map.
   </p>
 
   <div class="steps">
@@ -359,7 +359,7 @@
         <div class="step-title">Fill in the Request Details</div>
         <div class="fields">
           <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive name for this request (e.g., Backhaul Request 12/30/2025)</div></div>
-          <div class="field-row"><div class="field-name">Datum Point (Return Location) <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
+          <div class="field-row"><div class="field-name">Empty City, ST <span class="req">*</span></div><div class="field-desc">Where your truck currently is or will be at the start of its return home. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
           <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">Choose which fleet this request is for. The fleet's home base and rate config are used for all calculations.</div></div>
           <div class="field-row"><div class="field-name">Begin Pickup Window</div><div class="field-desc">The earliest date the truck is available to pick up a backhaul load</div></div>
           <div class="field-row"><div class="field-name">End Pickup Window</div><div class="field-desc">The last day of the pickup window. Once this date is fully in the past the request is marked <strong>Inactive</strong> and can't be run — edit the dates forward to re-enable it instantly (no credits are spent on inactive requests).</div></div>
@@ -401,7 +401,7 @@
       <div class="step-num-col"><div class="step-num">4</div><div class="step-line"></div></div>
       <div class="step-body">
         <div class="step-title">Submit the Request</div>
-        <p class="step-desc">Click <strong>Save Request</strong>. Haul Monitor geocodes the datum point, builds the route corridor from your location to fleet home, and scores all matching loads. This typically takes 5–15 seconds.</p>
+        <p class="step-desc">Click <strong>Save Request</strong>. Haul Monitor geocodes the empty location, builds the route corridor from your location to fleet home, and scores all matching loads. This typically takes 5–15 seconds.</p>
       </div>
     </div>
 
@@ -411,15 +411,15 @@
         <div class="step-title">Review Results</div>
         <p class="step-desc">Your request appears in <strong>Search</strong>. Click a request to open the full results view, and Run Search to execute the search.</p>
         <img class="shot" src="/guide/s2-requests-list.png" alt="Open Backhaul Requests page showing active request cards" />
-        <p class="step-desc" style="margin-top:12px;">The <strong>Route Map</strong> shows the top 10 opportunities plotted along your corridor home. The red <strong>A</strong> marker is your datum point; the green <strong>B</strong> is fleet home. Numbered circles show pickup locations.</p>
-        <img class="shot" src="/guide/s2-route-map.png" alt="Route Home Map showing datum point, fleet home, and opportunity markers along the corridor" />
+        <p class="step-desc" style="margin-top:12px;">The <strong>Route Map</strong> shows the top 10 opportunities plotted along your corridor home. The red <strong>A</strong> marker is your empty location; the green <strong>B</strong> is fleet home. Numbered circles show pickup locations.</p>
+        <img class="shot" src="/guide/s2-route-map.png" alt="Route Home Map showing empty location, fleet home, and opportunity markers along the corridor" />
         <p class="step-desc" style="margin-top:12px;">Below the map, opportunities are ranked by <strong>Customer Net Credit</strong> (highest first) with a full financial breakdown per load.</p>
         <img class="shot" src="/guide/s2-results.png" alt="Backhaul results ranked list showing financial breakdown with Customer Share, Mileage Exp, Stop Exp, Fuel Surcharge, and Net" />
         <div class="fields" style="margin-top:12px;">
           <div class="field-row"><div class="field-name">Customer Net Credit</div><div class="field-desc">Bottom-line benefit per load: carrier revenue share minus all OOR costs</div></div>
           <div class="field-row"><div class="field-name">Gross / $/mi</div><div class="field-desc">Total gross revenue from the load and revenue per mile</div></div>
           <div class="field-row"><div class="field-name">OOR Miles</div><div class="field-desc">Out-of-route miles added versus driving straight home</div></div>
-          <div class="field-row"><div class="field-name">To Pickup</div><div class="field-desc">Miles from your datum point to the load's pickup location</div></div>
+          <div class="field-row"><div class="field-name">Empty → Pickup</div><div class="field-desc">Miles from your empty location to the load's pickup location</div></div>
         </div>
         <div class="note" style="margin-top:12px;">
           <span class="note-icon">⚠️</span>
@@ -479,14 +479,14 @@
         <div class="step-title">Fill in the Request Details</div>
         <div class="fields">
           <div class="field-row"><div class="field-name">Request Name <span class="req">*</span></div><div class="field-desc">A descriptive label for this estimate (e.g., Estimate Request 03/05/2026)</div></div>
-          <div class="field-row"><div class="field-name">Datum Point <span class="req">*</span></div><div class="field-desc">The starting location for the return route. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
+          <div class="field-row"><div class="field-name">Empty City, ST <span class="req">*</span></div><div class="field-desc">The starting location for the return route. Enter city/state or ZIP (e.g., Charlotte, NC or 28036).</div></div>
           <div class="field-row"><div class="field-name">Fleet <span class="req">*</span></div><div class="field-desc">The fleet whose rate config will be used for all financial calculations</div></div>
           <div class="field-row"><div class="field-name">Equipment Available Date <span class="req">*</span></div><div class="field-desc">Start of the date window to search for available loads</div></div>
           <div class="field-row"><div class="field-name">Equipment Needed By <span class="req">*</span></div><div class="field-desc">End of the date window — equipment must be home by this date. As with backhaul requests, once this date is fully in the past the estimate is marked <strong>Inactive</strong>; edit the dates forward to run it again.</div></div>
           <div class="field-row"><div class="field-name">Est. Loads Per Year</div><div class="field-desc">Expected loads per year. Used to project annual revenue totals on the report (e.g., 52 for weekly, 120 for roughly weekly with some weeks doubled).</div></div>
           <div class="field-row"><div class="field-name">Min Net Credit Per Load $</div><div class="field-desc">Only opportunities at or above this net credit per load are included in the report averages. Prevents low-value or negative loads from skewing results (e.g., $50 or $100).</div></div>
         </div>
-        <img class="shot" src="/guide/s3-estimate-form.png" alt="Estimate form showing Request Name, Datum Point, Fleet, date fields, Est. Loads Per Year, Min Net Credit Per Load, and Save Estimate button" />
+        <img class="shot" src="/guide/s3-estimate-form.png" alt="Estimate form showing Request Name, Empty City, ST, Fleet, date fields, Est. Loads Per Year, Min Net Credit Per Load, and Save Estimate button" />
       </div>
     </div>
 
@@ -503,7 +503,7 @@
       <div class="step-body">
         <div class="step-title">Submit and View the Report</div>
         <p class="step-desc">Click <strong>Save Estimate</strong>. Haul Monitor finds matching opportunities and generates the report. It's saved in your <strong>Estimates</strong> list under <strong>Active</strong> — click any card to open it.</p>
-        <img class="shot" src="/guide/s3-estimates-list.png" alt="Estimates list showing Active estimate cards with datum point, dates, loads per year, and min net credit" />
+        <img class="shot" src="/guide/s3-estimates-list.png" alt="Estimates list showing Active estimate cards with empty location, dates, loads per year, and min net credit" />
       </div>
     </div>
 
