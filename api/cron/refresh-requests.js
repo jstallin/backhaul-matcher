@@ -4,6 +4,7 @@ import twilio from 'twilio';
 import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/notificationChangeDetection.js';
 import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
+import { brandSms } from '../../src/utils/smsBody.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -300,7 +301,8 @@ const sendNotification = async (method, email, phone, subject, text, sms) => {
         console.log(`📤 Attempting to send SMS via Twilio to ${phone}...`);
         const client = twilio(accountSid, authToken);
         const result = await client.messages.create({
-          body: (sms || text).slice(0, 320), // concise body preserves the deep-link
+          // #140: slice the core first, then brand — so the STOP reminder is never truncated.
+          body: brandSms((sms || text || '').slice(0, 300)),
           from: fromNumber,
           to: phone,
         });

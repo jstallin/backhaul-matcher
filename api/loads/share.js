@@ -19,6 +19,7 @@
 import twilio from 'twilio';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { brandSms } from '../../src/utils/smsBody.js';
 
 // Same auth posture as api/notifications (#57): sends spend our Resend/Twilio
 // accounts, so require a valid Supabase session JWT + CORS-restrict to our origins.
@@ -188,7 +189,7 @@ export default async function handler(req, res) {
 
     try {
       const client = twilio(accountSid, authToken);
-      const result = await client.messages.create({ body: text, from: fromNumber, to: recipient });
+      const result = await client.messages.create({ body: brandSms(text), from: fromNumber, to: recipient }); // #140
       messageId = result.sid;
     } catch (error) {
       console.error('Share SMS error:', error.message);

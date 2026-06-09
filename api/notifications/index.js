@@ -1,6 +1,7 @@
 import twilio from 'twilio';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { brandSms } from '../../src/utils/smsBody.js';
 
 // #57: this endpoint sends email (Resend) and SMS (Twilio) on our account, so it must
 // not be open. It is client-facing only (the cron uses the SDKs directly), so we require
@@ -83,7 +84,7 @@ export default async function handler(req, res) {
 
     try {
       const client = twilio(accountSid, authToken);
-      const result = await client.messages.create({ body: message, from: from || fromNumber, to });
+      const result = await client.messages.create({ body: brandSms(message), from: from || fromNumber, to }); // #140
       return res.status(200).json({ success: true, messageId: result.sid });
     } catch (error) {
       console.error('SMS error:', error.message);
