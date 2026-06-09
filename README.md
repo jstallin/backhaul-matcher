@@ -6,6 +6,7 @@ A logistics platform that solves the backhaul dilemma by matching empty return t
 
 - **Route Matching Algorithm**: Finds compatible loads within configurable search radius
 - **Revenue Optimization**: Calculates and ranks opportunities by efficiency score
+- **Backhaul Searches and Sales Estimates Supported**: Fleet-based specific backhaul searches and pre-sales revenue estimates by lane supported
 - **OOR Miles Calculation**: Compares additional miles vs. direct return
 - **Relay Mode**: Optional return to fleet home between pickup and delivery
 - **Equipment Compatibility**: Filters loads by trailer type, length, and weight
