@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** June 6, 2026
-- **Session type:** Claude Code (Ryder pilot-feedback batch #81–#85 shipped + #38, #94, #108 What's New banner, #103 user guide)
-- **Updated by:** Claude Code (session 11)
+- **Date:** June 8, 2026
+- **Session type:** Claude Code (session 12 — Ryder Truckstop outage diagnosis, #129 org fleet sharing, Datum→Empty, #131 pilot-revenue fix; full June 7–8 batch)
+- **Updated by:** Claude Code (session 12)
 
 ---
 
@@ -21,6 +21,22 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 7–8, 2026, session 12) — Ryder outage + #129 fleet sharing + Datum→Empty + cleanup
+
+**All shipped to production and verified** (PRs #116, #119, #121, #125, #126, #130, #132, #133, #134, #135, #136). The detailed per-issue narrative for the June 6–8 batch (#115, #117, #118, #120, #122, #123, #124, #127-app, #128, #131) is in the **session-11 addenda below**; this entry covers the new/uncaptured items.
+
+- **#129 (P2, ryder) — share fleets across an org, view-only — SHIPPED + verified on prod** (PR #135 + #136 follow-up; migration `20260608000004`, version matches repo on prod, no drift). A fleet owner grants specific org members view-only access via a search-as-you-type member multi-select (`OrgMemberMultiSelect`, on fleet create + edit). Shared fleets show in the recipient's list badged "Shared by X · View only" (no edit/delete) and are selectable on backhaul/estimate/WWP (dropdowns mark them "· shared"). **Recursion-safe RLS is the crux:** `fleet_shares` table + SECURITY DEFINER helpers (`current_user_owns_fleet`, `fleet_shared_with_current_user`) break the fleets↔fleet_shares policy cycle; recipients get additive SELECT-only policies on fleets/fleet_profiles/trucks/drivers, owner write policies untouched → view-only enforced at the DB. All fleet/profile reads are component-layer (`db.fleets.*`), so the RLS change unlocked the whole search/estimate/WWP pipeline with no algorithm change. Owner-only sharing (decided with Jason); shared fleets surface everywhere `getAll` is used. **#136 follow-up:** viewers can be chosen at fleet-creation time (persist right after create), not only after.
+- **#127 landing/guide (PR #134)** — carried the Datum → "Empty City, ST" / "Empty" / "empty location" relabel into the static marketing HTML (`public/index.html` landing, `public/user-guide.html`) that the app-only relabel had missed. Code/DB identifiers (`datum_point`) untouched.
+- **#131 pilot follow-up — confirmed live on prod:** Org Activity tile now shows real would-be revenue for the Ryder org (**$36 potential income** observed). Closes the "pending live confirmation" note in addendum 5.
+- **Ryder "no results" outage — RESOLVED (config, not code)** — detail in addendum 4 below; bad/missing per-org Truckstop integration ID, fixed in prod SQL. Runbook in memory ([[truckstop-per-org-integration-zero-results]]).
+
+**Carry-forward (parked, both flagged to Jason):**
+- ⏰ **Node 20 GitHub Actions runner deprecation — June 16, 2026.** Bump `actions/checkout@v4` / `setup-node@v4` / `cache@v4` / `upload-artifact@v4` in the workflows before then or CI breaks. **Only time-sensitive item.**
+- **$2.00/credit projection anchor (#131)** — pending Chip's preference (pricing tiered to $1.33; one `EST_CREDIT_PRICE` constant in `AdminDashboard.jsx`).
+- Open P3 backlog: #30, #31, #45, #77, #78. Infra account-ownership transfer runbook (`ACCOUNT-OWNERSHIP-RUNBOOK.md`) — human-at-keyboard, both founders.
 
 ---
 
