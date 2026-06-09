@@ -32,9 +32,9 @@
 - **#127 landing/guide (PR #134)** — carried the Datum → "Empty City, ST" / "Empty" / "empty location" relabel into the static marketing HTML (`public/index.html` landing, `public/user-guide.html`) that the app-only relabel had missed. Code/DB identifiers (`datum_point`) untouched.
 - **#131 pilot follow-up — confirmed live on prod:** Org Activity tile now shows real would-be revenue for the Ryder org (**$36 potential income** observed). Closes the "pending live confirmation" note in addendum 5.
 - **Ryder "no results" outage — RESOLVED (config, not code)** — detail in addendum 4 below; bad/missing per-org Truckstop integration ID, fixed in prod SQL. Runbook in memory ([[truckstop-per-org-integration-zero-results]]).
+- **#137 — GitHub Actions bumped off the Node 20 runner** (before the June 16 deadline): all 5 workflows → `checkout@v6`, `setup-node@v6`, `cache@v5`, `upload-artifact@v7`, `download-artifact@v8`. CI confirmed green with the Node 20 deprecation warning gone.
 
-**Carry-forward (parked, both flagged to Jason):**
-- ⏰ **Node 20 GitHub Actions runner deprecation — June 16, 2026.** Bump `actions/checkout@v4` / `setup-node@v4` / `cache@v4` / `upload-artifact@v4` in the workflows before then or CI breaks. **Only time-sensitive item.**
+**Carry-forward (parked):**
 - **$2.00/credit projection anchor (#131)** — pending Chip's preference (pricing tiered to $1.33; one `EST_CREDIT_PRICE` constant in `AdminDashboard.jsx`).
 - Open P3 backlog: #30, #31, #45, #77, #78. Infra account-ownership transfer runbook (`ACCOUNT-OWNERSHIP-RUNBOOK.md`) — human-at-keyboard, both founders.
 
