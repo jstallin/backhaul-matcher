@@ -7,6 +7,7 @@ import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildRequestPayload } from '../../utils/buildRequestPayload';
 import { generateRequestName } from '../../utils/requestName';
+import { smsConsentRequired, methodIncludesText, effectiveNotificationMethod } from '../../utils/smsConsent';
 import { findRouteHomeBackhauls, computeNegotiation, netCreditAtGross, isNoRateLoad, effectivePickupDate } from '../../utils/routeHomeMatching';
 import { CityStateInput } from '../CityStateInput';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
@@ -375,6 +376,7 @@ const BLANK_FORM = {
   maxAutoRefreshes: '',
   notificationEnabled: false,
   notificationMethod: 'email',
+  smsConsent: false, // #140: standalone SMS opt-in
 };
 
 function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
@@ -396,6 +398,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     maxAutoRefreshes: initialValues.max_auto_refreshes != null ? String(initialValues.max_auto_refreshes) : '',
     notificationEnabled: initialValues.notification_enabled || false,
     notificationMethod: initialValues.notification_method || 'email',
+    smsConsent: initialValues.sms_consent || false, // #140: re-affirm consent on edit
   } : { ...BLANK_FORM, selectedFleetId: fleets.length === 1 ? fleets[0].id : '' });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -434,6 +437,10 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     if (!form.datumText.trim()) e.datumText = 'Required';
     else if (!datumVerified) e.datumText = "We couldn't find that location — check the spelling.";
     if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
+    // #140: texting needs explicit consent; Email is always available so SMS stays optional.
+    if (smsConsentRequired(form.notificationEnabled || form.autoRefresh, form.notificationMethod) && !form.smsConsent) {
+      e.smsConsent = 'Check the SMS consent box to receive texts, or choose Email.';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -608,6 +615,16 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
                     <option value="both">Both</option>
                   </SelectInput>
                 </Field>
+                {/* #140: standalone, optional SMS opt-in — required only to receive texts */}
+                {methodIncludesText(form.notificationMethod) && (
+                  <div style={{ marginTop: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: t.font.size.sm, color: t.colors.text.secondary, lineHeight: 1.5, maxWidth: '520px' }}>
+                      <input type="checkbox" checked={form.smsConsent} onChange={e => set('smsConsent', e.target.checked)} style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span>I agree to receive recurring SMS text notifications from <strong>Haul Monitor</strong> about backhaul matches for this request, sent to the number on my fleet profile. Message frequency varies. Msg &amp; data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. See our <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: t.colors.accent.blue }}>Privacy Policy &amp; SMS Terms</a>.</span>
+                    </label>
+                    <ErrorMsg msg={errors.smsConsent} />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2031,7 +2048,7 @@ export function SearchView() {
         const change = detectBackhaulChanges(previousMatchesRef.current, opportunities);
         if (change) {
           sendBackhaulChangeNotification({
-            method: request.notification_method || 'email',
+            method: effectiveNotificationMethod(request.notification_method, request.sms_consent), // #140
             email: fleet?.email,
             phone: fleet?.phone_number,
             requestName: request.request_name,

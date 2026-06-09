@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import twilio from 'twilio';
 import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/notificationChangeDetection.js';
 import { isRequestExpired } from '../../src/utils/requestExpiry.js';
+import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -607,16 +608,13 @@ export default async function handler(req, res) {
             const requestLink = `${APP_URL}/app?request=${request.id}`;
             const { subject, text, sms } = buildNotificationMessage(request.request_name, change, requestLink);
 
-            const notifResult = await sendNotification(
-              request.notification_method || 'both',
-              fleet.email,
-              fleet.phone_number,
-              subject,
-              text,
-              sms
-            );
+            // #140: only text when explicit SMS consent was recorded ('both'→email, 'text'→none).
+            const method = effectiveNotificationMethod(request.notification_method, request.sms_consent);
 
-            notificationSent = notifResult.email?.success || notifResult.sms?.success;
+            if (method) {
+              const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
+              notificationSent = notifResult.email?.success || notifResult.sms?.success;
+            }
           } else {
             console.log('  ℹ️ No material change detected');
           }

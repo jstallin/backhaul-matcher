@@ -16,6 +16,7 @@ import { geocodeAddress } from '../utils/pcMilerClient';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
+import { effectiveNotificationMethod } from '../utils/smsConsent';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
 import { isExpiredInProgress, finishPayload } from '../utils/autoFinishRequests';
 import { unionModes } from '../utils/fleetModes';
@@ -362,7 +363,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
             
             // Send notification
             sendBackhaulChangeNotification({
-              method: request.notification_method || 'both',
+              method: effectiveNotificationMethod(request.notification_method, request.sms_consent), // #140
+
               email: fleet.email,
               phone: fleet.phone_number,
               requestName: request.request_name,

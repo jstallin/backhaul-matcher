@@ -1,3 +1,5 @@
+import { consentFieldsFor } from './smsConsent';
+
 // Builds the DB payload for creating/updating a backhaul_requests row
 // from the SearchView form state.
 export function buildRequestPayload(form, userId) {
@@ -27,6 +29,12 @@ export function buildRequestPayload(form, userId) {
     // Auto-refresh mandates notifications — persist them on even if the toggle state lagged.
     notification_enabled:     form.notificationEnabled || form.autoRefresh,
     notification_method:      (form.notificationEnabled || form.autoRefresh) ? (form.notificationMethod || 'email') : null,
+    // #140: explicit SMS consent (true + timestamp only when Text/Both + checkbox ticked)
+    ...consentFieldsFor({
+      notificationEnabled: form.notificationEnabled || form.autoRefresh,
+      method: form.notificationMethod,
+      consentChecked: form.smsConsent,
+    }),
     status:                   'active',
     user_id:                  userId,
   };
