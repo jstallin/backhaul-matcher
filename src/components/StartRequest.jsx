@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { CityStateInput } from './CityStateInput';
 import { FLEET_MODES } from '../utils/fleetModes';
 import { generateRequestName } from '../utils/requestName';
+import { smsConsentRequired, consentFieldsFor, methodIncludesText } from '../utils/smsConsent';
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -36,7 +37,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     autoRefreshInterval: '0.5',  // 30 minutes default
     maxAutoRefreshes: '',        // blank = unlimited (item 006)
     notificationEnabled: false,
-    notificationMethod: 'both',
+    notificationMethod: 'email',   // #140: default Email — SMS is explicit opt-in only
+    smsConsent: false,             // #140: standalone SMS opt-in for this request
     editingId: null
   });
 
@@ -96,7 +98,8 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           autoRefreshInterval: String(request.auto_refresh_interval ? (request.auto_refresh_interval / 60) : '0.5'), // Convert minutes to hours
           maxAutoRefreshes: request.max_auto_refreshes != null ? String(request.max_auto_refreshes) : '',
           notificationEnabled: request.notification_enabled || false,
-          notificationMethod: request.notification_method || 'both',
+          notificationMethod: request.notification_method || 'email',
+          smsConsent: request.sms_consent || false, // #140: re-affirm consent on edit
           editingId: request.id
         };
         
@@ -171,7 +174,9 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
       // so notifications are mandatory whenever auto-refresh is enabled.
       if (field === 'autoRefresh' && value) {
         next.notificationEnabled = true;
-        if (!next.notificationMethod) next.notificationMethod = 'both';
+        // #140: auto-refresh turns notifications on but must NOT force SMS — default
+        // to Email so consent is never implied. User can still choose Text + opt in.
+        if (!next.notificationMethod) next.notificationMethod = 'email';
       }
       return next;
     });
@@ -196,7 +201,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         newErrors.equipmentNeededDate = 'Needed date must be after available date';
       }
     }
-    
+
+    // #140: texting requires explicit consent; Email stays available so SMS is optional.
+    if (smsConsentRequired(formData.notificationEnabled || formData.autoRefresh, formData.notificationMethod) && !formData.smsConsent) {
+      newErrors.smsConsent = 'Check the SMS consent box to receive texts, or choose Email.';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -250,7 +260,13 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         max_auto_refreshes: formData.autoRefresh && parseInt(formData.maxAutoRefreshes, 10) > 0 ? parseInt(formData.maxAutoRefreshes, 10) : null,
         auto_refresh_count: 0,
         notification_enabled: formData.notificationEnabled || formData.autoRefresh,
-        notification_method: (formData.notificationEnabled || formData.autoRefresh) ? (formData.notificationMethod || 'both') : null,
+        notification_method: (formData.notificationEnabled || formData.autoRefresh) ? (formData.notificationMethod || 'email') : null,
+        // #140: record explicit SMS consent (true + timestamp only when Text/Both + checked)
+        ...consentFieldsFor({
+          notificationEnabled: formData.notificationEnabled || formData.autoRefresh,
+          method: formData.notificationMethod,
+          consentChecked: formData.smsConsent,
+        }),
         status: 'active'
       };
 
@@ -498,7 +514,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                   <input type="checkbox" checked={formData.notificationEnabled || formData.autoRefresh} onChange={(e) => handleChange('notificationEnabled', e.target.checked)} disabled={saving || formData.autoRefresh} style={{ width: '20px', height: '20px', cursor: formData.autoRefresh ? 'not-allowed' : 'pointer', marginTop: '2px' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Enable Notifications</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>{formData.autoRefresh ? 'Required while auto-refresh is on — you\'ll be alerted when the top result changes' : 'Get notified when auto-refresh finds changes in top result'}</div></div>
                 </label>
-                {(formData.notificationEnabled || formData.autoRefresh) && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}</div>}
+                {(formData.notificationEnabled || formData.autoRefresh) && <div style={{ marginLeft: '32px' }}><label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}>Notification Method</label><div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="text" checked={formData.notificationMethod === 'text'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Phone size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Text Message</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="email" checked={formData.notificationMethod === 'email'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><Mail size={16} /><span style={{ fontSize: '14px', color: colors.text.primary }}>Email</span></label><label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="radio" name="notificationMethod" value="both" checked={formData.notificationMethod === 'both'} onChange={(e) => handleChange('notificationMethod', e.target.value)} disabled={saving} /><div style={{ display: 'flex', gap: '4px' }}><Phone size={16} /><Mail size={16} /></div><span style={{ fontSize: '14px', color: colors.text.primary }}>Both</span></label></div>{selectedFleet && <div style={{ marginTop: '12px', padding: '10px', background: colors.background.card, borderRadius: '6px', fontSize: '12px', color: colors.text.secondary }}>{formData.notificationMethod !== 'email' && selectedFleet.phone_number && <div>📱 {selectedFleet.phone_number}</div>}{formData.notificationMethod !== 'text' && selectedFleet.email && <div>📧 {selectedFleet.email}</div>}</div>}{methodIncludesText(formData.notificationMethod) && (
+                  <div style={{ marginTop: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px', color: colors.text.secondary, lineHeight: 1.5 }}>
+                      <input type="checkbox" checked={formData.smsConsent} onChange={(e) => handleChange('smsConsent', e.target.checked)} disabled={saving} style={{ marginTop: '3px', flexShrink: 0 }} />
+                      <span>I agree to receive recurring SMS text notifications from <strong>Haul Monitor</strong> about backhaul matches for this request, sent to the number on my fleet profile. Message frequency varies. Msg &amp; data rates may apply. Reply <strong>STOP</strong> to cancel, <strong>HELP</strong> for help. See our <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.accent.primary }}>Privacy Policy &amp; SMS Terms</a>.</span>
+                    </label>
+                    {errors.smsConsent && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.smsConsent}</div>}
+                  </div>
+                )}</div>}
               </div>
 
               <button type="submit" disabled={saving} style={{ width: '100%', padding: '16px', background: colors.accent.success, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '16px', fontWeight: 800, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}>
