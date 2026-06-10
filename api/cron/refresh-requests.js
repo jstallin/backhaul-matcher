@@ -5,6 +5,10 @@ import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/not
 import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
 import { brandSms } from '../../src/utils/smsBody.js';
+// PR1: server-side auto-refresh now runs the SAME matching algorithm the client uses,
+// instead of a divergent inlined copy. pcMilerClient detects the server context and calls
+// PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
+import { findRouteHomeBackhauls } from '../../src/utils/routeHomeMatching.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -32,133 +36,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 );
 
-// ============================================
-// MATCHING ALGORITHM (adapted from routeHomeMatching.js)
-// ============================================
-
-const HAVERSINE_ROAD_FACTOR = 1.35;
-
-const calculateDistance = (lat1, lng1, lat2, lng2) => {
-  const R = 3959; // Radius of Earth in miles
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c * HAVERSINE_ROAD_FACTOR;
-};
-
-const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng, corridorWidthMiles = 100) => {
-  const directDistance = calculateDistance(datumLat, datumLng, homeLat, homeLng);
-  const datumToPickup = calculateDistance(datumLat, datumLng, pickupLat, pickupLng);
-  const pickupToHome = calculateDistance(pickupLat, pickupLng, homeLat, homeLng);
-  const totalDistance = datumToPickup + pickupToHome;
-  const deviation = totalDistance - directDistance;
-  return deviation <= corridorWidthMiles;
-};
-
-/**
- * Get driving distance from PC Miler (server-side, direct API call)
- */
-const getPCMilerDistance = async (origin, destination) => {
-  const token = process.env.PCMILER_API_KEY;
-  if (!token) return null;
-
-  const stops = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
-  const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports?stops=${encodeURIComponent(stops)}&reports=Mileage&authToken=${token}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data && Array.isArray(data) && data[0]?.ReportLines) {
-      const lines = data[0].ReportLines;
-      return lines[lines.length - 1]?.TMiles ?? null;
-    }
-    return null;
-  } catch (e) {
-    console.error('PC Miler error:', e.message);
-    return null;
-  }
-};
-
-const findRouteHomeBackhauls = async (datumPoint, fleetHome, fleetProfile, backhaulLoads, homeRadiusMiles = 50, corridorWidthMiles = 100) => {
-  // Get direct return distance from PC Miler (or Haversine fallback)
-  const pcMilerDirect = await getPCMilerDistance(datumPoint, fleetHome);
-  const directReturnMiles = pcMilerDirect ?? calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
-  console.log(`  Direct return: ${directReturnMiles} miles (${pcMilerDirect ? 'PC Miler' : 'Haversine'})`);
-
-  // Fast Haversine pre-filter
-  const availableLoads = backhaulLoads.filter(load => load.status === 'available');
-  const candidates = [];
-
-  for (const load of availableLoads) {
-    if (load.equipment_type !== fleetProfile.trailerType) continue;
-    if (load.trailer_length > fleetProfile.trailerLength) continue;
-    if (load.weight_lbs > fleetProfile.weightLimit) continue;
-
-    const haversineDeliveryToHome = calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-    if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
-
-    const isPickupAlongRoute = isAlongRoute(
-      load.pickup_lat, load.pickup_lng,
-      datumPoint.lat, datumPoint.lng,
-      fleetHome.lat, fleetHome.lng,
-      corridorWidthMiles
-    );
-    if (!isPickupAlongRoute) continue;
-
-    candidates.push(load);
-  }
-
-  // Cap candidates and get PC Miler distances
-  const maxCandidates = 30;
-  const toProcess = candidates.length > maxCandidates
-    ? candidates.sort((a, b) => {
-        const aDist = calculateDistance(a.delivery_lat, a.delivery_lng, fleetHome.lat, fleetHome.lng);
-        const bDist = calculateDistance(b.delivery_lat, b.delivery_lng, fleetHome.lat, fleetHome.lng);
-        return aDist - bDist;
-      }).slice(0, maxCandidates)
-    : candidates;
-
-  const opportunities = [];
-  const distanceResults = await Promise.all(
-    toProcess.map(async (load) => {
-      const [dtp, ptd, dth] = await Promise.all([
-        getPCMilerDistance(datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }),
-        getPCMilerDistance({ lat: load.pickup_lat, lng: load.pickup_lng }, { lat: load.delivery_lat, lng: load.delivery_lng }),
-        getPCMilerDistance({ lat: load.delivery_lat, lng: load.delivery_lng }, fleetHome)
-      ]);
-      return { load, dtp, ptd, dth };
-    })
-  );
-
-  for (const { load, dtp, ptd, dth } of distanceResults) {
-    const datumToPickup = dtp ?? calculateDistance(datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng);
-    const pickupToDelivery = ptd ?? load.distance_miles;
-    const deliveryToHome = dth ?? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-
-    if (deliveryToHome > homeRadiusMiles) continue;
-
-    const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
-    const totalRevenue = load.total_revenue;
-    const revenuePerMile = totalRevenue / totalMilesWithBackhaul;
-    const efficiencyScore = revenuePerMile * (directReturnMiles / totalMilesWithBackhaul) * 100;
-
-    opportunities.push({
-      ...load,
-      totalRevenue,
-      revenuePerMile,
-      efficiency_score: efficiencyScore,
-      origin: { city: load.pickup_city, state: load.pickup_state },
-      destination: { city: load.delivery_city, state: load.delivery_state }
-    });
-  }
-
-  opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
-  return opportunities;
-};
+// NOTE: the matching algorithm previously lived here as an inlined, divergent copy of
+// routeHomeMatching.js (no net revenue, no relay, no date window, Haversine-only corridor).
+// PR1 deleted it — the cron now imports the real findRouteHomeBackhauls (see top of file)
+// so server-side auto-refresh is full-fidelity and there is a single source of truth.
 
 // ============================================
 // GEOCODING (simplified server-side version)
@@ -562,12 +443,27 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Get fleet profile
-        const fleetProfile = fleet.fleet_profiles?.[0] || {
+        // Get fleet profile (snake_case row; findRouteHomeBackhauls reads either case)
+        const rawProfile = fleet.fleet_profiles?.[0] || null;
+        const fleetProfile = rawProfile || {
           trailerType: 'Dry Van',
           trailerLength: 53,
           weightLimit: 45000
         };
+
+        // Build rateConfig from the fleet profile — same shape the client passes — so the
+        // matcher computes NET revenue server-side (required for the materiality detector).
+        const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
+        const rateConfig = hasRateConfig ? {
+          revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+          mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+          stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+          otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+          otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+          fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+          fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+          doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
+        } : null;
 
         // Geocode datum point
         const datumCoords = await geocodeDatumPoint(request.datum_point);
@@ -582,14 +478,25 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Run matching algorithm (now async with PC Miler)
+        // Widen the search when geocoding fell back to home coords (no real datum fix),
+        // mirroring the client (SearchView.jsx) so server + client behave identically.
+        const geocodeFailed = datumCoords.lat === fleet.home_lat && datumCoords.lng === fleet.home_lng;
+        const homeRadiusMiles = geocodeFailed ? 200 : 100;
+        const corridorWidthMiles = geocodeFailed ? 300 : 100;
+
+        // Run the SAME matching algorithm the client uses, with full request fidelity:
+        // rateConfig (net revenue), relay flag, and the pickup-date window.
         const matches = await findRouteHomeBackhauls(
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,
           loadsData,
-          50,  // homeRadiusMiles
-          100  // corridorWidthMiles
+          homeRadiusMiles,
+          corridorWidthMiles,
+          rateConfig,
+          request.is_relay || false,
+          request.equipment_available_date || null,
+          request.equipment_needed_date || null
         );
 
         console.log(`  📦 Found ${matches.length} matches`);

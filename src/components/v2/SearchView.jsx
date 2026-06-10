@@ -1878,6 +1878,12 @@ export function SearchView() {
   const [nextRefreshTime, setNextRefreshTime] = useState(null);
   const [timeUntilRefresh, setTimeUntilRefresh] = useState('');
   const previousMatchesRef = useRef([]);
+  // Always-current handle to runMatching so the auto-refresh interval can call
+  // the latest version WITHOUT being a dependency of the timer effect. Otherwise
+  // runMatching's identity (it depends on the non-memoized deductCredit) changes
+  // every render, tearing down and recreating the interval each second — which
+  // resets nextRefreshTime so the countdown never advances and the refresh never fires.
+  const runMatchingRef = useRef(null);
 
   useEffect(() => {
     if (!user) return;
@@ -2072,6 +2078,9 @@ export function SearchView() {
     }
   }, [user, deductCredit]);
 
+  // Keep the ref pointed at the latest runMatching without re-subscribing the timer.
+  runMatchingRef.current = runMatching;
+
   // Auto-refresh timer — must be after runMatching to avoid TDZ
   useEffect(() => {
     if (!selectedRequest?.auto_refresh) {
@@ -2084,7 +2093,7 @@ export function SearchView() {
     let count = selectedRequest.auto_refresh_count || 0;
     setNextRefreshTime(new Date(Date.now() + intervalMs));
     const timer = setInterval(async () => {
-      runMatching(selectedRequest);
+      runMatchingRef.current?.(selectedRequest);
       count += 1;
       // Persist the running count; self-disable once the cap is reached.
       const reachedLimit = maxRefreshes != null && count >= maxRefreshes;
@@ -2103,7 +2112,7 @@ export function SearchView() {
       setNextRefreshTime(new Date(Date.now() + intervalMs));
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, selectedRequest?.max_auto_refreshes, runMatching]);
+  }, [selectedRequest?.id, selectedRequest?.auto_refresh, selectedRequest?.auto_refresh_interval, selectedRequest?.max_auto_refreshes]);
 
   // Countdown display
   useEffect(() => {
