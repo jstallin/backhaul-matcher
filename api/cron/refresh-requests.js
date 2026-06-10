@@ -8,7 +8,10 @@ import { brandSms } from '../../src/utils/smsBody.js';
 // PR1: server-side auto-refresh now runs the SAME matching algorithm the client uses,
 // instead of a divergent inlined copy. pcMilerClient detects the server context and calls
 // PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
-import { findRouteHomeBackhauls } from '../../src/utils/routeHomeMatching.js';
+import { findRouteHomeBackhauls, effectivePickupDate } from '../../src/utils/routeHomeMatching.js';
+import { unionModes } from '../../src/utils/fleetModes.js';
+// PR2: live Truckstop sourcing server-side — the SAME SOAP search the client/endpoint use.
+import { fetchTruckstopLoads } from '../_lib/truckstop.js';
 // Unified datum geocoder shared with v1 + v2 (PC*MILER → Mapbox → local). Isomorphic:
 // runs server-side here via direct PC*MILER + process.env. Replaces the old cron-only
 // Mapbox+NC_CITIES geocoder so all three paths resolve the datum identically.
@@ -47,6 +50,57 @@ const supabase = createClient(
 
 // Datum geocoding now uses the shared, isomorphic geocodeDatum (imported above) —
 // the SAME PC*MILER → Mapbox → local chain v1 and v2 use, so all three paths agree.
+
+// PR2: resolve a request owner's per-org Truckstop integration ID using the service-role
+// client (the cron has no user JWT). Mirrors handleTruckstop in api/integrations/[provider].js
+// (org_memberships → get_ts_integration_id RPC). Returns null when the org isn't connected,
+// so the caller falls back to the static load set — same NOT_CONNECTED behavior as the client.
+const getOrgTruckstopIntegrationId = async (userId) => {
+  if (!userId) return null;
+  const { data: membership } = await supabase
+    .from('org_memberships')
+    .select('org_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const orgId = membership?.org_id;
+  if (!orgId) return null;
+  const { data: integrationId } = await supabase.rpc('get_ts_integration_id', { p_org_id: orgId });
+  return integrationId || null;
+};
+
+// PR2: fetch live Truckstop loads for one request's org, mirroring the client's
+// getLoadsForMatching → /api/integrations/truckstop?action=loads params (radius 150,
+// fleet+request modes, pickup window). Returns null when not connected / on failure so
+// the caller falls back to the static load set.
+const getLiveTruckstopLoads = async (request, rawProfile) => {
+  const username = process.env.TRUCKSTOP_WS_USERNAME;
+  const password = process.env.TRUCKSTOP_WS_PASSWORD;
+  if (!username || !password) return null;
+
+  const integrationId = await getOrgTruckstopIntegrationId(request.user_id);
+  if (!integrationId) {
+    console.log('  ℹ️ Org not connected to Truckstop — using static loads');
+    return null;
+  }
+
+  const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+  try {
+    const loads = await fetchTruckstopLoads({
+      integrationId, username, password,
+      originCity:    request.datum_city || datumCityParsed,
+      originState:   request.datum_state || datumStateParsed,
+      equipmentType: rawProfile?.trailer_type || null,
+      modes:         unionModes(rawProfile?.modes, request.modes), // #36: fleet + request modes
+      radiusMiles:   150,
+      pickupDate:    effectivePickupDate(request.equipment_available_date),
+      pickupDateEnd: request.equipment_needed_date || '',
+    });
+    return loads?.length ? loads : null;
+  } catch (err) {
+    console.warn('  ⚠️ Live Truckstop fetch failed, using static loads:', err?.message || err);
+    return null;
+  }
+};
 
 // ============================================
 // NOTIFICATION LOGIC
@@ -340,9 +394,10 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
-    // Load backhaul data at runtime
-    const loadsData = await loadBackhaulData();
-    console.log(`📦 Loaded ${loadsData.length} backhaul loads`);
+    // Static load set — the FALLBACK used per request when an org isn't connected to
+    // Truckstop or a live fetch fails. Connected orgs get live loads inside the loop (PR2).
+    const fallbackLoads = await loadBackhaulData();
+    console.log(`📦 Loaded ${fallbackLoads.length} fallback backhaul loads`);
 
     // 1. Get all active requests that are due for refresh
     const now = new Date().toISOString();
@@ -444,13 +499,19 @@ export default async function handler(req, res) {
         const homeRadiusMiles = geocodeFailed ? 200 : 100;
         const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
+        // PR2: live Truckstop loads for this request's org (same source the user sees);
+        // fall back to the static set when the org isn't connected or the fetch fails.
+        const liveLoads = await getLiveTruckstopLoads(request, rawProfile);
+        const loadsForRequest = liveLoads || fallbackLoads;
+        console.log(`  📦 ${loadsForRequest.length} loads (${liveLoads ? 'live Truckstop' : 'static fallback'})`);
+
         // Run the SAME matching algorithm the client uses, with full request fidelity:
         // rateConfig (net revenue), relay flag, and the pickup-date window.
         const matches = await findRouteHomeBackhauls(
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,
-          loadsData,
+          loadsForRequest,
           homeRadiusMiles,
           corridorWidthMiles,
           rateConfig,
