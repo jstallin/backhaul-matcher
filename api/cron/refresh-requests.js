@@ -565,7 +565,10 @@ export default async function handler(req, res) {
 
         // Run the SAME matching algorithm the client uses, with full request fidelity:
         // rateConfig (net revenue), relay flag, and the pickup-date window.
-        const matches = await findRouteHomeBackhauls(
+        // NOTE: findRouteHomeBackhauls returns { opportunities, routeData } — unwrap to
+        // the ranked array. (Passing the object straight through made matches.length /
+        // matches[0] / snapshotFromMatches all undefined → material always false.)
+        const matchResult = await findRouteHomeBackhauls(
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,
@@ -577,6 +580,7 @@ export default async function handler(req, res) {
           request.equipment_available_date || null,
           request.equipment_needed_date || null
         );
+        const matches = matchResult?.opportunities || [];
 
         console.log(`  📦 Found ${matches.length} matches`);
 
@@ -655,8 +659,10 @@ export default async function handler(req, res) {
         results.push({
           requestId: request.id,
           requestName: request.request_name,
+          loadSource: liveLoads ? 'truckstop_live' : 'static_fallback',
+          loadsSearched: loadsForRequest.length,
           matchesFound: matches.length,
-          topMatchId: topMatch?.load_id,
+          topMatchId: topMatch?.load_id ?? null,
           material: !!change,
           charged,
           notificationSent,
