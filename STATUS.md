@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** June 8, 2026
-- **Session type:** Claude Code (session 12 — Ryder Truckstop outage diagnosis, #129 org fleet sharing, Datum→Empty, #131 pilot-revenue fix; full June 7–8 batch)
-- **Updated by:** Claude Code (session 12)
+- **Date:** June 10, 2026
+- **Session type:** Claude Code (session 13 — high-fidelity server-side auto-refresh: v2 timer fix + cron PR1–PR3 + unified geocoder, validated end-to-end on staging)
+- **Updated by:** Claude Code (session 13)
 
 ---
 
@@ -21,6 +21,31 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 10, 2026, session 13) — high-fidelity server-side auto-refresh (v2 timer + cron PR1–PR3 + unified geocoder)
+
+**On `staging`, validated end-to-end via manual cron fires; PR to `main` opened.** Commits `a17ebf4 … 8e46e80`. No migrations. The arc started from a question — "does an auto-refresh count as a Last Search on the admin dashboard?" — and turned into making the server cron actually trustworthy.
+
+**Started here:** the cron (`api/cron/refresh-requests.js`) was the only thing that *should* do background refresh, but it ran a **divergent inlined matching algorithm** against a **static JSON snapshot**, never charged, and isn't even scheduled. And v2's client-side auto-refresh timer was broken.
+
+- **v2 auto-refresh timer fix** (`SearchView.jsx`): the `setInterval` was torn down/recreated every render because `runMatching`'s identity churned (depends on the non-memoized `deductCredit` from `useCredits`), which reset the countdown every second and meant the refresh never fired. Decoupled via a `runMatchingRef` so the interval is stable — now consistent with v1.
+- **PR1 — real algorithm in the cron:** deleted the inlined copy; the cron now imports the real `findRouteHomeBackhauls` and passes full fidelity (`rateConfig`/net revenue, relay flag, pickup window, geocode-aware radii). `supabase.js` + `pcMilerClient.js` made **isomorphic** (server context → `process.env` + direct PC*MILER w/ `PCMILER_API_KEY`; client unchanged).
+- **Unified datum geocoder** (`src/utils/geocodeDatum.js`): v1/v2/cron previously used **three different** geocoders (Mapbox / PC*MILER / Mapbox+hardcoded) → the *same* request gave wildly different match counts (v1=0 vs v2=71 was a geocode divergence, not the algorithm). New canonical **PC*MILER → Mapbox → local** chain, used everywhere. (Estimates flow still on `parseDatumPoint` — follow-up.)
+- **PR2 — live Truckstop in the cron:** extracted the Truckstop SOAP search into a shared server module `api/_lib/truckstop.js` (single source of truth; the endpoint imports from it). Cron resolves the request owner's per-org integration ID (service-role: `org_memberships` → `get_ts_integration_id`) and fetches live loads with the client's exact params. **Connected orgs never fall back to the demo set** (would fabricate matches / fake a material charge) — only not-connected orgs do.
+- **PR3 — charge-on-material:** materiality (`detectNotifiableChange`) now gates **both** billing and notification. Material change → deduct 1 credit (pilot orgs get a `type='pilot'` would-be ledger row, balance untouched, #131) **and** insert a `user_activity_events` `search_run` row (`source=auto_refresh`). Non-material/first run → free, no event. **This answers the original question: an auto-refresh counts as a "Last Search" only when it's material.**
+
+**Bugs caught during live staging validation (each only surfaced on a real cron run — bundle/load tests can't catch logic):**
+- **Native-ESM** (`FUNCTION_INVOCATION_FAILED`/`ERR_MODULE_NOT_FOUND`): Vercel runs `api/` as native Node ESM (not bundled), so the imported client graph needed explicit `.js` extensions + `with { type: 'json' }`. Faithful local check: `node --input-type=module -e "import('./api/.../fn.js')"`. (memory: [[reference_vercel_native_esm_imports]])
+- **Unwrap bug:** `findRouteHomeBackhauls` returns `{opportunities, routeData}`; the cron treated it as the array → every match silently discarded, `material` always false.
+- **One-to-one embed:** `fleet.fleet_profiles?.[0]` — PostgREST returns a one-to-one embed as an **object, not array** → `null` profile → `equipmentType: null` (→ the all-equipment filter `"V F R SD LB"` that Truckstop returns **0** for) + no `rateConfig` + default fleet specs. Fixed with `Array.isArray` handling (mirrors `SearchView`). (memory: [[feedback_postgrest_one_to_one_join]])
+
+**Validated on staging (`test 003`, NYC→Davidson):** live `loadsSearched: 1330`, `matchesFound: 34`, `last_top_net: 600` (net revenue computing), and a forced material run confirmed in the DB — a `credit_transactions` `type='pilot'` row + a `search_run` (`source=auto_refresh`) event; the non-material run inserted neither.
+
+**Open follow-ups filed:** **#143** (P2) same-city/local-radius mode (real Ryder use case); **#144** (P2) client-side auto-refresh likely redundant now — discuss with Chip + the cron isn't scheduled in `vercel.json`; **#145** (P2) Mapbox NC proximity bias mis-geocodes distant cities (corridor quality — built NYC corridor from Shelter Island); **#146** (P3) Truckstop all-equipment filter returns 0.
+
+**Caveats before relying on this in prod:** (1) the **cron isn't scheduled** — only runs on manual fire (couple with the #144 decision); (2) **real credit deduction** (`deduct_credit`) wasn't exercised — the test account is a pilot org, so only the would-be-charge path ran (code mirrors the proven Stripe endpoint); (3) fix **#145** before trusting cron *match quality* for non-NC origins; (4) verify `MAPBOX_TOKEN` is set as a **runtime** env on prod (it was missing on staging until this session) or the geocoder collapses to the NC/FL local table.
 
 ---
 
