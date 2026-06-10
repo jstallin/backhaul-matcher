@@ -70,8 +70,15 @@ const getOrgTruckstopIntegrationId = async (userId) => {
 
 // PR2: fetch live Truckstop loads for one request's org, mirroring the client's
 // getLoadsForMatching → /api/integrations/truckstop?action=loads params (radius 150,
-// fleet+request modes, pickup window). Returns null when not connected / on failure so
-// the caller falls back to the static load set.
+// fleet+request modes, pickup window).
+//
+// Return contract distinguishes "not connected" from "connected, no loads":
+//   - null  → org is NOT connected (no integration ID / no WS creds). Caller MAY use the
+//             static demo set (dev convenience only).
+//   - array → org IS connected; this is authoritative live inventory. Returned as-is even
+//             when EMPTY, and [] on a hard error — so a connected (pilot) org is NEVER
+//             matched against the demo set (which would fabricate matches and could charge
+//             a credit on a fake "material" change).
 const getLiveTruckstopLoads = async (request, rawProfile) => {
   const username = process.env.TRUCKSTOP_WS_USERNAME;
   const password = process.env.TRUCKSTOP_WS_PASSWORD;
@@ -95,10 +102,12 @@ const getLiveTruckstopLoads = async (request, rawProfile) => {
       pickupDate:    effectivePickupDate(request.equipment_available_date),
       pickupDateEnd: request.equipment_needed_date || '',
     });
-    return loads?.length ? loads : null;
+    // Connected: live result is authoritative, even when empty. Never demo.
+    return loads || [];
   } catch (err) {
-    console.warn('  ⚠️ Live Truckstop fetch failed, using static loads:', err?.message || err);
-    return null;
+    // Connected but the live fetch errored — return 0 live loads, NOT demo.
+    console.warn('  ⚠️ Live Truckstop fetch failed (connected org) — using 0 live loads, not demo:', err?.message || err);
+    return [];
   }
 };
 
@@ -557,11 +566,12 @@ export default async function handler(req, res) {
         const homeRadiusMiles = geocodeFailed ? 200 : 100;
         const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
-        // PR2: live Truckstop loads for this request's org (same source the user sees);
-        // fall back to the static set when the org isn't connected or the fetch fails.
+        // PR2: live Truckstop loads for this request's org (same source the user sees).
+        // null = not connected → static demo set; array (incl. empty) = connected → live.
         const liveLoads = await getLiveTruckstopLoads(request, rawProfile);
-        const loadsForRequest = liveLoads || fallbackLoads;
-        console.log(`  📦 ${loadsForRequest.length} loads (${liveLoads ? 'live Truckstop' : 'static fallback'})`);
+        const connected = liveLoads !== null;
+        const loadsForRequest = connected ? liveLoads : fallbackLoads;
+        console.log(`  📦 ${loadsForRequest.length} loads (${connected ? 'live Truckstop' : 'static fallback'})`);
 
         // Run the SAME matching algorithm the client uses, with full request fidelity:
         // rateConfig (net revenue), relay flag, and the pickup-date window.
@@ -659,7 +669,7 @@ export default async function handler(req, res) {
         results.push({
           requestId: request.id,
           requestName: request.request_name,
-          loadSource: liveLoads ? 'truckstop_live' : 'static_fallback',
+          loadSource: connected ? 'truckstop_live' : 'static_fallback',
           loadsSearched: loadsForRequest.length,
           matchesFound: matches.length,
           topMatchId: topMatch?.load_id ?? null,
