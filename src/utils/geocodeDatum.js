@@ -16,8 +16,8 @@
  * runs unchanged in the browser (proxy + JWT / VITE_ env) and in the cron
  * (direct PC*MILER + process.env). Returns { lat, lng, label } or null.
  */
-import { geocodeAddress as pcmilerGeocode } from './pcMilerClient';
-import { geocodeAddress as mapboxGeocode } from './mapboxGeocoding';
+import { geocodeAddress as pcmilerGeocode } from './pcMilerClient.js';
+import { geocodeAddress as mapboxGeocode } from './mapboxGeocoding.js';
 
 const normalize = (r, fallbackLabel) =>
   (r && r.lat != null && r.lng != null)

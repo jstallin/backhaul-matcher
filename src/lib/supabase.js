@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { diffShareSet } from '../utils/fleetShares';
+import { diffShareSet } from '../utils/fleetShares.js';
 
 // Read env from whichever runtime we're in: the Vite client build exposes
 // `import.meta.env`; the Node serverless/cron runtime (which now imports the

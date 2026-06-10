@@ -5,7 +5,7 @@
  * All calls go through /api/pcmiler/* to keep the API key server-side.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.js';
 
 // Server-side (Vercel cron / serverless) there is no browser, no user session, and
 // relative `/api/pcmiler/*` URLs don't resolve. In that context we call PC*MILER's

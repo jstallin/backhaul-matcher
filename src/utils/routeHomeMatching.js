@@ -8,9 +8,9 @@
  * with fallback to Haversine-based filtering when API is unavailable.
  */
 
-import { getRouteWithCorridor, isPointInCorridor } from './routeCorridorService';
-import { getDrivingDistance } from './pcMilerClient';
-import { db } from '../lib/supabase';
+import { getRouteWithCorridor, isPointInCorridor } from './routeCorridorService.js';
+import { getDrivingDistance } from './pcMilerClient.js';
+import { db } from '../lib/supabase.js';
 
 // Session-level cache for per-load driving distances.
 // Survives tab switches and request re-opens within the same browser session.
