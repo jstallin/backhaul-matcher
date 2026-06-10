@@ -170,6 +170,21 @@ export const getRouteGeometry = async (points) => {
 export const geocodeAddress = async (address) => {
   if (!address || !address.trim()) return null;
   try {
+    if (IS_SERVER) {
+      // Server: call PC*MILER Locations directly (same parse as api/pcmiler/geocode.js).
+      const token = serverPcMilerToken();
+      if (!token) return null;
+      const r = await fetch(`${PCMILER_BASE}/locations?address=${encodeURIComponent(address.trim())}&authToken=${token}`);
+      if (!r.ok) return null;
+      const data = await r.json();
+      const loc = Array.isArray(data) ? data[0] : null;
+      if (loc?.Coords?.Lat != null && loc?.Coords?.Lon != null) {
+        const label = [loc.Address?.StreetAddress, loc.Address?.City, loc.Address?.State, loc.Address?.Zip]
+          .filter(Boolean).join(', ');
+        return { lat: Number(loc.Coords.Lat), lng: Number(loc.Coords.Lon), label: label || address.trim() };
+      }
+      return null;
+    }
     const response = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address.trim())}`, { headers: await authHeaders() });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));

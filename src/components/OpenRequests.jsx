@@ -13,7 +13,7 @@ import { buildDeclineSnapshot } from '../utils/declineSnapshot';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../utils/requestExpiry';
 import { geocodeAddress } from '../utils/pcMilerClient';
-import { parseDatumPoint } from '../utils/mapboxGeocoding';
+import { geocodeDatum } from '../utils/geocodeDatum';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { effectiveNotificationMethod } from '../utils/smsConsent';
@@ -182,7 +182,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       // Parallel: fleet fetch + datum geocode have no dependency on each other
       const [fleetInitial, geocoded] = await Promise.all([
         db.fleets.getById(request.fleet_id),
-        parseDatumPoint(request.datum_point),
+        geocodeDatum(request.datum_point),
       ]);
       let fleet = fleetInitial;
 
@@ -238,7 +238,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       console.log('📍 Geocoding result:', geocoded);
 
       const datumPoint = geocoded ? {
-        address: geocoded.city,
+        address: geocoded.label,
         lat: geocoded.lat,
         lng: geocoded.lng
       } : {
@@ -467,9 +467,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0
       } : null;
 
-      const geocoded = await parseDatumPoint(request.datum_point);
+      const geocoded = await geocodeDatum(request.datum_point);
       const datumPoint = geocoded
-        ? { address: geocoded.city, lat: geocoded.lat, lng: geocoded.lng }
+        ? { address: geocoded.label, lat: geocoded.lat, lng: geocoded.lng }
         : { address: request.datum_point, lat: fleet.home_lat, lng: fleet.home_lng };
 
       setDatumCoordinates({ lat: datumPoint.lat, lng: datumPoint.lng });

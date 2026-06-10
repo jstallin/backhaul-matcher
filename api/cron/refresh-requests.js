@@ -9,6 +9,10 @@ import { brandSms } from '../../src/utils/smsBody.js';
 // instead of a divergent inlined copy. pcMilerClient detects the server context and calls
 // PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
 import { findRouteHomeBackhauls } from '../../src/utils/routeHomeMatching.js';
+// Unified datum geocoder shared with v1 + v2 (PC*MILER → Mapbox → local). Isomorphic:
+// runs server-side here via direct PC*MILER + process.env. Replaces the old cron-only
+// Mapbox+NC_CITIES geocoder so all three paths resolve the datum identically.
+import { geocodeDatum } from '../../src/utils/geocodeDatum.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -41,52 +45,8 @@ const supabase = createClient(
 // PR1 deleted it — the cron now imports the real findRouteHomeBackhauls (see top of file)
 // so server-side auto-refresh is full-fidelity and there is a single source of truth.
 
-// ============================================
-// GEOCODING (simplified server-side version)
-// ============================================
-
-const NC_CITIES = {
-  'davidson': { lat: 35.4993, lng: -80.8487 },
-  'charlotte': { lat: 35.2271, lng: -80.8431 },
-  'raleigh': { lat: 35.7796, lng: -78.6382 },
-  'alachua': { lat: 29.7377, lng: -82.4248 },
-  'gainesville': { lat: 29.6516, lng: -82.3248 },
-  'jacksonville': { lat: 30.3322, lng: -81.6557 },
-  'tampa': { lat: 27.9506, lng: -82.4572 },
-  'orlando': { lat: 28.5383, lng: -81.3792 },
-  'lakeland': { lat: 28.0395, lng: -81.9498 },
-};
-
-const geocodeDatumPoint = async (datumPoint) => {
-  // Try Mapbox first
-  const mapboxToken = process.env.MAPBOX_TOKEN || process.env.VITE_MAPBOX_TOKEN;
-
-  if (mapboxToken && mapboxToken !== 'your_mapbox_public_token') {
-    try {
-      const encoded = encodeURIComponent(datumPoint.trim());
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${mapboxToken}&country=US&limit=1`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
-        return { lat, lng };
-      }
-    } catch (error) {
-      console.error('Mapbox geocoding error:', error.message);
-    }
-  }
-
-  // Fallback to local lookup
-  const cleaned = datumPoint.toLowerCase().trim();
-  for (const [key, value] of Object.entries(NC_CITIES)) {
-    if (cleaned.includes(key)) {
-      return value;
-    }
-  }
-
-  return null;
-};
+// Datum geocoding now uses the shared, isomorphic geocodeDatum (imported above) —
+// the SAME PC*MILER → Mapbox → local chain v1 and v2 use, so all three paths agree.
 
 // ============================================
 // NOTIFICATION LOGIC
@@ -465,8 +425,8 @@ export default async function handler(req, res) {
           doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
         } : null;
 
-        // Geocode datum point
-        const datumCoords = await geocodeDatumPoint(request.datum_point);
+        // Geocode datum point (unified geocoder — same as v1/v2)
+        const datumCoords = await geocodeDatum(request.datum_point);
         if (!datumCoords) {
           console.log(`  ⚠️ Could not geocode datum point: ${request.datum_point}`);
           continue;

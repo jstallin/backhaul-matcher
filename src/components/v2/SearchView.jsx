@@ -4,7 +4,7 @@ import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCredits } from '../../hooks/useCredits';
 import { useMobile } from '../../hooks/useMobile';
-import { geocodeAddress } from '../../utils/pcMilerClient';
+import { geocodeDatum } from '../../utils/geocodeDatum';
 import { buildRequestPayload } from '../../utils/buildRequestPayload';
 import { generateRequestName } from '../../utils/requestName';
 import { smsConsentRequired, methodIncludesText, effectiveNotificationMethod } from '../../utils/smsConsent';
@@ -1962,7 +1962,7 @@ export function SearchView() {
         db.fleets.getById(request.fleet_id),
         (request.datum_lat && request.datum_lng)
           ? Promise.resolve({ lat: request.datum_lat, lng: request.datum_lng, label: request.datum_point })
-          : geocodeAddress(request.datum_city && request.datum_state
+          : geocodeDatum(request.datum_city && request.datum_state
               ? `${request.datum_city}, ${request.datum_state}`
               : request.datum_point),
       ]);
