@@ -94,15 +94,14 @@ const getLiveTruckstopLoads = async (request, rawProfile) => {
   const tsParams = {
     originCity:    request.datum_city || datumCityParsed,
     originState:   request.datum_state || datumStateParsed,
-    equipmentType: rawProfile?.trailer_type || null,
+    // Default to 'Dry Van' (matches SearchView) — a null type becomes the all-equipment
+    // filter "V F R SD LB", which Truckstop returns 0 for.
+    equipmentType: rawProfile?.trailer_type || 'Dry Van',
     modes:         unionModes(rawProfile?.modes, request.modes), // #36: fleet + request modes
     radiusMiles:   150,
     pickupDate:    effectivePickupDate(request.equipment_available_date),
     pickupDateEnd: request.equipment_needed_date || '',
   };
-  // TEMP DEBUG: base URL (testws default vs prod) + resolved search params — no secrets.
-  // Diagnosing why the cron's live fetch returns 0 while the browser/endpoint return loads.
-  console.log('  🔎 [TS-DEBUG] base=' + (process.env.TRUCKSTOP_BASE_URL || 'testws.truckstop.com(default)') + ' params=' + JSON.stringify(tsParams));
   try {
     const loads = await fetchTruckstopLoads({ integrationId, username, password, ...tsParams });
     // Connected: live result is authoritative, even when empty. Never demo.
@@ -528,8 +527,13 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Get fleet profile (snake_case row; findRouteHomeBackhauls reads either case)
-        const rawProfile = fleet.fleet_profiles?.[0] || null;
+        // Get fleet profile (snake_case row; findRouteHomeBackhauls reads either case).
+        // PostgREST returns a one-to-one embed as an OBJECT, not an array — so `[0]`
+        // yielded undefined → null rawProfile → equipmentType null (→ all-equipment
+        // filter "V F R SD LB" that Truckstop returns 0 for) + no rateConfig + default
+        // fleet profile. Handle both shapes, mirroring SearchView. (feedback: PostgREST
+        // one-to-one join returns object not array.)
+        const rawProfile = (Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles) || null;
         const fleetProfile = rawProfile || {
           trailerType: 'Dry Van',
           trailerLength: 53,
