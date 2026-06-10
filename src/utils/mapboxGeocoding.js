@@ -74,9 +74,12 @@ export const geocodeAddress = async (address) => {
     // Encode the address for URL
     const encodedAddress = encodeURIComponent(address.trim());
     
-    // Build Mapbox API URL
-    // Bias results to North Carolina by providing proximity parameter
-    const url = `${GEOCODING_API}/${encodedAddress}.json?access_token=${MAPBOX_TOKEN}&proximity=-80.8431,35.2271&country=US&limit=1`;
+    // Build Mapbox API URL.
+    // #145: no `proximity` bias — a hardcoded Charlotte,NC proximity snapped distant
+    // cities to the nearest NC-ish match ("New York, NY" → Shelter Island, NY). Datums
+    // are always full "City, ST" with country=US, so Mapbox resolves them accurately
+    // on relevance alone; the bias only hurt non-NC origins (and the cron's corridor).
+    const url = `${GEOCODING_API}/${encodedAddress}.json?access_token=${MAPBOX_TOKEN}&country=US&limit=1`;
     
     console.log('Geocoding with Mapbox:', address);
     
