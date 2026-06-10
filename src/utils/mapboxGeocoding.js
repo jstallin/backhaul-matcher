@@ -1,7 +1,12 @@
 // Mapbox Geocoding API Service
 // Documentation: https://docs.mapbox.com/api/search/geocoding/
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+// Isomorphic env: Vite client build exposes import.meta.env; the Node serverless/cron
+// runtime exposes process.env (the unified geocodeDatum imports this server-side).
+const _env = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env
+  : (typeof process !== 'undefined' ? process.env : {});
+const MAPBOX_TOKEN = _env.VITE_MAPBOX_TOKEN || _env.MAPBOX_TOKEN;
 const GEOCODING_API = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 
 // Fallback local geocoding for common NC and FL locations (used if Mapbox token not configured)

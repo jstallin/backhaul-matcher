@@ -6,8 +6,8 @@
  */
 
 import * as turf from '@turf/turf';
-import usLandPolygon from '../data/us-land-simplified.json';
-import { getRouteWithDistance } from './pcMilerClient';
+import usLandPolygon from '../data/us-land-simplified.json' with { type: 'json' };
+import { getRouteWithDistance } from './pcMilerClient.js';
 
 // Cache for routes - key is "lat1,lng1->lat2,lng2" rounded to 3 decimals
 const routeCache = new Map();

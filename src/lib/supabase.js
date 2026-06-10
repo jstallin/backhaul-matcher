@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
-import { diffShareSet } from '../utils/fleetShares';
+import { diffShareSet } from '../utils/fleetShares.js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Read env from whichever runtime we're in: the Vite client build exposes
+// `import.meta.env`; the Node serverless/cron runtime (which now imports the
+// shared db helpers + matcher) exposes `process.env`. In Node `import.meta.env`
+// is undefined, so we must guard it — otherwise this module throws at import time
+// the moment a server function pulls in the matching algorithm.
+const env = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env
+  : (typeof process !== 'undefined' ? process.env : {});
+const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');

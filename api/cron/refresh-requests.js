@@ -5,6 +5,17 @@ import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/not
 import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
 import { brandSms } from '../../src/utils/smsBody.js';
+// PR1: server-side auto-refresh now runs the SAME matching algorithm the client uses,
+// instead of a divergent inlined copy. pcMilerClient detects the server context and calls
+// PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
+import { findRouteHomeBackhauls, effectivePickupDate } from '../../src/utils/routeHomeMatching.js';
+import { unionModes } from '../../src/utils/fleetModes.js';
+// PR2: live Truckstop sourcing server-side — the SAME SOAP search the client/endpoint use.
+import { fetchTruckstopLoads } from '../_lib/truckstop.js';
+// Unified datum geocoder shared with v1 + v2 (PC*MILER → Mapbox → local). Isomorphic:
+// runs server-side here via direct PC*MILER + process.env. Replaces the old cron-only
+// Mapbox+NC_CITIES geocoder so all three paths resolve the datum identically.
+import { geocodeDatum } from '../../src/utils/geocodeDatum.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -32,179 +43,132 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 );
 
-// ============================================
-// MATCHING ALGORITHM (adapted from routeHomeMatching.js)
-// ============================================
+// NOTE: the matching algorithm previously lived here as an inlined, divergent copy of
+// routeHomeMatching.js (no net revenue, no relay, no date window, Haversine-only corridor).
+// PR1 deleted it — the cron now imports the real findRouteHomeBackhauls (see top of file)
+// so server-side auto-refresh is full-fidelity and there is a single source of truth.
 
-const HAVERSINE_ROAD_FACTOR = 1.35;
+// Datum geocoding now uses the shared, isomorphic geocodeDatum (imported above) —
+// the SAME PC*MILER → Mapbox → local chain v1 and v2 use, so all three paths agree.
 
-const calculateDistance = (lat1, lng1, lat2, lng2) => {
-  const R = 3959; // Radius of Earth in miles
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c * HAVERSINE_ROAD_FACTOR;
+// PR2: resolve a request owner's per-org Truckstop integration ID using the service-role
+// client (the cron has no user JWT). Mirrors handleTruckstop in api/integrations/[provider].js
+// (org_memberships → get_ts_integration_id RPC). Returns null when the org isn't connected,
+// so the caller falls back to the static load set — same NOT_CONNECTED behavior as the client.
+const getOrgTruckstopIntegrationId = async (userId) => {
+  if (!userId) return null;
+  const { data: membership } = await supabase
+    .from('org_memberships')
+    .select('org_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const orgId = membership?.org_id;
+  if (!orgId) return null;
+  const { data: integrationId } = await supabase.rpc('get_ts_integration_id', { p_org_id: orgId });
+  return integrationId || null;
 };
 
-const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng, corridorWidthMiles = 100) => {
-  const directDistance = calculateDistance(datumLat, datumLng, homeLat, homeLng);
-  const datumToPickup = calculateDistance(datumLat, datumLng, pickupLat, pickupLng);
-  const pickupToHome = calculateDistance(pickupLat, pickupLng, homeLat, homeLng);
-  const totalDistance = datumToPickup + pickupToHome;
-  const deviation = totalDistance - directDistance;
-  return deviation <= corridorWidthMiles;
-};
+// PR2: fetch live Truckstop loads for one request's org, mirroring the client's
+// getLoadsForMatching → /api/integrations/truckstop?action=loads params (radius 150,
+// fleet+request modes, pickup window).
+//
+// Return contract distinguishes "not connected" from "connected, no loads":
+//   - null  → org is NOT connected (no integration ID / no WS creds). Caller MAY use the
+//             static demo set (dev convenience only).
+//   - array → org IS connected; this is authoritative live inventory. Returned as-is even
+//             when EMPTY, and [] on a hard error — so a connected (pilot) org is NEVER
+//             matched against the demo set (which would fabricate matches and could charge
+//             a credit on a fake "material" change).
+const getLiveTruckstopLoads = async (request, rawProfile) => {
+  const username = process.env.TRUCKSTOP_WS_USERNAME;
+  const password = process.env.TRUCKSTOP_WS_PASSWORD;
+  if (!username || !password) return null;
 
-/**
- * Get driving distance from PC Miler (server-side, direct API call)
- */
-const getPCMilerDistance = async (origin, destination) => {
-  const token = process.env.PCMILER_API_KEY;
-  if (!token) return null;
+  const integrationId = await getOrgTruckstopIntegrationId(request.user_id);
+  if (!integrationId) {
+    console.log('  ℹ️ Org not connected to Truckstop — using static loads');
+    return null;
+  }
 
-  const stops = `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
-  const url = `https://pcmiler.alk.com/apis/rest/v1.0/Service.svc/route/routeReports?stops=${encodeURIComponent(stops)}&reports=Mileage&authToken=${token}`;
-
+  const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+  const tsParams = {
+    originCity:    request.datum_city || datumCityParsed,
+    originState:   request.datum_state || datumStateParsed,
+    // Default to 'Dry Van' (matches SearchView) — a null type becomes the all-equipment
+    // filter "V F R SD LB", which Truckstop returns 0 for.
+    equipmentType: rawProfile?.trailer_type || 'Dry Van',
+    modes:         unionModes(rawProfile?.modes, request.modes), // #36: fleet + request modes
+    radiusMiles:   150,
+    pickupDate:    effectivePickupDate(request.equipment_available_date),
+    pickupDateEnd: request.equipment_needed_date || '',
+  };
   try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data && Array.isArray(data) && data[0]?.ReportLines) {
-      const lines = data[0].ReportLines;
-      return lines[lines.length - 1]?.TMiles ?? null;
+    const loads = await fetchTruckstopLoads({ integrationId, username, password, ...tsParams });
+    // Connected: live result is authoritative, even when empty. Never demo.
+    return loads || [];
+  } catch (err) {
+    // Connected but the live fetch errored — return 0 live loads, NOT demo.
+    console.warn('  ⚠️ Live Truckstop fetch failed (connected org) — using 0 live loads, not demo:', err?.message || err);
+    return [];
+  }
+};
+
+// PR3: pilot-org check (mirrors isInPilotOrg in api/stripe/index.js). Pilot orgs aren't
+// charged — instead a type='pilot' ledger row records the would-be charge for the admin
+// revenue projection (#131). Active window only.
+const isInPilotOrg = async (userId) => {
+  if (!userId) return false;
+  const { data } = await supabase
+    .from('org_memberships')
+    .select('orgs(is_pilot, pilot_start_date, pilot_end_date)')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const org = data?.orgs;
+  if (!org?.is_pilot) return false;
+  const today = new Date().toISOString().split('T')[0];
+  if (org.pilot_start_date && org.pilot_start_date > today) return false;
+  if (org.pilot_end_date && org.pilot_end_date < today) return false;
+  return true;
+};
+
+// PR3: charge for a value-delivering (material) auto-refresh and log a search_run
+// activity event so the admin dashboard's Last Search + revenue reflect it. Mirrors the
+// stripe deduct path: pilot orgs get a would-be ledger row (balance untouched), everyone
+// else hits the deduct_credit RPC. Telemetry/charge failures are logged, never thrown —
+// a billing hiccup must not abort the refresh loop. Returns true if a credit was charged.
+const DESC = 'Auto-refresh (material change)';
+const chargeForMaterialRefresh = async (userId, requestId) => {
+  if (!userId) return false;
+  let charged = false;
+  try {
+    if (await isInPilotOrg(userId)) {
+      const { error } = await supabase
+        .from('credit_transactions')
+        .insert({ user_id: userId, amount: -1, type: 'pilot', description: DESC });
+      if (error) console.error('  ⚠️ Pilot would-be credit record failed:', error.message);
+    } else {
+      const { data: ok, error } = await supabase.rpc('deduct_credit', {
+        p_user_id: userId, p_amount: 1, p_description: DESC,
+      });
+      if (error) console.error('  ⚠️ Auto-refresh credit deduction failed:', error.message);
+      else if (!ok) console.warn('  ⚠️ Auto-refresh: insufficient credits (notification still sent)');
+      else charged = true;
     }
-    return null;
   } catch (e) {
-    console.error('PC Miler error:', e.message);
-    return null;
-  }
-};
-
-const findRouteHomeBackhauls = async (datumPoint, fleetHome, fleetProfile, backhaulLoads, homeRadiusMiles = 50, corridorWidthMiles = 100) => {
-  // Get direct return distance from PC Miler (or Haversine fallback)
-  const pcMilerDirect = await getPCMilerDistance(datumPoint, fleetHome);
-  const directReturnMiles = pcMilerDirect ?? calculateDistance(datumPoint.lat, datumPoint.lng, fleetHome.lat, fleetHome.lng);
-  console.log(`  Direct return: ${directReturnMiles} miles (${pcMilerDirect ? 'PC Miler' : 'Haversine'})`);
-
-  // Fast Haversine pre-filter
-  const availableLoads = backhaulLoads.filter(load => load.status === 'available');
-  const candidates = [];
-
-  for (const load of availableLoads) {
-    if (load.equipment_type !== fleetProfile.trailerType) continue;
-    if (load.trailer_length > fleetProfile.trailerLength) continue;
-    if (load.weight_lbs > fleetProfile.weightLimit) continue;
-
-    const haversineDeliveryToHome = calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-    if (haversineDeliveryToHome > homeRadiusMiles * 1.5) continue;
-
-    const isPickupAlongRoute = isAlongRoute(
-      load.pickup_lat, load.pickup_lng,
-      datumPoint.lat, datumPoint.lng,
-      fleetHome.lat, fleetHome.lng,
-      corridorWidthMiles
-    );
-    if (!isPickupAlongRoute) continue;
-
-    candidates.push(load);
+    console.error('  ⚠️ chargeForMaterialRefresh error:', e?.message || e);
   }
 
-  // Cap candidates and get PC Miler distances
-  const maxCandidates = 30;
-  const toProcess = candidates.length > maxCandidates
-    ? candidates.sort((a, b) => {
-        const aDist = calculateDistance(a.delivery_lat, a.delivery_lng, fleetHome.lat, fleetHome.lng);
-        const bDist = calculateDistance(b.delivery_lat, b.delivery_lng, fleetHome.lat, fleetHome.lng);
-        return aDist - bDist;
-      }).slice(0, maxCandidates)
-    : candidates;
-
-  const opportunities = [];
-  const distanceResults = await Promise.all(
-    toProcess.map(async (load) => {
-      const [dtp, ptd, dth] = await Promise.all([
-        getPCMilerDistance(datumPoint, { lat: load.pickup_lat, lng: load.pickup_lng }),
-        getPCMilerDistance({ lat: load.pickup_lat, lng: load.pickup_lng }, { lat: load.delivery_lat, lng: load.delivery_lng }),
-        getPCMilerDistance({ lat: load.delivery_lat, lng: load.delivery_lng }, fleetHome)
-      ]);
-      return { load, dtp, ptd, dth };
-    })
-  );
-
-  for (const { load, dtp, ptd, dth } of distanceResults) {
-    const datumToPickup = dtp ?? calculateDistance(datumPoint.lat, datumPoint.lng, load.pickup_lat, load.pickup_lng);
-    const pickupToDelivery = ptd ?? load.distance_miles;
-    const deliveryToHome = dth ?? calculateDistance(load.delivery_lat, load.delivery_lng, fleetHome.lat, fleetHome.lng);
-
-    if (deliveryToHome > homeRadiusMiles) continue;
-
-    const totalMilesWithBackhaul = datumToPickup + pickupToDelivery + deliveryToHome;
-    const totalRevenue = load.total_revenue;
-    const revenuePerMile = totalRevenue / totalMilesWithBackhaul;
-    const efficiencyScore = revenuePerMile * (directReturnMiles / totalMilesWithBackhaul) * 100;
-
-    opportunities.push({
-      ...load,
-      totalRevenue,
-      revenuePerMile,
-      efficiency_score: efficiencyScore,
-      origin: { city: load.pickup_city, state: load.pickup_state },
-      destination: { city: load.delivery_city, state: load.delivery_state }
-    });
+  // Activity event (search_run) — only material refreshes count as a "search" on the
+  // admin dashboard, matching the client's logActivityEvent(SEARCH_RUN) semantics.
+  try {
+    const { error } = await supabase
+      .from('user_activity_events')
+      .insert({ user_id: userId, event_type: 'search_run', metadata: { kind: 'backhaul', request_id: requestId, source: 'auto_refresh' } });
+    if (error) console.error('  ⚠️ Activity event insert failed:', error.message);
+  } catch (e) {
+    console.error('  ⚠️ Activity event error:', e?.message || e);
   }
-
-  opportunities.sort((a, b) => b.efficiency_score - a.efficiency_score);
-  return opportunities;
-};
-
-// ============================================
-// GEOCODING (simplified server-side version)
-// ============================================
-
-const NC_CITIES = {
-  'davidson': { lat: 35.4993, lng: -80.8487 },
-  'charlotte': { lat: 35.2271, lng: -80.8431 },
-  'raleigh': { lat: 35.7796, lng: -78.6382 },
-  'alachua': { lat: 29.7377, lng: -82.4248 },
-  'gainesville': { lat: 29.6516, lng: -82.3248 },
-  'jacksonville': { lat: 30.3322, lng: -81.6557 },
-  'tampa': { lat: 27.9506, lng: -82.4572 },
-  'orlando': { lat: 28.5383, lng: -81.3792 },
-  'lakeland': { lat: 28.0395, lng: -81.9498 },
-};
-
-const geocodeDatumPoint = async (datumPoint) => {
-  // Try Mapbox first
-  const mapboxToken = process.env.MAPBOX_TOKEN || process.env.VITE_MAPBOX_TOKEN;
-
-  if (mapboxToken && mapboxToken !== 'your_mapbox_public_token') {
-    try {
-      const encoded = encodeURIComponent(datumPoint.trim());
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${mapboxToken}&country=US&limit=1`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.features && data.features.length > 0) {
-        const [lng, lat] = data.features[0].center;
-        return { lat, lng };
-      }
-    } catch (error) {
-      console.error('Mapbox geocoding error:', error.message);
-    }
-  }
-
-  // Fallback to local lookup
-  const cleaned = datumPoint.toLowerCase().trim();
-  for (const [key, value] of Object.entries(NC_CITIES)) {
-    if (cleaned.includes(key)) {
-      return value;
-    }
-  }
-
-  return null;
+  return charged;
 };
 
 // ============================================
@@ -499,9 +463,10 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
-    // Load backhaul data at runtime
-    const loadsData = await loadBackhaulData();
-    console.log(`📦 Loaded ${loadsData.length} backhaul loads`);
+    // Static load set — the FALLBACK used per request when an org isn't connected to
+    // Truckstop or a live fetch fails. Connected orgs get live loads inside the loop (PR2).
+    const fallbackLoads = await loadBackhaulData();
+    console.log(`📦 Loaded ${fallbackLoads.length} fallback backhaul loads`);
 
     // 1. Get all active requests that are due for refresh
     const now = new Date().toISOString();
@@ -562,15 +527,35 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Get fleet profile
-        const fleetProfile = fleet.fleet_profiles?.[0] || {
+        // Get fleet profile (snake_case row; findRouteHomeBackhauls reads either case).
+        // PostgREST returns a one-to-one embed as an OBJECT, not an array — so `[0]`
+        // yielded undefined → null rawProfile → equipmentType null (→ all-equipment
+        // filter "V F R SD LB" that Truckstop returns 0 for) + no rateConfig + default
+        // fleet profile. Handle both shapes, mirroring SearchView. (feedback: PostgREST
+        // one-to-one join returns object not array.)
+        const rawProfile = (Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles) || null;
+        const fleetProfile = rawProfile || {
           trailerType: 'Dry Van',
           trailerLength: 53,
           weightLimit: 45000
         };
 
-        // Geocode datum point
-        const datumCoords = await geocodeDatumPoint(request.datum_point);
+        // Build rateConfig from the fleet profile — same shape the client passes — so the
+        // matcher computes NET revenue server-side (required for the materiality detector).
+        const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
+        const rateConfig = hasRateConfig ? {
+          revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+          mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+          stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+          otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+          otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+          fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+          fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+          doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
+        } : null;
+
+        // Geocode datum point (unified geocoder — same as v1/v2)
+        const datumCoords = await geocodeDatum(request.datum_point);
         if (!datumCoords) {
           console.log(`  ⚠️ Could not geocode datum point: ${request.datum_point}`);
           continue;
@@ -582,31 +567,66 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Run matching algorithm (now async with PC Miler)
-        const matches = await findRouteHomeBackhauls(
+        // Widen the search when geocoding fell back to home coords (no real datum fix),
+        // mirroring the client (SearchView.jsx) so server + client behave identically.
+        const geocodeFailed = datumCoords.lat === fleet.home_lat && datumCoords.lng === fleet.home_lng;
+        const homeRadiusMiles = geocodeFailed ? 200 : 100;
+        const corridorWidthMiles = geocodeFailed ? 300 : 100;
+
+        // PR2: live Truckstop loads for this request's org (same source the user sees).
+        // null = not connected → static demo set; array (incl. empty) = connected → live.
+        const liveLoads = await getLiveTruckstopLoads(request, rawProfile);
+        const connected = liveLoads !== null;
+        const loadsForRequest = connected ? liveLoads : fallbackLoads;
+        console.log(`  📦 ${loadsForRequest.length} loads (${connected ? 'live Truckstop' : 'static fallback'})`);
+
+        // Run the SAME matching algorithm the client uses, with full request fidelity:
+        // rateConfig (net revenue), relay flag, and the pickup-date window.
+        // NOTE: findRouteHomeBackhauls returns { opportunities, routeData } — unwrap to
+        // the ranked array. (Passing the object straight through made matches.length /
+        // matches[0] / snapshotFromMatches all undefined → material always false.)
+        const matchResult = await findRouteHomeBackhauls(
           { lat: datumCoords.lat, lng: datumCoords.lng },
           { lat: fleet.home_lat, lng: fleet.home_lng },
           fleetProfile,
-          loadsData,
-          50,  // homeRadiusMiles
-          100  // corridorWidthMiles
+          loadsForRequest,
+          homeRadiusMiles,
+          corridorWidthMiles,
+          rateConfig,
+          request.is_relay || false,
+          request.equipment_available_date || null,
+          request.equipment_needed_date || null
         );
+        const matches = matchResult?.opportunities || [];
 
         console.log(`  📦 Found ${matches.length} matches`);
 
         const topMatch = matches[0] || null;
         let notificationSent = false;
+        let charged = false;
 
-        // Check for material change (unified net-based detector)
-        if (topMatch && request.notification_enabled) {
-          const change = detectNotifiableChange(
-            { topId: request.last_top_match_id, topNet: request.last_top_net, top25AvgNet: request.last_top25_avg_net },
-            matches
-          );
+        // Materiality drives BOTH billing (PR3) and notifications: a refresh that
+        // produced a materially better/worse result delivered value. Compute it once,
+        // independent of notification settings. Returns null on the first run (baseline
+        // established silently) and when nothing material changed — those refreshes are
+        // free and never logged as a search.
+        const change = topMatch
+          ? detectNotifiableChange(
+              { topId: request.last_top_match_id, topNet: request.last_top_net, top25AvgNet: request.last_top25_avg_net },
+              matches
+            )
+          : null;
 
-          if (change) {
-            console.log(`  📬 Material change detected: ${change.type}`);
+        if (change) {
+          console.log(`  📬 Material change detected: ${change.type}`);
 
+          // PR3: charge 1 credit for the value-delivering refresh + log a search_run
+          // event. Only material refreshes cost a credit or count as a "search".
+          charged = await chargeForMaterialRefresh(request.user_id, request.id);
+
+          // Notify only when the user opted in (notification is delivery; the charge
+          // above is for the value found, regardless of notification preference).
+          if (request.notification_enabled) {
             const requestLink = `${APP_URL}/app?request=${request.id}`;
             const { subject, text, sms } = buildNotificationMessage(request.request_name, change, requestLink);
 
@@ -617,9 +637,9 @@ export default async function handler(req, res) {
               const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
               notificationSent = notifResult.email?.success || notifResult.sms?.success;
             }
-          } else {
-            console.log('  ℹ️ No material change detected');
           }
+        } else {
+          console.log('  ℹ️ No material change — free refresh, not charged, not logged as a search');
         }
 
         // Calculate next refresh time
@@ -656,8 +676,12 @@ export default async function handler(req, res) {
         results.push({
           requestId: request.id,
           requestName: request.request_name,
+          loadSource: connected ? 'truckstop_live' : 'static_fallback',
+          loadsSearched: loadsForRequest.length,
           matchesFound: matches.length,
-          topMatchId: topMatch?.load_id,
+          topMatchId: topMatch?.load_id ?? null,
+          material: !!change,
+          charged,
           notificationSent,
           nextRefreshAt
         });

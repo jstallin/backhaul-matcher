@@ -5,7 +5,15 @@
  * All calls go through /api/pcmiler/* to keep the API key server-side.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.js';
+
+// Server-side (Vercel cron / serverless) there is no browser, no user session, and
+// relative `/api/pcmiler/*` URLs don't resolve. In that context we call PC*MILER's
+// REST API directly with the server-only PCMILER_API_KEY — the same pattern the
+// proxies use internally. The client path is unchanged (proxy + user JWT).
+const IS_SERVER = typeof window === 'undefined';
+const PCMILER_BASE = 'https://pcmiler.alk.com/apis/rest/v1.0/Service.svc';
+const serverPcMilerToken = () => (typeof process !== 'undefined' ? process.env.PCMILER_API_KEY : null);
 
 // #87: the /api/pcmiler/* proxies now require a valid session (they spend the billed
 // PC*MILER key). Attach the current user's access token to each request. getSession()
@@ -41,7 +49,14 @@ export const formatStops = (points) => {
 export const getDrivingDistance = async (points) => {
   try {
     const stops = formatStops(points);
-    const response = await fetch(`/api/pcmiler/route?stops=${encodeURIComponent(stops)}&reports=Mileage`, { headers: await authHeaders() });
+    let response;
+    if (IS_SERVER) {
+      const token = serverPcMilerToken();
+      if (!token) return null;
+      response = await fetch(`${PCMILER_BASE}/route/routeReports?stops=${encodeURIComponent(stops)}&reports=Mileage&authToken=${token}`);
+    } else {
+      response = await fetch(`/api/pcmiler/route?stops=${encodeURIComponent(stops)}&reports=Mileage`, { headers: await authHeaders() });
+    }
 
     if (!response.ok) {
       console.warn(`PC Miler route API returned ${response.status}`);
@@ -99,7 +114,14 @@ export const getDrivingDistance = async (points) => {
 export const getRouteGeometry = async (points) => {
   try {
     const stops = formatStops(points);
-    const response = await fetch(`/api/pcmiler/routepath?stops=${encodeURIComponent(stops)}`, { headers: await authHeaders() });
+    let response;
+    if (IS_SERVER) {
+      const token = serverPcMilerToken();
+      if (!token) return null;
+      response = await fetch(`${PCMILER_BASE}/route/routePath?stops=${encodeURIComponent(stops)}&authToken=${token}`);
+    } else {
+      response = await fetch(`/api/pcmiler/routepath?stops=${encodeURIComponent(stops)}`, { headers: await authHeaders() });
+    }
 
     if (!response.ok) {
       console.warn(`PC Miler routepath API returned ${response.status}`);
@@ -148,6 +170,21 @@ export const getRouteGeometry = async (points) => {
 export const geocodeAddress = async (address) => {
   if (!address || !address.trim()) return null;
   try {
+    if (IS_SERVER) {
+      // Server: call PC*MILER Locations directly (same parse as api/pcmiler/geocode.js).
+      const token = serverPcMilerToken();
+      if (!token) return null;
+      const r = await fetch(`${PCMILER_BASE}/locations?address=${encodeURIComponent(address.trim())}&authToken=${token}`);
+      if (!r.ok) return null;
+      const data = await r.json();
+      const loc = Array.isArray(data) ? data[0] : null;
+      if (loc?.Coords?.Lat != null && loc?.Coords?.Lon != null) {
+        const label = [loc.Address?.StreetAddress, loc.Address?.City, loc.Address?.State, loc.Address?.Zip]
+          .filter(Boolean).join(', ');
+        return { lat: Number(loc.Coords.Lat), lng: Number(loc.Coords.Lon), label: label || address.trim() };
+      }
+      return null;
+    }
     const response = await fetch(`/api/pcmiler/geocode?address=${encodeURIComponent(address.trim())}`, { headers: await authHeaders() });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
