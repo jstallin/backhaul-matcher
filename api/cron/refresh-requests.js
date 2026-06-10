@@ -91,17 +91,20 @@ const getLiveTruckstopLoads = async (request, rawProfile) => {
   }
 
   const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+  const tsParams = {
+    originCity:    request.datum_city || datumCityParsed,
+    originState:   request.datum_state || datumStateParsed,
+    equipmentType: rawProfile?.trailer_type || null,
+    modes:         unionModes(rawProfile?.modes, request.modes), // #36: fleet + request modes
+    radiusMiles:   150,
+    pickupDate:    effectivePickupDate(request.equipment_available_date),
+    pickupDateEnd: request.equipment_needed_date || '',
+  };
+  // TEMP DEBUG: base URL (testws default vs prod) + resolved search params — no secrets.
+  // Diagnosing why the cron's live fetch returns 0 while the browser/endpoint return loads.
+  console.log('  🔎 [TS-DEBUG] base=' + (process.env.TRUCKSTOP_BASE_URL || 'testws.truckstop.com(default)') + ' params=' + JSON.stringify(tsParams));
   try {
-    const loads = await fetchTruckstopLoads({
-      integrationId, username, password,
-      originCity:    request.datum_city || datumCityParsed,
-      originState:   request.datum_state || datumStateParsed,
-      equipmentType: rawProfile?.trailer_type || null,
-      modes:         unionModes(rawProfile?.modes, request.modes), // #36: fleet + request modes
-      radiusMiles:   150,
-      pickupDate:    effectivePickupDate(request.equipment_available_date),
-      pickupDateEnd: request.equipment_needed_date || '',
-    });
+    const loads = await fetchTruckstopLoads({ integrationId, username, password, ...tsParams });
     // Connected: live result is authoritative, even when empty. Never demo.
     return loads || [];
   } catch (err) {
