@@ -102,6 +102,64 @@ const getLiveTruckstopLoads = async (request, rawProfile) => {
   }
 };
 
+// PR3: pilot-org check (mirrors isInPilotOrg in api/stripe/index.js). Pilot orgs aren't
+// charged — instead a type='pilot' ledger row records the would-be charge for the admin
+// revenue projection (#131). Active window only.
+const isInPilotOrg = async (userId) => {
+  if (!userId) return false;
+  const { data } = await supabase
+    .from('org_memberships')
+    .select('orgs(is_pilot, pilot_start_date, pilot_end_date)')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const org = data?.orgs;
+  if (!org?.is_pilot) return false;
+  const today = new Date().toISOString().split('T')[0];
+  if (org.pilot_start_date && org.pilot_start_date > today) return false;
+  if (org.pilot_end_date && org.pilot_end_date < today) return false;
+  return true;
+};
+
+// PR3: charge for a value-delivering (material) auto-refresh and log a search_run
+// activity event so the admin dashboard's Last Search + revenue reflect it. Mirrors the
+// stripe deduct path: pilot orgs get a would-be ledger row (balance untouched), everyone
+// else hits the deduct_credit RPC. Telemetry/charge failures are logged, never thrown —
+// a billing hiccup must not abort the refresh loop. Returns true if a credit was charged.
+const DESC = 'Auto-refresh (material change)';
+const chargeForMaterialRefresh = async (userId, requestId) => {
+  if (!userId) return false;
+  let charged = false;
+  try {
+    if (await isInPilotOrg(userId)) {
+      const { error } = await supabase
+        .from('credit_transactions')
+        .insert({ user_id: userId, amount: -1, type: 'pilot', description: DESC });
+      if (error) console.error('  ⚠️ Pilot would-be credit record failed:', error.message);
+    } else {
+      const { data: ok, error } = await supabase.rpc('deduct_credit', {
+        p_user_id: userId, p_amount: 1, p_description: DESC,
+      });
+      if (error) console.error('  ⚠️ Auto-refresh credit deduction failed:', error.message);
+      else if (!ok) console.warn('  ⚠️ Auto-refresh: insufficient credits (notification still sent)');
+      else charged = true;
+    }
+  } catch (e) {
+    console.error('  ⚠️ chargeForMaterialRefresh error:', e?.message || e);
+  }
+
+  // Activity event (search_run) — only material refreshes count as a "search" on the
+  // admin dashboard, matching the client's logActivityEvent(SEARCH_RUN) semantics.
+  try {
+    const { error } = await supabase
+      .from('user_activity_events')
+      .insert({ user_id: userId, event_type: 'search_run', metadata: { kind: 'backhaul', request_id: requestId, source: 'auto_refresh' } });
+    if (error) console.error('  ⚠️ Activity event insert failed:', error.message);
+  } catch (e) {
+    console.error('  ⚠️ Activity event error:', e?.message || e);
+  }
+  return charged;
+};
+
 // ============================================
 // NOTIFICATION LOGIC
 // ============================================
@@ -524,17 +582,30 @@ export default async function handler(req, res) {
 
         const topMatch = matches[0] || null;
         let notificationSent = false;
+        let charged = false;
 
-        // Check for material change (unified net-based detector)
-        if (topMatch && request.notification_enabled) {
-          const change = detectNotifiableChange(
-            { topId: request.last_top_match_id, topNet: request.last_top_net, top25AvgNet: request.last_top25_avg_net },
-            matches
-          );
+        // Materiality drives BOTH billing (PR3) and notifications: a refresh that
+        // produced a materially better/worse result delivered value. Compute it once,
+        // independent of notification settings. Returns null on the first run (baseline
+        // established silently) and when nothing material changed — those refreshes are
+        // free and never logged as a search.
+        const change = topMatch
+          ? detectNotifiableChange(
+              { topId: request.last_top_match_id, topNet: request.last_top_net, top25AvgNet: request.last_top25_avg_net },
+              matches
+            )
+          : null;
 
-          if (change) {
-            console.log(`  📬 Material change detected: ${change.type}`);
+        if (change) {
+          console.log(`  📬 Material change detected: ${change.type}`);
 
+          // PR3: charge 1 credit for the value-delivering refresh + log a search_run
+          // event. Only material refreshes cost a credit or count as a "search".
+          charged = await chargeForMaterialRefresh(request.user_id, request.id);
+
+          // Notify only when the user opted in (notification is delivery; the charge
+          // above is for the value found, regardless of notification preference).
+          if (request.notification_enabled) {
             const requestLink = `${APP_URL}/app?request=${request.id}`;
             const { subject, text, sms } = buildNotificationMessage(request.request_name, change, requestLink);
 
@@ -545,9 +616,9 @@ export default async function handler(req, res) {
               const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
               notificationSent = notifResult.email?.success || notifResult.sms?.success;
             }
-          } else {
-            console.log('  ℹ️ No material change detected');
           }
+        } else {
+          console.log('  ℹ️ No material change — free refresh, not charged, not logged as a search');
         }
 
         // Calculate next refresh time
@@ -586,6 +657,8 @@ export default async function handler(req, res) {
           requestName: request.request_name,
           matchesFound: matches.length,
           topMatchId: topMatch?.load_id,
+          material: !!change,
+          charged,
           notificationSent,
           nextRefreshAt
         });
