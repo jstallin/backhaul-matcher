@@ -15,17 +15,10 @@
  */
 export default function handler(req, res) {
   const truckstopConfigured = !!(process.env.TRUCKSTOP_WS_USERNAME && process.env.TRUCKSTOP_WS_PASSWORD);
-  // #146 diag: the resolved Truckstop base URL — a public API hostname, NOT a secret.
-  // Reveals whether the lambda sees TRUCKSTOP_BASE_URL=webservices (prod) or falls back
-  // to the testws sandbox default (which returns the 9,999,999,999 sentinel loads). Lets
-  // us confirm the env var from an unauthenticated curl. Remove once prod is confirmed.
-  const tsBaseUrl = process.env.TRUCKSTOP_BASE_URL || 'https://testws.truckstop.com';
   res.setHeader('Cache-Control', 'no-store');
   return res.status(truckstopConfigured ? 200 : 503).json({
     ok: truckstopConfigured,
     service: 'integrations',
     truckstop_ws_configured: truckstopConfigured,
-    truckstop_base_url: tsBaseUrl,
-    truckstop_endpoint_mode: tsBaseUrl.includes('testws') ? 'test' : 'live',
   });
 }
