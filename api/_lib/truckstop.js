@@ -248,12 +248,6 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
   // runtime logs on every search. The HTTP request line + load count below are enough
   // to debug; the integration ID stays out of logs (Vault-protected at rest).
 
-  // #146 diag: which endpoint are we actually hitting? Front-loaded short token so it
-  // survives the Vercel log table's ~28-char message truncation (full URL gets cut off,
-  // and the log tool's full-text search times out). TEST = testws sandbox, LIVE =
-  // webservices prod. Remove once prod is confirmed live.
-  console.log(`[TS-DIAG] endpoint=${TS_ENDPOINT.includes('testws') ? 'TEST' : 'LIVE'}`);
-
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'text/xml', 'Accept': 'text/xml', 'SOAPAction': TS_SOAP_ACTION },
@@ -296,11 +290,6 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
   });
 
   const loads = deduped.map(normalizeTsLoad).filter(Boolean);
-  // #146 diag: count implausible records (sentinel/test data — e.g. PaymentAmount
-  // 9,999,999,999). Non-zero on a LIVE endpoint points at test-tier credentials, not
-  // the endpoint. Front-loaded short token (see truncation note above).
-  const sentinels = loads.filter(l => l.total_revenue > 1_000_000 || l.trailer_length > 100).length;
-  console.log(`[TS-DIAG] sentinels=${sentinels} of ${loads.length}`);
   console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)`);
   return loads;
 }
@@ -330,7 +319,12 @@ export function normalizeTsLoad(load) {
 
     // MultipleLoadDetailResult uses PaymentAmount + Mileage (vs Payment + Miles in search results)
     const equipCode = load.Equipment ?? load.EquipmentTypes?.Code ?? '';
-    const payment   = parseFloat(String(load.PaymentAmount ?? load.Payment ?? '0').replace(/[^0-9.]/g, '')) || 0;
+    // Truckstop encodes "no firm rate / call for rate" as a 9,999,999,999 sentinel. Map it
+    // to 0 — the app's no-rate convention — so it flows into the existing Call-for-Rate +
+    // Negotiate path (isNoRateLoad treats <= 0 as no rate). Left as-is it ranks #1 with a
+    // fabricated multi-billion-dollar net. #146.
+    const rawPayment = parseFloat(String(load.PaymentAmount ?? load.Payment ?? '0').replace(/[^0-9.]/g, '')) || 0;
+    const payment   = rawPayment >= 1_000_000 ? 0 : rawPayment;
     const miles     = parseInt(load.Mileage ?? load.Miles ?? 0, 10);
     const rpm       = miles > 0 ? Math.round((payment / miles) * 100) / 100 : 0;
 
@@ -339,6 +333,10 @@ export function normalizeTsLoad(load) {
 
     const ageRaw   = String(load.Age ?? '0').replace('+', '').trim();
     const ageHours = parseInt(ageRaw, 10) || 0;
+
+    // 9999 = Truckstop's "unspecified length" sentinel → null rather than "9999 ft". #146
+    const rawLength = parseFloat(load.Length ?? 53);
+    const trailerLength = rawLength >= 100 ? null : rawLength;
 
     return {
       load_id:          String(load.ID),
@@ -369,7 +367,7 @@ export function normalizeTsLoad(load) {
       delivery_time:    load.DeliveryTime ?? null,
       distance_miles:   miles,
       weight_lbs:       parseInt(load.Weight ?? 0, 10),
-      trailer_length:   parseFloat(load.Length ?? 53),
+      trailer_length:   trailerLength,
       total_revenue:    payment,
       revenue_per_mile: rpm,
       phone:            load.PointOfContactPhone ?? load.TruckCompanyPhone ?? null,
