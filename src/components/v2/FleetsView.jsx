@@ -6,6 +6,7 @@ import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
 import { FLEET_MODES } from '../../utils/fleetModes';
+import { FLEET_TRAILER_TYPES } from '../../utils/equipmentTypes';
 import { OrgMemberMultiSelect } from '../OrgMemberMultiSelect';
 import { fetchOrgMembers, memberName } from '../../utils/orgMembers';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle, Copy } from '../../icons';
@@ -169,7 +170,6 @@ const US_STATES = [
   'VA','WA','WV','WI','WY','DC',
 ];
 
-const FLEET_TRAILER_TYPES = ['Dry Van', 'Refrigerated', 'Flatbed', 'Step Deck', 'Removable Gooseneck', 'Hotshot', 'Power Only'];
 const EQUIPMENT_VARIATIONS = ['Conestoga', 'Tanker', 'Curtain Side', 'Extendable', 'Lowboy'];
 const TRUCK_TRAILER_TYPES = ['Dry Van', 'Reefer', 'Flatbed', 'Step Deck', 'Lowboy', 'Tanker'];
 const TRUCK_STATUSES = [{ value: 'active', label: 'Active' }, { value: 'maintenance', label: 'Maintenance' }, { value: 'inactive', label: 'Inactive' }];
@@ -290,6 +290,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
     if (!form.email.trim()) return setError('Email is required.');
     if (!form.homeAddress.trim()) return setError('Home address is required.');
     if (!form.homeLat || !form.homeLng) return setError('Please verify the home address before saving.');
+    if (!form.trailerType) return setError('Default trailer type is required.');
     if (form.fuelMpg === '' || !(Number(form.fuelMpg) > 0)) return setError('MPG is required (enter your contractual miles per gallon).');
 
     setSaving(true);
@@ -392,7 +393,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
         </Field>
       </FormGrid>
       <FormGrid cols={2}>
-        <Field label="Default Trailer Type">
+        <Field label="Default Trailer Type" required>
           <SelectInput value={form.trailerType} onChange={set('trailerType')} options={FLEET_TRAILER_TYPES} />
         </Field>
         <Field label="Equipment Variation" hint="Optional — Conestoga, Tanker, etc.">
