@@ -20,12 +20,15 @@ const TS_ENDPOINT = `${TS_BASE_URL}/v13/Searching/LoadSearch.svc`;
 const TS_SOAP_ACTION = 'http://webservices.truckstop.com/v12/ILoadSearch/GetMultipleLoadDetailResults';
 
 // App equipment type names → Truckstop codes
-const EQUIP_TO_TS = {
-  'Dry Van':      'V',
-  'Flatbed':      'F',
-  'Refrigerated': 'R',
-  'Step Deck':    'SD',
-  'Lowboy':       'LB',
+export const EQUIP_TO_TS = {
+  'Dry Van':             'V',
+  'Flatbed':             'F',
+  'Refrigerated':        'R',
+  'Step Deck':           'SD',
+  'Lowboy':              'LB',
+  'Removable Gooseneck': 'RGN',
+  'Hotshot':             'HS',
+  'Power Only':          'PO',
 };
 
 // Truckstop codes → app equipment type names
@@ -35,6 +38,9 @@ const TS_TO_EQUIP = {
   'R': 'Refrigerated', 'RVF': 'Refrigerated', 'RV': 'Refrigerated',
   'SD': 'Step Deck', 'SDF': 'Step Deck',
   'LB': 'Lowboy',
+  'RGN': 'Removable Gooseneck',
+  'HS': 'Hotshot',
+  'PO': 'Power Only',
   'DD': 'Double Drop',
   'TNK': 'Tanker',
   'IM': 'Intermodal',
