@@ -456,7 +456,10 @@ export const FleetSetup = ({ fleet, onComplete }) => {
                 disabled={saving}
                 style={inputStyle}
               />
-              <div style={helperStyle}>For text notifications</div>
+              <div style={helperStyle}>
+                Used only for SMS load alerts you opt into per request. Msg &amp; data rates may apply. Reply STOP to cancel.{' '}
+                <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: colors.accent.primary }}>Privacy Policy &amp; SMS Terms</a>.
+              </div>
             </div>
             <div>
               <label style={labelStyle}>Fleet Manager Email *</label>

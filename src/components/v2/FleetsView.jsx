@@ -360,7 +360,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
         <Field label="MC Number"><Input value={form.mcNumber} onChange={set('mcNumber')} /></Field>
         <Field label="DOT Number"><Input value={form.dotNumber} onChange={set('dotNumber')} /></Field>
         */}
-        <Field label="Phone" required><Input value={form.phoneNumber} onChange={set('phoneNumber')} /></Field>
+        <Field label="Phone" required hint={<>Used only for SMS load alerts you opt into per request. Msg &amp; data rates may apply. Reply STOP to cancel. <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: t.colors.accent.blue }}>Privacy Policy &amp; SMS Terms</a>.</>}><Input value={form.phoneNumber} onChange={set('phoneNumber')} /></Field>
         <Field label="Email" required><Input value={form.email} onChange={set('email')} type="email" /></Field>
       </FormGrid>
 
