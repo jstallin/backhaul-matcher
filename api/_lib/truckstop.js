@@ -248,9 +248,11 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
   // runtime logs on every search. The HTTP request line + load count below are enough
   // to debug; the integration ID stays out of logs (Vault-protected at rest).
 
-  // #146 diag: which endpoint are we actually hitting? Non-secret — reveals testws
-  // (sentinel data) vs webservices (real feed). Remove once prod is confirmed live.
-  console.log(`[Truckstop] search endpoint: ${TS_ENDPOINT}`);
+  // #146 diag: which endpoint are we actually hitting? Front-loaded short token so it
+  // survives the Vercel log table's ~28-char message truncation (full URL gets cut off,
+  // and the log tool's full-text search times out). TEST = testws sandbox, LIVE =
+  // webservices prod. Remove once prod is confirmed live.
+  console.log(`[TS-DIAG] endpoint=${TS_ENDPOINT.includes('testws') ? 'TEST' : 'LIVE'}`);
 
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
@@ -295,10 +297,11 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
 
   const loads = deduped.map(normalizeTsLoad).filter(Boolean);
   // #146 diag: count implausible records (sentinel/test data — e.g. PaymentAmount
-  // 9,999,999,999). A non-zero count on a 'webservices' endpoint points at test-tier
-  // credentials rather than the endpoint. Remove with the endpoint log above.
+  // 9,999,999,999). Non-zero on a LIVE endpoint points at test-tier credentials, not
+  // the endpoint. Front-loaded short token (see truncation note above).
   const sentinels = loads.filter(l => l.total_revenue > 1_000_000 || l.trailer_length > 100).length;
-  console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)${sentinels ? `, ${sentinels} implausible/sentinel` : ''}`);
+  console.log(`[TS-DIAG] sentinels=${sentinels} of ${loads.length}`);
+  console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)`);
   return loads;
 }
 
