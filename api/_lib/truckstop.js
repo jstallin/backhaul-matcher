@@ -248,6 +248,10 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
   // runtime logs on every search. The HTTP request line + load count below are enough
   // to debug; the integration ID stays out of logs (Vault-protected at rest).
 
+  // #146 diag: which endpoint are we actually hitting? Non-secret — reveals testws
+  // (sentinel data) vs webservices (real feed). Remove once prod is confirmed live.
+  console.log(`[Truckstop] search endpoint: ${TS_ENDPOINT}`);
+
   const tsRes = await fetch(TS_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'text/xml', 'Accept': 'text/xml', 'SOAPAction': TS_SOAP_ACTION },
@@ -290,7 +294,11 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
   });
 
   const loads = deduped.map(normalizeTsLoad).filter(Boolean);
-  console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)`);
+  // #146 diag: count implausible records (sentinel/test data — e.g. PaymentAmount
+  // 9,999,999,999). A non-zero count on a 'webservices' endpoint points at test-tier
+  // credentials rather than the endpoint. Remove with the endpoint log above.
+  const sentinels = loads.filter(l => l.total_revenue > 1_000_000 || l.trailer_length > 100).length;
+  console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)${sentinels ? `, ${sentinels} implausible/sentinel` : ''}`);
   return loads;
 }
 
