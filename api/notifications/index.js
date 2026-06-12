@@ -2,6 +2,7 @@ import twilio from 'twilio';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import { brandSms } from '../../src/utils/smsBody.js';
+import { toE164 } from '../../src/utils/phone.js';
 
 // #57: this endpoint sends email (Resend) and SMS (Twilio) on our account, so it must
 // not be open. It is client-facing only (the cron uses the SDKs directly), so we require
@@ -73,6 +74,9 @@ export default async function handler(req, res) {
   if (type === 'sms') {
     const { to, message, from } = req.body;
     if (!to || !message) return res.status(400).json({ error: 'Missing required fields: to, message' });
+    // Twilio requires E.164 (+1XXXXXXXXXX); fleet phones are stored free-form.
+    const e164To = toE164(to);
+    if (!e164To) return res.status(400).json({ success: false, error: 'Invalid phone number (expected US 10-digit or E.164)' });
 
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -84,7 +88,7 @@ export default async function handler(req, res) {
 
     try {
       const client = twilio(accountSid, authToken);
-      const result = await client.messages.create({ body: brandSms(message), from: from || fromNumber, to }); // #140
+      const result = await client.messages.create({ body: brandSms(message), from: from || fromNumber, to: e164To }); // #140
       return res.status(200).json({ success: true, messageId: result.sid });
     } catch (error) {
       console.error('SMS error:', error.message);

@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { geocodeAddress } from '../utils/pcMilerClient';
 import { FLEET_MODES } from '../utils/fleetModes';
 import { parseFleetHome } from '../utils/parseFleetHome';
+import { formatUsPhone } from '../utils/phone';
 import { OrgMemberMultiSelect } from './OrgMemberMultiSelect';
 import { fetchOrgMembers } from '../utils/orgMembers';
 
@@ -89,7 +90,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
         name: fleet.name || '',
         mcNumber: fleet.mc_number || '',
         dotNumber: fleet.dot_number || '',
-        phoneNumber: fleet.phone_number || '',
+        phoneNumber: formatUsPhone(fleet.phone_number || ''),
         email: fleet.email || '',
         homeStreet: parsedStreet,
         homeCity: parsedCity,
@@ -451,7 +452,7 @@ export const FleetSetup = ({ fleet, onComplete }) => {
               <input
                 type="tel"
                 value={formData.phoneNumber}
-                onChange={(e) => handleChange('phoneNumber', e.target.value)}
+                onChange={(e) => handleChange('phoneNumber', formatUsPhone(e.target.value))}
                 required
                 disabled={saving}
                 style={inputStyle}

@@ -5,6 +5,7 @@ import { detectNotifiableChange, snapshotFromMatches } from '../../src/utils/not
 import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
 import { brandSms } from '../../src/utils/smsBody.js';
+import { toE164 } from '../../src/utils/phone.js';
 // PR1: server-side auto-refresh now runs the SAME matching algorithm the client uses,
 // instead of a divergent inlined copy. pcMilerClient detects the server context and calls
 // PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
@@ -259,19 +260,25 @@ const sendNotification = async (method, email, phone, subject, text, sms) => {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+    // Fleet phones are stored free-form; Twilio requires E.164 (+1XXXXXXXXXX) or it
+    // rejects with err 21211. Normalize, and skip (not throw) on an unparseable number.
+    const smsTo = toE164(phone);
 
-    if (accountSid && authToken && fromNumber) {
+    if (!smsTo) {
+      console.warn(`⚠️ Skipping SMS — unparseable phone "${phone}" (expected US 10-digit or E.164)`);
+      results.sms = { success: false, error: 'Invalid phone number' };
+    } else if (accountSid && authToken && fromNumber) {
       try {
-        console.log(`📤 Attempting to send SMS via Twilio to ${phone}...`);
+        console.log(`📤 Attempting to send SMS via Twilio to ${smsTo}...`);
         const client = twilio(accountSid, authToken);
         const result = await client.messages.create({
           // #140: slice the core first, then brand — so the STOP reminder is never truncated.
           body: brandSms((sms || text || '').slice(0, 300)),
           from: fromNumber,
-          to: phone,
+          to: smsTo,
         });
         results.sms = { success: true, id: result.sid };
-        console.log(`✅ SMS sent via Twilio to ${phone}, sid: ${result.sid}`);
+        console.log(`✅ SMS sent via Twilio to ${smsTo}, sid: ${result.sid}`);
       } catch (error) {
         results.sms = { success: false, error: error.message, code: error.code };
         console.error(`❌ Twilio SMS failed: ${error.message} (code ${error.code})`);
