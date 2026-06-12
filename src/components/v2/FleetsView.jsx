@@ -7,6 +7,7 @@ import { geocodeAddress } from '../../utils/pcMilerClient';
 import { buildFleetPayload } from '../../utils/buildFleetPayload';
 import { FLEET_MODES } from '../../utils/fleetModes';
 import { FLEET_TRAILER_TYPES } from '../../utils/equipmentTypes';
+import { formatUsPhone } from '../../utils/phone';
 import { OrgMemberMultiSelect } from '../OrgMemberMultiSelect';
 import { fetchOrgMembers, memberName } from '../../utils/orgMembers';
 import { Plus, Truck, User, Edit, Trash2, CheckCircle, MapPin, Save, AlertCircle, Copy } from '../../icons';
@@ -241,7 +242,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
       name: fleet.name ?? '',
       mcNumber: fleet.mc_number ?? '',
       dotNumber: fleet.dot_number ?? '',
-      phoneNumber: fleet.phone_number ?? '',
+      phoneNumber: formatUsPhone(fleet.phone_number ?? ''),
       email: fleet.email ?? '',
       homeAddress: fleet.home_address ?? '',
       homeLat: fleet.home_lat ?? null,
@@ -361,7 +362,7 @@ function ProfileTab({ fleet, onSaved, onDeleted, members = [] }) {
         <Field label="MC Number"><Input value={form.mcNumber} onChange={set('mcNumber')} /></Field>
         <Field label="DOT Number"><Input value={form.dotNumber} onChange={set('dotNumber')} /></Field>
         */}
-        <Field label="Phone" required hint={<>Used only for SMS load alerts you opt into per request. Msg &amp; data rates may apply. Reply STOP to cancel. <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: t.colors.accent.blue }}>Privacy Policy &amp; SMS Terms</a>.</>}><Input value={form.phoneNumber} onChange={set('phoneNumber')} /></Field>
+        <Field label="Phone" required hint={<>Used only for SMS load alerts you opt into per request. Msg &amp; data rates may apply. Reply STOP to cancel. <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: t.colors.accent.blue }}>Privacy Policy &amp; SMS Terms</a>.</>}><Input value={form.phoneNumber} onChange={(v) => set('phoneNumber')(formatUsPhone(v))} placeholder="(555) 123-4567" /></Field>
         <Field label="Email" required><Input value={form.email} onChange={set('email')} type="email" /></Field>
       </FormGrid>
 
