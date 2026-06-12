@@ -92,12 +92,14 @@ const buildNotificationMessage = (requestName, fleetName, oldTopMatch, newTopMat
   const newNet = netOf(newTopMatch);
   const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const newRoute = `${newTopMatch?.origin?.city}, ${newTopMatch?.origin?.state} → ${newTopMatch?.destination?.city}, ${newTopMatch?.destination?.state}`;
+  // GSM-7-safe arrow for SMS — a Unicode → forces UCS-2 and ~halves the per-segment budget.
+  const smsRoute = newRoute.replace('→', '->');
   const smsLink = link ? ` View: ${link}` : '';
 
   switch (changeType) {
     case 'new_top':
       subject = `🎯 New top backhaul for ${requestName}`;
-      smsBody = `New #1 backhaul for ${requestName}: ${fmt(newNet)} net (${newRoute}).${smsLink}`;
+      smsBody = `New #1 backhaul for ${requestName}: ${fmt(newNet)} net (${smsRoute}).${smsLink}`;
       emailBody = `A new #1 backhaul opportunity is available for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },
@@ -109,7 +111,7 @@ const buildNotificationMessage = (requestName, fleetName, oldTopMatch, newTopMat
 
     case 'top_net_up':
       subject = `📈 Top backhaul improved for ${requestName}`;
-      smsBody = `Top backhaul net revenue improved for ${requestName}: now ${fmt(newNet)} (${newRoute}).${smsLink}`;
+      smsBody = `Top backhaul net revenue improved for ${requestName}: now ${fmt(newNet)} (${smsRoute}).${smsLink}`;
       emailBody = `Your top backhaul's net revenue improved for "${requestName}".\n\nRoute: ${newRoute}\nNet revenue: ${fmt(newNet)}\n\nView this request: ${link}`;
       emailHtml = buildEmailHtml(subject, [
         { label: 'Request', value: requestName },

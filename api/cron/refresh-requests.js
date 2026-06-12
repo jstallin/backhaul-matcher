@@ -182,19 +182,21 @@ const chargeForMaterialRefresh = async (userId, requestId) => {
 // Net-based notification copy (item #48) with a deep-link to the request results (#51).
 const buildNotificationMessage = (requestName, change, link) => {
   const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  const routeOf = (m) => m ? `${m.origin?.city}, ${m.origin?.state} → ${m.destination?.city}, ${m.destination?.state}` : '';
+  // arrow defaults to → for email; SMS passes '->' to stay in GSM-7 (a Unicode arrow
+  // forces UCS-2, ~halving the per-segment budget and multiplying segment cost).
+  const routeOf = (m, arrow = '→') => m ? `${m.origin?.city}, ${m.origin?.state} ${arrow} ${m.destination?.city}, ${m.destination?.state}` : '';
 
   let subject, body, sms;
   switch (change.type) {
     case 'new_top':
       subject = `🎯 New top backhaul for ${requestName}`;
       body = `New #1 backhaul for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
-      sms = `New #1 backhaul for "${requestName}": ${fmt(change.newNet)} net. View: ${link}`;
+      sms = `New #1 backhaul for "${requestName}" (${routeOf(change.match, '->')}): ${fmt(change.newNet)} net. View: ${link}`;
       break;
     case 'top_net_up':
       subject = `📈 Top backhaul improved for ${requestName}`;
       body = `Your top backhaul's net revenue rose ${Math.round(change.pct)}% for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
-      sms = `Top backhaul up ${Math.round(change.pct)}% for "${requestName}": ${fmt(change.newNet)} net. View: ${link}`;
+      sms = `Top backhaul up ${Math.round(change.pct)}% for "${requestName}" (${routeOf(change.match, '->')}): ${fmt(change.newNet)} net. View: ${link}`;
       break;
     case 'lane_softening':
       subject = `📉 Lane softening for ${requestName}`;
