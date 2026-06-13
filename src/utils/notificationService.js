@@ -3,6 +3,7 @@
  * Handles sending email and SMS notifications for backhaul changes
  */
 import { detectNotifiableChange, snapshotFromMatches, netOf } from './notificationChangeDetection';
+import { isWithinNotifyWindow, DEFAULT_TZ } from './quietHours';
 import { supabase } from '../lib/supabase';
 
 const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || '/api/notifications';
@@ -51,6 +52,14 @@ export const sendBackhaulChangeNotification = async (params) => {
 
   // Build notification message
   const message = buildNotificationMessage(requestName, fleetName, oldTopMatch, newTopMatch, changeType, link);
+
+  // Quiet hours (both channels): suppress outside the recipient's local 8 AM–9 PM.
+  // The recipient is the viewer here, so use the browser's timezone.
+  const viewerTz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat().resolvedOptions().timeZone) || DEFAULT_TZ;
+  if (!isWithinNotifyWindow(new Date(), viewerTz)) {
+    console.log(`🌙 Quiet hours (${viewerTz}) — suppressing notification`);
+    return { success: true, suppressed: true };
+  }
 
   try {
     // Send based on method
