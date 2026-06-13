@@ -6,6 +6,7 @@ import { isRequestExpired } from '../../src/utils/requestExpiry.js';
 import { effectiveNotificationMethod } from '../../src/utils/smsConsent.js';
 import { brandSms } from '../../src/utils/smsBody.js';
 import { toE164 } from '../../src/utils/phone.js';
+import { isWithinNotifyWindow, usTimeZoneFromCoords } from '../../src/utils/quietHours.js';
 // PR1: server-side auto-refresh now runs the SAME matching algorithm the client uses,
 // instead of a divergent inlined copy. pcMilerClient detects the server context and calls
 // PC*MILER directly with PCMILER_API_KEY; supabase.js reads process.env server-side.
@@ -643,8 +644,16 @@ export default async function handler(req, res) {
             const method = effectiveNotificationMethod(request.notification_method, request.sms_consent);
 
             if (method) {
-              const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
-              notificationSent = notifResult.email?.success || notifResult.sms?.success;
+              // Quiet hours (both channels): suppress the send outside the fleet's local
+              // 8 AM–9 PM. The change was still detected/charged above and is visible
+              // in-app; a daytime material change re-triggers a fresh alert.
+              const tz = usTimeZoneFromCoords(fleet?.home_lng, fleet?.home_lat);
+              if (!isWithinNotifyWindow(new Date(), tz)) {
+                console.log(`  🌙 Quiet hours (${tz}) — suppressing ${method} notification for "${request.request_name}"`);
+              } else {
+                const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
+                notificationSent = notifResult.email?.success || notifResult.sms?.success;
+              }
             }
           }
         } else {
