@@ -808,7 +808,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 fleet={selectedFleet}
                 matches={backhaulMatches}
                 datumCoordinates={datumCoordinates}
-                fleetHome={{ lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
+                fleetHome={(selectedRequest?.bypass_fleet_home && selectedRequest?.search_home_lat != null)
+                  ? { lat: selectedRequest.search_home_lat, lng: selectedRequest.search_home_lng, address: selectedRequest.search_home_address } // #159: plot the substituted search home
+                  : { lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
                 routeData={routeData}
                 onBack={() => setSelectedRequest(null)}
                 onEdit={handleEditRequest}

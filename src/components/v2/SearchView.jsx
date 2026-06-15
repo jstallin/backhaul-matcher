@@ -422,6 +422,9 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   const [searchHomeVerified, setSearchHomeVerified] = useState(!!(initialValues?.bypass_fleet_home && initialValues?.search_home_lat != null));
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
+  const isMobile = useMobile();
+  // Indent for the controls nested under a toggle; collapse on mobile so inputs keep their width.
+  const nestIndent = isMobile ? '0' : '46px';
 
   const set = (key, val) => setForm(f => {
     const next = { ...f, [key]: val };
@@ -533,7 +536,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           {initialValues ? 'Edit Request' : 'New Backhaul Request'}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
           <Field label="Request Name" style={{ gridColumn: '1 / -1' }}>
             <Input value={form.requestName} onChange={e => set('requestName', e.target.value)} placeholder="Optional — auto-generated if blank" />
             <ErrorMsg msg={errors.requestName} />
@@ -582,7 +585,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           {/* #158: Limit Weight? — only loads at/below Max Weight are returned */}
           <div>
             <Toggle checked={form.limitWeight} onChange={v => set('limitWeight', v)} label="Limit weight — only show loads at or below a maximum" />
-            <div style={{ marginTop: '8px', marginLeft: '46px', maxWidth: '220px' }}>
+            <div style={{ marginTop: '8px', marginLeft: nestIndent, maxWidth: '220px' }}>
               <Field label="Max Weight (lbs)">
                 <Input type="number" value={form.maxWeight} onChange={e => set('maxWeight', e.target.value)} disabled={!form.limitWeight} placeholder="e.g. 44000" />
                 <ErrorMsg msg={errors.maxWeight} />
@@ -593,7 +596,7 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
           {/* #159: Bypass Fleet Home — substitute the fleet's home with a Search Home for this request */}
           <div>
             <Toggle checked={form.bypassFleetHome} onChange={v => set('bypassFleetHome', v)} label="Bypass fleet home — route to a different home for this request only" />
-            <div style={{ marginTop: '8px', marginLeft: '46px' }}>
+            <div style={{ marginTop: '8px', marginLeft: nestIndent }}>
               <Field label="Search Home">
                 {form.bypassFleetHome ? (
                   <>
@@ -1603,7 +1606,12 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const [toastLoad, setToastLoad] = useState(null);
   const toastTimerRef = useRef(null);
 
-  const fleetHome = fleet ? { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address } : null;
+  // #159: when the request bypasses its fleet home, the map must plot the substituted
+  // search home (matching already routes to it) — otherwise the home marker/route line
+  // stays at the original fleet home while results reflect the temp home.
+  const fleetHome = (request?.bypass_fleet_home && request?.search_home_lat != null)
+    ? { lat: request.search_home_lat, lng: request.search_home_lng, address: request.search_home_address }
+    : (fleet ? { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address } : null);
   const expired = isRequestExpired(request); // #83: window fully past — run disabled
 
   const handleHaulConfirm = async (keepSearching = false) => {
