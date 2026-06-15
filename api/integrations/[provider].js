@@ -553,11 +553,16 @@ async function handleTruckstop(req, res, supabase, user) {
       modes,
       pickup_date,
       pickup_date_end,
+      max_weight,
       radius_miles = '150'
     } = req.query;
 
     // Optional fleet transport modes (item 007), arriving comma-separated.
     const modesList = (modes || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+    // #158: optional max load weight. Truckstop's SOAP LoadSearch has no weight
+    // criterion, so fetchTruckstopLoads filters the parsed results post-fetch.
+    const maxWeightLbs = max_weight ? parseInt(max_weight, 10) : null;
 
     try {
       const loads = await fetchTruckstopLoads({
@@ -570,6 +575,7 @@ async function handleTruckstop(req, res, supabase, user) {
         equipmentType: equipment_type || null,
         modes: modesList,
         radiusMiles: parseInt(radius_miles, 10),
+        maxWeightLbs,
       });
 
       console.log(`✅ Truckstop: ${loads.length} loads returned`);

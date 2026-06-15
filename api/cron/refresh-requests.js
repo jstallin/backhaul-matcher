@@ -103,6 +103,8 @@ const getLiveTruckstopLoads = async (request, rawProfile) => {
     radiusMiles:   150,
     pickupDate:    effectivePickupDate(request.equipment_available_date),
     pickupDateEnd: request.equipment_needed_date || '',
+    // #158: optional per-request max load weight; null = no limit
+    maxWeightLbs:  request.max_weight_lbs ?? null,
   };
   try {
     const loads = await fetchTruckstopLoads({ integrationId, username, password, ...tsParams });
@@ -583,6 +585,12 @@ export default async function handler(req, res) {
         const homeRadiusMiles = geocodeFailed ? 200 : 100;
         const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
+        // #159: "Bypass Fleet Home" — auto-refresh must route to the same search home the
+        // user set, or cron matches would diverge from the manual search results.
+        const searchHome = (request.bypass_fleet_home && request.search_home_lat != null && request.search_home_lng != null)
+          ? { lat: request.search_home_lat, lng: request.search_home_lng, address: request.search_home_address }
+          : null;
+
         // PR2: live Truckstop loads for this request's org (same source the user sees).
         // null = not connected → static demo set; array (incl. empty) = connected → live.
         const liveLoads = await getLiveTruckstopLoads(request, rawProfile);
@@ -605,7 +613,8 @@ export default async function handler(req, res) {
           rateConfig,
           request.is_relay || false,
           request.equipment_available_date || null,
-          request.equipment_needed_date || null
+          request.equipment_needed_date || null,
+          searchHome // #159: substitutes fleet home for routing when set
         );
         const matches = matchResult?.opportunities || [];
 

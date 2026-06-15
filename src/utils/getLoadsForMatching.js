@@ -47,7 +47,8 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       equipmentType = 'Dry Van',
       modes = [],
       pickupDate = '',
-      pickupDateEnd = ''
+      pickupDateEnd = '',
+      maxWeight = null
     } = requestContext;
 
     const params = new URLSearchParams({
@@ -66,6 +67,8 @@ async function getTruckstopLoads(userId, requestContext = {}) {
       pickup_date:    pickupDate,
       // #117: end of the request's pickup window — server searches the whole span
       pickup_date_end: pickupDateEnd,
+      // #158: optional max load weight; omitted when no limit set
+      max_weight:     maxWeight != null ? String(maxWeight) : '',
       radius_miles:   '150'
     });
 

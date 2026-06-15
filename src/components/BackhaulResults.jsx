@@ -184,6 +184,13 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
 
   return (
     <div>
+      {/* #159: substituted search home notice */}
+      {request?.bypass_fleet_home && request?.search_home_lat != null && (
+        <div style={{ marginBottom: '16px', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${colors.accent.primary}`, borderRadius: '8px', color: colors.text.primary, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <MapPin size={16} color={colors.accent.primary} />
+          <span>This request is running with the substituted search home{request.search_home_address ? ` (${request.search_home_address})` : ''}, replacing fleet's home.</span>
+        </div>
+      )}
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <div className="br-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
@@ -486,13 +493,19 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   {match.credit && <div><strong>Credit:</strong> {match.credit}</div>}
                   {match.experience_factor && <div><strong>Rating:</strong> {match.experience_factor}</div>}
                 </div>
-                {match.contactPhone && (
+                {/* #160: show broker contact on the card whenever a phone OR email is available */}
+                {(match.contactPhone || match.companyEmail) && (
                   <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.border.secondary}`, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span style={{ color: colors.text.tertiary, fontWeight: 600 }}>Contact Broker:</span>
-                    <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Call</a>
-                    <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Text</a>
-                    <span style={{ color: colors.text.secondary }}>{match.contactPhone}</span>
+                    {match.contactPhone && (
+                      <>
+                        <a href={`tel:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Call</a>
+                        <a href={`sms:${match.contactPhone}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Text</a>
+                        <span style={{ color: colors.text.secondary }}>{match.contactPhone}</span>
+                      </>
+                    )}
                     {match.companyEmail && <a href={`mailto:${match.companyEmail}`} onClick={e => e.stopPropagation()} style={{ color: colors.accent.primary, fontWeight: 700, textDecoration: 'none', padding: '3px 10px', border: `1px solid ${colors.accent.primary}`, borderRadius: '6px', fontSize: '12px' }}>Email</a>}
+                    {match.companyEmail && <span style={{ color: colors.text.secondary, wordBreak: 'break-all' }}>{match.companyEmail}</span>}
                   </div>
                 )}
                 {match.special_info && (

@@ -369,6 +369,12 @@ const BLANK_FORM = {
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
   driverHomeBy: '',
+  limitWeight: false,     // #158
+  maxWeight: '',          // #158
+  bypassFleetHome: false, // #159
+  searchHome: '',         // #159
+  searchHomeLat: null,
+  searchHomeLng: null,
   isRelay: false,
   modes: [],
   autoRefresh: false,
@@ -391,6 +397,12 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     equipmentAvailableDate: initialValues.equipment_available_date || '',
     equipmentNeededDate: initialValues.equipment_needed_date || '',
     driverHomeBy: initialValues.driver_home_by || '',
+    limitWeight: initialValues.max_weight_lbs != null,                                    // #158
+    maxWeight: initialValues.max_weight_lbs != null ? String(initialValues.max_weight_lbs) : '',
+    bypassFleetHome: initialValues.bypass_fleet_home || false,                            // #159
+    searchHome: initialValues.search_home_address || '',
+    searchHomeLat: initialValues.search_home_lat ?? null,
+    searchHomeLng: initialValues.search_home_lng ?? null,
     isRelay: initialValues.is_relay || false,
     modes: Array.isArray(initialValues.modes) ? initialValues.modes : [],
     autoRefresh: initialValues.auto_refresh || false,
@@ -406,6 +418,8 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
   // even for v1-created rows that never stored coords) — treat it as verified on load so
   // editing an unrelated field doesn't falsely fail. Editing the datum flips this off.
   const [datumVerified, setDatumVerified] = useState(!!(initialValues?.datum_lat || initialValues?.datum_point));
+  // #159: a saved bypass request already has verified search-home coords.
+  const [searchHomeVerified, setSearchHomeVerified] = useState(!!(initialValues?.bypass_fleet_home && initialValues?.search_home_lat != null));
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   const { user } = useAuth();
 
@@ -431,12 +445,31 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
     }
   };
 
+  // #159: Search Home resolution — verified the same way as the datum point.
+  const handleSearchHomeResolve = (r) => {
+    if (r && r.lat != null && r.lng != null) {
+      setForm(f => ({ ...f, searchHome: r.label, searchHomeLat: r.lat, searchHomeLng: r.lng }));
+      setSearchHomeVerified(true);
+      setErrors(e => ({ ...e, searchHome: null }));
+    } else {
+      setForm(f => ({ ...f, searchHomeLat: null, searchHomeLng: null }));
+      setSearchHomeVerified(false);
+    }
+  };
+
   const validate = () => {
     const e = {};
     // #128: request name is optional — auto-generated on save when left blank.
     if (!form.datumText.trim()) e.datumText = 'Required';
     else if (!datumVerified) e.datumText = "We couldn't find that location — check the spelling.";
     if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
+    // #158: a checked "Limit Weight?" needs a positive max weight.
+    if (form.limitWeight && !(parseInt(form.maxWeight, 10) > 0)) e.maxWeight = 'Enter a max weight, or turn off Limit Weight.';
+    // #159: a checked "Bypass Fleet Home" needs a verified search home.
+    if (form.bypassFleetHome) {
+      if (!form.searchHome.trim()) e.searchHome = 'Required';
+      else if (!searchHomeVerified || form.searchHomeLat == null) e.searchHome = "We couldn't find that location — check the spelling.";
+    }
     // #140: texting needs explicit consent; Email is always available so SMS stays optional.
     if (smsConsentRequired(form.notificationEnabled || form.autoRefresh, form.notificationMethod) && !form.smsConsent) {
       e.smsConsent = 'Check the SMS consent box to receive texts, or choose Email.';
@@ -546,6 +579,44 @@ function RequestForm({ fleets, initialValues = null, onSave, onCancel }) {
         </div>
 
         <div style={{ borderTop: `1px solid ${t.colors.border.default}`, paddingTop: '16px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* #158: Limit Weight? — only loads at/below Max Weight are returned */}
+          <div>
+            <Toggle checked={form.limitWeight} onChange={v => set('limitWeight', v)} label="Limit weight — only show loads at or below a maximum" />
+            <div style={{ marginTop: '8px', marginLeft: '46px', maxWidth: '220px' }}>
+              <Field label="Max Weight (lbs)">
+                <Input type="number" value={form.maxWeight} onChange={e => set('maxWeight', e.target.value)} disabled={!form.limitWeight} placeholder="e.g. 44000" />
+                <ErrorMsg msg={errors.maxWeight} />
+              </Field>
+            </div>
+          </div>
+
+          {/* #159: Bypass Fleet Home — substitute the fleet's home with a Search Home for this request */}
+          <div>
+            <Toggle checked={form.bypassFleetHome} onChange={v => set('bypassFleetHome', v)} label="Bypass fleet home — route to a different home for this request only" />
+            <div style={{ marginTop: '8px', marginLeft: '46px' }}>
+              <Field label="Search Home">
+                {form.bypassFleetHome ? (
+                  <>
+                    <CityStateInput
+                      value={form.searchHome}
+                      onChange={(v) => { set('searchHome', v); setSearchHomeVerified(false); set('searchHomeLat', null); set('searchHomeLng', null); }}
+                      onResolve={handleSearchHomeResolve}
+                      placeholder="City, ST (e.g. Burlington, NC)"
+                      accentColor={t.colors.accent.blue}
+                      inputStyle={{ width: '100%', padding: '8px 10px', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.lg, fontSize: t.font.size.sm, color: t.colors.text.primary, background: '#fff', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                    <ErrorMsg msg={errors.searchHome} />
+                    {searchHomeVerified && form.searchHomeLat != null && (
+                      <span style={{ fontSize: '11px', color: '#22c55e', marginTop: '4px', display: 'block' }}>✓ Location verified</span>
+                    )}
+                  </>
+                ) : (
+                  <Input value="" onChange={() => {}} disabled placeholder="City, ST" />
+                )}
+              </Field>
+            </div>
+          </div>
+
           <Toggle checked={form.isRelay} onChange={v => set('isRelay', v)} label="Relay mode — driver picks up en route home" />
 
           <div>
@@ -1038,6 +1109,8 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
             <span style={{ color: t.colors.text.secondary }}>{match.contactPhone}</span>
           </>}
           {match.companyEmail && <a href={`mailto:${match.companyEmail}`} onClick={e => e.stopPropagation()} style={{ color: t.colors.accent.blue, fontWeight: t.font.weight.bold, textDecoration: 'none', padding: '2px 10px', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.md, whiteSpace: 'nowrap' }}>Email</a>}
+          {/* #160: show the broker email address on the card, not just the mailto button */}
+          {match.companyEmail && <span style={{ color: t.colors.text.secondary, wordBreak: 'break-all' }}>{match.companyEmail}</span>}
         </div>
       )}
       {match.special_info && (
@@ -1623,6 +1696,13 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
       </div>
 
       <div style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
+        {/* #159: substituted search home notice */}
+        {request?.bypass_fleet_home && request?.search_home_lat != null && (
+          <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#eff6ff', border: `1px solid ${t.colors.accent.blue}`, borderRadius: t.radius.xl, color: t.colors.text.primary, fontSize: t.font.size.sm, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MapPin size={15} color={t.colors.accent.blue} />
+            <span>This request is running with the substituted search home{request.search_home_address ? ` (${request.search_home_address})` : ''}, replacing fleet's home.</span>
+          </div>
+        )}
         {/* Map */}
         {mapVisible && datumCoords && fleetHome && (
           <Card style={{ marginBottom: '20px', overflow: 'hidden' }}>
@@ -1999,6 +2079,10 @@ export function SearchView() {
       setDatumCoords({ lat: datumPoint.lat, lng: datumPoint.lng });
 
       const fleetHome = { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address };
+      // #159: "Bypass Fleet Home" — substitute the request's search home for routing only.
+      const searchHome = (request.bypass_fleet_home && request.search_home_lat != null && request.search_home_lng != null)
+        ? { lat: request.search_home_lat, lng: request.search_home_lng, address: request.search_home_address }
+        : null;
       const geocodeFailed = datumPoint.lat === fleet.home_lat && datumPoint.lng === fleet.home_lng;
       const homeRadiusMiles = geocodeFailed ? 200 : 100;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
@@ -2018,6 +2102,8 @@ export function SearchView() {
         pickupDate: effectivePickupDate(request.equipment_available_date),
         // #117: end of the pickup window — Truckstop searches the whole remaining span
         pickupDateEnd: request.equipment_needed_date || '',
+        // #158: optional per-request max load weight; null = no limit
+        maxWeight: request.max_weight_lbs ?? null,
       };
 
       const [creditResult, loadsResult] = await Promise.all([
@@ -2045,7 +2131,8 @@ export function SearchView() {
         rateConfig,
         request.is_relay || false,
         effectivePickupDate(request.equipment_available_date),
-        request.equipment_needed_date || null // #117: window end keeps the client filter in step
+        request.equipment_needed_date || null, // #117: window end keeps the client filter in step
+        searchHome // #159: substitutes fleet home for routing when set
       );
 
       const opportunities = result.opportunities || [];

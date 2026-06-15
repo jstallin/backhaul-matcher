@@ -22,6 +22,7 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
   // Datum typo guard (item 002): null = unchecked, true = geocoded ok, false = couldn't resolve.
   const [datumResolved, setDatumResolved] = useState(null);
+  const [searchHomeResolved, setSearchHomeResolved] = useState(null); // #159
   const hasLoadedEditingRequest = useRef(false);
 
   const [formData, setFormData] = useState({
@@ -31,6 +32,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     equipmentAvailableDate: today(),
     equipmentNeededDate: today(),
     driverHomeBy: '',            // #81: display-only dispatcher signal, optional
+    limitWeight: false,          // #158: "Limit Weight?" toggle (UI-only; persisted as null max_weight when off)
+    maxWeight: '',               // #158: max load weight in lbs when limitWeight is on
+    bypassFleetHome: false,      // #159: substitute the fleet's home with searchHome for this request
+    searchHome: '',              // #159: "Search Home" City, ST text
+    searchHomeLat: null,         // #159: resolved at verification time, saved to the request
+    searchHomeLng: null,
     isRelay: false,
     modes: [],                   // optional request-level transport modes (#36)
     autoRefresh: false,
@@ -92,6 +99,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
           equipmentAvailableDate: request.equipment_available_date || today(),
           equipmentNeededDate: request.equipment_needed_date || today(),
           driverHomeBy: request.driver_home_by || '',
+          limitWeight: request.max_weight_lbs != null,         // #158
+          maxWeight: request.max_weight_lbs != null ? String(request.max_weight_lbs) : '',
+          bypassFleetHome: request.bypass_fleet_home || false, // #159
+          searchHome: request.search_home_address || '',
+          searchHomeLat: request.search_home_lat ?? null,
+          searchHomeLng: request.search_home_lng ?? null,
           isRelay: request.is_relay || false,
           modes: Array.isArray(request.modes) ? request.modes : [],
           autoRefresh: request.auto_refresh || false,
@@ -105,6 +118,9 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         
         console.log('📋 Setting form data:', updatedFormData);
         setFormData(updatedFormData);
+        // #159: a saved search home already has verified coords — mark resolved so editing
+        // doesn't force a re-verify, but require re-verify if the text is changed.
+        setSearchHomeResolved(request.bypass_fleet_home && request.search_home_lat != null ? true : null);
         console.log('✨ Form data set with editingId:', request.id);
         
         // Mark as processed so we know not to re-load from server
@@ -191,6 +207,15 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
     if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Empty City, ST is required';
     else if (datumResolved === false) newErrors.datumPoint = "We couldn't find that location — check the spelling.";
     if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
+    // #158: a checked "Limit Weight?" needs a positive number
+    if (formData.limitWeight && !(parseInt(formData.maxWeight, 10) > 0)) {
+      newErrors.maxWeight = 'Enter a max weight in pounds, or uncheck Limit Weight.';
+    }
+    // #159: a checked "Bypass Fleet Home" needs a verified search home
+    if (formData.bypassFleetHome) {
+      if (!formData.searchHome.trim()) newErrors.searchHome = 'Enter a search home, or uncheck Bypass Fleet Home.';
+      else if (searchHomeResolved === false || formData.searchHomeLat == null) newErrors.searchHome = "We couldn't find that location — check the spelling.";
+    }
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
     if (!formData.equipmentNeededDate) newErrors.equipmentNeededDate = 'Equipment needed date is required';
     
@@ -252,6 +277,13 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
         driver_home_by: formData.driverHomeBy || null, // #81: display-only, never sent to load boards
+        // #158: max load weight (null = no limit, i.e. "Limit Weight?" unchecked)
+        max_weight_lbs: formData.limitWeight && parseInt(formData.maxWeight, 10) > 0 ? parseInt(formData.maxWeight, 10) : null,
+        // #159: per-request search-home override; coords captured at verification time
+        bypass_fleet_home: formData.bypassFleetHome,
+        search_home_address: formData.bypassFleetHome ? (formData.searchHome.trim() || null) : null,
+        search_home_lat: formData.bypassFleetHome ? formData.searchHomeLat : null,
+        search_home_lng: formData.bypassFleetHome ? formData.searchHomeLng : null,
         is_relay: formData.isRelay,
         modes: Array.isArray(formData.modes) && formData.modes.length ? formData.modes : null, // #36
         auto_refresh: formData.autoRefresh,
@@ -316,6 +348,12 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
         equipmentAvailableDate: today(),
         equipmentNeededDate: today(),
         driverHomeBy: '',
+        limitWeight: false,
+        maxWeight: '',
+        bypassFleetHome: false,
+        searchHome: '',
+        searchHomeLat: null,
+        searchHomeLng: null,
         isRelay: false,
         modes: [],
         autoRefresh: false,
@@ -441,7 +479,57 @@ export const StartRequest = ({ onMenuNavigate, onNavigateToSettings }) => {
                 </div>
               </div>
 
-              <div style={{ marginBottom: '32px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid \${colors.border.accent}` }}>
+              {/* #158: Limit Weight? — when checked, only loads at/below Max Weight are returned */}
+              <div style={{ marginBottom: '16px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid ${colors.border.accent}` }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.limitWeight} onChange={(e) => handleChange('limitWeight', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
+                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Limit Weight?</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Only show loads at or below a maximum weight</div></div>
+                </label>
+                <div style={{ marginTop: '12px', marginLeft: '32px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: formData.limitWeight ? colors.text.primary : colors.text.tertiary }}>Max Weight (lbs)</label>
+                  <input type="number" min="1" value={formData.maxWeight} onChange={(e) => handleChange('maxWeight', e.target.value)} disabled={saving || !formData.limitWeight} placeholder="e.g. 44000" style={{ width: '200px', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.maxWeight ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', opacity: formData.limitWeight ? 1 : 0.5 }} />
+                  {errors.maxWeight && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.maxWeight}</div>}
+                </div>
+              </div>
+
+              {/* #159: Bypass Fleet Home — substitute the fleet's home with a Search Home for this request */}
+              <div style={{ marginBottom: '16px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid ${colors.border.accent}` }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={formData.bypassFleetHome} onChange={(e) => handleChange('bypassFleetHome', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
+                  <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Bypass Fleet Home</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Route to a different home for this request only</div></div>
+                </label>
+                <div style={{ marginTop: '12px', marginLeft: '32px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: formData.bypassFleetHome ? colors.text.primary : colors.text.tertiary }}>Search Home</label>
+                  {formData.bypassFleetHome ? (
+                    <>
+                      <CityStateInput
+                        value={formData.searchHome}
+                        onChange={(v) => { handleChange('searchHome', v); setSearchHomeResolved(null); setFormData(prev => ({ ...prev, searchHomeLat: null, searchHomeLng: null })); }}
+                        onResolve={(r) => {
+                          if (r && r.lat != null && r.lng != null) {
+                            setSearchHomeResolved(true);
+                            setFormData(prev => ({ ...prev, searchHome: r.label || prev.searchHome, searchHomeLat: r.lat, searchHomeLng: r.lng }));
+                            setErrors(prev => ({ ...prev, searchHome: null }));
+                          } else {
+                            setSearchHomeResolved(false);
+                            setFormData(prev => ({ ...prev, searchHomeLat: null, searchHomeLng: null }));
+                          }
+                        }}
+                        disabled={saving}
+                        placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)"
+                        accentColor={colors.accent.primary}
+                        inputStyle={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${errors.searchHome ? colors.accent.danger : colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
+                      />
+                      {searchHomeResolved === true && formData.searchHomeLat != null && <div style={{ marginTop: '4px', fontSize: '12px', color: '#22c55e' }}>✓ Location verified</div>}
+                      {errors.searchHome && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.searchHome}</div>}
+                    </>
+                  ) : (
+                    <input type="text" disabled value="" placeholder="City, ST" style={{ width: '100%', padding: '12px 16px', background: colors.background.secondary, border: `1px solid ${colors.border.accent}`, borderRadius: '8px', color: colors.text.primary, fontSize: '15px', outline: 'none', opacity: 0.5, boxSizing: 'border-box' }} />
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '32px', padding: '16px', background: colors.background.secondary, borderRadius: '8px', border: `1px solid ${colors.border.accent}` }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                   <input type="checkbox" checked={formData.isRelay} onChange={(e) => handleChange('isRelay', e.target.checked)} disabled={saving} style={{ width: '20px', height: '20px', cursor: 'pointer' }} />
                   <div><div style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>Relay Request</div><div style={{ fontSize: '13px', color: colors.text.secondary }}>Enable if this is a relay operation</div></div>
