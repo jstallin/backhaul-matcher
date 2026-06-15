@@ -235,7 +235,7 @@ export async function validateTruckstopIntegrationId(integrationId) {
   }
 }
 
-export async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate, pickupDateEnd }) {
+export async function fetchTruckstopLoads({ integrationId, username, password, originCity, originState, destState, equipmentType, modes, radiusMiles = 150, pickupDate, pickupDateEnd, maxWeightLbs = null }) {
   const { city: cleanCity, state: cleanState } = parseOriginCityState(originCity, originState);
   if (!cleanState || /^\d{5}$/.test(cleanCity)) {
     console.warn(`[Truckstop] Skipping search — datum point "${originCity}" has no usable city/state. User should set datum to a city, not a ZIP code.`);
@@ -289,7 +289,17 @@ export async function fetchTruckstopLoads({ integrationId, username, password, o
     seen.add(id); return true;
   });
 
-  const loads = deduped.map(normalizeTsLoad).filter(Boolean);
+  let loads = deduped.map(normalizeTsLoad).filter(Boolean);
+
+  // #158: post-fetch max-weight filter (Truckstop SOAP has no weight criterion).
+  // Drop loads whose reported weight exceeds the cap; loads with no reported weight
+  // pass through (mirrors the fleet-profile weight behavior in routeHomeMatching.js).
+  if (maxWeightLbs != null && maxWeightLbs > 0) {
+    const before = loads.length;
+    loads = loads.filter(l => !l.weight_lbs || l.weight_lbs <= maxWeightLbs);
+    console.log(`[Truckstop] max-weight filter ≤${maxWeightLbs} lbs: ${loads.length} of ${before} loads kept`);
+  }
+
   console.log(`[Truckstop] ${loads.length} loads (${rawLoads.length} raw, ${rawLoads.length - deduped.length} dupes removed)`);
   return loads;
 }

@@ -18,6 +18,13 @@ export function buildRequestPayload(form, userId) {
     equipment_needed_date:    form.equipmentNeededDate    || null,
     // #81: dispatcher-visibility only — never sent to load-board search params.
     driver_home_by:           form.driverHomeBy           || null,
+    // #158: max load weight (null = no limit, i.e. "Limit Weight?" unchecked).
+    max_weight_lbs:           form.limitWeight && parseInt(form.maxWeight, 10) > 0 ? parseInt(form.maxWeight, 10) : null,
+    // #159: per-request search-home override; coords captured at verification time.
+    bypass_fleet_home:        !!form.bypassFleetHome,
+    search_home_address:      form.bypassFleetHome ? (form.searchHome?.trim() || null) : null,
+    search_home_lat:          form.bypassFleetHome ? (form.searchHomeLat ?? null) : null,
+    search_home_lng:          form.bypassFleetHome ? (form.searchHomeLng ?? null) : null,
     is_relay:                 form.isRelay,
     // Optional request-level transport modes (#36); null when none selected.
     modes:                    Array.isArray(form.modes) && form.modes.length ? form.modes : null,

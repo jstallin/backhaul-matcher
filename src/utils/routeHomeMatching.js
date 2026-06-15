@@ -279,6 +279,9 @@ export const effectivePickupDate = (dateStr, today = new Date()) => {
  * @param {Boolean} isRelay - Relay mode
  * @param {String} requestedPickupDate - Optional 'YYYY-MM-DD'; loads outside the window ±PICKUP_WINDOW_DAYS are dropped
  * @param {String} requestedPickupDateEnd - Optional 'YYYY-MM-DD' end of the pickup window (#117); defaults to the start date
+ * @param {Object} searchHome - Optional {lat, lng} (#159); when set (request "Bypass Fleet Home"),
+ *   it substitutes fleetHome for all routing/corridor/distance math. The fleet association is
+ *   otherwise unchanged (rates, equipment still come from fleetProfile).
  * @returns {Object} - { opportunities: Array, routeData: { route, corridor } | null }
  */
 export const findRouteHomeBackhauls = async (
@@ -291,8 +294,16 @@ export const findRouteHomeBackhauls = async (
   rateConfig = null,
   isRelay = false,
   requestedPickupDate = null,
-  requestedPickupDateEnd = null
+  requestedPickupDateEnd = null,
+  searchHome = null
 ) => {
+  // #159: a request that bypasses its fleet's home routes to the user-entered
+  // search home instead. Reassigning here means every downstream reference
+  // (corridor, Haversine, PC*MILER legs, distance cache key) uses the substitute.
+  if (searchHome && searchHome.lat != null && searchHome.lng != null) {
+    fleetHome = searchHome;
+  }
+
   const opportunities = [];
   let routeData = null;
   let useCorridor = false;

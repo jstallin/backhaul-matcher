@@ -267,7 +267,14 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         address: fleet.home_address
       };
 
-      console.log('🏠 Fleet home coordinates:', fleetHome);
+      // #159: "Bypass Fleet Home" — route to the request's search home instead of the
+      // fleet's home. Fleet association (rates/equipment) is unchanged; this only
+      // substitutes the home coordinates used for corridor + distance math.
+      const searchHome = (request.bypass_fleet_home && request.search_home_lat != null && request.search_home_lng != null)
+        ? { lat: request.search_home_lat, lng: request.search_home_lng, address: request.search_home_address }
+        : null;
+
+      console.log('🏠 Fleet home coordinates:', fleetHome, searchHome ? `(overridden by search home ${searchHome.address})` : '');
 
       console.log('🔍 Route-home matching with:', {
         geocoded: geocoded || '⚠️ FAILED - using fleet home',
@@ -301,7 +308,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         modes:         unionModes(rawProfile?.modes, selectedRequest.modes), // #36: fleet + request modes
         pickupDate:    effPickupDate,
         // #117: end of the pickup window — Truckstop searches the whole remaining span
-        pickupDateEnd: request.equipment_needed_date || ''
+        pickupDateEnd: request.equipment_needed_date || '',
+        // #158: optional per-request max load weight; null = no limit
+        maxWeight:     request.max_weight_lbs ?? null
       };
 
       // Parallel: credit deduction + load fetching are independent of each other
@@ -326,7 +335,8 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
         rateConfig,
         request.is_relay || false,
         effPickupDate,
-        request.equipment_needed_date || null // #117: window end keeps the client filter in step
+        request.equipment_needed_date || null, // #117: window end keeps the client filter in step
+        searchHome // #159: substitutes fleet home for routing when set
       );
 
       const matches = result.opportunities;
@@ -798,7 +808,9 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
                 fleet={selectedFleet}
                 matches={backhaulMatches}
                 datumCoordinates={datumCoordinates}
-                fleetHome={{ lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
+                fleetHome={(selectedRequest?.bypass_fleet_home && selectedRequest?.search_home_lat != null)
+                  ? { lat: selectedRequest.search_home_lat, lng: selectedRequest.search_home_lng, address: selectedRequest.search_home_address } // #159: plot the substituted search home
+                  : { lat: selectedFleet.home_lat, lng: selectedFleet.home_lng, address: selectedFleet.home_address }}
                 routeData={routeData}
                 onBack={() => setSelectedRequest(null)}
                 onEdit={handleEditRequest}
