@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** June 10, 2026
-- **Session type:** Claude Code (session 13 — high-fidelity server-side auto-refresh: v2 timer fix + cron PR1–PR3 + unified geocoder, validated end-to-end on staging)
-- **Updated by:** Claude Code (session 13)
+- **Date:** June 15, 2026
+- **Session type:** Claude Code (session 14 — Ryder request-form batch #158/#159/#160, shipped to prod + v2 mobile/map follow-ups)
+- **Updated by:** Claude Code (session 14)
 
 ---
 
@@ -21,6 +21,22 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 15, 2026, session 14) — Ryder request-form batch #158/#159/#160
+
+**All three SHIPPED to production and verified** (PR #161, merged to `main`; migration `20260615000001` auto-applied to prod by the Supabase GitHub integration and confirmed — the 5 new columns exist on `backhaul_requests` and the repo-filename version is in `schema_migrations`, no drift). Issues #158/#159/#160 closed. Local `main`/`staging` resynced. Bundled deliberately — all three touch the create/edit backhaul request form + results UI.
+
+- **#158 (P2, ryder) — "Limit Weight?" field.** New checkbox + "Max Weight" number input above the relay toggle (v1 `StartRequest`, v2 `SearchView` RequestForm). Stored as `backhaul_requests.max_weight_lbs` (null = no limit, i.e. unchecked). **Filtering is post-fetch in `fetchTruckstopLoads` (`api/_lib/truckstop.js`)** — the single chokepoint shared by the manual proxy path (`getLoadsForMatching` → `[provider].js`) **and** the cron — because Truckstop's SOAP `LoadSearch` has **no weight criterion**. Loads with no reported weight pass through (mirrors the existing fleet-profile weight behavior in `routeHomeMatching.js` line ~337). New `api/__tests__/truckstopMaxWeight.test.js` (over-cap dropped, unknown kept, at-cap eligible, zero = no limit).
+- **#159 (P2, ryder) — "Bypass Fleet Home".** New checkbox + verified "Search Home" `CityStateInput` (geocoded/verified exactly like the datum point; coords captured at verify time and saved). `findRouteHomeBackhauls` gained an optional **trailing `searchHome` param**; when set it reassigns `fleetHome` at the top so every downstream reference (corridor, Haversine, PC*MILER legs, distance-cache key) uses the substitute. Per-request routing override only — `fleet_id`/rates/equipment unchanged. **Wired through all three matching call sites** — v1 `OpenRequests`, v2 `SearchView`, **and the auto-refresh cron `refresh-requests.js`** — so cron results don't diverge from manual (the [[project_datum_geocoder_divergence]] trap). Results show a banner: *"This request is running with the substituted search home, replacing fleet's home."* New columns: `bypass_fleet_home`, `search_home_address`, `search_home_lat`, `search_home_lng`.
+- **#160 (P2, ryder) — broker email/company on the load card.** v1 `BackhaulResults` card: the "Contact Broker" row was gated on a phone being present, so email-only loads hid the email — now renders whenever phone **or** email exists, and shows the email address text (not just the mailto button). v2 `SearchView` card: added the email address text alongside the existing "Email" button. Broker **company name** was already on both cards (`match.broker`).
+
+**Follow-up fixes after Ryder tested #159 on prod (same session, second commit in PR #161):**
+- **v2 mobile form layout** — the RequestForm's two-column grid didn't collapse on phones (labels/inputs misaligned). Now single-column on mobile via `useMobile`; the controls nested under the new toggles drop their 46px indent on mobile so inputs keep full width.
+- **Map plotted the original fleet home** — with bypass on, matching correctly routed to the search home but the map's `fleetHome` marker (and the straight-line fallback drawn when PC*MILER geometry is absent) still used the fleet's original home. The map's `fleetHome` now resolves to the request's search home when bypass is active — fixed in **both** v2 (`SearchView` ResultsPanel) **and** v1 (`OpenRequests` → `BackhaulResults`), since v1 had the identical defect.
+
+**Verify-on-prod checklist worth running with live loads:** create/edit a request with Bypass Fleet Home on, confirm it saves + reloads on edit, the banner shows, and the map plots the substituted home + corridor toward it.
 
 ---
 
