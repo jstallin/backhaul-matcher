@@ -1,31 +1,16 @@
 {
-  "version": "June 2026 - Pilot Updates!",
-  "date": "2026-06-06",
+  "version": "June 15, 2026 - Pilot Updates!",
+  "date": "2026-06-15",
   "items": [
     {
-      "title": "Operations Declined: cancellation reason + Reports tile for declined top-load revenue",
-      "body": "New \"Operations Declined\" cancellation reason, plus a Reports tile that totals the revenue passed on — gross, customer net, and carrier net of the best available load at decline time.",
-      "issue": 84
+      "title": "Share fleets across an org",
+      "body": "Allow Fleet owners to share fleets with co-workers.",
+      "issue": 129
     },
     {
-      "title": "Disable expired backhaul requests (pickup window fully in the past)",
-      "body": "Requests whose pickup window has fully passed are now marked Inactive and can't be run (no credits spent) — just edit the dates forward to re-enable them instantly.",
-      "issue": 83
-    },
-    {
-      "title": "Share load from detail view — Email / Text / Copy",
-      "body": "Share any load by email or text straight from its detail view — the email includes full load details and a route map — or copy a ready-to-paste summary to your clipboard.",
-      "issue": 82
-    },
-    {
-      "title": "Add \"Driver Needed Home By\" date field to backhaul requests",
-      "body": "Add a \"Driver Needed Home By\" date to your backhaul requests — it appears on search results and each load's details so dispatch always has the deadline in view.",
-      "issue": 81
-    },
-    {
-      "title": "Duplicate a fleet",
-      "body": "Duplicate any fleet with one click — copies the full rate configuration (rates, fuel settings, equipment, charges) so you can stand up a similar fleet without re-entering setup.",
-      "issue": 38
+      "title": "Make Backhaul Request name field optional (if it isn't already) and auto-generate a value if none is provided by the user",
+      "body": "Backhaul request name defaults to username + location + date of creation if not entered, a time-saver.",
+      "issue": 128
     }
   ]
 }
