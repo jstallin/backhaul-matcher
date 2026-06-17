@@ -2154,9 +2154,7 @@ export function SearchView() {
             phone: fleet?.phone_number,
             requestName: request.request_name,
             fleetName: fleet?.name,
-            oldTopMatch: change.oldMatch,
-            newTopMatch: change.newMatch,
-            changeType: change.type,
+            change,
             requestId: request.id,
           }).catch(err => console.error('Notification error:', err));
         }
