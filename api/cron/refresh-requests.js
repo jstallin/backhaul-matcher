@@ -18,6 +18,9 @@ import { fetchTruckstopLoads } from '../_lib/truckstop.js';
 // runs server-side here via direct PC*MILER + process.env. Replaces the old cron-only
 // Mapbox+NC_CITIES geocoder so all three paths resolve the datum identically.
 import { geocodeDatum } from '../../src/utils/geocodeDatum.js';
+// Shared notification builder (subject/text/HTML/SMS) — same module the client path uses,
+// so cron emails render the branded HTML instead of plain text and never drift in copy.
+import { buildBackhaulNotification, buildRequestLink } from '../../src/utils/notificationEmail.js';
 
 // Backhaul data will be fetched at runtime
 let backhaulLoadsData = null;
@@ -182,40 +185,10 @@ const chargeForMaterialRefresh = async (userId, requestId) => {
 // Change detection now lives in the shared, unit-tested detector
 // (src/utils/notificationChangeDetection.js) so the cron and client agree.
 
-// Net-based notification copy (item #48) with a deep-link to the request results (#51).
-const buildNotificationMessage = (requestName, change, link) => {
-  const fmt = (n) => `$${Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-  // arrow defaults to → for email; SMS passes '->' to stay in GSM-7 (a Unicode arrow
-  // forces UCS-2, ~halving the per-segment budget and multiplying segment cost).
-  const routeOf = (m, arrow = '→') => m ? `${m.origin?.city}, ${m.origin?.state} ${arrow} ${m.destination?.city}, ${m.destination?.state}` : '';
+// Notification copy/HTML now comes from the shared builder (buildBackhaulNotification),
+// so the cron and client paths produce identical emails. See src/utils/notificationEmail.js.
 
-  let subject, body, sms;
-  switch (change.type) {
-    case 'new_top':
-      subject = `🎯 New top backhaul for ${requestName}`;
-      body = `New #1 backhaul for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
-      sms = `New #1 backhaul for "${requestName}" (${routeOf(change.match, '->')}): ${fmt(change.newNet)} net. View: ${link}`;
-      break;
-    case 'top_net_up':
-      subject = `📈 Top backhaul improved for ${requestName}`;
-      body = `Your top backhaul's net revenue rose ${Math.round(change.pct)}% for "${requestName}".\n\nRoute: ${routeOf(change.match)}\nNet revenue: ${fmt(change.newNet)}`;
-      sms = `Top backhaul up ${Math.round(change.pct)}% for "${requestName}" (${routeOf(change.match, '->')}): ${fmt(change.newNet)} net. View: ${link}`;
-      break;
-    case 'lane_softening':
-      subject = `📉 Lane softening for ${requestName}`;
-      body = `Average net revenue across your top loads for "${requestName}" is down ${Math.abs(Math.round(change.pct))}% (avg ${fmt(change.avgNet)}). You may want to act soon.`;
-      sms = `Heads up: top loads for "${requestName}" softening (avg ${fmt(change.avgNet)} net). View: ${link}`;
-      break;
-    default:
-      subject = `Backhaul update for ${requestName}`;
-      body = `There's an update for your backhaul request "${requestName}".`;
-      sms = `Backhaul update for "${requestName}". View: ${link}`;
-  }
-  const text = `${body}\n\nView this request: ${link}`;
-  return { subject, text, sms };
-};
-
-const sendNotification = async (method, email, phone, subject, text, sms) => {
+const sendNotification = async (method, email, phone, subject, text, html, sms) => {
   const results = { email: null, sms: null };
 
   // Debug logging
@@ -239,7 +212,8 @@ const sendNotification = async (method, email, phone, subject, text, sms) => {
           from: 'Haul Monitor <notifications@haulmonitor.cloud>',
           to: [email],
           subject,
-          text
+          text,
+          ...(html ? { html } : {})
         });
         if (error) {
           results.email = { success: false, error: error.message };
@@ -646,8 +620,12 @@ export default async function handler(req, res) {
           // Notify only when the user opted in (notification is delivery; the charge
           // above is for the value found, regardless of notification preference).
           if (request.notification_enabled) {
-            const requestLink = `${APP_URL}/app?request=${request.id}`;
-            const { subject, text, sms } = buildNotificationMessage(request.request_name, change, requestLink);
+            const requestLink = buildRequestLink(APP_URL, request.id);
+            const { subject, text, html, sms } = buildBackhaulNotification(change, {
+              requestName: request.request_name,
+              fleetName: fleet?.name,
+              link: requestLink,
+            });
 
             // #140: only text when explicit SMS consent was recorded ('both'→email, 'text'→none).
             const method = effectiveNotificationMethod(request.notification_method, request.sms_consent);
@@ -660,7 +638,7 @@ export default async function handler(req, res) {
               if (!isWithinNotifyWindow(new Date(), tz)) {
                 console.log(`  🌙 Quiet hours (${tz}) — suppressing ${method} notification for "${request.request_name}"`);
               } else {
-                const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, sms);
+                const notifResult = await sendNotification(method, fleet.email, fleet.phone_number, subject, text, html, sms);
                 notificationSent = notifResult.email?.success || notifResult.sms?.success;
               }
             }

@@ -379,9 +379,7 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
               phone: fleet.phone_number,
               requestName: request.request_name,
               fleetName: fleet.name,
-              oldTopMatch: change.oldMatch,
-              newTopMatch: change.newMatch,
-              changeType: change.type,
+              change,
               requestId: request.id
             }).then(result => {
               if (result.success) {
