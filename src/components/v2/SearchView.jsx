@@ -21,6 +21,10 @@ import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../uti
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
 import { LoadShareMenu } from '../LoadShareMenu';
+import { SaveLoadButton } from '../SaveLoadButton';
+import { ContactBrokerDialog } from '../ContactBrokerDialog';
+import { buildSavedLoadRow, savedKeyOf } from '../../utils/savedLoad';
+import { geocodeMissingCoords } from '../../utils/geocodeMatchCoords';
 import { CoDriverV2 } from './CoDriverV2';
 import {
   Plus, Search, MapPin, Truck, Package, RefreshCw,
@@ -890,7 +894,7 @@ function fmtNum(n, decimals = 1) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: decimals }).format(n);
 }
 
-function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis, onNegotiate, onTruckstopClick, isPending }) {
+function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onHaulThis, onNegotiate, onTruckstopClick, isPending, saved, onToggleSave, saveBusy }) {
   const rc = RANK_COLORS[rank] || DEFAULT_RANK_COLORS;
 
   const hasRateConfig = match.has_rate_config;
@@ -1158,6 +1162,14 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
           >
             <Map size={13} /> View on Map
           </button>
+          {/* #163: save/bookmark this load */}
+          <SaveLoadButton
+            saved={saved}
+            busy={saveBusy}
+            onToggle={onToggleSave}
+            palette={{ accent: t.colors.accent.blue, border: t.colors.border.default, textMuted: t.colors.text.muted }}
+            style={{ flex: 1, justifyContent: 'center', padding: '9px 12px', borderRadius: t.radius.lg, fontSize: t.font.size.xs }}
+          />
         </div>
         <button
           onClick={() => onHaulThis(match)}
@@ -1185,7 +1197,7 @@ function MatchCard({ match, rank, fleet, request, onViewDetails, onMapClick, onH
 
 // ─── Route Details Modal ──────────────────────────────────────────────────────
 
-function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onViewMap }) {
+function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onViewMap, saved, onToggleSave, saveBusy }) {
   if (!match) return null;
 
   const directMiles    = match.direct_return_miles ?? mAdditional(match) ?? 0;
@@ -1403,6 +1415,14 @@ function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onV
             >
               <Map size={15} /> View on Map
             </button>
+            {/* #163: save/bookmark from the detail card */}
+            <SaveLoadButton
+              saved={saved}
+              busy={saveBusy}
+              onToggle={onToggleSave}
+              palette={{ accent: t.colors.accent.blue, border: t.colors.border.default, textMuted: t.colors.text.muted }}
+              style={{ padding: '12px 16px', borderRadius: t.radius.xl, fontSize: t.font.size.sm }}
+            />
             <button
               onClick={onClose}
               style={{ padding: '12px 16px', background: 'transparent', border: `1px solid ${t.colors.border.default}`, borderRadius: t.radius.xl, color: t.colors.text.muted, fontSize: t.font.size.sm, fontWeight: t.font.weight.medium, cursor: 'pointer' }}
@@ -1418,7 +1438,7 @@ function RouteDetailsModal({ match, request, fleetHome, onClose, onHaulThis, onV
 
 // ─── Map Modal ────────────────────────────────────────────────────────────────
 
-function MapModal({ match, onClose }) {
+function MapModal({ match, onClose, datum = null, home = null }) {
   if (!match) return null;
   return (
     <div
@@ -1446,6 +1466,8 @@ function MapModal({ match, onClose }) {
               dest_city: mDestAddr(match),
               distance_miles: mDistance(match),
             }}
+            datum={datum}  /* #165: A = empty city */
+            home={home}    /* #165: B = fleet home */
           />
         </div>
       </div>
@@ -1606,6 +1628,41 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
   const [toastLoad, setToastLoad] = useState(null);
   const toastTimerRef = useRef(null);
 
+  // #163: saved-load state — Set of savedKeyOf() keys + busy guard during a toggle.
+  const { user } = useAuth();
+  const [savedKeys, setSavedKeys] = useState(() => new Set());
+  const [savingKey, setSavingKey] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    db.savedLoads.getAll(user.id)
+      .then(rows => { if (!cancelled) setSavedKeys(new Set(rows.map(r => `${r.source}::${r.load_id}`))); })
+      .catch(err => console.error('Load saved loads failed:', err.message));
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const toggleSave = async (match) => {
+    const key = savedKeyOf(match);
+    if (!key || !user?.id) return;
+    setSavingKey(key);
+    const wasSaved = savedKeys.has(key);
+    // Optimistic toggle; revert on failure.
+    setSavedKeys(prev => { const n = new Set(prev); wasSaved ? n.delete(key) : n.add(key); return n; });
+    try {
+      if (wasSaved) {
+        await db.savedLoads.removeByLoad(user.id, match.load_id ?? match.source_load_id, match.source ?? 'unknown');
+      } else {
+        await db.savedLoads.save(buildSavedLoadRow(match, { userId: user.id, requestId: request?.id || null, fleetId: fleet?.id || null }));
+      }
+    } catch (err) {
+      console.error('Toggle save failed:', err.message);
+      setSavedKeys(prev => { const n = new Set(prev); wasSaved ? n.add(key) : n.delete(key); return n; });
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
   // #159: when the request bypasses its fleet home, the map must plot the substituted
   // search home (matching already routes to it) — otherwise the home marker/route line
   // stays at the original fleet home while results reflect the temp home.
@@ -1721,6 +1778,16 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
               routeData={routeData}
               selectedLoadId={mapFocusLoad?.load_id}
             />
+            {/* #164: map legend — parity with v1 (colors match the RouteHomeMap markers) */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', padding: '10px 16px', borderTop: `1px solid ${t.colors.page.cardBorder}`, fontSize: t.font.size.xs, color: t.colors.text.secondary }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#EF4444' }} /> <strong>A</strong> = Empty</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10B981' }} /> <strong>B</strong> = Fleet Home</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#008b00' }} /> <strong>1-10</strong> = Pickups</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#5EA0DB' }} /> <strong>1-10</strong> = Deliveries</span>
+              {routeData?.corridor && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '18px', height: '10px', border: '2px dashed #008b00', borderRadius: '2px' }} /> Search Corridor</span>
+              )}
+            </div>
           </Card>
         )}
 
@@ -1823,6 +1890,9 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
                 onNegotiate={m => setNegotiateMatch(m)}
                 onTruckstopClick={handleTruckstopClick}
                 isPending={pendingLoads.has(match.load_id || match.id)}
+                saved={savedKeys.has(savedKeyOf(match))}
+                onToggleSave={() => toggleSave(match)}
+                saveBusy={savingKey === savedKeyOf(match)}
               />
             ))}
           </>
@@ -1845,9 +1915,14 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
         onClose={() => setSelectedMatch(null)}
         onHaulThis={() => { setHaulMatch(selectedMatch); setSelectedMatch(null); }}
         onViewMap={() => { setMapMatch(selectedMatch); setSelectedMatch(null); }}
+        saved={selectedMatch ? savedKeys.has(savedKeyOf(selectedMatch)) : false}
+        onToggleSave={() => selectedMatch && toggleSave(selectedMatch)}
+        saveBusy={selectedMatch ? savingKey === savedKeyOf(selectedMatch) : false}
       />
       <MapModal
         match={mapMatch}
+        datum={datumCoords}
+        home={fleetHome}
         onClose={() => setMapMatch(null)}
       />
       <HaulConfirmDialog
@@ -2163,6 +2238,12 @@ export function SearchView() {
 
       setMatches(opportunities);
       setRouteData(result.routeData || null);
+
+      // #164: background-fill missing pickup/delivery coords so the map plots every load
+      // (Truckstop loads arrive coordless). Mirrors v1; updates markers once resolved.
+      geocodeMissingCoords(opportunities)
+        .then(filled => { if (filled !== opportunities) setMatches(prev => (prev === opportunities ? filled : prev)); })
+        .catch(err => console.warn('Map coord geocode failed:', err.message));
     } catch (err) {
       console.error('Matching error:', err);
       setMatchError(err.message || 'An error occurred during search.');

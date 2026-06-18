@@ -703,6 +703,59 @@ export const db = {
     }
   },
 
+  // #163: saved (bookmarked) loads — snapshots of live third-party loads.
+  savedLoads: {
+    async getAll(userId) {
+      const { data, error } = await supabase
+        .from('saved_loads')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+
+    // Idempotent save — re-saving the same load updates the snapshot (unique on user+load+source).
+    async save(row) {
+      const { data, error } = await supabase
+        .from('saved_loads')
+        .upsert(row, { onConflict: 'user_id,load_id,source' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async removeByLoad(userId, loadId, source) {
+      const { error } = await supabase
+        .from('saved_loads')
+        .delete()
+        .eq('user_id', userId)
+        .eq('load_id', loadId)
+        .eq('source', source);
+      if (error) throw error;
+    },
+
+    async updateStatus(id, status) {
+      const { data, error } = await supabase
+        .from('saved_loads')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async delete(id) {
+      const { error } = await supabase
+        .from('saved_loads')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    }
+  },
+
   // Work week plan operations
   workWeekPlans: {
     async getActive(userId) {

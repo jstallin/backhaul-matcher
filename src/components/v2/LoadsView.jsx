@@ -3,6 +3,7 @@ import { db } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { tokens } from '../../styles/tokens.v2';
 import { useMobile } from '../../hooks/useMobile';
+import { SavedLoadsPanel } from '../SavedLoadsPanel';
 
 const t = tokens;
 
@@ -105,7 +106,7 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-const FILTER_TABS = ['All', 'Completed', 'Active', 'Cancelled'];
+const FILTER_TABS = ['All', 'Completed', 'Active', 'Cancelled', 'Saved'];
 
 function filterRequests(requests, tab) {
   if (tab === 'All') return requests;
@@ -272,7 +273,12 @@ export function LoadsView() {
 
       {/* Table */}
       <Card>
-        {filtered.length === 0 ? (
+        {activeTab === 'Saved' ? (
+          <SavedLoadsPanel
+            userId={user?.id}
+            palette={{ accent: t.colors.accent.blue, text: t.colors.text.primary, textMuted: t.colors.text.muted, border: t.colors.page.cardBorder, cardBg: t.colors.page.cardBg, bg: '#f8fafc', green: t.colors.accent.green }}
+          />
+        ) : filtered.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', color: t.colors.text.muted }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px', opacity: 0.4 }}>
               <rect x="3" y="3" width="18" height="18" rx="2" />

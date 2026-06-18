@@ -122,6 +122,13 @@ export const Save = ({ size = 24, color = 'currentColor', style = {} }) => (
   </svg>
 );
 
+// #163: bookmark — pass fill (e.g. the accent color) to show the "saved" filled state.
+export const Bookmark = ({ size = 24, color = 'currentColor', fill = 'none', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
+    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
 export const X = ({ size = 24, color = 'currentColor', style = {} }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
     <line x1="18" y1="6" x2="6" y2="18"></line>

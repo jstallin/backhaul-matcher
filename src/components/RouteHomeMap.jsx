@@ -112,6 +112,22 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
 
   const top10 = (backhauls || []).slice(0, 10);
 
+  // #164: when several loads resolve to the same point (e.g. multiple loads from one city,
+  // or coordless loads sharing a state centroid) the markers stack and hide each other.
+  // Fan duplicates out with a small deterministic golden-angle offset so all are present
+  // and separate as the user zooms in. Reset each render.
+  const placedCoords = new Map();
+  const spread = (lat, lng) => {
+    if (lat == null || lng == null) return [lat, lng];
+    const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+    const n = placedCoords.get(key) || 0;
+    placedCoords.set(key, n + 1);
+    if (n === 0) return [lat, lng];
+    const angle = n * 2.399963; // golden angle (radians)
+    const r = 0.02 + 0.012 * n; // ~1.5–8 mi; small enough to stay near the city
+    return [lat + r * Math.cos(angle), lng + r * Math.sin(angle)];
+  };
+
   // Route key for detecting changes
   const routeKey = datumPoint && fleetHome
     ? `${datumPoint.lat},${datumPoint.lng}->${fleetHome.lat},${fleetHome.lng}`
@@ -217,7 +233,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
             <span key={`backhaul-${load.load_id}`}>
               {pLat != null && pLng != null && (
                 <Marker
-                  position={[pLat, pLng]}
+                  position={spread(pLat, pLng)}
                   icon={createCircleIcon(
                     isSelected ? '#00a300' : '#008b00',
                     String(loadNum),
@@ -238,7 +254,7 @@ export const RouteHomeMap = ({ datumPoint, fleetHome, backhauls, selectedLoadId,
 
               {dLat != null && dLng != null && (
                 <Marker
-                  position={[dLat, dLng]}
+                  position={spread(dLat, dLng)}
                   icon={createCircleIcon(
                     isSelected ? '#3B82F6' : '#5EA0DB',
                     String(loadNum),
