@@ -7,8 +7,19 @@
 
 ## Last Updated
 - **Date:** June 18, 2026
-- **Session type:** Claude Code (session 15 — Ryder batch #163 save-a-load + #164 v2 map plotting/legend/overlap + #165 detail-map A→B lane; notification HTML unification also shipped earlier this session)
+- **Session type:** Claude Code (session 15 — Ryder batch #163/#164/#165; then #167 estimate Return To + optional fleet; notification HTML unification earlier same day)
 - **Updated by:** Claude Code (session 15)
+
+---
+
+## What Was Just Completed (June 18, 2026, session 15 cont.) — #167 estimate "Return To" + optional fleet + CI apt-hang fix
+
+**Shipped to prod** (PRs #168 core + #169 follow-up). Migration `20260618000002` (return_to_* on estimate_requests) verified on prod. Issue #167 closed.
+
+- **#167 (P2, ryder) — Return To City, ST + optional fleet (v1 + v2):** Ryder runs sales estimates before a fleet exists. `estimate_requests.fleet_id` was already nullable; added `return_to_point/city/state/lat/lng`. Forms (v1 `StartEstimateRequest`, v2 `EstimatesView`): new "Return To City, ST" next to Empty City, ST; fleet dropdown optional ("No fleet (use Return To)"); selecting a fleet **mirrors its home into Return To and locks the field**; Return To required only when no fleet; v1 also dropped the "No Fleets Available" gate. Run paths (v1 `OpenEstimateRequests`, v2 `EstimatesView`): home = fleet home when attached else Return To coords (stored or geocoded at run); fleet fetch guarded for null `fleet_id`.
+- **No-fleet net revenue:** without a fleet there's no rate config, so a shared **`DEFAULT_ESTIMATE_RATE_CONFIG`** in `routeHomeMatching.js` (80/20 split + **$2.00/OOR-mile** all-in; fuel + stops folded in at 0) is applied only when no fleet → fleet-less estimates still show net. A results note shows "Estimated with defaults (no fleet): 80/20, $2.00/mi". A fleet with no config still gets the "set rate config" prompt (unchanged). **The $2/mi default and 80/20 are the no-fleet assumption — flag for Chip; tunable via the one constant.**
+- **Per-load carrier revenue (#169):** the estimate report's carrier section was `× annual volume`, so a volume-less estimate showed all-$0 (prod report screenshot). Now shows **per-load** carrier figures always, with the **annual projection** added as a row when an Annual Volume is set (else a hint). v1 + v2. (Net Credit per Load was always correct.)
+- **CI fix (#169):** the Playwright `Install Playwright OS dependencies` step (`npx playwright install-deps` → apt) began **hanging 30+ min** after a GitHub runner-image roll. Fixed with `DEBIAN_FRONTEND=noninteractive` on the install steps + `timeout-minutes: 20` on the job (`.github/workflows/test.yml`). If cross-browser tests ever hang on that step again, it's a runner/apt issue, not the code.
 
 ---
 
