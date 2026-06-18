@@ -29,6 +29,9 @@ jobs:
   playwright:
     name: Playwright cross-browser tests
     runs-on: ubuntu-latest
+    # Fail fast instead of hanging for hours if a runner step (e.g. apt during
+    # playwright install-deps) stalls.
+    timeout-minutes: 20
     # Tests run against the live staging or production site depending on target branch.
     # Pushes/PRs targeting main → production URL. Everything else → staging URL.
     # Set TEST_EMAIL + TEST_PASSWORD in repo secrets to also run authenticated tests.
@@ -53,10 +56,15 @@ jobs:
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium firefox webkit
+        env:
+          # Non-interactive apt so install-deps can't hang on a debconf prompt.
+          DEBIAN_FRONTEND: noninteractive
 
       - name: Install Playwright OS dependencies (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium firefox webkit
+        env:
+          DEBIAN_FRONTEND: noninteractive
 
       - name: Run Playwright tests
         run: npx playwright test
