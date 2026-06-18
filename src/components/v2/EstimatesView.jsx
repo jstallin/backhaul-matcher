@@ -27,15 +27,23 @@ const buildCategory = (source, annualVolume) => {
   const otherCharges    = Number(source.other_charges)       || 0;
   const additionalMiles = Number(source.additionalMiles)     || 0;
   const stopCount       = Number(source.stop_count)          || 2;
+  const carrierTotalPerLoad = carrierSplit + oorMilesCost + oorStopsCost + oorFsc + otherCharges;
   return {
     netCredit,
+    // Per-load carrier figures (#167 follow-up): always meaningful, even with no Annual Volume.
+    carrierSplit,
+    oorMilesCost,
+    oorStopsCost,
+    oorFsc,
+    otherCharges,
+    carrierTotalPerLoad,
     annualCredit:       netCredit    * annualVolume,
     annualCarrierSplit: carrierSplit * annualVolume,
     annualOorMiles:     oorMilesCost * annualVolume,
     annualOorStops:     oorStopsCost * annualVolume,
     annualOorFsc:       oorFsc       * annualVolume,
     annualOtherCharges: otherCharges * annualVolume,
-    carrierTotal:       (carrierSplit + oorMilesCost + oorStopsCost + oorFsc + otherCharges) * annualVolume,
+    carrierTotal:       carrierTotalPerLoad * annualVolume,
     additionalMiles,
     annualMiles:        additionalMiles * annualVolume,
     stopCount,
@@ -985,47 +993,61 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
                         <td style={valCell(false)}>{fmtNum(metrics.averageTop5.stopCount)}</td>
                       </tr>
 
-                      {subheadRow('Carrier Annual Revenue Components')}
+                      {/* #167 follow-up: per-load carrier figures so the section is meaningful
+                          even with no Annual Volume; annual columns layer on when vol is set. */}
+                      {subheadRow('Carrier Revenue Components (per load)')}
                       <tr>
                         <td style={labelCell}>Backhaul % Split</td>
-                        <td style={valCell(false)}>{fmt$(metrics.highestNet.annualCarrierSplit)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageAll.annualCarrierSplit)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.annualCarrierSplit)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.highestNet.carrierSplit)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageAll.carrierSplit)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.carrierSplit)}</td>
                       </tr>
                       <tr>
-                        <td style={labelCell}>OOR Miles (carrier miles × rate × vol)</td>
-                        <td style={valCell(false)}>{fmt$(metrics.highestNet.annualOorMiles)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageAll.annualOorMiles)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.annualOorMiles)}</td>
+                        <td style={labelCell}>OOR Miles (carrier miles × rate)</td>
+                        <td style={valCell(false)}>{fmt$(metrics.highestNet.oorMilesCost)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageAll.oorMilesCost)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.oorMilesCost)}</td>
                       </tr>
                       <tr>
-                        <td style={labelCell}>OOR Stops ({fmtNum(metrics.highestNet.stopCount)} per load × stop rate × vol)</td>
-                        <td style={valCell(false)}>{fmt$(metrics.highestNet.annualOorStops)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageAll.annualOorStops)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.annualOorStops)}</td>
+                        <td style={labelCell}>OOR Stops ({fmtNum(metrics.highestNet.stopCount)} per load × stop rate)</td>
+                        <td style={valCell(false)}>{fmt$(metrics.highestNet.oorStopsCost)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageAll.oorStopsCost)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.oorStopsCost)}</td>
                       </tr>
                       <tr>
-                        <td style={labelCell}>OOR Fuel Surcharge (FSC × OOR mi × vol)</td>
-                        <td style={valCell(false)}>{fmt$(metrics.highestNet.annualOorFsc)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageAll.annualOorFsc)}</td>
-                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.annualOorFsc)}</td>
+                        <td style={labelCell}>OOR Fuel Surcharge (FSC × OOR mi)</td>
+                        <td style={valCell(false)}>{fmt$(metrics.highestNet.oorFsc)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageAll.oorFsc)}</td>
+                        <td style={valCell(false)}>{fmt$(metrics.averageTop5.oorFsc)}</td>
                       </tr>
-                      {(metrics.highestNet.annualOtherCharges > 0 || metrics.averageAll.annualOtherCharges > 0) && (
+                      {(metrics.highestNet.otherCharges > 0 || metrics.averageAll.otherCharges > 0) && (
                         <tr>
-                          <td style={labelCell}>Other Charges (annual)</td>
-                          <td style={valCell(false)}>{fmt$(metrics.highestNet.annualOtherCharges)}</td>
-                          <td style={valCell(false)}>{fmt$(metrics.averageAll.annualOtherCharges)}</td>
-                          <td style={valCell(false)}>{fmt$(metrics.averageTop5.annualOtherCharges)}</td>
+                          <td style={labelCell}>Other Charges</td>
+                          <td style={valCell(false)}>{fmt$(metrics.highestNet.otherCharges)}</td>
+                          <td style={valCell(false)}>{fmt$(metrics.averageAll.otherCharges)}</td>
+                          <td style={valCell(false)}>{fmt$(metrics.averageTop5.otherCharges)}</td>
                         </tr>
                       )}
 
-                      {subheadRow('Carrier Total Annual Revenue Addition')}
+                      {subheadRow('Total Carrier Revenue Addition')}
                       <tr style={{ background: `${t.colors.accent.green}08` }}>
-                        <td style={{ ...labelCell, fontWeight: t.font.weight.extrabold, color: t.colors.text.primary, fontSize: t.font.size.base }}>Total Carrier Revenue Addition</td>
-                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.highestNet.carrierTotal)}</td>
-                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageAll.carrierTotal)}</td>
-                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageTop5.carrierTotal)}</td>
+                        <td style={{ ...labelCell, fontWeight: t.font.weight.extrabold, color: t.colors.text.primary, fontSize: t.font.size.base }}>Per Load</td>
+                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.highestNet.carrierTotalPerLoad)}</td>
+                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageAll.carrierTotalPerLoad)}</td>
+                        <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageTop5.carrierTotalPerLoad)}</td>
                       </tr>
+                      {annualVolume > 0 ? (
+                        <tr style={{ background: `${t.colors.accent.green}08` }}>
+                          <td style={{ ...labelCell, fontWeight: t.font.weight.extrabold, color: t.colors.text.primary, fontSize: t.font.size.base }}>Annual (× {annualVolume} loads)</td>
+                          <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.highestNet.carrierTotal)}</td>
+                          <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageAll.carrierTotal)}</td>
+                          <td style={{ ...valCell(true), fontSize: t.font.size.base }}>{fmt$(metrics.averageTop5.carrierTotal)}</td>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <td colSpan={4} style={{ ...labelCell, color: t.colors.text.muted, fontStyle: 'italic' }}>Add an Annual Volume to this estimate to project annual carrier revenue.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
