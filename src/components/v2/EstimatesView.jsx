@@ -925,6 +925,12 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
                   ⚠ Fleet rate config not set — financial calculations unavailable
                 </span>
               )}
+              {/* #167: fleet-less estimate — net is computed from generic defaults */}
+              {!estimate?.fleet_id && matches.length > 0 && (
+                <span style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>
+                  ℹ Estimated with defaults (no fleet): 80/20 split, $2.00/mi
+                </span>
+              )}
             </div>
 
             {/* Table */}

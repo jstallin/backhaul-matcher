@@ -285,6 +285,12 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
               ⚠ Fleet rate config not set — financial calculations unavailable
             </div>
           )}
+          {/* #167: fleet-less estimate — net is computed from generic defaults */}
+          {!request?.fleet_id && filteredMatches.length > 0 && (
+            <div style={{ fontSize: '13px', color: colors.text.tertiary, fontWeight: 600 }}>
+              ℹ Estimated with defaults (no fleet): 80/20 split, $2.00/mi
+            </div>
+          )}
         </div>
 
         {filteredMatches.length === 0 && (
