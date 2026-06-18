@@ -7,7 +7,7 @@ import { AvatarMenu } from './AvatarMenu';
 import { EstimateResults } from './EstimateResults';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, DEFAULT_ESTIMATE_RATE_CONFIG } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
@@ -62,7 +62,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
     try {
       const [creditResult, fleetRaw] = await Promise.all([
         deductCredit('Estimate search'),
-        db.fleets.getById(request.fleet_id),
+        request.fleet_id ? db.fleets.getById(request.fleet_id) : Promise.resolve(null), // #167: fleet optional
       ]);
 
       if (!creditResult.success) {
@@ -73,7 +73,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
 
       let fleet = fleetRaw;
 
-      if (!fleet.home_lat || !fleet.home_lng) {
+      if (fleet && (!fleet.home_lat || !fleet.home_lng)) {
         const success = await updateFleetCoordinates(db, fleet.id, fleet.home_address);
         if (success) {
           fleet = await db.fleets.getById(request.fleet_id);
@@ -86,9 +86,9 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
 
       setSelectedFleet(fleet);
 
-      const rawProfile = Array.isArray(fleet.fleet_profiles)
-        ? fleet.fleet_profiles[0]
-        : fleet.fleet_profiles;
+      const rawProfile = fleet
+        ? (Array.isArray(fleet.fleet_profiles) ? fleet.fleet_profiles[0] : fleet.fleet_profiles)
+        : null;
 
       const fleetProfile = rawProfile
         ? {
@@ -99,43 +99,66 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
         : { trailerType: 'Dry Van', trailerLength: 53, weightLimit: 45000 };
 
       const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
-      const rateConfig = hasRateConfig ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
-        mileageRate:         rawProfile.mileage_rate          ? parseFloat(rawProfile.mileage_rate)          : 0,
-        stopRate:            rawProfile.stop_rate             ? parseFloat(rawProfile.stop_rate)             : 0,
-        otherCharge1Amount:  rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
-        otherCharge2Amount:  rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
-        fuelPeg:             rawProfile.fuel_peg              ? parseFloat(rawProfile.fuel_peg)              : 0,
-        fuelMpg:             rawProfile.fuel_mpg              ? parseFloat(rawProfile.fuel_mpg)              : 6,
-        doePaddRate:         rawProfile.doe_padd_rate         ? parseFloat(rawProfile.doe_padd_rate)         : 0,
-      } : null;
+      // #167: no fleet → generic default config (80/20, $2/mi) so net still computes; with a
+      // fleet, use its config (or null → "set your rate config" prompt, unchanged).
+      const rateConfig = !fleet
+        ? DEFAULT_ESTIMATE_RATE_CONFIG
+        : (hasRateConfig ? {
+            revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+            mileageRate:         rawProfile.mileage_rate          ? parseFloat(rawProfile.mileage_rate)          : 0,
+            stopRate:            rawProfile.stop_rate             ? parseFloat(rawProfile.stop_rate)             : 0,
+            otherCharge1Amount:  rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+            otherCharge2Amount:  rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+            fuelPeg:             rawProfile.fuel_peg              ? parseFloat(rawProfile.fuel_peg)              : 0,
+            fuelMpg:             rawProfile.fuel_mpg              ? parseFloat(rawProfile.fuel_mpg)              : 6,
+            doePaddRate:         rawProfile.doe_padd_rate         ? parseFloat(rawProfile.doe_padd_rate)         : 0,
+          } : null);
 
       const geocoded = await parseDatumPoint(request.datum_point);
-      const fleetHome = { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address };
+
+      // #167: effective home — fleet home when attached, else the Return To location.
+      let home;
+      if (fleet) {
+        home = { lat: fleet.home_lat, lng: fleet.home_lng, address: fleet.home_address };
+      } else {
+        let rtLat = request.return_to_lat, rtLng = request.return_to_lng;
+        if (rtLat == null || rtLng == null) {
+          const rtGeo = await parseDatumPoint(request.return_to_point || '');
+          rtLat = rtGeo?.lat; rtLng = rtGeo?.lng;
+        }
+        if (rtLat == null || rtLng == null) {
+          console.error('Could not locate Return To for estimate:', request.return_to_point);
+          setLoadingMatches(false);
+          return;
+        }
+        home = { lat: rtLat, lng: rtLng, address: request.return_to_point || 'Return To' };
+      }
+      const fleetHome = home;
 
       const datumPoint = geocoded
         ? { address: geocoded.city, lat: geocoded.lat, lng: geocoded.lng }
-        : { address: request.datum_point, lat: fleet.home_lat, lng: fleet.home_lng };
+        : { address: request.datum_point, lat: home.lat, lng: home.lng };
 
-      const geocodeFailed = datumPoint.lat === fleet.home_lat && datumPoint.lng === fleet.home_lng;
+      const geocodeFailed = datumPoint.lat === home.lat && datumPoint.lng === home.lng;
       const homeRadiusMiles   = geocodeFailed ? 200 : 50;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
       const [datumCityParsed = '', datumStateParsed = ''] = (request.datum_point || '').split(',').map(s => s.trim());
+      const [homeCityParsed = '', homeStateParsed = ''] = (home.address || '').split(',').map(s => s.trim());
       const requestContext = {
         datumCity:     datumCityParsed || datumPoint.address || request.datum_point,
         datumState:    datumStateParsed,
         datumLat:      datumPoint.lat || 0,
         datumLng:      datumPoint.lng || 0,
-        homeCity:      fleet.home_city || fleet.home_address || '',
-        homeState:     fleet.home_state || '',
-        homeLat:       fleet.home_lat || 0,
-        homeLng:       fleet.home_lng || 0,
+        homeCity:      homeCityParsed,
+        homeState:     homeStateParsed,
+        homeLat:       home.lat || 0,
+        homeLng:       home.lng || 0,
         equipmentType: fleetProfile.trailerType || 'Dry Van',
         modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate:    request.equipment_available_date || '',
       };
-      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id, requestContext);
+      const { loads: loadsForMatching, isLive } = await getLoadsForMatching(user.id, request.fleet_id || null, requestContext);
       if (isLive) {
         console.log(`Using ${loadsForMatching.length} live imported loads for matching`);
       } else {
@@ -296,7 +319,7 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
                           </div>
                         )}
                       </div>
-                      <div style={{ fontSize: '13px', color: colors.text.secondary }}>{request.fleets?.name || 'Unknown Fleet'}</div>
+                      <div style={{ fontSize: '13px', color: colors.text.secondary }}>{request.fleets?.name || 'No fleet'}</div>
                     </div>
                     <ChevronRight size={24} color={colors.accent.primary} />
                   </div>

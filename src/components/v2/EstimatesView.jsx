@@ -6,7 +6,7 @@ import { useCredits } from '../../hooks/useCredits';
 import { BuyCreditsModal } from '../BuyCreditsModal';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
-import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, DEFAULT_ESTIMATE_RATE_CONFIG } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
@@ -330,6 +330,7 @@ function Toggle({ checked, onChange, label }) {
 const BLANK_FORM = {
   requestName: '',
   datumPoint: '',
+  returnTo: '',          // #167
   selectedFleetId: '',
   equipmentAvailableDate: '',
   equipmentNeededDate: '',
@@ -345,6 +346,7 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
       return {
         requestName: initialValues.request_name || '',
         datumPoint: initialValues.datum_point || '',
+        returnTo: initialValues.return_to_point || '',
         selectedFleetId: initialValues.fleet_id || '',
         equipmentAvailableDate: initialValues.equipment_available_date || '',
         equipmentNeededDate: initialValues.equipment_needed_date || '',
@@ -359,12 +361,14 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
   const [saving, setSaving] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  const selectedFleet = fleets.find(f => f.id === form.selectedFleetId);
 
   const validate = () => {
     const e = {};
     if (!form.requestName.trim()) e.requestName = 'Required';
     if (!form.datumPoint.trim()) e.datumPoint = 'Required — enter "City, ST" or ZIP';
-    if (!form.selectedFleetId) e.selectedFleetId = 'Select a fleet';
+    // #167: fleet optional; require a Return To when no fleet is selected (matching needs a home).
+    if (!form.selectedFleetId && !form.returnTo.trim()) e.returnTo = 'Select a fleet, or enter a Return To city';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -374,10 +378,20 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
     if (!validate()) return;
     setSaving(true);
     try {
+      // #167: fleet home is authoritative when selected (mirrored into Return To); else the
+      // user-entered Return To is the home (geocoded at run).
+      const parseCS = (s) => { const [c = '', st = ''] = (s || '').split(',').map(x => x.trim()); return { city: c || null, state: st || null }; };
+      const rtText = selectedFleet ? (selectedFleet.home_address || '') : form.returnTo.trim();
+      const rtCS = parseCS(rtText);
       const payload = {
         request_name: form.requestName.trim(),
         datum_point: form.datumPoint.trim(),
-        fleet_id: form.selectedFleetId,
+        return_to_point: rtText || null,
+        return_to_city: rtCS.city,
+        return_to_state: rtCS.state,
+        return_to_lat: selectedFleet ? (selectedFleet.home_lat ?? null) : null,
+        return_to_lng: selectedFleet ? (selectedFleet.home_lng ?? null) : null,
+        fleet_id: form.selectedFleetId || null,
         equipment_available_date: form.equipmentAvailableDate || null,
         equipment_needed_date: form.equipmentNeededDate || null,
         annual_volume: form.annualVolume !== '' ? Number(form.annualVolume) : null,
@@ -417,12 +431,22 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
             <ErrorMsg msg={errors.datumPoint} />
           </Field>
 
-          <Field label="Fleet">
+          {/* #167: Return To — mirrors fleet home (read-only) when a fleet is selected. */}
+          <Field label="Return To City, ST">
+            <Input
+              value={selectedFleet ? (selectedFleet.home_address || '') : form.returnTo}
+              onChange={e => set('returnTo', e.target.value)}
+              disabled={!!selectedFleet}
+              placeholder="City, ST or ZIP"
+            />
+            <ErrorMsg msg={errors.returnTo} />
+          </Field>
+
+          <Field label="Fleet (optional)">
             <SelectInput value={form.selectedFleetId} onChange={e => set('selectedFleetId', e.target.value)}>
-              <option value="">Select fleet…</option>
+              <option value="">No fleet (use Return To)</option>
               {fleets.map(f => <option key={f.id} value={f.id}>{f.name}{f.user_id !== user?.id ? ' · shared' : ''}</option>)}
             </SelectInput>
-            <ErrorMsg msg={errors.selectedFleetId} />
           </Field>
 
           <Field label="Equipment Available Date">
@@ -462,7 +486,7 @@ function EstimateForm({ fleets, initialValues, onSave, onCancel }) {
 function EstimateCard({ estimate, active, onSelect, onEdit, onDelete }) {
   const [hovered, setHovered] = useState(false);
   const isEditable = ['active', 'pending'].includes(estimate.status);
-  const fleetName = estimate.fleets?.name || estimate.fleet_name || '';
+  const fleetName = estimate.fleets?.name || estimate.fleet_name || 'No fleet'; // #167: fleet optional
 
   return (
     <div
@@ -901,6 +925,12 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
                   ⚠ Fleet rate config not set — financial calculations unavailable
                 </span>
               )}
+              {/* #167: fleet-less estimate — net is computed from generic defaults */}
+              {!estimate?.fleet_id && matches.length > 0 && (
+                <span style={{ fontSize: t.font.size.sm, color: t.colors.text.muted, fontWeight: t.font.weight.semibold }}>
+                  ℹ Estimated with defaults (no fleet): 80/20 split, $2.00/mi
+                </span>
+              )}
             </div>
 
             {/* Table */}
@@ -1317,9 +1347,11 @@ export function EstimatesView() {
     setHasRun(false);
 
     try {
+      // #167: fleet is optional. Fetch it only when attached; otherwise the estimate's
+      // Return To location is the home.
       const [creditResult, fleetData, geocoded] = await Promise.all([
         deductCredit('Estimate search'),
-        db.fleets.getById(estimate.fleet_id),
+        estimate.fleet_id ? db.fleets.getById(estimate.fleet_id) : Promise.resolve(null),
         geocodeAddress(estimate.datum_point),
       ]);
 
@@ -1330,53 +1362,73 @@ export function EstimatesView() {
 
       setSelectedFleet(fleetData);
 
-      if (!fleetData.home_lat || !fleetData.home_lng) {
-        throw new Error('Fleet home address is not geocoded. Go to Fleets → Profile and verify the home base address.');
+      // Effective home (B): fleet home when attached, else the Return To location (#167).
+      let home;
+      if (fleetData) {
+        if (!fleetData.home_lat || !fleetData.home_lng) {
+          throw new Error('Fleet home address is not geocoded. Go to Fleets → Profile and verify the home base address.');
+        }
+        home = { lat: fleetData.home_lat, lng: fleetData.home_lng, address: fleetData.home_address };
+      } else {
+        let rtLat = estimate.return_to_lat, rtLng = estimate.return_to_lng;
+        if (rtLat == null || rtLng == null) {
+          const rtGeo = await geocodeAddress(estimate.return_to_point || '');
+          rtLat = rtGeo?.lat; rtLng = rtGeo?.lng;
+        }
+        if (rtLat == null || rtLng == null) {
+          throw new Error('Could not locate the Return To city for this estimate. Edit it and re-check the Return To value.');
+        }
+        home = { lat: rtLat, lng: rtLng, address: estimate.return_to_point || 'Return To' };
       }
 
-      const rawProfile = Array.isArray(fleetData.fleet_profiles)
-        ? fleetData.fleet_profiles[0]
-        : fleetData.fleet_profiles;
+      const rawProfile = fleetData
+        ? (Array.isArray(fleetData.fleet_profiles) ? fleetData.fleet_profiles[0] : fleetData.fleet_profiles)
+        : null;
 
       const fleetProfile = rawProfile || { trailerType: 'Dry Van', trailerLength: 53, weightLimit: 45000 };
 
       const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
-      const rateConfig = hasRateConfig ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
-        mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
-        stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
-        otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
-        otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
-        fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
-        fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
-        doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
-      } : null;
+      // #167: no fleet → generic default config (80/20, $2/mi) so net still computes; with a
+      // fleet, use its config (or null → "set your rate config" prompt, unchanged).
+      const rateConfig = !fleetData
+        ? DEFAULT_ESTIMATE_RATE_CONFIG
+        : (hasRateConfig ? {
+            revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+            mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+            stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+            otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+            otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+            fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+            fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+            doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
+          } : null);
 
       const datumPoint = geocoded
         ? { address: geocoded.label || estimate.datum_point, lat: geocoded.lat, lng: geocoded.lng }
-        : { address: estimate.datum_point, lat: fleetData.home_lat, lng: fleetData.home_lng };
+        : { address: estimate.datum_point, lat: home.lat, lng: home.lng };
 
-      const fleetHome = { lat: fleetData.home_lat, lng: fleetData.home_lng, address: fleetData.home_address };
-      const geocodeFailed = datumPoint.lat === fleetData.home_lat && datumPoint.lng === fleetData.home_lng;
+      const fleetHome = home;
+      const geocodeFailed = datumPoint.lat === home.lat && datumPoint.lng === home.lng;
       const homeRadiusMiles = geocodeFailed ? 200 : 100;
       const corridorWidthMiles = geocodeFailed ? 300 : 100;
 
       const [datumCityParsed = '', datumStateParsed = ''] = (estimate.datum_point || '').split(',').map(s => s.trim());
+      const [homeCityParsed = '', homeStateParsed = ''] = (home.address || '').split(',').map(s => s.trim());
       const requestContext = {
         datumCity:     datumCityParsed || datumPoint.address || estimate.datum_point,
         datumState:    datumStateParsed,
         datumLat:      datumPoint.lat || 0,
         datumLng:      datumPoint.lng || 0,
-        homeCity:      fleetData.home_city || fleetData.home_address || '',
-        homeState:     fleetData.home_state || '',
-        homeLat:       fleetData.home_lat || 0,
-        homeLng:       fleetData.home_lng || 0,
+        homeCity:      homeCityParsed,
+        homeState:     homeStateParsed,
+        homeLat:       home.lat || 0,
+        homeLng:       home.lng || 0,
         equipmentType: fleetProfile.trailerType || fleetProfile.trailer_type || 'Dry Van',
         modes:         Array.isArray(rawProfile?.modes) ? rawProfile.modes : [],
         pickupDate:    estimate.equipment_available_date || '',
       };
 
-      const loadsResult = await getLoadsForMatching(user.id, estimate.fleet_id, requestContext);
+      const loadsResult = await getLoadsForMatching(user.id, estimate.fleet_id || null, requestContext);
       const { loads: loadsForMatching } = loadsResult || { loads: [] };
 
       logActivityEvent(ACTIVITY_EVENTS.SEARCH_RUN, { kind: 'estimate', request_id: estimate.id }); // #85

@@ -6,9 +6,9 @@
 ---
 
 ## Last Updated
-- **Date:** June 15, 2026
-- **Session type:** Claude Code (session 14 — Ryder request-form batch #158/#159/#160, shipped to prod + v2 mobile/map follow-ups)
-- **Updated by:** Claude Code (session 14)
+- **Date:** June 18, 2026
+- **Session type:** Claude Code (session 15 — Ryder batch #163 save-a-load + #164 v2 map plotting/legend/overlap + #165 detail-map A→B lane; notification HTML unification also shipped earlier this session)
+- **Updated by:** Claude Code (session 15)
 
 ---
 
@@ -21,6 +21,22 @@
 - **Numbering:** kickoff IDs 001–009 are preserved in issue *titles* (`[007] …`); GitHub assigns native numbers (#20+). New pilot issues just use native numbers — the 00x scheme is retired.
 - **Flow:** intake (Chip/Ryder feedback → labeled issue) → triage (P1/P2/P3) → branch off `staging` → `Fixes #N` in commits → PR staging→main → smoke test → merge → apply migrations → resync.
 - **Seeded:** 001–009 created and **closed** as shipped (#20–28). Open follow-ups: **#29** Vercel Pro upgrade (P2, unblocks 006 server-side + 008 cron), **#30** 007 full mode filtering + live LoadType validation (P3), **#31** 005 negotiation option-3 revisit (P3).
+
+---
+
+## What Was Just Completed (June 18, 2026, session 15) — Ryder batch #163/#164/#165 + notification HTML unification
+
+**All SHIPPED to production and verified.** Two PRs merged: **#162** (notification email unification) and **#166** (the #163/#164/#165 batch). Migration `20260618000001_saved_loads.sql` auto-applied to prod by the Supabase integration and **verified** (table + 4 RLS policies + 33 cols + version in `schema_migrations`, no drift). Issues #163/#164/#165 closed; local branches resynced.
+
+- **Notification emails unified (earlier this session, PR #162):** auto-refresh (cron) emails were plain text while client emails were HTML — two divergent send paths. New shared `src/utils/notificationEmail.js` (`buildBackhaulNotification` + `buildRequestLink`) used by BOTH `notificationService.js` (client) and `api/cron/refresh-requests.js` (cron); cron now passes `html` to Resend. Confirmed live: the auto-refresh email arrives as branded HTML with a working `/app?request=<id>` link. (Verifying the live send required a non-expired request with live Truckstop inventory — the lane was briefly empty (`loadsSearched:0`) during testing, unrelated to the change.)
+
+- **#163 (P2, ryder/whats-new) — Save a load (v1 + v2):** new dedicated **`saved_loads`** table (snapshot of the live load + `request_id`; deliberately NOT `imported_loads`, so saves never enter the matching/import pipeline — `getLoadsForMatching` reads `imported_loads`). `db.savedLoads` helpers + pure tested `buildSavedLoadRow` mapper (`src/utils/savedLoad.js`). Shared **`SaveLoadButton`** (bookmark toggle) on all 4 surfaces (v1 card+detail, v2 MatchCard+RouteDetailsModal) + new `Bookmark` icon. Shared **`ContactBrokerDialog`** extracted from inline Call/Text/Email JSX. "Saved" filter in BOTH Loads views (v2 `LoadsView` tab, v1 `ImportedLoads` chip) backed by one shared **`SavedLoadsPanel`**: table (status "Saved") + per-row action dropdown — **View** (snapshot detail), **Haul** (completes the originating request via the existing flow when `request_id` present), **Contact Broker**. The dropdown renders via a **portal** (fixed positioning) so the table's overflow container can't clip it (the "menu hidden below a short table" fix).
+
+- **#164 (P2, ryder, v2 bug) — result map plotting:** root cause was v1 ran a coordinate-backfill geocode for coordless Truckstop loads and v2 didn't (so v2 markers collapsed onto state centroids and points vanished). Extracted into shared `src/utils/geocodeMatchCoords.js` (`geocodeMissingCoords`, fills flat + nested coords), now used by BOTH v1 and v2. Added the **legend** to v2 (parity with v1). `RouteHomeMap` now **fans overlapping markers** out with a deterministic golden-angle offset (no clustering dep) so co-located loads are all visible/separate on zoom.
+
+- **#165 (P2, ryder) — load-detail map A→B context:** `RouteMap` takes optional `datum` (A=empty) + `home` (B=fleet home); draws A/B markers + a grey lane line, passed from both detail map modals (coords already in scope). Per Ryder follow-up, the lane uses the **actual PC*MILER preferred driving route** (solid grey) when fetchable, falling back to a straight dashed line. NOTE: this adds a PC*MILER route call when a detail map opens with A/B — same class as the existing load-route call; watch ahead of the July billing-on-actuals window.
+
+**New shared modules this session:** `notificationEmail.js`, `savedLoad.js`, `geocodeMatchCoords.js`, `SaveLoadButton.jsx`, `ContactBrokerDialog.jsx`, `SavedLoadsPanel.jsx` + `Bookmark` icon. Tests added for `savedLoad`, `geocodeMatchCoords`, `notificationEmail` (suite now 356).
 
 ---
 
