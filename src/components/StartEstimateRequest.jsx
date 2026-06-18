@@ -18,6 +18,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     editingId: null,
     requestName: '',
     datumPoint: '',
+    returnTo: '',            // #167: "Return To City, ST" — home/destination when no fleet
     selectedFleetId: '',
     equipmentAvailableDate: '',
     equipmentNeededDate: '',
@@ -45,6 +46,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
         editingId: request.id,
         requestName: request.request_name || '',
         datumPoint: request.datum_point || '',
+        returnTo: request.return_to_point || '',
         selectedFleetId: request.fleet_id || '',
         equipmentAvailableDate: request.equipment_available_date ? request.equipment_available_date.split('T')[0] : '',
         equipmentNeededDate: request.equipment_needed_date ? request.equipment_needed_date.split('T')[0] : '',
@@ -85,7 +87,8 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
     const newErrors = {};
     if (!formData.requestName.trim()) newErrors.requestName = 'Request name is required';
     if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Datum point is required';
-    if (!formData.selectedFleetId) newErrors.selectedFleetId = 'Please select a fleet';
+    // #167: fleet is optional, but matching needs a home — require a Return To when none.
+    if (!formData.selectedFleetId && !formData.returnTo.trim()) newErrors.returnTo = 'Select a fleet, or enter a Return To city';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';
     if (!formData.equipmentNeededDate) newErrors.equipmentNeededDate = 'Equipment needed date is required';
     if (formData.equipmentAvailableDate && formData.equipmentNeededDate) {
@@ -109,10 +112,22 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
 
     setSaving(true);
     try {
+      // #167: when a fleet is selected its home is authoritative and mirrored into Return To;
+      // otherwise Return To (user-entered, geocoded at run) is the home.
+      const fleetSel = fleets.find(f => f.id === formData.selectedFleetId);
+      const parseCS = (s) => { const [c = '', st = ''] = (s || '').split(',').map(x => x.trim()); return { city: c || null, state: st || null }; };
+      const rtText = fleetSel ? (fleetSel.home_address || '') : formData.returnTo.trim();
+      const rtCS = parseCS(rtText);
+
       const requestData = {
-        fleet_id: formData.selectedFleetId,
+        fleet_id: formData.selectedFleetId || null,
         request_name: formData.requestName,
         datum_point: formData.datumPoint,
+        return_to_point: rtText || null,
+        return_to_city: rtCS.city,
+        return_to_state: rtCS.state,
+        return_to_lat: fleetSel ? (fleetSel.home_lat ?? null) : null,
+        return_to_lng: fleetSel ? (fleetSel.home_lng ?? null) : null,
         equipment_available_date: formData.equipmentAvailableDate,
         equipment_needed_date: formData.equipmentNeededDate,
         is_relay: formData.isRelay,
@@ -131,6 +146,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
           editingId: null,
           requestName: '',
           datumPoint: '',
+          returnTo: '',
           selectedFleetId: fleets.length === 1 ? fleets[0].id : '',
           equipmentAvailableDate: '',
           equipmentNeededDate: '',
@@ -194,18 +210,9 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
       </div>
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px' }}>
-        {fleets.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px', background: colors.background.card, borderRadius: '16px', border: `1px solid ${colors.border.primary}` }}>
-            <Truck size={64} color={colors.text.tertiary} style={{ marginBottom: '24px' }} />
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: 800, color: colors.text.primary }}>No Fleets Available</h3>
-            <p style={{ margin: '0 0 32px 0', color: colors.text.secondary, fontSize: '15px', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-              You need to create a fleet before you can create an estimate request.
-            </p>
-            <button onClick={() => onMenuNavigate('fleets')} style={{ padding: '14px 28px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
-              Go to Fleets
-            </button>
-          </div>
-        ) : (
+        {(
+          /* #167: fleet is optional for estimates (sales estimates happen before a fleet
+             exists), so the form always renders — no "No Fleets" gate. */
           <form onSubmit={handleSubmit}>
             <div style={{ background: colors.background.card, border: `1px solid ${colors.border.primary}`, borderRadius: '16px', padding: '32px' }}>
 
@@ -224,11 +231,29 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
                 <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>Where equipment needs to return from</div>
               </div>
 
-              {/* Select Fleet */}
+              {/* #167: Return To City, ST — home/destination. When a fleet is selected it mirrors
+                  the fleet's home (read-only) so the user sees the value being used. */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Truck size={16} style={{ display: 'inline', marginRight: '6px' }} />Select Fleet *</label>
-                <select value={formData.selectedFleetId} onChange={(e) => handleChange('selectedFleetId', e.target.value)} disabled={saving} style={{ ...inputStyle, border: `1px solid ${errors.selectedFleetId ? colors.accent.danger : colors.border.accent}`, cursor: 'pointer' }}>
-                  <option value="">-- Select a fleet --</option>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><MapPin size={16} style={{ display: 'inline', marginRight: '6px' }} />Return To City, ST{!formData.selectedFleetId ? ' *' : ''}</label>
+                <input
+                  type="text"
+                  value={selectedFleet ? (selectedFleet.home_address || '') : formData.returnTo}
+                  onChange={(e) => handleChange('returnTo', e.target.value)}
+                  disabled={saving || !!selectedFleet}
+                  placeholder="City, ST or ZIP (e.g., Charlotte, NC or 28036)"
+                  style={{ ...inputStyle, border: `1px solid ${errors.returnTo ? colors.accent.danger : colors.border.accent}`, opacity: selectedFleet ? 0.7 : 1 }}
+                />
+                {errors.returnTo && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.returnTo}</div>}
+                <div style={{ marginTop: '4px', fontSize: '12px', color: colors.text.tertiary }}>
+                  {selectedFleet ? 'Using the selected fleet’s home base.' : 'Where the load should route back to (used as the home for this estimate)'}
+                </div>
+              </div>
+
+              {/* Select Fleet (optional) */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: colors.text.primary }}><Truck size={16} style={{ display: 'inline', marginRight: '6px' }} />Select Fleet <span style={{ fontWeight: 400, color: colors.text.tertiary }}>(optional)</span></label>
+                <select value={formData.selectedFleetId} onChange={(e) => handleChange('selectedFleetId', e.target.value)} disabled={saving} style={{ ...inputStyle, border: `1px solid ${colors.border.accent}`, cursor: 'pointer' }}>
+                  <option value="">-- No fleet (use Return To) --</option>
                   {fleets.map(fleet => <option key={fleet.id} value={fleet.id}>{fleet.name} (MC: {fleet.mc_number || 'N/A'}){fleet.user_id !== user?.id ? ' · shared' : ''}</option>)}
                 </select>
                 {errors.selectedFleetId && <div style={{ marginTop: '4px', fontSize: '13px', color: colors.accent.danger }}>{errors.selectedFleetId}</div>}
