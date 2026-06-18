@@ -75,7 +75,9 @@ const FitBounds = ({ points }) => {
   return null;
 };
 
-export const RouteMap = ({ route, backhaul = null, showComparison = false }) => {
+// #165: `datum` (A = empty city) and `home` (B = fleet home/destination) are optional context
+// points. When provided, the load is shown within the A→B lane (grey line + A/B markers).
+export const RouteMap = ({ route, backhaul = null, showComparison = false, datum = null, home = null }) => {
   const { colors, theme } = useTheme();
   const [routeGeoJSON, setRouteGeoJSON] = useState(null);
   const [backhaulRouteGeoJSON, setBackhaulRouteGeoJSON] = useState(null);
@@ -186,8 +188,17 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
       pts.push([backhaul.pickup_lat, backhaul.pickup_lng]);
       pts.push([backhaul.delivery_lat, backhaul.delivery_lng]);
     }
+    // #165: include the A→B context points so the map frames the whole lane.
+    if (datum?.lat != null && datum?.lng != null) pts.push([datum.lat, datum.lng]);
+    if (home?.lat != null && home?.lng != null) pts.push([home.lat, home.lng]);
     return pts;
-  }, [resolvedRoute, backhaul]);
+  }, [resolvedRoute, backhaul, datum?.lat, datum?.lng, home?.lat, home?.lng]);
+
+  // #165: grey straight line for the overall empty→home lane (context behind the load).
+  const laneGeoJSON = useMemo(() => {
+    if (datum?.lat == null || datum?.lng == null || home?.lat == null || home?.lng == null) return null;
+    return { type: 'Feature', geometry: { type: 'LineString', coordinates: [[datum.lng, datum.lat], [home.lng, home.lat]] } };
+  }, [datum?.lat, datum?.lng, home?.lat, home?.lng]);
 
   if (!route) return null;
   if (geocoding) {
@@ -246,6 +257,15 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
         />
 
         <FitBounds points={boundsPoints} />
+
+        {/* #165: grey empty→home lane line (drawn first so the load route sits on top) */}
+        {laneGeoJSON && (
+          <GeoJSON
+            key={`lane-${datum?.lat}-${home?.lat}`}
+            data={laneGeoJSON}
+            style={{ color: '#9CA3AF', weight: 3, opacity: 0.7, dashArray: '6 8' }}
+          />
+        )}
 
         {/* Primary Route Line */}
         {routeGeoJSON && (
@@ -344,6 +364,20 @@ export const RouteMap = ({ route, backhaul = null, showComparison = false }) => 
                 </div>
               </div>
             </Popup>
+          </Marker>
+        )}
+
+        {/* #165: A = empty city (datum) */}
+        {datum?.lat != null && datum?.lng != null && (
+          <Marker position={[datum.lat, datum.lng]} icon={createLabeledIcon('#EF4444', 'A · EMPTY', 30)}>
+            <Popup><div style={{ padding: '4px' }}><strong>Empty (A)</strong><br/>{datum.address || `${datum.lat.toFixed(2)}, ${datum.lng.toFixed(2)}`}</div></Popup>
+          </Marker>
+        )}
+
+        {/* #165: B = fleet home / destination */}
+        {home?.lat != null && home?.lng != null && (
+          <Marker position={[home.lat, home.lng]} icon={createLabeledIcon('#10B981', 'B · HOME', 30)}>
+            <Popup><div style={{ padding: '4px' }}><strong>Fleet Home (B)</strong><br/>{home.address || `${home.lat.toFixed(2)}, ${home.lng.toFixed(2)}`}</div></Popup>
           </Marker>
         )}
       </MapContainer>

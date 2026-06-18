@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/supabase';
 import { HamburgerMenu } from './HamburgerMenu';
 import { AvatarMenu } from './AvatarMenu';
+import { SavedLoadsPanel } from './SavedLoadsPanel';
 
 export const ImportedLoads = ({ onMenuNavigate }) => {
   const { colors } = useTheme();
@@ -267,7 +268,8 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
     { value: 'contacted', label: 'Contacted', count: loads.filter(l => l.status === 'contacted').length },
     { value: 'booked', label: 'Booked', count: loads.filter(l => l.status === 'booked').length },
     { value: 'dismissed', label: 'Dismissed', count: loads.filter(l => l.status === 'dismissed').length },
-    { value: 'all', label: 'All', count: loads.length }
+    { value: 'all', label: 'All', count: loads.length },
+    { value: 'saved', label: 'Saved' } // #163: bookmarked loads (separate saved_loads table)
   ];
 
   return (
@@ -459,12 +461,21 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
               transition: 'all 0.2s ease'
             }}
           >
-            {opt.label} ({opt.count})
+            {opt.label}{opt.count != null ? ` (${opt.count})` : ''}
           </button>
         ))}
       </div>
 
-      {/* Content */}
+      {/* #163: Saved loads use the dedicated saved_loads table + shared panel */}
+      {filter === 'saved' ? (
+        <div style={{ background: colors.background.card, borderRadius: '12px', border: `1px solid ${colors.border.primary}`, overflow: 'hidden' }}>
+          <SavedLoadsPanel
+            userId={user?.id}
+            palette={{ accent: colors.accent.primary, text: colors.text.primary, textMuted: colors.text.secondary, border: colors.border.primary, cardBg: colors.background.card, bg: colors.background.secondary, green: colors.accent.success }}
+          />
+        </div>
+      ) : (
+      /* Content */
       <div style={{ display: 'flex', gap: '24px' }}>
         {/* Loads List */}
         <div style={{ flex: '1', minWidth: 0 }}>
@@ -831,6 +842,7 @@ export const ImportedLoads = ({ onMenuNavigate }) => {
           </div>
         )}
       </div>
+      )}
 
       <style>{`
         @keyframes spin {

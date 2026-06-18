@@ -1,10 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { MapPin, Navigation, TrendingUp, Truck, Package, Edit, X, Map, CheckCircle } from '../icons';
 import { CANCELLATION_REASONS } from '../utils/cancellationReasons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/supabase';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { LoadShareMenu } from './LoadShareMenu';
+import { SaveLoadButton } from './SaveLoadButton';
+import { buildSavedLoadRow, savedKeyOf } from '../utils/savedLoad';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { generateTop10Report } from '../utils/generateReport';
 import { computeNegotiation, netCreditAtGross, isNoRateLoad } from '../utils/routeHomeMatching';
@@ -91,6 +95,40 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
   const [pendingLoads, setPendingLoads] = useState(new Set());
   const [toastLoad, setToastLoad] = useState(null);
   const toastTimerRef = useRef(null);
+
+  // #163: saved-load state (Set of savedKeyOf keys) + busy guard during a toggle.
+  const { user } = useAuth();
+  const [savedKeys, setSavedKeys] = useState(() => new Set());
+  const [savingKey, setSavingKey] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    db.savedLoads.getAll(user.id)
+      .then(rows => { if (!cancelled) setSavedKeys(new Set(rows.map(r => `${r.source}::${r.load_id}`))); })
+      .catch(err => console.error('Load saved loads failed:', err.message));
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const toggleSave = async (match) => {
+    const key = savedKeyOf(match);
+    if (!key || !user?.id) return;
+    setSavingKey(key);
+    const wasSaved = savedKeys.has(key);
+    setSavedKeys(prev => { const n = new Set(prev); wasSaved ? n.delete(key) : n.add(key); return n; });
+    try {
+      if (wasSaved) {
+        await db.savedLoads.removeByLoad(user.id, match.load_id ?? match.source_load_id, match.source ?? 'unknown');
+      } else {
+        await db.savedLoads.save(buildSavedLoadRow(match, { userId: user.id, requestId: request?.id || null, fleetId: fleet?.id || null }));
+      }
+    } catch (err) {
+      console.error('Toggle save failed:', err.message);
+      setSavedKeys(prev => { const n = new Set(prev); wasSaved ? n.add(key) : n.delete(key); return n; });
+    } finally {
+      setSavingKey(null);
+    }
+  };
 
   // const handleAiAnalyze = async (match) => { ... };
   // const handleAiFeedback = async (match, rating) => { ... };
@@ -526,6 +564,14 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                     <Map size={16} />
                     View on Map
                   </button>
+                  {/* #163: save/bookmark this load */}
+                  <SaveLoadButton
+                    saved={savedKeys.has(savedKeyOf(match))}
+                    busy={savingKey === savedKeyOf(match)}
+                    onToggle={() => toggleSave(match)}
+                    palette={{ accent: colors.accent.primary, border: colors.border.accent, textMuted: colors.text.secondary }}
+                    style={{ flex: 1, justifyContent: 'center', padding: '12px 20px', borderRadius: '8px', fontSize: '14px' }}
+                  />
                 </div>
                 <button
                   onClick={() => setHaulMatch(match)}
@@ -579,6 +625,13 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                  {/* #163: save/bookmark from the detail card */}
+                  <SaveLoadButton
+                    saved={savedKeys.has(savedKeyOf(m))}
+                    busy={savingKey === savedKeyOf(m)}
+                    onToggle={() => toggleSave(m)}
+                    palette={{ accent: colors.accent.primary, border: colors.border.accent, textMuted: colors.text.secondary }}
+                  />
                   {/* #82: Share this load — Email / Text / Copy */}
                   <LoadShareMenu
                     match={m}
@@ -1014,6 +1067,8 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
                   dest_city: mapMatch.destination.address,
                   distance_miles: mapMatch.distance
                 }}
+                datum={datumCoordinates}  /* #165: A = empty city */
+                home={fleetHome}          /* #165: B = fleet home */
               />
             </div>
           </div>

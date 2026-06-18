@@ -12,12 +12,12 @@ import { findRouteHomeBackhauls, effectivePickupDate } from '../utils/routeHomeM
 import { buildDeclineSnapshot } from '../utils/declineSnapshot';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../utils/requestExpiry';
-import { geocodeAddress } from '../utils/pcMilerClient';
 import { geocodeDatum } from '../utils/geocodeDatum';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../utils/notificationService';
 import { effectiveNotificationMethod } from '../utils/smsConsent';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
+import { geocodeMissingCoords } from '../utils/geocodeMatchCoords';
 import { isExpiredInProgress, finishPayload } from '../utils/autoFinishRequests';
 import { unionModes } from '../utils/fleetModes';
 import { CoDriver } from './CoDriver';
@@ -402,36 +402,10 @@ export const OpenRequests = ({ onMenuNavigate, onNavigateToSettings }) => {
       setBackhaulMatches(matches);
       setLoadingMatches(false);
 
-      // Background: geocode missing pickup/delivery coords for map view (DF loads have null lat/lng)
-      const top10 = matches.slice(0, 10);
-      if (top10.some(m => m.pickup_lat == null || m.delivery_lat == null)) {
-        const cityMap = new Map();
-        top10.forEach(m => {
-          if (m.pickup_lat == null && m.pickup_city && m.pickup_state)
-            cityMap.set(`${m.pickup_city},${m.pickup_state}`, null);
-          if (m.delivery_lat == null && m.delivery_city && m.delivery_state)
-            cityMap.set(`${m.delivery_city},${m.delivery_state}`, null);
-        });
-        Promise.all([...cityMap.keys()].map(async (key) => {
-          const [city, state] = key.split(',');
-          // #87: geocodeAddress sends the session token (the proxy now requires auth).
-          const geo = await geocodeAddress(`${city}, ${state}`);
-          if (geo?.lat && geo?.lng) cityMap.set(key, { lat: geo.lat, lng: geo.lng });
-        })).then(() => {
-          setBackhaulMatches(prev => prev.map(m => {
-            const updated = { ...m };
-            if (m.pickup_lat == null && m.pickup_city && m.pickup_state) {
-              const coords = cityMap.get(`${m.pickup_city},${m.pickup_state}`);
-              if (coords) { updated.pickup_lat = coords.lat; updated.pickup_lng = coords.lng; }
-            }
-            if (m.delivery_lat == null && m.delivery_city && m.delivery_state) {
-              const coords = cityMap.get(`${m.delivery_city},${m.delivery_state}`);
-              if (coords) { updated.delivery_lat = coords.lat; updated.delivery_lng = coords.lng; }
-            }
-            return updated;
-          }));
-        });
-      }
+      // #164: background-fill missing pickup/delivery coords for the map (shared with v2).
+      geocodeMissingCoords(matches)
+        .then(filled => { if (filled !== matches) setBackhaulMatches(filled); })
+        .catch(err => console.warn('Map coord geocode failed:', err.message));
     } catch (error) {
       console.error('Error loading matches:', error);
       setBackhaulMatches([]);
