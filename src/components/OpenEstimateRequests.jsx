@@ -7,7 +7,7 @@ import { AvatarMenu } from './AvatarMenu';
 import { EstimateResults } from './EstimateResults';
 import { db } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { findRouteHomeBackhauls } from '../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, DEFAULT_ESTIMATE_RATE_CONFIG } from '../utils/routeHomeMatching';
 import { parseDatumPoint } from '../utils/mapboxGeocoding';
 import { geocodeFleetAddress, updateFleetCoordinates } from '../utils/geocodeFleetAddress';
 import { getLoadsForMatching } from '../utils/getLoadsForMatching';
@@ -99,16 +99,20 @@ export const OpenEstimateRequests = ({ onMenuNavigate, onNavigateToSettings }) =
         : { trailerType: 'Dry Van', trailerLength: 53, weightLimit: 45000 };
 
       const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
-      const rateConfig = hasRateConfig ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
-        mileageRate:         rawProfile.mileage_rate          ? parseFloat(rawProfile.mileage_rate)          : 0,
-        stopRate:            rawProfile.stop_rate             ? parseFloat(rawProfile.stop_rate)             : 0,
-        otherCharge1Amount:  rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
-        otherCharge2Amount:  rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
-        fuelPeg:             rawProfile.fuel_peg              ? parseFloat(rawProfile.fuel_peg)              : 0,
-        fuelMpg:             rawProfile.fuel_mpg              ? parseFloat(rawProfile.fuel_mpg)              : 6,
-        doePaddRate:         rawProfile.doe_padd_rate         ? parseFloat(rawProfile.doe_padd_rate)         : 0,
-      } : null;
+      // #167: no fleet → generic default config (80/20, $2/mi) so net still computes; with a
+      // fleet, use its config (or null → "set your rate config" prompt, unchanged).
+      const rateConfig = !fleet
+        ? DEFAULT_ESTIMATE_RATE_CONFIG
+        : (hasRateConfig ? {
+            revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+            mileageRate:         rawProfile.mileage_rate          ? parseFloat(rawProfile.mileage_rate)          : 0,
+            stopRate:            rawProfile.stop_rate             ? parseFloat(rawProfile.stop_rate)             : 0,
+            otherCharge1Amount:  rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+            otherCharge2Amount:  rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+            fuelPeg:             rawProfile.fuel_peg              ? parseFloat(rawProfile.fuel_peg)              : 0,
+            fuelMpg:             rawProfile.fuel_mpg              ? parseFloat(rawProfile.fuel_mpg)              : 6,
+            doePaddRate:         rawProfile.doe_padd_rate         ? parseFloat(rawProfile.doe_padd_rate)         : 0,
+          } : null);
 
       const geocoded = await parseDatumPoint(request.datum_point);
 

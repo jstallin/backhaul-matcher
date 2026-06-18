@@ -118,6 +118,21 @@ const isAlongRoute = (pickupLat, pickupLng, datumLat, datumLng, homeLat, homeLng
   return deviation <= corridorWidthMiles;
 };
 
+// #167: default rate config for estimates with NO fleet attached (sales estimates that
+// happen before a fleet exists). So a fleet-less estimate still shows NET (not just gross):
+// 80/20 split + a $2.00/OOR-mile all-in operating cost. Fuel + per-stop costs are folded
+// into the mileage rate (left at 0). Tunable; only applied when there is no fleet.
+export const DEFAULT_ESTIMATE_RATE_CONFIG = {
+  revenueSplitCarrier: 20, // → customer keeps 80%
+  mileageRate: 2.0,        // $/out-of-route mile, all-in
+  stopRate: 0,
+  otherCharge1Amount: 0,
+  otherCharge2Amount: 0,
+  fuelPeg: 0,
+  fuelMpg: 6,
+  doePaddRate: 0,          // 0 → fuel surcharge folded into mileageRate
+};
+
 /**
  * Calculate net revenue fields from rate config
  * FSC/mile = (DOE PADD Rate - PEG) / MPG

@@ -6,7 +6,7 @@ import { useCredits } from '../../hooks/useCredits';
 import { BuyCreditsModal } from '../BuyCreditsModal';
 import { useMobile } from '../../hooks/useMobile';
 import { geocodeAddress } from '../../utils/pcMilerClient';
-import { findRouteHomeBackhauls } from '../../utils/routeHomeMatching';
+import { findRouteHomeBackhauls, DEFAULT_ESTIMATE_RATE_CONFIG } from '../../utils/routeHomeMatching';
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
@@ -1382,16 +1382,20 @@ export function EstimatesView() {
       const fleetProfile = rawProfile || { trailerType: 'Dry Van', trailerLength: 53, weightLimit: 45000 };
 
       const hasRateConfig = rawProfile && (rawProfile.revenue_split_carrier != null || rawProfile.mileage_rate != null);
-      const rateConfig = hasRateConfig ? {
-        revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
-        mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
-        stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
-        otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
-        otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
-        fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
-        fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
-        doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
-      } : null;
+      // #167: no fleet → generic default config (80/20, $2/mi) so net still computes; with a
+      // fleet, use its config (or null → "set your rate config" prompt, unchanged).
+      const rateConfig = !fleetData
+        ? DEFAULT_ESTIMATE_RATE_CONFIG
+        : (hasRateConfig ? {
+            revenueSplitCarrier: rawProfile.revenue_split_carrier || 20,
+            mileageRate: rawProfile.mileage_rate ? parseFloat(rawProfile.mileage_rate) : 0,
+            stopRate: rawProfile.stop_rate ? parseFloat(rawProfile.stop_rate) : 0,
+            otherCharge1Amount: rawProfile.other_charge_1_amount ? parseFloat(rawProfile.other_charge_1_amount) : 0,
+            otherCharge2Amount: rawProfile.other_charge_2_amount ? parseFloat(rawProfile.other_charge_2_amount) : 0,
+            fuelPeg: rawProfile.fuel_peg ? parseFloat(rawProfile.fuel_peg) : 0,
+            fuelMpg: rawProfile.fuel_mpg ? parseFloat(rawProfile.fuel_mpg) : 6,
+            doePaddRate: rawProfile.doe_padd_rate ? parseFloat(rawProfile.doe_padd_rate) : 0,
+          } : null);
 
       const datumPoint = geocoded
         ? { address: geocoded.label || estimate.datum_point, lat: geocoded.lat, lng: geocoded.lng }
