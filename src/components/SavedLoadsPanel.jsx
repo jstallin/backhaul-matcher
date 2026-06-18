@@ -2,6 +2,7 @@
 // One component for v1 + v2; host passes a palette to match the theme. Reads saved_loads,
 // shows status "Saved", and reuses the existing haul completion + broker-contact patterns.
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../lib/supabase';
 import { Package, TrendingUp, Phone, X, CheckCircle } from '../icons';
 import { ContactBrokerDialog } from './ContactBrokerDialog';
@@ -11,28 +12,53 @@ const miles = (v) => (v == null || v === '' ? '—' : Number(v).toLocaleString('
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
 const routeOf = (r) => `${[r.origin_city, r.origin_state].filter(Boolean).join(', ') || '—'} → ${[r.destination_city, r.destination_state].filter(Boolean).join(', ') || '—'}`;
 
-// Per-row action dropdown (mirrors the LoadShareMenu popover: outside-click closes).
+// Per-row action dropdown. Rendered via a portal with fixed positioning so the table's
+// horizontal-scroll container (overflow) can't clip it — the bug where the menu was hidden
+// below a short table. Anchored to the button's viewport rect; closes on outside click/scroll.
 function RowActions({ row, p, onView, onHaul, onContact }) {
   const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
+  const [pos, setPos] = useState(null);
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
-    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    const onDown = (e) => {
+      if (btnRef.current?.contains(e.target) || menuRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    const close = () => setOpen(false);
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
   }, [open]);
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      // If the row is near the viewport bottom, open upward so the menu stays on-screen.
+      const openUp = r.bottom + 150 > window.innerHeight;
+      setPos({ top: openUp ? undefined : r.bottom + 6, bottom: openUp ? window.innerHeight - r.top + 6 : undefined, right: Math.max(8, window.innerWidth - r.right) });
+    }
+    setOpen(o => !o);
+  };
+
   const item = { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: p.text, textAlign: 'left', whiteSpace: 'nowrap' };
   return (
-    <div ref={wrapRef} style={{ position: 'relative', display: 'inline-flex' }}>
-      <button onClick={() => setOpen(o => !o)} aria-label="Load actions" style={{ padding: '6px 10px', background: 'none', border: `1px solid ${p.border}`, borderRadius: '8px', cursor: 'pointer', color: p.text, fontSize: '16px', lineHeight: 1, fontWeight: 700 }}>⋯</button>
-      {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, background: p.cardBg, border: `1px solid ${p.border}`, borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 30000, minWidth: '170px', overflow: 'hidden' }}>
+    <>
+      <button ref={btnRef} onClick={toggle} aria-label="Load actions" style={{ padding: '6px 10px', background: 'none', border: `1px solid ${p.border}`, borderRadius: '8px', cursor: 'pointer', color: p.text, fontSize: '16px', lineHeight: 1, fontWeight: 700 }}>⋯</button>
+      {open && pos && createPortal(
+        <div ref={menuRef} style={{ position: 'fixed', top: pos.top, bottom: pos.bottom, right: pos.right, background: p.cardBg, border: `1px solid ${p.border}`, borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 30000, minWidth: '170px', overflow: 'hidden' }}>
           <button style={item} onClick={() => { setOpen(false); onView(row); }}><Package size={15} color={p.accent} /> View</button>
           <button style={item} onClick={() => { setOpen(false); onHaul(row); }}><TrendingUp size={15} color={p.accent} /> Haul</button>
           <button style={item} onClick={() => { setOpen(false); onContact(row); }}><Phone size={15} color={p.accent} /> Contact Broker</button>
-        </div>
-      )}
-    </div>
+        </div>, document.body)}
+    </>
   );
 }
 
