@@ -49,15 +49,21 @@ export function detectNotifiableChange(prev, newMatches, thresholdPct = NOTIFY_N
 
   const top = newMatches[0];
 
+  // Don't alert on a top load that isn't profitable. A "call for rate" / no-posted-rate load
+  // has gross 0, so its net is 0 − out-of-route costs (always ≤ 0); a genuinely negative net
+  // is likewise not worth notifying about. net > 0 cleanly covers both. The baseline still
+  // advances (caller records this topId), so a later profitable #1 re-triggers normally.
+  const topNetWorthAlerting = next.topNet > 0;
+
   // 1) New #1 load — by definition the new best (matches are net-ranked).
   if (prev.topId !== next.topId) {
-    return { type: 'new_top', match: top, newNet: next.topNet };
+    return topNetWorthAlerting ? { type: 'new_top', match: top, newNet: next.topNet } : null;
   }
 
   // 2) Same top load, net improved >= threshold%.
   const topPct = pctChange(prev.topNet, next.topNet);
   if (topPct >= thresholdPct) {
-    return { type: 'top_net_up', match: top, newNet: next.topNet, pct: topPct };
+    return topNetWorthAlerting ? { type: 'top_net_up', match: top, newNet: next.topNet, pct: topPct } : null;
   }
 
   // 3) Lane softening — avg net of the top 25 dropped >= threshold% overall.
