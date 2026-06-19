@@ -88,6 +88,26 @@ describe('detectNotifiableChange', () => {
     expect(detectNotifiableChange(prev, [])).toBeNull();
   });
 
+  // A "call for rate" / no-posted-rate top load has gross 0 → net ≤ 0; never alert on it.
+  it('does NOT fire new_top when the new #1 load has a non-positive net (call-for-rate)', () => {
+    const prev = snapshotFromMatches(matches(500, 400));
+    const next = matches(-300, -400); // new top id, but best net is negative
+    expect(detectNotifiableChange(prev, next)).toBeNull();
+  });
+
+  it('still fires new_top when the new #1 is profitable', () => {
+    const prev = snapshotFromMatches(matches(500, 400));
+    const next = matches(600, 500); // new top id, positive net
+    expect(detectNotifiableChange(prev, next)?.type).toBe('new_top');
+  });
+
+  it('does NOT fire top_net_up when the (improved) top net is still non-positive', () => {
+    const ids = ['A', 'B'];
+    const prev = snapshotFromMatches(sameTopWithNets(ids, [-100, -120]));
+    const next = sameTopWithNets(ids, [-50, -120]); // big % "rise" but still negative
+    expect(detectNotifiableChange(prev, next)).toBeNull();
+  });
+
   it('respects a custom threshold', () => {
     const ids = ['A', 'B'];
     const prev = snapshotFromMatches(sameTopWithNets(ids, [100, 100]));
