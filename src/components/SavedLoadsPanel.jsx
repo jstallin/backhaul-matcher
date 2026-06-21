@@ -12,17 +12,30 @@ const miles = (v) => (v == null || v === '' ? '—' : Number(v).toLocaleString('
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
 const routeOf = (r) => `${[r.origin_city, r.origin_state].filter(Boolean).join(', ') || '—'} → ${[r.destination_city, r.destination_state].filter(Boolean).join(', ') || '—'}`;
 
-// Per-row action dropdown. Rendered via a portal with fixed positioning so the table's
+// Per-row action menu. Rendered via a portal with fixed positioning so the table's
 // horizontal-scroll container (overflow) can't clip it — the bug where the menu was hidden
-// below a short table. Anchored to the button's viewport rect; closes on outside click/scroll.
+// below a short table (#163). On narrow screens (#171) the anchored dropdown was unreachable:
+// the Actions column sits at the far right of a 7-column horizontal-scroll table, and the
+// anchored menu was awkward to position/tap. There we render a full-width bottom sheet instead.
+const MOBILE_BP = 640;
+
 function RowActions({ row, p, onView, onHaul, onContact }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < MOBILE_BP);
   const btnRef = useRef(null);
   const menuRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BP);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Desktop only: close the anchored dropdown on outside click / scroll / resize.
+  // The mobile bottom sheet handles dismissal via its own backdrop.
+  useEffect(() => {
+    if (!open || isMobile) return;
     const onDown = (e) => {
       if (btnRef.current?.contains(e.target) || menuRef.current?.contains(e.target)) return;
       setOpen(false);
@@ -36,10 +49,10 @@ function RowActions({ row, p, onView, onHaul, onContact }) {
       window.removeEventListener('scroll', close, true);
       window.removeEventListener('resize', close);
     };
-  }, [open]);
+  }, [open, isMobile]);
 
   const toggle = () => {
-    if (!open && btnRef.current) {
+    if (!open && !isMobile && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       // If the row is near the viewport bottom, open upward so the menu stays on-screen.
       const openUp = r.bottom + 150 > window.innerHeight;
@@ -48,15 +61,31 @@ function RowActions({ row, p, onView, onHaul, onContact }) {
     setOpen(o => !o);
   };
 
+  const close = () => setOpen(false);
   const item = { display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: p.text, textAlign: 'left', whiteSpace: 'nowrap' };
+  const sheetItem = { display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '16px 18px', background: 'none', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '16px', fontWeight: 600, color: p.text, textAlign: 'left' };
   return (
     <>
       <button ref={btnRef} onClick={toggle} aria-label="Load actions" style={{ padding: '6px 10px', background: 'none', border: `1px solid ${p.border}`, borderRadius: '8px', cursor: 'pointer', color: p.text, fontSize: '16px', lineHeight: 1, fontWeight: 700 }}>⋯</button>
-      {open && pos && createPortal(
+
+      {/* Mobile: full-width bottom sheet — always reachable, large tap targets */}
+      {open && isMobile && createPortal(
+        <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 30000, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: p.cardBg, borderTopLeftRadius: '18px', borderTopRightRadius: '18px', boxShadow: '0 -8px 32px rgba(0,0,0,0.25)', padding: '10px 12px calc(16px + env(safe-area-inset-bottom))', borderTop: `1px solid ${p.border}` }}>
+            <div style={{ width: '38px', height: '4px', borderRadius: '999px', background: p.border, margin: '4px auto 10px' }} />
+            <div style={{ fontSize: '13px', fontWeight: 700, color: p.textMuted, padding: '2px 8px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{routeOf(row)}</div>
+            <button style={sheetItem} onClick={() => { close(); onView(row); }}><Package size={20} color={p.accent} /> View</button>
+            <button style={sheetItem} onClick={() => { close(); onHaul(row); }}><TrendingUp size={20} color={p.accent} /> Haul</button>
+            <button style={sheetItem} onClick={() => { close(); onContact(row); }}><Phone size={20} color={p.accent} /> Contact Broker</button>
+          </div>
+        </div>, document.body)}
+
+      {/* Desktop: anchored dropdown */}
+      {open && !isMobile && pos && createPortal(
         <div ref={menuRef} style={{ position: 'fixed', top: pos.top, bottom: pos.bottom, right: pos.right, background: p.cardBg, border: `1px solid ${p.border}`, borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 30000, minWidth: '170px', overflow: 'hidden' }}>
-          <button style={item} onClick={() => { setOpen(false); onView(row); }}><Package size={15} color={p.accent} /> View</button>
-          <button style={item} onClick={() => { setOpen(false); onHaul(row); }}><TrendingUp size={15} color={p.accent} /> Haul</button>
-          <button style={item} onClick={() => { setOpen(false); onContact(row); }}><Phone size={15} color={p.accent} /> Contact Broker</button>
+          <button style={item} onClick={() => { close(); onView(row); }}><Package size={15} color={p.accent} /> View</button>
+          <button style={item} onClick={() => { close(); onHaul(row); }}><TrendingUp size={15} color={p.accent} /> Haul</button>
+          <button style={item} onClick={() => { close(); onContact(row); }}><Phone size={15} color={p.accent} /> Contact Broker</button>
         </div>, document.body)}
     </>
   );
@@ -164,8 +193,9 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
         </tbody>
       </table>
 
-      {/* View — saved snapshot detail */}
-      {viewRow && (
+      {/* View — saved snapshot detail. Portaled to body: an ancestor's transform would
+          otherwise trap position:fixed and clip the modal to the table (#171). */}
+      {viewRow && createPortal(
         <div onClick={() => setViewRow(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 30000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: p.cardBg, borderRadius: '14px', width: '100%', maxWidth: '440px', padding: '22px', border: `1px solid ${p.border}`, boxShadow: '0 16px 48px rgba(0,0,0,0.35)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -194,8 +224,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
               <button onClick={() => { setViewRow(null); setContactRow(viewRow); }} style={{ flex: 1, padding: '11px', background: 'none', border: `1px solid ${p.border}`, borderRadius: '8px', color: p.text, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Contact Broker</button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
 
       {/* Contact Broker */}
       <ContactBrokerDialog
@@ -208,7 +237,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
       />
 
       {/* Haul confirm */}
-      {haulRow && (
+      {haulRow && createPortal(
         <div onClick={() => !haulBusy && setHaulRow(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 30000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: p.cardBg, borderRadius: '14px', width: '100%', maxWidth: '400px', padding: '22px', border: `1px solid ${p.border}`, boxShadow: '0 16px 48px rgba(0,0,0,0.35)' }}>
             <div style={{ fontSize: '18px', fontWeight: 800, color: p.text, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}><TrendingUp size={18} color={p.green} /> Haul This Load</div>
@@ -224,8 +253,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
     </div>
   );
 }
