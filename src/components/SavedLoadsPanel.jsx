@@ -193,8 +193,9 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
         </tbody>
       </table>
 
-      {/* View — saved snapshot detail */}
-      {viewRow && (
+      {/* View — saved snapshot detail. Portaled to body: an ancestor's transform would
+          otherwise trap position:fixed and clip the modal to the table (#171). */}
+      {viewRow && createPortal(
         <div onClick={() => setViewRow(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 30000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: p.cardBg, borderRadius: '14px', width: '100%', maxWidth: '440px', padding: '22px', border: `1px solid ${p.border}`, boxShadow: '0 16px 48px rgba(0,0,0,0.35)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -223,8 +224,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
               <button onClick={() => { setViewRow(null); setContactRow(viewRow); }} style={{ flex: 1, padding: '11px', background: 'none', border: `1px solid ${p.border}`, borderRadius: '8px', color: p.text, fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Contact Broker</button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
 
       {/* Contact Broker */}
       <ContactBrokerDialog
@@ -237,7 +237,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
       />
 
       {/* Haul confirm */}
-      {haulRow && (
+      {haulRow && createPortal(
         <div onClick={() => !haulBusy && setHaulRow(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 30000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: p.cardBg, borderRadius: '14px', width: '100%', maxWidth: '400px', padding: '22px', border: `1px solid ${p.border}`, boxShadow: '0 16px 48px rgba(0,0,0,0.35)' }}>
             <div style={{ fontSize: '18px', fontWeight: 800, color: p.text, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}><TrendingUp size={18} color={p.green} /> Haul This Load</div>
@@ -253,8 +253,7 @@ export function SavedLoadsPanel({ userId, palette = {}, emptyHint }) {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
     </div>
   );
 }

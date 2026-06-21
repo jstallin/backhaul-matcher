@@ -1,6 +1,7 @@
 // #163: Contact Broker dialog — Call / Text / Email for a load's broker. One shared
 // component for v1 + v2 (palette-themed). Controlled via `open`/`onClose`. Reuses the same
 // tel:/sms:/mailto: links the load cards use inline.
+import { createPortal } from 'react-dom';
 import { Phone, Mail, X } from '../icons';
 
 export function ContactBrokerDialog({ open, onClose, phone, email, broker, palette }) {
@@ -12,7 +13,9 @@ export function ContactBrokerDialog({ open, onClose, phone, email, broker, palet
     border: `1px solid ${p.border}`, borderRadius: '10px', textDecoration: 'none',
     color: p.text, fontSize: '14px', fontWeight: 600,
   };
-  return (
+  // Portaled to body: an ancestor's transform would otherwise trap position:fixed
+  // and clip this dialog to the host container (#171).
+  return createPortal(
     <div
       onClick={onClose}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 30000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
@@ -37,6 +40,7 @@ export function ContactBrokerDialog({ open, onClose, phone, email, broker, palet
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
