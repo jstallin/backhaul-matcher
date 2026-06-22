@@ -10,6 +10,7 @@ import { findRouteHomeBackhauls, DEFAULT_ESTIMATE_RATE_CONFIG } from '../../util
 import { getLoadsForMatching } from '../../utils/getLoadsForMatching';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
+import { EstimateShareMenu } from '../EstimateShareMenu';
 
 const t = tokens;
 
@@ -839,6 +840,15 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
           <div style={{ fontSize: t.font.size.lg, fontWeight: t.font.weight.bold, color: t.colors.text.primary }}>{estimate.request_name}</div>
           <div style={{ fontSize: t.font.size.xs, color: t.colors.text.muted }}>{estimate.datum_point}{fleet ? ` · ${fleet.name}` : ''}{annualVolume ? ` · ${annualVolume} loads/yr` : ''}</div>
         </div>
+        {canPrint && (
+          <EstimateShareMenu
+            estimate={estimate}
+            fleet={fleet}
+            metrics={metrics}
+            annualVolume={annualVolume}
+            palette={{ accent: t.colors.accent.blue, text: t.colors.text.primary, textMuted: t.colors.text.muted, border: t.colors.page.cardBorder, cardBg: '#fff', inputBg: '#fff' }}
+          />
+        )}
         {canPrint && <GhostBtn onClick={handlePrint} style={{ fontSize: t.font.size.xs, padding: '6px 12px' }}>🖨 Print / Save PDF</GhostBtn>}
         <GhostBtn onClick={() => onEdit(estimate)} style={{ fontSize: t.font.size.xs, padding: '6px 10px' }}>✏️ Edit</GhostBtn>
         {/* #83: expired pickup window — run disabled until dates are edited forward */}

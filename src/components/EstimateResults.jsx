@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { ArrowLeft, Download, TrendingUp, DollarSign, Truck, MapPin, Calendar, Edit, X } from '../icons';
+import { EstimateShareMenu } from './EstimateShareMenu';
 
 // ─── Metric helpers ──────────────────────────────────────────────────────────
 
@@ -171,7 +172,16 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
         >
           <ArrowLeft size={16} /> Back to Estimate Requests
         </button>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {metrics && (
+            <EstimateShareMenu
+              estimate={request}
+              fleet={fleet}
+              metrics={metrics}
+              annualVolume={annualVolume}
+              palette={{ accent: colors.accent.primary, text: colors.text.primary, textMuted: colors.text.secondary, border: colors.border.accent, cardBg: colors.background.overlay, inputBg: colors.background.secondary }}
+            />
+          )}
           <button
             onClick={handlePrint}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: colors.accent.primary, border: 'none', borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
