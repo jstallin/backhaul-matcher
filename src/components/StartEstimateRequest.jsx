@@ -86,7 +86,7 @@ export const StartEstimateRequest = ({ onMenuNavigate, onNavigateToSettings }) =
   const validateForm = () => {
     const newErrors = {};
     if (!formData.requestName.trim()) newErrors.requestName = 'Request name is required';
-    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Datum point is required';
+    if (!formData.datumPoint.trim()) newErrors.datumPoint = 'Empty City, ST is required';
     // #167: fleet is optional, but matching needs a home — require a Return To when none.
     if (!formData.selectedFleetId && !formData.returnTo.trim()) newErrors.returnTo = 'Select a fleet, or enter a Return To city';
     if (!formData.equipmentAvailableDate) newErrors.equipmentAvailableDate = 'Equipment available date is required';

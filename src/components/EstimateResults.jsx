@@ -261,9 +261,11 @@ export const EstimateResults = ({ request, fleet, matches, onBack, onEdit, onCan
             </div>
             <div style={{ textAlign: 'right', fontSize: '13px', color: colors.text.secondary, lineHeight: '1.8' }}>
               <div><strong>Generated:</strong> {today}</div>
-              <div><strong>Fleet:</strong> {fleet?.name || 'Unknown Fleet'}</div>
-              {fleet?.home_address && <div><strong>Fleet Home:</strong> {fleet.home_address}</div>}
-              <div><strong>Datum:</strong> {request.datum_point}</div>
+              <div><strong>Fleet:</strong> {fleet?.name || '—'}</div>
+              {fleet
+                ? (fleet.home_address && <div><strong>Fleet Home:</strong> {fleet.home_address}</div>)
+                : <div><strong>Home:</strong> {[request.return_to_city, request.return_to_state].filter(Boolean).join(', ') || '—'}</div>}
+              <div><strong>Empty City, ST:</strong> {request.datum_point}</div>
               <div><strong>Pickup Window:</strong> {fmtDate(request.equipment_available_date)} – {fmtDate(request.equipment_needed_date)}</div>
               {annualVolume > 0 && <div><strong>Annual Volume:</strong> {annualVolume} loads/yr</div>}
             </div>

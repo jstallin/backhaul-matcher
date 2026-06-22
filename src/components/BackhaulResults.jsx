@@ -268,7 +268,7 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
         </h3>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '14px', color: colors.text.secondary }}>
           <div><strong>Fleet:</strong> {fleet.name}</div>
-          <div><strong>Datum Point:</strong> {request.datum_point}</div>
+          <div><strong>Empty City, ST:</strong> {request.datum_point}</div>
           <div><strong>Matches Found:</strong> {matches.length}</div>
           {/* #81: dispatcher signal — display only, does not affect matching */}
           {request.driver_home_by && (

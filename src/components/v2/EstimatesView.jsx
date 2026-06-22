@@ -905,8 +905,10 @@ function EstimateReport({ estimate, fleet, matches, isLoading, error, hasRun, on
                 <div style={{ textAlign: 'right', fontSize: t.font.size.sm, color: t.colors.text.secondary, lineHeight: 1.8 }}>
                   <div><strong>Generated:</strong> {today}</div>
                   <div><strong>Fleet:</strong> {fleet?.name || '—'}</div>
-                  {fleet?.home_address && <div><strong>Fleet Home:</strong> {fleet.home_address}</div>}
-                  <div><strong>Datum:</strong> {estimate.datum_point}</div>
+                  {fleet
+                    ? (fleet.home_address && <div><strong>Fleet Home:</strong> {fleet.home_address}</div>)
+                    : <div><strong>Home:</strong> {[estimate.return_to_city, estimate.return_to_state].filter(Boolean).join(', ') || '—'}</div>}
+                  <div><strong>Empty City, ST:</strong> {estimate.datum_point}</div>
                   <div><strong>Pickup Window:</strong> {fmtDateLong(estimate.equipment_available_date)} – {fmtDateLong(estimate.equipment_needed_date)}</div>
                   {annualVolume > 0 && <div><strong>Annual Volume:</strong> {annualVolume} loads/yr</div>}
                 </div>
