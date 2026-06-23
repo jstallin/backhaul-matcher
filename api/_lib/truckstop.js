@@ -53,8 +53,14 @@ const ALL_MAJOR_EQUIP = 'V F R SD LB';
 // LoadSearch <LoadType> enum (Full | Partial | All). The Full/Partial axis is
 // the only mode dimension the LoadSearch Criteria exposes — the broader modes
 // (Intermodal, Drayage, Parcel, Air, Water, Ocean) have no Criteria field and
-// are captured at the fleet level but not sent as a server-side filter.
+// are captured at the fleet/request level but not sent as a server-side filter.
 // No modes selected → 'Full' (preserves the prior hardcoded default).
+//
+// #30: rather than silently dropping the unfilterable modes, the results UI now
+// shows a SearchModesNotice listing the modes the search was scoped to (fleet +
+// request union). The <LoadType> enum values themselves (esp. 'All') still need
+// live validation against the Truckstop API — left to Chip — so the mapping below
+// is intentionally unchanged here.
 export function deriveLoadType(modes = []) {
   const set = new Set(modes);
   const wantsFull = set.has('Truck Load');

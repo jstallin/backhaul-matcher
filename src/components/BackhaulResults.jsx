@@ -7,6 +7,8 @@ import { db } from '../lib/supabase';
 import { RouteMap } from './RouteMap';
 import { CoDriver } from './CoDriver';
 import { LoadShareMenu } from './LoadShareMenu';
+import { SearchModesNotice } from './SearchModesNotice';
+import { searchModes } from '../utils/fleetModes';
 import { SaveLoadButton } from './SaveLoadButton';
 import { buildSavedLoadRow, savedKeyOf } from '../utils/savedLoad';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../utils/activityEvents';
@@ -278,6 +280,11 @@ export const BackhaulResults = ({ request, fleet, matches, datumCoordinates, fle
           )}
         </div>
       </div>
+
+      <SearchModesNotice
+        modes={searchModes(fleet, request)}
+        palette={{ accent: colors.accent.primary, text: colors.text.primary, bg: `${colors.accent.primary}12`, border: `${colors.accent.primary}40` }}
+      />
 
       {matches.length === 0 ? (
         /* No Matches */

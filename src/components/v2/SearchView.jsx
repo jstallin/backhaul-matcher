@@ -16,7 +16,8 @@ import { CANCELLATION_REASONS } from '../../utils/cancellationReasons';
 import { buildDeclineSnapshot } from '../../utils/declineSnapshot';
 import { logActivityEvent, ACTIVITY_EVENTS } from '../../utils/activityEvents';
 import { isRequestExpired, EXPIRED_HINT } from '../../utils/requestExpiry';
-import { FLEET_MODES, unionModes } from '../../utils/fleetModes';
+import { FLEET_MODES, unionModes, searchModes } from '../../utils/fleetModes';
+import { SearchModesNotice } from '../SearchModesNotice';
 import { sendBackhaulChangeNotification, detectBackhaulChanges } from '../../utils/notificationService';
 import { RouteHomeMap } from '../RouteHomeMap';
 import { RouteMap } from '../RouteMap';
@@ -1807,6 +1808,14 @@ function ResultsPanel({ request, fleet, matches, routeData, datumCoords, isLoadi
             <div style={{ color: t.colors.text.primary, fontWeight: t.font.weight.semibold, marginBottom: '6px' }}>Search failed</div>
             <div style={{ color: t.colors.text.muted, fontSize: t.font.size.sm }}>{error}</div>
           </Card>
+        )}
+
+        {/* #30: mode-scope notice — shown once a search has run (results or empty) */}
+        {!isLoading && !error && (matches.length > 0 || datumCoords) && (
+          <SearchModesNotice
+            modes={searchModes(fleet, request)}
+            palette={{ accent: t.colors.accent.blue, text: t.colors.text.primary, bg: '#eff6ff', border: '#bfdbfe' }}
+          />
         )}
 
         {/* Empty state — no matches */}
