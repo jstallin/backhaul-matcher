@@ -142,7 +142,7 @@ async function summarizeOrgPreferences() {
         .limit(30),
       supabase
         .from('backhaul_requests')
-        .select('datum_point, equipment_type, out_of_route_miles, net_revenue, revenue_amount, completed_at')
+        .select('datum_point, out_of_route_miles, net_revenue, revenue_amount, completed_at')
         .eq('fleet_id', fleetId)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
@@ -163,9 +163,8 @@ async function summarizeOrgPreferences() {
       const net   = h.net_revenue    != null ? ` | net $${Number(h.net_revenue).toFixed(0)}`    : '';
       const gross = h.revenue_amount != null ? ` | gross $${Number(h.revenue_amount).toFixed(0)}` : '';
       const oor   = h.out_of_route_miles != null ? ` | ${h.out_of_route_miles} OOR mi`          : '';
-      const equip = h.equipment_type ? ` | ${h.equipment_type}` : '';
       const when  = h.completed_at   ? new Date(h.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-      return `  - ${h.datum_point || 'unknown'}${equip}${oor}${gross}${net}${when ? ` (${when})` : ''}`;
+      return `  - ${h.datum_point || 'unknown'}${oor}${gross}${net}${when ? ` (${when})` : ''}`;
     }).join('\n');
 
     const feedbackLines = feedback.map(f => {
