@@ -354,7 +354,7 @@ export function normalizeTsLoad(load) {
     const rawLength = parseFloat(load.Length ?? 53);
     const trailerLength = rawLength >= 100 ? null : rawLength;
 
-    return {
+    const normalized = {
       load_id:          String(load.ID),
       source:           'truckstop',
       broker:           load.TruckCompanyName ?? load.CompanyName ?? 'Truckstop',
@@ -395,6 +395,16 @@ export function normalizeTsLoad(load) {
       status:           'available',
       posted_date:      load.Entered ? new Date(load.Entered).toISOString() : new Date().toISOString(),
     };
+
+    // #181: fast-xml-parser (ignoreAttributes:false) turns `xsi:nil="true"` elements into
+    // `{ '@_nil': ... }` objects. `?? null` / `|| null` don't catch those (a non-null object),
+    // so a nil string field (e.g. PointOfContact) would reach the UI as an object and crash
+    // React with error #31 ("objects are not valid as a React child"), white-screening the
+    // results. Every field here is meant to be a scalar — null out any stray object value.
+    for (const k in normalized) {
+      if (normalized[k] !== null && typeof normalized[k] === 'object') normalized[k] = null;
+    }
+    return normalized;
   } catch (err) {
     console.warn('Failed to normalize Truckstop load:', err);
     return null;
