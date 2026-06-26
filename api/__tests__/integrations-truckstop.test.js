@@ -311,11 +311,11 @@ describe('buildPickupDates (#117)', () => {
     expect(buildPickupDates('2026-05-01', null, today)).toEqual(['2026-06-05']);
   });
 
-  it('caps the window at 10 dates', () => {
+  it('caps the window at 7 dates (Truckstop rejects >7 with "max of 7 dates")', () => {
     const dates = buildPickupDates('2026-06-08', '2026-07-30', today);
-    expect(dates).toHaveLength(10);
+    expect(dates).toHaveLength(7);
     expect(dates[0]).toBe('2026-06-08');
-    expect(dates[9]).toBe('2026-06-17');
+    expect(dates[6]).toBe('2026-06-14');
   });
 
   it('computes "today" in Central time, not UTC (the Friday-midnight bug)', () => {

@@ -113,7 +113,13 @@ export function getDestStates(homeState) {
 // max(start, today) → min(end, start + MAX_PICKUP_DATES − 1), with "today" computed
 // in Central time so an evening search doesn't roll onto the next calendar day.
 // Truckstop still rejects past dates, so the clamp-up-to-today behavior is preserved.
-const MAX_PICKUP_DATES = 10;
+// #183: Truckstop's GetMultipleLoadDetailResults rejects a search outright with
+// "You can only have a max of 7 dates" if PickupDates has more than 7 entries — the
+// whole query returns 0 loads. So a request whose pickup window spans >7 days (e.g.
+// an estimate or a wide Ryder window) silently returned nothing and fell back through
+// DirectFreight to stale scraped data. Cap at 7; windows longer than that search their
+// first 7 days.
+const MAX_PICKUP_DATES = 7;
 export function buildPickupDates(pickupDate, pickupDateEnd, today = new Date()) {
   const todayStr = today.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
   const startRaw = pickupDate ? String(pickupDate).slice(0, 10) : '';
