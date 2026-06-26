@@ -269,7 +269,7 @@ async function fetchOrgHistory(fleetId) {
     const [hauledRes, feedbackRes] = await Promise.all([
       supabase
         .from('backhaul_requests')
-        .select('datum_point, equipment_type, out_of_route_miles, net_revenue, revenue_amount, completed_at')
+        .select('datum_point, out_of_route_miles, net_revenue, revenue_amount, completed_at')
         .eq('fleet_id', fleetId)
         .eq('status', 'completed')
         .order('completed_at', { ascending: false })
@@ -294,9 +294,8 @@ async function fetchOrgHistory(fleetId) {
         const net = h.net_revenue != null ? ` | net $${Number(h.net_revenue).toFixed(0)}` : '';
         const rev = h.revenue_amount != null ? ` | gross $${Number(h.revenue_amount).toFixed(0)}` : '';
         const oor = h.out_of_route_miles != null ? ` | ${h.out_of_route_miles} OOR mi` : '';
-        const equip = h.equipment_type ? ` | ${h.equipment_type}` : '';
         const when = h.completed_at ? new Date(h.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-        lines.push(`  - ${h.datum_point || 'unknown datum'}${equip}${oor}${rev}${net}${when ? ` (${when})` : ''}`);
+        lines.push(`  - ${h.datum_point || 'unknown datum'}${oor}${rev}${net}${when ? ` (${when})` : ''}`);
       });
     }
 
@@ -668,7 +667,7 @@ If asked something you cannot resolve after a genuine attempt, tell the user: "I
   if (context === 'requests') {
     const { requests = [] } = contextData;
     const summary = requests.map((r, i) =>
-      `  ${i + 1}. "${r.request_name}" | Datum: ${r.datum_point || 'not set'} | Equipment: ${r.equipment_type || 'not set'} | Status: ${r.status} | ${new Date(r.created_at).toLocaleDateString()}`
+      `  ${i + 1}. "${r.request_name}" | Datum: ${r.datum_point || 'not set'} | Status: ${r.status} | ${new Date(r.created_at).toLocaleDateString()}`
     ).join('\n');
 
     return `You are Co-driver, an AI dispatch assistant built into Haul Monitor. Help the dispatcher manage their open backhaul requests.
