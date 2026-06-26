@@ -29,3 +29,38 @@ describe('normalizeTsLoad — Truckstop sentinels', () => {
     expect(load.revenue_per_mile).toBeGreaterThan(0);
   });
 });
+
+// Guards #181: fast-xml-parser turns `xsi:nil="true"` elements into `{ '@_nil': ... }`
+// objects. Those must not survive into the normalized load — rendered in JSX they crash
+// React (#31, "objects are not valid as a React child") and white-screen the results.
+describe('normalizeTsLoad — XML nil objects', () => {
+  const base = {
+    ID: '2', OriginCity: 'Warren', OriginState: 'OH',
+    DestinationCity: 'Winchester', DestinationState: 'VA', Mileage: '287',
+  };
+
+  it('coerces xsi:nil string fields to null instead of leaving {@_nil} objects', () => {
+    const load = normalizeTsLoad({
+      ...base,
+      PointOfContact:      { '@_nil': 'true' },
+      PointOfContactPhone: { '@_nil': 'true' },
+      TruckCompanyEmail:   { '@_nil': 'true' },
+      SpecInfo:            { '@_nil': 'true' },
+    });
+    expect(load.contact_name).toBeNull();
+    expect(load.phone).toBeNull();
+    expect(load.company_email).toBeNull();
+    expect(load.special_info).toBeNull();
+  });
+
+  it('leaves no object-typed values anywhere in the normalized load', () => {
+    const load = normalizeTsLoad({
+      ...base,
+      PointOfContact: { '@_nil': 'true' },
+      TruckCompanyName: { '@_nil': 'true' },
+    });
+    for (const v of Object.values(load)) {
+      expect(typeof v === 'object' && v !== null).toBe(false);
+    }
+  });
+});
